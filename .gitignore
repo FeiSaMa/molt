@@ -1,0 +1,17 @@
+# 忽略运行产物与依赖
+runs/*
+!runs/.gitkeep
+
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+node_modules/
+npm-debug.log*
+
+# 本地覆盖与凭据
+.env
+.pi/sol-pi.local.json

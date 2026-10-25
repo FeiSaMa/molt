@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "molt"
+version = "0.0.0"
+description = "自进化 agent 引擎的外层编排器：搜索受控开关、跑题集、打分、回退"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "molt" }]
+dependencies = [
+  # 占位：骨架阶段不安装任何依赖
+  # "httpx>=0.27",
+  # "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = [
+  # "pytest>=8",
+  # "ruff>=0.6",
+]
+
+[project.scripts]
+molt = "molt.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["molt"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
