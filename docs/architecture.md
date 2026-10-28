@@ -70,7 +70,7 @@ score = (-success_rate, tokens_total, wall_ms_total)
 | --- | --- |
 | SoL-Pi | Pi 内的效率机制：动作融合、观测句柄、证据保留式 reducer、在线上下文压缩；配置面是 `sol-pi.json` |
 | Harness² | harness 结构本身；在开放世界任务上以改前/改后的同任务对比代替 ground-truth verifier |
-| Agno | agent 框架层：工具、记忆、多 agent 编排等运行时组件（不作为 harness 自动搜索的来源，`[unverified]` 具体版本口径） |
+| Agno | agent 平台层，Apache-2.0，自称 self-improving agent platform：SDK（Agno / Claude Agent / Codex）+ AgentOS（持久服务：REST API、MCP server、鉴权、人工审批、断点续跑、调度）+ Control Plane（托管 UI）。它改进的是提示与工具，不是 harness 配置，因此不作为本项目的对标基线 |
 | DGM | agent 的自身实现代码；靠 benchmark 分数驱动变异与归档 |
 
 我们的边界：**我们不发明 harness 优化算法**；我们证明这套东西能在"测试当裁判、改动可退回、端侧离线"的条件下成立。算法层面的新东西留给上游，本项目的产出是可复现的编排、契约与证据链。
