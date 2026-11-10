@@ -64,6 +64,9 @@ fail closed：`kind="live"` 同时带 `replay_of_run_id`、`kind="live"` 无 `mo
 - 「1 live + 1 replay」只指 `closure`；`scan10` 是**扫描回放**，不是 demo 的第二次运行。
 - live 模式下全文件恰好 1 条 `kind=live`；`--mode replay` 下恰 0 条，closure 候选标 `fixture`。
 - 页面讲法：closure 讲「基线回放 → 提案 → 真实候选 → 门禁」，scan10 讲「此前 10 题扫描的回放」。
+- 当前提交的样例来自真实 Pi 扫描：baseline 10/10、候选 10/10 但单位成本更高，
+  `gate.json` 结论为 `reject / cost_not_lower`，`archive.json` 记录回滚；这是负结果，
+  页面不得改写成「已采纳」。
 
 ## 重新生成
 

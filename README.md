@@ -78,6 +78,26 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
   **回放**（`demo_group=scan10`），不是 demo 的第二次运行。页面必须按
   `runs[].demo_group` 与 `runs[].provenance` 分开标注，不得暗示两条都 live。
 
+### 真实 Pi 基线（demo-6，2026-11-11）
+
+10 道 search 的实测（并发 1，费用为 run 记录实际值；详见 [ADR-0008](docs/decisions/0008-demo.md)）：
+
+| config | solved | cost | cost_per_solved |
+|---|---|---|---|
+| **low/full（baseline v0）** | **10/10** | **$0.009978** | **$0.000998** |
+| off/full（proposer 派生候选） | 10/10 | $0.012385 | $0.001239 |
+| off/minimal（最接近） | 10/10 | $0.011894 | $0.001189 |
+| low/minimal | 10/10 | $0.021180 | $0.002118 |
+| high/full（v0-pi） | 10/10 | $0.035560 | $0.003556 |
+| high/minimal | 10/10 | $0.021113 | $0.002111 |
+
+- **没有「10/10 且 cost < baseline」的候选**；最接近的 off/minimal 仍贵 19.2%。
+  因此 `molt demo` 的 gate 如实给出 `reject / cost_not_lower` 并回滚到基线代，
+  没有为了展示 adopt 修改门禁或候选选择。
+- holdout 实测：baseline 5/5，候选 4/5（逐题明细不导出，只给聚合）。
+- fixture 基线是 `3/10`（`molt calibrate` 的校准口径）；真实 Pi 是 `10/10`。
+  **fixture 只用于校准，不是能力声明。**
+
 ## 状态
 
 - 已实现：schema / 类型双校验、genome 哈希冻结、G1–G8 门禁、快照与 kill -9 恢复、
@@ -86,5 +106,6 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
   第二 shell `svc-config` + deterministic runtime（零成本、manifest 驱动装载）、
   `demo-6` 的 10 search + 5 holdout 题集、`calibrate` 基线校准、
   `export` 的 `web/data` 数据导出（无页面代码）、
-  `demo` 现场闭环（1 live + 1 replay + 10 题扫描回放，180s 硬上限）。
+  `demo` 现场闭环（1 live + 1 replay + 10 题扫描回放，180s 硬上限；真实扫描结论为
+  `reject / cost_not_lower`，证据在 `web/data`）。
 - 未实现：HTML 报告页面。

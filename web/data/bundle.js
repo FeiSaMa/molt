@@ -3,7 +3,7 @@ window.MOLT_VIEW = {
   "archive": {
     "archives": [
       {
-        "adopted_at": "2026-11-10T16:36:03Z",
+        "adopted_at": "2026-11-10T16:52:33Z",
         "archive_id": "arc-0001-6b492ef0",
         "ext": {},
         "generation": 1,
@@ -18,7 +18,7 @@ window.MOLT_VIEW = {
         "snapshot_id": "snap-98576b1069d0ae90"
       },
       {
-        "adopted_at": "2026-11-10T16:36:03Z",
+        "adopted_at": "2026-11-10T16:52:33Z",
         "archive_id": "arc-0002-revert-6b492ef0",
         "ext": {
           "reverted_from": "arc-0001-6b492ef0"
@@ -46,7 +46,7 @@ window.MOLT_VIEW = {
       },
       {
         "adopted": true,
-        "adopted_at": "2026-11-10T16:36:03Z",
+        "adopted_at": "2026-11-10T16:52:33Z",
         "archive_id": "arc-0002-revert-6b492ef0",
         "generation": 2,
         "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
@@ -76,7 +76,7 @@ window.MOLT_VIEW = {
   "events": {
     "report": [
       {
-        "event_id": "ev-9b3f766ca110425d",
+        "event_id": "ev-4868cc3915bd4e4d",
         "ext": {},
         "payload": {
           "count": 5
@@ -84,7 +84,7 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T16:36:03Z",
+        "ts": "2026-11-10T16:52:33Z",
         "type": "holdout.accessed"
       },
       {
@@ -96,7 +96,7 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T16:36:03Z",
+        "ts": "2026-11-10T16:52:33Z",
         "type": "report.scored"
       },
       {
@@ -108,13 +108,13 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T16:36:03Z",
+        "ts": "2026-11-10T16:52:33Z",
         "type": "report.scored"
       }
     ],
     "search": [
       {
-        "event_id": "ev-8900d1a2ee9f4283",
+        "event_id": "ev-656c9035c2194209",
         "ext": {},
         "payload": {
           "parent_genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
@@ -123,21 +123,34 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T16:35:57Z",
+        "ts": "2026-11-10T16:52:23Z",
         "type": "proposal.generated"
       },
       {
-        "event_id": "ev-d7405f2511db4787",
+        "event_id": "ev-b1a9b555370d4a21",
         "ext": {},
         "payload": {
           "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
           "task_id": "smoke-add"
         },
-        "run_id": "0f659604-smoke-add-a1-96eae9",
+        "run_id": "0f659604-smoke-add-a1-5d1f3e",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T16:35:57Z",
+        "ts": "2026-11-10T16:52:23Z",
         "type": "run.started"
+      },
+      {
+        "event_id": "ev-577a86ac8f1145c6",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "smoke-add"
+        },
+        "run_id": "0f659604-smoke-add-a1-5d1f3e",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T16:52:33Z",
+        "type": "run.finished"
       },
       {
         "event_id": "ev-demo-demo-gate",
@@ -149,21 +162,8 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T16:36:03Z",
+        "ts": "2026-11-10T16:52:33Z",
         "type": "gate.decided"
-      },
-      {
-        "event_id": "ev-e9f2adb9c9634f1f",
-        "ext": {},
-        "payload": {
-          "outcome": "passed",
-          "task_id": "smoke-add"
-        },
-        "run_id": "0f659604-smoke-add-a1-96eae9",
-        "schema_version": "1.0.0",
-        "scope": "search",
-        "ts": "2026-11-10T16:36:03Z",
-        "type": "run.finished"
       }
     ]
   },
@@ -178,11 +178,11 @@ window.MOLT_VIEW = {
           "reason": "ok"
         },
         "candidate_genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
-        "created_at": "2026-11-10T16:36:03Z",
+        "created_at": "2026-11-10T16:52:33Z",
         "decision_id": "demo-decision-demo",
         "deltas": {
-          "cost_per_solved_usd": 0.000218,
-          "cost_total_usd": 0.002183,
+          "cost_per_solved_usd": 0.000645,
+          "cost_total_usd": 0.006452,
           "solved": 0
         },
         "ext": {
@@ -207,9 +207,9 @@ window.MOLT_VIEW = {
           {
             "baseline_cost_usd": 0.00150677,
             "baseline_passed": true,
-            "candidate_cost_usd": 0.0006445,
+            "candidate_cost_usd": 0.00491424,
             "candidate_passed": true,
-            "cost_delta_usd": -0.000862,
+            "cost_delta_usd": 0.003407,
             "passed_delta": 0,
             "task_id": "smoke-add"
           },
@@ -307,7 +307,7 @@ window.MOLT_VIEW = {
             "total": 10
           },
           "candidate": {
-            "cost_per_solved_usd": 0.0012161,
+            "cost_per_solved_usd": 0.001643074,
             "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
             "solved": 10,
             "total": 10
@@ -367,8 +367,8 @@ window.MOLT_VIEW = {
     ]
   },
   "redaction": {
-    "canonical_hash": "b060e05eff12b0e2622b08f331e9880c9b86c05839acd5fa933a2d306843f569",
-    "metrics_hash": "3b36e4f9de455fc12b7516749fc54de99a8e19988c33c204e24eb2bba1edbfb5",
+    "canonical_hash": "a3f199aa4eb14b1e92bd9678716a51c981dd51e0ba337e15435ebe28af33b9c4",
+    "metrics_hash": "c608922f0c1c5e8fb2b4bc526a5d48f5f29a1418caee1f78e540924c84b2cf01",
     "post_metrics": {
       "keys": [
         "$.decisions",
@@ -618,6 +618,16 @@ window.MOLT_VIEW = {
         "$.runs[0].ext.runtime.ledger.details[3].output",
         "$.runs[0].ext.runtime.ledger.details[3].reasoning",
         "$.runs[0].ext.runtime.ledger.details[3].total",
+        "$.runs[0].ext.runtime.ledger.details[4].cache_read",
+        "$.runs[0].ext.runtime.ledger.details[4].cache_write",
+        "$.runs[0].ext.runtime.ledger.details[4].cost_source",
+        "$.runs[0].ext.runtime.ledger.details[4].cost_usd",
+        "$.runs[0].ext.runtime.ledger.details[4].entry_id",
+        "$.runs[0].ext.runtime.ledger.details[4].input",
+        "$.runs[0].ext.runtime.ledger.details[4].kind",
+        "$.runs[0].ext.runtime.ledger.details[4].output",
+        "$.runs[0].ext.runtime.ledger.details[4].reasoning",
+        "$.runs[0].ext.runtime.ledger.details[4].total",
         "$.runs[0].ext.runtime.ledger.entries",
         "$.runs[0].ext.runtime.ledger.input",
         "$.runs[0].ext.runtime.ledger.matches",
@@ -713,6 +723,16 @@ window.MOLT_VIEW = {
         "$.runs[0].ext.runtime.usage.details[3].output",
         "$.runs[0].ext.runtime.usage.details[3].reasoning",
         "$.runs[0].ext.runtime.usage.details[3].total",
+        "$.runs[0].ext.runtime.usage.details[4].cache_read",
+        "$.runs[0].ext.runtime.usage.details[4].cache_write",
+        "$.runs[0].ext.runtime.usage.details[4].cost_source",
+        "$.runs[0].ext.runtime.usage.details[4].cost_usd",
+        "$.runs[0].ext.runtime.usage.details[4].entry_id",
+        "$.runs[0].ext.runtime.usage.details[4].input",
+        "$.runs[0].ext.runtime.usage.details[4].kind",
+        "$.runs[0].ext.runtime.usage.details[4].output",
+        "$.runs[0].ext.runtime.usage.details[4].reasoning",
+        "$.runs[0].ext.runtime.usage.details[4].total",
         "$.runs[0].ext.runtime.usage.entries",
         "$.runs[0].ext.runtime.usage.input",
         "$.runs[0].ext.runtime.usage.matches",
@@ -7054,7 +7074,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].paired[0].candidate_cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.decisions[0].paired[1].baseline_cost_usd",
@@ -7142,7 +7162,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].scores.candidate.cost_per_solved_usd",
-          0.0012161
+          0.001643074
         ],
         [
           "$.decisions[0].scores.candidate.solved",
@@ -7250,11 +7270,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].scores.search.cost_per_solved_usd",
-          0.0012161
+          0.001643074
         ],
         [
           "$.results[2].scores.search.cost_total_usd",
-          0.012161
+          0.01643074
         ],
         [
           "$.results[2].scores.search.invalid_ratio",
@@ -7274,11 +7294,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[3].scores.search.cost_per_solved_usd",
-          0.0012161
+          0.001643074
         ],
         [
           "$.results[3].scores.search.cost_total_usd",
-          0.012161
+          0.01643074
         ],
         [
           "$.results[3].scores.search.invalid_ratio",
@@ -7314,15 +7334,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.assistant_cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.runs[0].ext.runtime.ledger.assistant_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.cache_read",
-          12416.0
+          58240.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.cache_write",
@@ -7330,11 +7350,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cache_read",
-          2688.0
+          6272.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cache_write",
@@ -7342,15 +7362,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cost_usd",
-          0.000148128
+          0.000215832
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].input",
-          212.0
+          370.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].output",
-          57.0
+          56.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].reasoning",
@@ -7358,11 +7378,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].total",
-          2957.0
+          6698.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cache_read",
-          2944.0
+          6656.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cache_write",
@@ -7370,15 +7390,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cost_usd",
-          0.000198264
+          0.00022413599999999997
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].input",
-          374.0
+          298.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].output",
-          57.0
+          79.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].reasoning",
@@ -7386,11 +7406,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].total",
-          3375.0
+          7033.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].cache_read",
-          3328.0
+          6912.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].cache_write",
@@ -7398,15 +7418,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].cost_usd",
-          0.000193368
+          0.003842772
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].input",
-          218.0
+          12099.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].output",
-          90.0
+          143.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].reasoning",
@@ -7414,11 +7434,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].total",
-          3636.0
+          19154.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].cache_read",
-          3456.0
+          19072.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].cache_write",
@@ -7426,15 +7446,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].cost_usd",
-          0.000104736
+          0.000398232
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].input",
-          204.0
+          230.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].output",
-          19.0
+          179.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].reasoning",
@@ -7442,23 +7462,51 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].total",
-          3679.0
+          19481.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cache_read",
+          19328.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cache_write",
+          0.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cost_usd",
+          0.00023326800000000002
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].input",
+          179.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].output",
+          53.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].reasoning",
+          0.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].total",
+          19560.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.entries",
-          4.0
+          5.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.input",
-          1008.0
+          13176.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.output",
-          223.0
+          510.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.raw_total_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.reasoning",
@@ -7466,11 +7514,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.total_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.turns",
-          4.0
+          5.0
         ],
         [
           "$.runs[0].ext.runtime.returncode",
@@ -7478,23 +7526,23 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.trust.preflight_cost_usd",
-          0.00035438
+          0.00165878
         ],
         [
           "$.runs[0].ext.runtime.trust.preflight_tokens",
-          5756.0
+          13240.0
         ],
         [
           "$.runs[0].ext.runtime.usage.assistant_cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.runs[0].ext.runtime.usage.assistant_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.usage.cache_read",
-          12416.0
+          58240.0
         ],
         [
           "$.runs[0].ext.runtime.usage.cache_write",
@@ -7502,11 +7550,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cache_read",
-          2688.0
+          6272.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cache_write",
@@ -7514,15 +7562,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cost_usd",
-          0.000148128
+          0.000215832
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].input",
-          212.0
+          370.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].output",
-          57.0
+          56.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].reasoning",
@@ -7530,11 +7578,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].total",
-          2957.0
+          6698.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cache_read",
-          2944.0
+          6656.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cache_write",
@@ -7542,15 +7590,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cost_usd",
-          0.000198264
+          0.00022413599999999997
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].input",
-          374.0
+          298.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].output",
-          57.0
+          79.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].reasoning",
@@ -7558,11 +7606,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].total",
-          3375.0
+          7033.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].cache_read",
-          3328.0
+          6912.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].cache_write",
@@ -7570,15 +7618,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].cost_usd",
-          0.000193368
+          0.003842772
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].input",
-          218.0
+          12099.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].output",
-          90.0
+          143.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].reasoning",
@@ -7586,11 +7634,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].total",
-          3636.0
+          19154.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].cache_read",
-          3456.0
+          19072.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].cache_write",
@@ -7598,15 +7646,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].cost_usd",
-          0.000104736
+          0.000398232
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].input",
-          204.0
+          230.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].output",
-          19.0
+          179.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].reasoning",
@@ -7614,23 +7662,51 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].total",
-          3679.0
+          19481.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cache_read",
+          19328.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cache_write",
+          0.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cost_usd",
+          0.00023326800000000002
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].input",
+          179.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].output",
+          53.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].reasoning",
+          0.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].total",
+          19560.0
         ],
         [
           "$.runs[0].ext.runtime.usage.entries",
-          4.0
+          5.0
         ],
         [
           "$.runs[0].ext.runtime.usage.input",
-          1008.0
+          13176.0
         ],
         [
           "$.runs[0].ext.runtime.usage.output",
-          223.0
+          510.0
         ],
         [
           "$.runs[0].ext.runtime.usage.raw_total_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.usage.reasoning",
@@ -7638,31 +7714,31 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.total_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.usage.turns",
-          4.0
+          5.0
         ],
         [
           "$.runs[0].usage.cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.runs[0].usage.tokens_in",
-          1008.0
+          13176.0
         ],
         [
           "$.runs[0].usage.tokens_out",
-          223.0
+          510.0
         ],
         [
           "$.runs[0].usage.turns",
-          4.0
+          5.0
         ],
         [
           "$.runs[0].usage.wall_ms",
-          5311.0
+          9812.0
         ],
         [
           "$.runs[1].attempt",
@@ -20656,7 +20732,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details",
-          "array[4]"
+          "array[5]"
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0]",
@@ -20832,6 +20908,50 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].total",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4]",
+          "object"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cache_read",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cache_write",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cost_source",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].entry_id",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].input",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].kind",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].output",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].reasoning",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].total",
           "number"
         ],
         [
@@ -21056,7 +21176,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details",
-          "array[4]"
+          "array[5]"
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0]",
@@ -21232,6 +21352,50 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].total",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4]",
+          "object"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cache_read",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cache_write",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cost_source",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].entry_id",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].input",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].kind",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].output",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].reasoning",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].total",
           "number"
         ],
         [
@@ -50209,6 +50373,16 @@ window.MOLT_VIEW = {
         "$.runs[0].ext.runtime.ledger.details[3].output",
         "$.runs[0].ext.runtime.ledger.details[3].reasoning",
         "$.runs[0].ext.runtime.ledger.details[3].total",
+        "$.runs[0].ext.runtime.ledger.details[4].cache_read",
+        "$.runs[0].ext.runtime.ledger.details[4].cache_write",
+        "$.runs[0].ext.runtime.ledger.details[4].cost_source",
+        "$.runs[0].ext.runtime.ledger.details[4].cost_usd",
+        "$.runs[0].ext.runtime.ledger.details[4].entry_id",
+        "$.runs[0].ext.runtime.ledger.details[4].input",
+        "$.runs[0].ext.runtime.ledger.details[4].kind",
+        "$.runs[0].ext.runtime.ledger.details[4].output",
+        "$.runs[0].ext.runtime.ledger.details[4].reasoning",
+        "$.runs[0].ext.runtime.ledger.details[4].total",
         "$.runs[0].ext.runtime.ledger.entries",
         "$.runs[0].ext.runtime.ledger.input",
         "$.runs[0].ext.runtime.ledger.matches",
@@ -50304,6 +50478,16 @@ window.MOLT_VIEW = {
         "$.runs[0].ext.runtime.usage.details[3].output",
         "$.runs[0].ext.runtime.usage.details[3].reasoning",
         "$.runs[0].ext.runtime.usage.details[3].total",
+        "$.runs[0].ext.runtime.usage.details[4].cache_read",
+        "$.runs[0].ext.runtime.usage.details[4].cache_write",
+        "$.runs[0].ext.runtime.usage.details[4].cost_source",
+        "$.runs[0].ext.runtime.usage.details[4].cost_usd",
+        "$.runs[0].ext.runtime.usage.details[4].entry_id",
+        "$.runs[0].ext.runtime.usage.details[4].input",
+        "$.runs[0].ext.runtime.usage.details[4].kind",
+        "$.runs[0].ext.runtime.usage.details[4].output",
+        "$.runs[0].ext.runtime.usage.details[4].reasoning",
+        "$.runs[0].ext.runtime.usage.details[4].total",
         "$.runs[0].ext.runtime.usage.entries",
         "$.runs[0].ext.runtime.usage.input",
         "$.runs[0].ext.runtime.usage.matches",
@@ -56645,7 +56829,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].paired[0].candidate_cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.decisions[0].paired[1].baseline_cost_usd",
@@ -56733,7 +56917,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].scores.candidate.cost_per_solved_usd",
-          0.0012161
+          0.001643074
         ],
         [
           "$.decisions[0].scores.candidate.solved",
@@ -56841,11 +57025,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].scores.search.cost_per_solved_usd",
-          0.0012161
+          0.001643074
         ],
         [
           "$.results[2].scores.search.cost_total_usd",
-          0.012161
+          0.01643074
         ],
         [
           "$.results[2].scores.search.invalid_ratio",
@@ -56865,11 +57049,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[3].scores.search.cost_per_solved_usd",
-          0.0012161
+          0.001643074
         ],
         [
           "$.results[3].scores.search.cost_total_usd",
-          0.012161
+          0.01643074
         ],
         [
           "$.results[3].scores.search.invalid_ratio",
@@ -56905,15 +57089,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.assistant_cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.runs[0].ext.runtime.ledger.assistant_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.cache_read",
-          12416.0
+          58240.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.cache_write",
@@ -56921,11 +57105,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cache_read",
-          2688.0
+          6272.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cache_write",
@@ -56933,15 +57117,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cost_usd",
-          0.000148128
+          0.000215832
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].input",
-          212.0
+          370.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].output",
-          57.0
+          56.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].reasoning",
@@ -56949,11 +57133,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].total",
-          2957.0
+          6698.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cache_read",
-          2944.0
+          6656.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cache_write",
@@ -56961,15 +57145,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cost_usd",
-          0.000198264
+          0.00022413599999999997
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].input",
-          374.0
+          298.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].output",
-          57.0
+          79.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].reasoning",
@@ -56977,11 +57161,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].total",
-          3375.0
+          7033.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].cache_read",
-          3328.0
+          6912.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].cache_write",
@@ -56989,15 +57173,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].cost_usd",
-          0.000193368
+          0.003842772
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].input",
-          218.0
+          12099.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].output",
-          90.0
+          143.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].reasoning",
@@ -57005,11 +57189,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].total",
-          3636.0
+          19154.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].cache_read",
-          3456.0
+          19072.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].cache_write",
@@ -57017,15 +57201,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].cost_usd",
-          0.000104736
+          0.000398232
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].input",
-          204.0
+          230.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].output",
-          19.0
+          179.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].reasoning",
@@ -57033,23 +57217,51 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].total",
-          3679.0
+          19481.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cache_read",
+          19328.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cache_write",
+          0.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cost_usd",
+          0.00023326800000000002
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].input",
+          179.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].output",
+          53.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].reasoning",
+          0.0
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].total",
+          19560.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.entries",
-          4.0
+          5.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.input",
-          1008.0
+          13176.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.output",
-          223.0
+          510.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.raw_total_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.reasoning",
@@ -57057,11 +57269,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.total_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.turns",
-          4.0
+          5.0
         ],
         [
           "$.runs[0].ext.runtime.returncode",
@@ -57069,23 +57281,23 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.trust.preflight_cost_usd",
-          0.00035438
+          0.00165878
         ],
         [
           "$.runs[0].ext.runtime.trust.preflight_tokens",
-          5756.0
+          13240.0
         ],
         [
           "$.runs[0].ext.runtime.usage.assistant_cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.runs[0].ext.runtime.usage.assistant_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.usage.cache_read",
-          12416.0
+          58240.0
         ],
         [
           "$.runs[0].ext.runtime.usage.cache_write",
@@ -57093,11 +57305,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cache_read",
-          2688.0
+          6272.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cache_write",
@@ -57105,15 +57317,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cost_usd",
-          0.000148128
+          0.000215832
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].input",
-          212.0
+          370.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].output",
-          57.0
+          56.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].reasoning",
@@ -57121,11 +57333,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].total",
-          2957.0
+          6698.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cache_read",
-          2944.0
+          6656.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cache_write",
@@ -57133,15 +57345,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cost_usd",
-          0.000198264
+          0.00022413599999999997
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].input",
-          374.0
+          298.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].output",
-          57.0
+          79.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].reasoning",
@@ -57149,11 +57361,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].total",
-          3375.0
+          7033.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].cache_read",
-          3328.0
+          6912.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].cache_write",
@@ -57161,15 +57373,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].cost_usd",
-          0.000193368
+          0.003842772
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].input",
-          218.0
+          12099.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].output",
-          90.0
+          143.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].reasoning",
@@ -57177,11 +57389,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].total",
-          3636.0
+          19154.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].cache_read",
-          3456.0
+          19072.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].cache_write",
@@ -57189,15 +57401,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].cost_usd",
-          0.000104736
+          0.000398232
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].input",
-          204.0
+          230.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].output",
-          19.0
+          179.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].reasoning",
@@ -57205,23 +57417,51 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].total",
-          3679.0
+          19481.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cache_read",
+          19328.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cache_write",
+          0.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cost_usd",
+          0.00023326800000000002
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].input",
+          179.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].output",
+          53.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].reasoning",
+          0.0
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].total",
+          19560.0
         ],
         [
           "$.runs[0].ext.runtime.usage.entries",
-          4.0
+          5.0
         ],
         [
           "$.runs[0].ext.runtime.usage.input",
-          1008.0
+          13176.0
         ],
         [
           "$.runs[0].ext.runtime.usage.output",
-          223.0
+          510.0
         ],
         [
           "$.runs[0].ext.runtime.usage.raw_total_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.usage.reasoning",
@@ -57229,31 +57469,31 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.total_tokens",
-          13647.0
+          71926.0
         ],
         [
           "$.runs[0].ext.runtime.usage.turns",
-          4.0
+          5.0
         ],
         [
           "$.runs[0].usage.cost_usd",
-          0.0006445
+          0.00491424
         ],
         [
           "$.runs[0].usage.tokens_in",
-          1008.0
+          13176.0
         ],
         [
           "$.runs[0].usage.tokens_out",
-          223.0
+          510.0
         ],
         [
           "$.runs[0].usage.turns",
-          4.0
+          5.0
         ],
         [
           "$.runs[0].usage.wall_ms",
-          5311.0
+          9812.0
         ],
         [
           "$.runs[1].attempt",
@@ -70247,7 +70487,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details",
-          "array[4]"
+          "array[5]"
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0]",
@@ -70423,6 +70663,50 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].total",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4]",
+          "object"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cache_read",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cache_write",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cost_source",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].entry_id",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].input",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].kind",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].output",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].reasoning",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.ledger.details[4].total",
           "number"
         ],
         [
@@ -70647,7 +70931,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details",
-          "array[4]"
+          "array[5]"
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0]",
@@ -70823,6 +71107,50 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].total",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4]",
+          "object"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cache_read",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cache_write",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cost_source",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].entry_id",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].input",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].kind",
+          "string"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].output",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].reasoning",
+          "number"
+        ],
+        [
+          "$.runs[0].ext.runtime.usage.details[4].total",
           "number"
         ],
         [
@@ -99560,7 +99888,7 @@ window.MOLT_VIEW = {
       "key_value_secret",
       "home_path"
     ],
-    "source_hash": "b060e05eff12b0e2622b08f331e9880c9b86c05839acd5fa933a2d306843f569"
+    "source_hash": "a3f199aa4eb14b1e92bd9678716a51c981dd51e0ba337e15435ebe28af33b9c4"
   },
   "report_results": {
     "report_runs_total": {
@@ -99579,7 +99907,7 @@ window.MOLT_VIEW = {
     },
     "results": [
       {
-        "generated_at": "2026-11-10T16:36:03Z",
+        "generated_at": "2026-11-10T16:52:33Z",
         "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
         "report_runs": {
           "by_status": {
@@ -99616,7 +99944,7 @@ window.MOLT_VIEW = {
         }
       },
       {
-        "generated_at": "2026-11-10T16:36:03Z",
+        "generated_at": "2026-11-10T16:52:33Z",
         "genome_id": "sha256:daedb2b1e132b199cacb3cf78b86ac9cd6af3c75e1a9b9938a2f615b310a30e5",
         "report_runs": {
           "by_status": {},
@@ -99641,8 +99969,8 @@ window.MOLT_VIEW = {
             "total": 5
           },
           "search": {
-            "cost_per_solved_usd": 0.0012161,
-            "cost_total_usd": 0.012161,
+            "cost_per_solved_usd": 0.001643074,
+            "cost_total_usd": 0.01643074,
             "invalid_ratio": 0.0,
             "pass_at_1_first_attempt": 1.0,
             "solved": 10,
@@ -99657,9 +99985,9 @@ window.MOLT_VIEW = {
     "runs": [
       {
         "attempt": 1,
-        "cost_usd": 0.0006445,
+        "cost_usd": 0.00491424,
         "demo_group": "closure",
-        "finished_at": "2026-11-10T16:36:03Z",
+        "finished_at": "2026-11-10T16:52:33Z",
         "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
         "provenance": {
           "kind": "live",
@@ -99667,24 +99995,24 @@ window.MOLT_VIEW = {
           "model": "deepseek/deepseek-flash",
           "runtime_id": "pi-1.5.0"
         },
-        "run_id": "0f659604-smoke-add-a1-96eae9",
+        "run_id": "0f659604-smoke-add-a1-5d1f3e",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T16:35:57Z",
+        "started_at": "2026-11-10T16:52:23Z",
         "status": "passed",
         "task_id": "smoke-add",
         "tokens": {
-          "in": 1008,
-          "out": 223
+          "in": 13176,
+          "out": 510
         },
-        "turns": 4,
+        "turns": 5,
         "verifier": {
           "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
           "matches": true,
           "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
           "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
         },
-        "wall_ms": 5311
+        "wall_ms": 9812
       },
       {
         "attempt": 1,
@@ -100391,7 +100719,7 @@ window.MOLT_VIEW = {
   "search_results": {
     "results": [
       {
-        "generated_at": "2026-11-10T16:36:03Z",
+        "generated_at": "2026-11-10T16:52:33Z",
         "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
         "result_id": "result-demo-baseline-search",
         "scope": "search",
@@ -100407,14 +100735,14 @@ window.MOLT_VIEW = {
         }
       },
       {
-        "generated_at": "2026-11-10T16:36:03Z",
+        "generated_at": "2026-11-10T16:52:33Z",
         "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
         "result_id": "result-demo-candidate-search",
         "scope": "search",
         "scores": {
           "search": {
-            "cost_per_solved_usd": 0.0012161,
-            "cost_total_usd": 0.012161,
+            "cost_per_solved_usd": 0.001643074,
+            "cost_total_usd": 0.01643074,
             "invalid_ratio": 0.0,
             "pass_at_1_first_attempt": 1.0,
             "solved": 10,
@@ -100428,7 +100756,7 @@ window.MOLT_VIEW = {
   "snapshots": {
     "snapshots": [
       {
-        "created_at": "2026-11-10T16:36:03Z",
+        "created_at": "2026-11-10T16:52:33Z",
         "file_count": 42,
         "generation": 1,
         "roots": [

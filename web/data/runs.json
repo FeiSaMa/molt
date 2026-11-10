@@ -2,9 +2,9 @@
   "runs": [
     {
       "attempt": 1,
-      "cost_usd": 0.0006445,
+      "cost_usd": 0.00491424,
       "demo_group": "closure",
-      "finished_at": "2026-11-10T16:36:03Z",
+      "finished_at": "2026-11-10T16:52:33Z",
       "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
       "provenance": {
         "kind": "live",
@@ -12,24 +12,24 @@
         "model": "deepseek/deepseek-flash",
         "runtime_id": "pi-1.5.0"
       },
-      "run_id": "0f659604-smoke-add-a1-96eae9",
+      "run_id": "0f659604-smoke-add-a1-5d1f3e",
       "scope": "search",
       "solved": true,
-      "started_at": "2026-11-10T16:35:57Z",
+      "started_at": "2026-11-10T16:52:23Z",
       "status": "passed",
       "task_id": "smoke-add",
       "tokens": {
-        "in": 1008,
-        "out": 223
+        "in": 13176,
+        "out": 510
       },
-      "turns": 4,
+      "turns": 5,
       "verifier": {
         "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
         "matches": true,
         "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
         "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
       },
-      "wall_ms": 5311
+      "wall_ms": 9812
     },
     {
       "attempt": 1,

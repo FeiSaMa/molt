@@ -1,7 +1,7 @@
 {
   "archives": [
     {
-      "adopted_at": "2026-11-10T16:36:03Z",
+      "adopted_at": "2026-11-10T16:52:33Z",
       "archive_id": "arc-0001-6b492ef0",
       "ext": {},
       "generation": 1,
@@ -16,7 +16,7 @@
       "snapshot_id": "snap-98576b1069d0ae90"
     },
     {
-      "adopted_at": "2026-11-10T16:36:03Z",
+      "adopted_at": "2026-11-10T16:52:33Z",
       "archive_id": "arc-0002-revert-6b492ef0",
       "ext": {
         "reverted_from": "arc-0001-6b492ef0"
@@ -44,7 +44,7 @@
     },
     {
       "adopted": true,
-      "adopted_at": "2026-11-10T16:36:03Z",
+      "adopted_at": "2026-11-10T16:52:33Z",
       "archive_id": "arc-0002-revert-6b492ef0",
       "generation": 2,
       "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
