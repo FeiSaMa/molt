@@ -370,6 +370,8 @@ def build_proposal(
                 "source": chosen.source,
                 "diagnosis": chosen.diagnosis,
                 "fallback_reason": fallback_reason,
+                "prompt_sha256": chosen.prompt_sha256,
+                "response_sha256": chosen.response_sha256,
             }
         )[:16]
     )
