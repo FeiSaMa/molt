@@ -1,0 +1,34 @@
+# CODEOWNERS — 只保护「代码与题集」，不锁候选目录。
+# 语法：pattern owners...；**最后一条匹配的规则生效**（后面的覆盖前面的）。
+# 所以先写宽泛规则，再写契约等更具体的覆盖规则。
+# owner 语义见 AGENTS.md §五；契约域 PR 另需 2 人 approve（见 CONTRIBUTING.md §四）。
+
+# --- 宽泛归属 -------------------------------------------------------------
+# 非契约文档默认归集成域；契约文档在下面被更具体的规则覆盖。
+/docs/                   @dong856
+/README.md               @dong856
+
+# --- 契约域（单条规则即可，不要被上面的 /docs/ 覆盖） ---------------------
+/schemas/                @FeiSaMa @By-Diamond @dong856
+/molt/core/              @FeiSaMa
+/docs/protocol.md        @FeiSaMa
+/docs/decisions/         @FeiSaMa
+
+# --- 场景域：shell / 题集 / holdout ---------------------------------------
+# 含 harness.py / verifier.py / task_provider.py / switches.schema.json（冻结面）
+# 以及 bench/**（冻结面）。
+#
+# 注意：/shells/*/genomes/、/shells/*/prompts/、/shells/*/tools/ 故意不单独列规则。
+# 这些是候选目录，新增文件只产生新 genome_id，不应被 owner 审批锁死；
+# 它们仍由下面的 /shells/ 兜底（1 位 owner 评审即可）。
+/shells/                 @By-Diamond
+/bench/                  @By-Diamond
+
+# --- 集成域：adapter / 导出数据面 / CI ------------------------------------
+/molt/adapters/          @dong856
+/web/                    @dong856
+/.github/                @dong856
+
+# --- 根级协作文件 ---------------------------------------------------------
+/AGENTS.md               @FeiSaMa @dong856
+/CONTRIBUTING.md         @FeiSaMa @dong856
