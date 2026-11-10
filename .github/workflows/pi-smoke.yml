@@ -1,0 +1,89 @@
+name: pi-smoke
+
+# 真实 Pi 1.5.0 冒烟：手动触发，只跑 `pytest -m pi`（1 题，预算 ≤ 1 USD）。
+# 不属于必需检查，不进入 PR 门禁；跑在装了 pi + bwrap 的自托管 runner 上。
+# 凭据只从仓库 secrets 注入，工作流文件里不出现任何 key。
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_cost_usd:
+        description: "本次冒烟的费用上限（美元，0 < x <= 1.0）"
+        required: true
+        default: "1.0"
+      reason:
+        description: "为什么现在跑 live（留档用）"
+        required: false
+        default: "手动冒烟"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pi-smoke
+  cancel-in-progress: false
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUNBUFFERED: "1"
+  MOLT_RUN_PI_LIVE: "1"
+
+jobs:
+  pi-smoke:
+    name: pi-smoke
+    # 需要预装：pi CLI、bwrap、uv；且能出网到模型 provider。
+    runs-on: [self-hosted, pi]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --extra dev --locked
+
+      - name: 费用护栏（cap 与 scenario 预算取小）
+        env:
+          MAX_COST_USD: ${{ inputs.max_cost_usd }}
+          REASON: ${{ inputs.reason }}
+        run: |
+          uv run python - <<'PY'
+          import json
+          import os
+          import pathlib
+          import sys
+
+          raw = os.environ.get("MAX_COST_USD", "1.0").strip()
+          try:
+              cap = float(raw)
+          except ValueError:
+              sys.exit(f"max_cost_usd 不是数字: {raw!r}")
+          if not (0 < cap <= 1.0):
+              sys.exit("max_cost_usd 必须落在 (0, 1.0]：这是单次冒烟，不是压测")
+
+          scenario = json.loads(
+              pathlib.Path("scenarios/demo/scenario.json").read_text(encoding="utf-8")
+          )
+          budget = float(scenario["policy"]["budget"]["execution_budget_usd"])
+          print(f"reason = {os.environ.get('REASON', '')}")
+          print(f"input cap = {cap} USD, scenario budget = {budget} USD")
+          if budget > cap:
+              sys.exit("scenario 预算高于本次 cap；请先调低 scenario.policy.budget 或提高 cap")
+          print(f"effective cap = {min(cap, budget)} USD")
+          PY
+
+      - name: Pi live 冒烟（单题）
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
+            echo "::error::缺少 DEEPSEEK_API_KEY secret"
+            exit 1
+          fi
+          uv run pytest -q -m pi
+
+      - name: 清理本地凭据残留
+        if: always()
+        run: |
+          rm -rf .pi .env || true
+          git status --porcelain

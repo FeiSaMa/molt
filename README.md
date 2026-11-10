@@ -35,6 +35,8 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
 
 ## 契约
 
+协作规范见 [AGENTS.md](AGENTS.md)（契约 / 冻结面 / 禁止清单）与 [CONTRIBUTING.md](CONTRIBUTING.md)（分支 / 评审 / schema 流程）。
+
 - 协议字段表：[`docs/protocol.md`](docs/protocol.md)（由 `molt schema docs` 从 schema 生成，禁止手改）。
 - 决策：[ADR-0002 协议](docs/decisions/0002-protocol-v1.md)、
   [ADR-0003 评分](docs/decisions/0003-scoring.md)、
