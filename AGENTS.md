@@ -16,9 +16,10 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
   且**单题执行成本不升**；搜索开销单列报告，不与执行成本互相抵消。
   原文见 [ADR-0003 §claim 措辞](docs/decisions/0003-scoring.md)。
 - 真实 Pi demo（demo-6，2026-11-11）：起点 `high/full`（v0-pi）**10/10、$0.035560**；
-  proposal 派生候选 `low/full`（v0）**10/10、$0.009978**，执行成本 **−72%**（gate 实测
-  9 题 replay + 1 条 live 为 −70.0%），gate `adopt`。这是**选定的高→低起点**，
-  不是搜索空间最优性声称。
+  proposal 派生候选 `low/full`（v0）**10/10、$0.009978**。口径分开：
+  **扫描级**成本 **−72%**（10 题扫描 vs 10 题扫描）；
+  **gate 级**成本 **−70.0%**（cps $0.003556 → $0.001068，9 条 replay + 1 条 live）。
+  gate `adopt`。这是**选定的高→低起点**，不是搜索空间最优性声称。
 - 负结果（同批 6 组）：**没有候选比 low/full 更便宜**（最接近的 `off/minimal` 仍 +19.2%）；
   不得把 demo 表述成「baseline v0 被改进」或「搜索找到了更优配置」。
 - fixture 基线是 `3/10`，只用于 `molt calibrate` 校准，不得当作真实能力或对外 claim。
@@ -39,7 +40,8 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 - `demo-6`：10 搜索 + 5 holdout，`bench_hash` / genome / task 全量对齐。
 - 第二 shell `svc-config` + deterministic runtime（零成本、manifest 驱动装载）。
 - `molt demo`：1 live + 1 replay 闭环、10 题扫描回放、180s 硬上限（ADR-0008）；
-  选定 `high/full → low/full` 的真实高→低起点，gate `adopt`（10/10，成本 −72%）。
+  选定 `high/full → low/full` 的真实高→低起点，gate `adopt`（10/10；
+  扫描级成本 −72%，gate 级成本 −70.0%）。
 - `molt doctor --repo-policy`：只读检查协作文件、冻结面与契约域。
 
 ## 二、三层与七端口
@@ -92,7 +94,9 @@ uv sync --extra dev                                  # 装 dev 依赖（pytest /
 uv run ruff check .                                  # lint（line-length 100）
 uv run pytest -q                                     # 311 passed / 2 skipped；pi 标记默认 skip
 uv run python -m molt schema validate --all          # 36 条记录通过
-uv run python -m molt scenario validate              # demo 10/5 + svc-config 一致性
+uv run python -m molt scenario validate --scenario scenarios/demo/scenario.json  # validate 的 --scenario 是路径
+# 注意：scenario validate 的 --scenario 是 scenario.json 路径；
+# search/propose/audit/export/demo 的 --scenario 是 id（或 shell_id 别名）。
 uv run python -m molt calibrate --scenario demo --min-pass 3   # fixture 基线 solved=3
 uv run python -m molt search --runtime fixture       # 搜索集（fixture 确定性、零成本）
 uv run python -m molt search --runtime pi            # 真实 Pi：需本地 pi + bwrap，受预算约束
@@ -176,7 +180,9 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 
 1. 先在 `docs/decisions/` 落 ADR（新增 `000N-*.md`，格式对齐现有 8 篇）。
 2. 改 `schemas/v1/**`（major 变更才新开 `schemas/v2/`），再跑 `molt schema docs` 生成
-   `docs/protocol.md`，然后 `molt schema validate --all` + `molt scenario validate`。
+   `docs/protocol.md`，然后 `molt schema validate --all` +
+   `molt scenario validate --scenario scenarios/demo/scenario.json`。
+   （`scenario validate` 的 `--scenario` 是路径；其它命令的 `--scenario` 是 id。）
 3. PR 需要 **2 人 approve**，其中至少 1 人来自 @FeiSaMa；`main` 由分支保护挡住直推与 force push。
    当前仓库有**两个 active ruleset**（`main-protection` 与旧的 `protect-main`），求并集、严格项为准；
    旧 ruleset 是否删除由用户决定。
@@ -188,7 +194,8 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 一次变更合并前必须满足：
 
 - [ ] 测试：`uv run pytest -q` 全绿（新增行为有对应用例）。
-- [ ] Schema：`molt schema validate --all` 与 `molt scenario validate` 通过；
+- [ ] Schema：`molt schema validate --all` 与
+      `molt scenario validate --scenario scenarios/demo/scenario.json` 通过；
       `docs/protocol.md` 无手改漂移。
 - [ ] 零写入：命令跑完仓库树不变（`tests/test_zero_write.py` + `git status --porcelain` 为空）。
 - [ ] 证据可复算：涉及 run/result 的变更能在 `molt audit` 下重算出同样数字。

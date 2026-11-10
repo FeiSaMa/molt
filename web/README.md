@@ -58,16 +58,32 @@ fail closed：`kind="live"` 同时带 `replay_of_run_id`、`kind="live"` 无 `mo
 |---|---|---|
 | `closure` | 1 条 replay 基线 + 1 条同题候选 | baseline=`replay`（带 `replay_of_run_id`）；live 模式候选=`live` |
 | `scan10` | 10 题扫描的回放（每题的基线 run 各复制一次） | `replay`，每条带 `replay_of_run_id` |
-| `candidate-scan` | 候选在其余 9 题上的 fixture 执行（只为 10 题分母） | `fixture`，不是 live |
+| `candidate-scan` | 候选在其余 9 题上的执行 | `--candidate-state` 下为已录扫描的 `replay`；否则 `fixture`，不是 live |
 | `null` | 普通 `search`/`export` 证据，无 demo 分组 | 按 genome runtime 推断 |
 
 - 「1 live + 1 replay」只指 `closure`；`scan10` 是**扫描回放**，不是 demo 的第二次运行。
 - live 模式下全文件恰好 1 条 `kind=live`；`--mode replay` 下恰 0 条，closure 候选标 `fixture`。
 - 页面讲法：closure 讲「基线回放 → 提案 → 真实候选 → 门禁」，scan10 讲「此前 10 题扫描的回放」。
-- 当前提交的样例来自真实 Pi 扫描：**起点 high/full（v0-pi）$0.035560 → 候选
-  low/full（v0）$0.009978**，10/10 不变、成本 −72%，`gate.json` 为 `adopt`。
-  页面必须标明 demo 的**起点是 high/full**，不得说成「baseline v0 被改进」；
-  6 组扫描中没有比 low/full 更便宜的候选（负结果见 ADR-0008）。
+- 当前提交的样例来自真实 Pi 扫描（两个口径不要混用）：
+  - **扫描级**：起点 high/full（v0-pi）10 题扫描 `$0.035560` → 候选 low/full（v0）
+    10 题扫描 `$0.009978`，10/10 不变，成本 **−72%**；
+  - **gate 级**：门禁配对（9 条候选 replay + 1 条 live closure）cps
+    `$0.003556 → $0.001068`，成本 **−70.0%**，`gate.json` 为 `adopt`。
+  - 页面必须标明 demo 的**起点是 high/full**，不得说成「baseline v0 被改进」；
+    6 组扫描中没有比 low/full 更便宜的候选（负结果见 ADR-0008）。
+
+### 数据使用警告
+
+1. **不要对 `runs.json.cost_usd` 直接求和**：`scan10` 与 `closure` 各含一条同源的
+   `smoke-add` 基线 run（一条是扫描回放，一条是 closure 回放），求和会重复计算。
+   成本与门禁结论以 `gate.json`、`search_results.json`、`report_results.json` 为准。
+2. **不要用 run 的 `genome_id` 直接归因候选**：`candidate-scan` 的 replay run 保留
+   录制时的 genome_id（如 v0/fixture），closure 的 live run 用同 switches 的 pi 变体；
+   `gate.json` 的 `candidate_genome_id` 与 `result` 才是门禁口径。页面归因读
+   `gate.json` / `search_results` / `report_results`，`runs[].genome_id` 只作明细展示。
+3. **本仓库只交付数据面**（`web/data`，15 文件，无页面代码）。页面由队友 C 消费该数据面；
+   必须按 `demo_group` + `provenance` 分开标注：`closure` 的 **1 live + 1 replay**，
+   以及 `scan10` 的 **10 条 replay**。不得把 scan10 说成第二次 live 运行。
 
 ## 重新生成
 

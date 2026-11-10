@@ -85,9 +85,7 @@ def test_demo_replay_end_to_end(tmp_path: Path) -> None:
     assert baseline[0]["provenance"]["live"] is False
     # replay 模式不得出现 live，也不得把 fixture 标成 live。
     assert all(row["provenance"]["kind"] != "live" for row in runs)
-    assert all(
-        row["provenance"]["live"] is (row["provenance"]["kind"] == "live") for row in runs
-    )
+    assert all(row["provenance"]["live"] is (row["provenance"]["kind"] == "live") for row in runs)
 
     audit = _load(out / "audit.json")
     assert audit["ok"] is True
@@ -249,9 +247,10 @@ def test_demo_infers_baseline_genome_from_state(tmp_path: Path) -> None:
     baseline_meta = summary["genomes"]["baseline"]
     assert baseline_meta["source"] == "baseline-state"
     assert baseline_meta["switches"] == {"thinking": "high", "context": "full", "tools": "bash"}
-    assert baseline_meta["genome_id"] == _load(
-        ROOT / "shells/code-repair/genomes/v0-pi.json"
-    )["genome_id"]
+    assert (
+        baseline_meta["genome_id"]
+        == _load(ROOT / "shells/code-repair/genomes/v0-pi.json")["genome_id"]
+    )
     assert summary["genomes"]["proposal_matches_candidate"] is True
     assert summary["genomes"]["candidate"]["switches"]["thinking"] == "low"
     assert summary["genomes"]["candidate"]["switches"]["context"] == "full"

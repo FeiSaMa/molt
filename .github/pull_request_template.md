@@ -31,7 +31,7 @@
 PYTHONDONTWRITEBYTECODE=1 uv run pytest -q
 uv run ruff check .
 PYTHONDONTWRITEBYTECODE=1 uv run python -m molt schema validate --all
-PYTHONDONTWRITEBYTECODE=1 uv run python -m molt scenario validate
+PYTHONDONTWRITEBYTECODE=1 uv run python -m molt scenario validate --scenario scenarios/demo/scenario.json
 ```
 
 ```
@@ -52,7 +52,8 @@ PYTHONDONTWRITEBYTECODE=1 uv run python -m molt audit --scenario demo
 ## Checklist
 
 - [ ] 测试：新增行为有用例，`pytest -q` 全绿
-- [ ] Schema：`schema validate --all` + `scenario validate` 通过；`docs/protocol.md` 未手改
+- [ ] Schema：`schema validate --all` +
+      `scenario validate --scenario scenarios/demo/scenario.json` 通过；`docs/protocol.md` 未手改
 - [ ] 零写入：`git status --porcelain` 为空；`tests/test_zero_write.py` 通过
 - [ ] Provenance：`run.ext.provenance.kind` 与实际一致（fixture 未标 live，replay 带 `replay_of_run_id`）
 - [ ] 脱敏：diff 中无 key/token/个人信息；`redaction` 报告覆盖字段未泄漏

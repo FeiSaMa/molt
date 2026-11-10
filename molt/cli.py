@@ -198,9 +198,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_demo.add_argument("--state", type=Path, default=Path("state/demo"))
     p_demo.add_argument("--out", type=Path, default=Path("web/data"))
-    p_demo.add_argument(
-        "--model", default="deepseek/deepseek-flash", help="live 候选的 Pi 模型"
-    )
+    p_demo.add_argument("--model", default="deepseek/deepseek-flash", help="live 候选的 Pi 模型")
     p_demo.add_argument("--pi-executable", default="pi")
 
     return parser
@@ -1231,9 +1229,7 @@ def cmd_demo(args: argparse.Namespace) -> int:
     export = summary["export"]
     print(f"export out={export['out']} files={export['files']} revision={export['revision']}")
     counts = summary["provenance_counts"]
-    print(
-        f"provenance live={counts['live']} replay={counts['replay']} fixture={counts['fixture']}"
-    )
+    print(f"provenance live={counts['live']} replay={counts['replay']} fixture={counts['fixture']}")
     print(f"summary {Path(summary['state']) / 'demo-summary.json'}")
     return 0
 

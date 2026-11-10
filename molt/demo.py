@@ -583,9 +583,7 @@ def record_baseline_scan(
     store = StateStore(baseline_root)
     store.ensure()
     store.write_genome(genome)
-    engine = build_engine(
-        repo_root, scenario, store, baseline_root / "work", runtime="fixture"
-    )
+    engine = build_engine(repo_root, scenario, store, baseline_root / "work", runtime="fixture")
     tasks = [engine.task_provider.load_task(task_id) for task_id in scenario.task_sets["search"]]
     engine.run_suite(genome, tasks, scope="search")
     EventLog(store.root).materialize("search")
@@ -652,9 +650,7 @@ def run_demo(
             recorded = True
             source_runs = _baseline_runs(StateStore(baseline_root), scenario)
     inferred = _state_genome(baseline_store, scenario, repo_root)
-    baseline_genome = inferred or load_genome(
-        repo_root, default_genome_path(repo_root, scenario)
-    )
+    baseline_genome = inferred or load_genome(repo_root, default_genome_path(repo_root, scenario))
     baseline_genome_source = "baseline-state" if inferred is not None else "default-genome"
     store.write_genome(baseline_genome)
     _deadline_check(deadline, "baseline", started)
@@ -906,7 +902,11 @@ def run_demo(
 
     # 7) adopt / revert：先归档基线，再按 gate 结论采纳候选或回滚到基线代。
     manifest = ShellManifest.from_dict(
-        json.loads((Path(repo_root) / "shells" / scenario.shell_id / "manifest.json").read_text(encoding="utf-8"))
+        json.loads(
+            (Path(repo_root) / "shells" / scenario.shell_id / "manifest.json").read_text(
+                encoding="utf-8"
+            )
+        )
     )
     roots = {name: Path(repo_root) / name for name in manifest.artifact_roots}
     baseline_archive = store.adopt(

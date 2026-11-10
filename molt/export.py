@@ -235,9 +235,7 @@ def _runs_payload(runs: Iterable[Run], genomes: dict[str, Genome]) -> dict[str, 
                     "tests_hash_after": verification["tests_hash_after"],
                 },
                 "provenance": _provenance(run, genomes),
-                "demo_group": run.ext.get("demo_group")
-                if isinstance(run.ext, dict)
-                else None,
+                "demo_group": run.ext.get("demo_group") if isinstance(run.ext, dict) else None,
                 "started_at": run.started_at,
                 "finished_at": run.finished_at,
             }

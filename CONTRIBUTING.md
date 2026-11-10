@@ -64,7 +64,7 @@ feat(shell): 新增 svc-config shell 的三端口实现
 - 涉及仓库写入的测试，用文件系统树快照验收，**不要**用 `git status` 代替
   （pytest 自身会写 `__pycache__`）。
 - 新增题集/题面：同步更新 `scenario.bench_hash` 与 genome 的 `scenario_version`，
-  否则 `molt scenario validate` 会失败。
+  否则 `molt scenario validate --scenario scenarios/demo/scenario.json` 会失败。
 
 ## 六、Schema / 协议变更步骤
 
@@ -78,7 +78,7 @@ feat(shell): 新增 svc-config shell 的三端口实现
 4. **双校验**：
    ```bash
    PYTHONDONTWRITEBYTECODE=1 uv run python -m molt schema validate --all
-   PYTHONDONTWRITEBYTECODE=1 uv run python -m molt scenario validate
+   PYTHONDONTWRITEBYTECODE=1 uv run python -m molt scenario validate --scenario scenarios/demo/scenario.json
    ```
 5. **更新 golden**：`tests/fixtures/records/` 下对应记录样例；`tests/test_schema_compat.py`
    同时验证「删字段两侧都拒、`ext` 新增是 minor 兼容」。
@@ -100,7 +100,8 @@ feat(shell): 新增 svc-config shell 的三端口实现
 - [ ] 标注是否触碰 **verifier / scenario_version 构件**（冻结面，见 AGENTS §六）。
 - [ ] **零写入**：`git status --porcelain` 为空；`tests/test_zero_write.py` 通过。
 - [ ] **provenance**：`run.ext.provenance.kind` 与实际一致，fixture 未标 live。
-- [ ] 粘贴验证命令与输出（`ruff`、`pytest`、`schema validate`、`scenario validate`）。
+- [ ] 粘贴验证命令与输出（`ruff`、`pytest`、`schema validate`、
+      `scenario validate --scenario scenarios/demo/scenario.json`）。
 - [ ] 回滚方式：revert 提交 / `molt revert --to <archive_id>` / 重生成导出。
 
 ## 九、CI 期望
