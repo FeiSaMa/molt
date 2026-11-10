@@ -2,19 +2,259 @@
   "runs": [
     {
       "attempt": 1,
-      "cost_usd": 1.84,
-      "finished_at": "2026-11-10T15:41:53Z",
-      "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+      "cost_usd": 0.368,
+      "finished_at": "2026-11-10T15:56:08Z",
+      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
       "provenance": {
         "kind": "fixture",
         "live": false,
         "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
         "runtime_id": "fixture"
       },
-      "run_id": "6574e7ca-smoke-add-a1-1ff5e8",
+      "run_id": "4cdd5ba5-search-clamp-a1-503430",
       "scope": "search",
       "solved": true,
-      "started_at": "2026-11-10T15:41:53Z",
+      "started_at": "2026-11-10T15:56:07Z",
+      "status": "passed",
+      "task_id": "search-clamp",
+      "tokens": {
+        "in": 1150,
+        "out": 800
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 368
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.368,
+      "finished_at": "2026-11-10T15:56:07Z",
+      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "4cdd5ba5-search-max-two-a1-fe5353",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:56:07Z",
+      "status": "passed",
+      "task_id": "search-max-two",
+      "tokens": {
+        "in": 1150,
+        "out": 800
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 368
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.368,
+      "finished_at": "2026-11-10T15:56:07Z",
+      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "4cdd5ba5-search-mean-a1-346f96",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:56:07Z",
+      "status": "passed",
+      "task_id": "search-mean",
+      "tokens": {
+        "in": 1150,
+        "out": 800
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 368
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.368,
+      "finished_at": "2026-11-10T15:56:07Z",
+      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "4cdd5ba5-search-missing-return-a1-241290",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:56:07Z",
+      "status": "passed",
+      "task_id": "search-missing-return",
+      "tokens": {
+        "in": 1150,
+        "out": 800
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 368
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.368,
+      "finished_at": "2026-11-10T15:56:07Z",
+      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "4cdd5ba5-search-off-by-one-a1-7dfd6f",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:56:07Z",
+      "status": "passed",
+      "task_id": "search-off-by-one",
+      "tokens": {
+        "in": 1150,
+        "out": 800
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 368
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.368,
+      "finished_at": "2026-11-10T15:56:07Z",
+      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "4cdd5ba5-search-slice-a1-bb322e",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:56:07Z",
+      "status": "passed",
+      "task_id": "search-slice",
+      "tokens": {
+        "in": 1150,
+        "out": 800
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 368
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.368,
+      "finished_at": "2026-11-10T15:56:07Z",
+      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "4cdd5ba5-search-slug-a1-703936",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:56:07Z",
+      "status": "passed",
+      "task_id": "search-slug",
+      "tokens": {
+        "in": 1150,
+        "out": 800
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 368
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.368,
+      "finished_at": "2026-11-10T15:56:07Z",
+      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "4cdd5ba5-search-wrong-var-a1-cffb04",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:56:07Z",
+      "status": "passed",
+      "task_id": "search-wrong-var",
+      "tokens": {
+        "in": 1150,
+        "out": 800
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 368
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.368,
+      "finished_at": "2026-11-10T15:56:07Z",
+      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "4cdd5ba5-smoke-add-a1-000a4a",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:56:06Z",
       "status": "passed",
       "task_id": "smoke-add",
       "tokens": {
@@ -25,26 +265,26 @@
       "verifier": {
         "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
         "matches": true,
-        "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
-        "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
       },
-      "wall_ms": 1840
+      "wall_ms": 368
     },
     {
       "attempt": 1,
-      "cost_usd": 1.84,
-      "finished_at": "2026-11-10T15:41:53Z",
-      "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+      "cost_usd": 0.368,
+      "finished_at": "2026-11-10T15:56:07Z",
+      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
       "provenance": {
         "kind": "fixture",
         "live": false,
         "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
         "runtime_id": "fixture"
       },
-      "run_id": "6574e7ca-smoke-even-a1-4a3919",
+      "run_id": "4cdd5ba5-smoke-even-a1-19b52b",
       "scope": "search",
       "solved": true,
-      "started_at": "2026-11-10T15:41:53Z",
+      "started_at": "2026-11-10T15:56:07Z",
       "status": "passed",
       "task_id": "smoke-even",
       "tokens": {
@@ -55,26 +295,266 @@
       "verifier": {
         "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
         "matches": true,
-        "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
-        "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
       },
-      "wall_ms": 1840
+      "wall_ms": 368
     },
     {
       "attempt": 1,
-      "cost_usd": 0.92,
-      "finished_at": "2026-11-10T15:41:53Z",
-      "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+      "cost_usd": 0.184,
+      "finished_at": "2026-11-10T15:56:06Z",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "provenance": {
         "kind": "fixture",
         "live": false,
         "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
         "runtime_id": "fixture"
       },
-      "run_id": "ec10a3a2-smoke-add-a1-f004c4",
+      "run_id": "6b492ef0-search-clamp-a1-326c50",
+      "scope": "search",
+      "solved": false,
+      "started_at": "2026-11-10T15:56:06Z",
+      "status": "failed",
+      "task_id": "search-clamp",
+      "tokens": {
+        "in": 1150,
+        "out": 400
+      },
+      "turns": 2,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 184
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.184,
+      "finished_at": "2026-11-10T15:56:06Z",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6b492ef0-search-max-two-a1-da2c8f",
+      "scope": "search",
+      "solved": false,
+      "started_at": "2026-11-10T15:56:06Z",
+      "status": "failed",
+      "task_id": "search-max-two",
+      "tokens": {
+        "in": 1150,
+        "out": 400
+      },
+      "turns": 2,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 184
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.184,
+      "finished_at": "2026-11-10T15:56:06Z",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6b492ef0-search-mean-a1-a561c8",
+      "scope": "search",
+      "solved": false,
+      "started_at": "2026-11-10T15:56:06Z",
+      "status": "failed",
+      "task_id": "search-mean",
+      "tokens": {
+        "in": 1150,
+        "out": 400
+      },
+      "turns": 2,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 184
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.184,
+      "finished_at": "2026-11-10T15:56:06Z",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6b492ef0-search-missing-return-a1-710ec6",
+      "scope": "search",
+      "solved": false,
+      "started_at": "2026-11-10T15:56:06Z",
+      "status": "failed",
+      "task_id": "search-missing-return",
+      "tokens": {
+        "in": 1150,
+        "out": 400
+      },
+      "turns": 2,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 184
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.184,
+      "finished_at": "2026-11-10T15:56:06Z",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6b492ef0-search-off-by-one-a1-20e432",
       "scope": "search",
       "solved": true,
-      "started_at": "2026-11-10T15:41:53Z",
+      "started_at": "2026-11-10T15:56:05Z",
+      "status": "passed",
+      "task_id": "search-off-by-one",
+      "tokens": {
+        "in": 1150,
+        "out": 400
+      },
+      "turns": 2,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 184
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.184,
+      "finished_at": "2026-11-10T15:56:06Z",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6b492ef0-search-slice-a1-ee7ef6",
+      "scope": "search",
+      "solved": false,
+      "started_at": "2026-11-10T15:56:06Z",
+      "status": "failed",
+      "task_id": "search-slice",
+      "tokens": {
+        "in": 1150,
+        "out": 400
+      },
+      "turns": 2,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 184
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.184,
+      "finished_at": "2026-11-10T15:56:06Z",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6b492ef0-search-slug-a1-48ace4",
+      "scope": "search",
+      "solved": false,
+      "started_at": "2026-11-10T15:56:06Z",
+      "status": "failed",
+      "task_id": "search-slug",
+      "tokens": {
+        "in": 1150,
+        "out": 400
+      },
+      "turns": 2,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 184
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.184,
+      "finished_at": "2026-11-10T15:56:06Z",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6b492ef0-search-wrong-var-a1-f7308d",
+      "scope": "search",
+      "solved": false,
+      "started_at": "2026-11-10T15:56:06Z",
+      "status": "failed",
+      "task_id": "search-wrong-var",
+      "tokens": {
+        "in": 1150,
+        "out": 400
+      },
+      "turns": 2,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+      },
+      "wall_ms": 184
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.184,
+      "finished_at": "2026-11-10T15:56:05Z",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6b492ef0-smoke-add-a1-ce6ccf",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:56:05Z",
       "status": "passed",
       "task_id": "smoke-add",
       "tokens": {
@@ -85,26 +565,26 @@
       "verifier": {
         "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
         "matches": true,
-        "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
-        "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
       },
-      "wall_ms": 920
+      "wall_ms": 184
     },
     {
       "attempt": 1,
-      "cost_usd": 0.92,
-      "finished_at": "2026-11-10T15:41:53Z",
-      "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+      "cost_usd": 0.184,
+      "finished_at": "2026-11-10T15:56:05Z",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "provenance": {
         "kind": "fixture",
         "live": false,
         "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
         "runtime_id": "fixture"
       },
-      "run_id": "ec10a3a2-smoke-even-a1-e5e11c",
+      "run_id": "6b492ef0-smoke-even-a1-798742",
       "scope": "search",
       "solved": true,
-      "started_at": "2026-11-10T15:41:53Z",
+      "started_at": "2026-11-10T15:56:05Z",
       "status": "passed",
       "task_id": "smoke-even",
       "tokens": {
@@ -115,10 +595,10 @@
       "verifier": {
         "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
         "matches": true,
-        "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
-        "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
+        "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+        "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
       },
-      "wall_ms": 920
+      "wall_ms": 184
     }
   ]
 }

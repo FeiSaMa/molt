@@ -14,7 +14,26 @@ from molt.bench import bench_tree_hash, compute_bench_hash
 from molt.cli import main
 
 ROOT = Path(__file__).resolve().parents[1]
-REFERENCED = ["smoke-add", "smoke-even", "holdout-even"]
+SEARCH = [
+    "smoke-add",
+    "smoke-even",
+    "search-off-by-one",
+    "search-max-two",
+    "search-missing-return",
+    "search-wrong-var",
+    "search-slice",
+    "search-mean",
+    "search-slug",
+    "search-clamp",
+]
+REPORT = [
+    "holdout-even",
+    "holdout-palindrome",
+    "holdout-gcd",
+    "holdout-factorial",
+    "holdout-dedupe",
+]
+REFERENCED = SEARCH + REPORT
 
 
 def _copy_repo(tmp_path: Path) -> Path:

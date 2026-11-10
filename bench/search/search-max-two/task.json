@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "search-max-two",
+  "scenario_version": "demo-6",
+  "shell_id": "code-repair",
+  "scope": "search",
+  "title": "比较运算符写反",
+  "workspace_ref": "bench/search/search-max-two/workspace",
+  "tests_ref": "bench/search/search-max-two/tests",
+  "timeout_s": 30,
+  "ext": {
+    "fixture": {
+      "target": "solution.py",
+      "solution": "def max_two(a, b):\n    return a if a > b else b\n",
+      "solvable_at": [
+        "high"
+      ],
+      "base_cost_usd": 0.2
+    }
+  }
+}

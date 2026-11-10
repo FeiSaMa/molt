@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "demo-5",
-  "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+  "scenario_version": "demo-6",
+  "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
   "parent_id": null,
   "shell_id": "code-repair",
   "shell_version": "1.0.0",
   "switches": {
-    "thinking": "high",
+    "thinking": "low",
     "context": "full",
     "tools": "bash"
   },

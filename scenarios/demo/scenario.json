@@ -1,18 +1,30 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "demo-5",
+  "scenario_version": "demo-6",
   "scenario_id": "demo",
-  "title": "B1 demo：两题搜索集 + 一题留出集",
+  "title": "B2c demo：10 题搜索集 + 5 题留出集",
   "shell_id": "code-repair",
   "shell_version": "1.0.0",
-  "bench_hash": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
+  "bench_hash": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
   "task_sets": {
     "search": [
       "smoke-add",
-      "smoke-even"
+      "smoke-even",
+      "search-off-by-one",
+      "search-max-two",
+      "search-missing-return",
+      "search-wrong-var",
+      "search-slice",
+      "search-mean",
+      "search-slug",
+      "search-clamp"
     ],
     "report": [
-      "holdout-even"
+      "holdout-even",
+      "holdout-palindrome",
+      "holdout-gcd",
+      "holdout-factorial",
+      "holdout-dedupe"
     ]
   },
   "policy": {
@@ -27,6 +39,6 @@
     "network": "provider_only"
   },
   "ext": {
-    "note": "fixture demo 不产生真实模型调用；Pi runtime 为可选 live 路径"
+    "note": "10 search + 5 holdout 的 fixture demo；holdout 只进 scope=report 的 result，隔离依赖 runtime 边界。fixture 不产生真实模型调用；Pi runtime 为可选 live 路径。"
   }
 }

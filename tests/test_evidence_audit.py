@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_demo_audit_is_green(demo_artifacts) -> None:
     store, scenario, summary = demo_artifacts
     report = audit_state(store, scenario)
-    assert report["runs"] == 6
+    assert report["runs"] == 2 * (10 + 5)  # baseline + candidate × (search 10 + holdout 5)
     assert report["results"] == 4
     assert report["decisions"] == 1
     assert report["report_events"] >= 2

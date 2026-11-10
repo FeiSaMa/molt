@@ -1,89 +1,91 @@
 {
   "report_runs_total": {
     "by_status": {
-      "passed": 2
+      "failed": 4,
+      "passed": 6
     },
     "cost_usd": 2.76,
-    "count": 2,
-    "solved": 2,
+    "count": 10,
+    "solved": 6,
     "tokens": {
-      "in": 2300,
-      "out": 1200
+      "in": 11500,
+      "out": 6000
     },
     "wall_ms": 2760
   },
   "results": [
     {
       "generated_at": "2026-01-01T00:00:00Z",
-      "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "report_runs": {
         "by_status": {
+          "failed": 4,
           "passed": 1
         },
-        "cost_usd": 1.84,
-        "count": 1,
+        "cost_usd": 0.92,
+        "count": 5,
         "solved": 1,
         "tokens": {
-          "in": 1150,
-          "out": 800
+          "in": 5750,
+          "out": 2000
         },
-        "wall_ms": 1840
+        "wall_ms": 920
       },
       "result_id": "result-baseline-report",
       "scope": "report",
       "scores": {
         "holdout": {
-          "cost_per_solved_usd": 1.84,
-          "cost_total_usd": 1.84,
+          "cost_per_solved_usd": 0.9199999999999999,
+          "cost_total_usd": 0.9199999999999999,
           "invalid_ratio": 0.0,
-          "pass_at_1_first_attempt": 1.0,
+          "pass_at_1_first_attempt": 0.2,
           "solved": 1,
-          "total": 1
+          "total": 5
         },
         "search": {
-          "cost_per_solved_usd": 1.84,
-          "cost_total_usd": 3.68,
+          "cost_per_solved_usd": 0.6133333333333333,
+          "cost_total_usd": 1.8399999999999999,
           "invalid_ratio": 0.0,
-          "pass_at_1_first_attempt": 1.0,
-          "solved": 2,
-          "total": 2
+          "pass_at_1_first_attempt": 0.3,
+          "solved": 3,
+          "total": 10
         }
       }
     },
     {
       "generated_at": "2026-01-01T00:00:00Z",
-      "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
       "report_runs": {
         "by_status": {
-          "passed": 1
+          "passed": 5
         },
-        "cost_usd": 0.92,
-        "count": 1,
-        "solved": 1,
+        "cost_usd": 1.84,
+        "count": 5,
+        "solved": 5,
         "tokens": {
-          "in": 1150,
-          "out": 400
+          "in": 5750,
+          "out": 4000
         },
-        "wall_ms": 920
+        "wall_ms": 1840
       },
       "result_id": "result-candidate-report",
       "scope": "report",
       "scores": {
         "holdout": {
-          "cost_per_solved_usd": 0.92,
-          "cost_total_usd": 0.92,
+          "cost_per_solved_usd": 0.368,
+          "cost_total_usd": 1.8399999999999999,
           "invalid_ratio": 0.0,
           "pass_at_1_first_attempt": 1.0,
-          "solved": 1,
-          "total": 1
+          "solved": 5,
+          "total": 5
         },
         "search": {
-          "cost_per_solved_usd": 0.92,
-          "cost_total_usd": 1.84,
+          "cost_per_solved_usd": 0.368,
+          "cost_total_usd": 3.6799999999999997,
           "invalid_ratio": 0.0,
           "pass_at_1_first_attempt": 1.0,
-          "solved": 2,
-          "total": 2
+          "solved": 10,
+          "total": 10
         }
       }
     }

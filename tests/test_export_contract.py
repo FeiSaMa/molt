@@ -19,6 +19,13 @@ from molt.export import AGGREGATE_KEYS, DATA_FILES, ExportError, export_web_data
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED = set(DATA_FILES)
 EXCLUDED_DIRS = {".git", ".venv", "__pycache__", ".pytest_cache", ".ruff_cache"}
+HOLDOUT_IDS = (
+    "holdout-even",
+    "holdout-palindrome",
+    "holdout-gcd",
+    "holdout-factorial",
+    "holdout-dedupe",
+)
 
 
 def _load(path: Path):
@@ -66,6 +73,8 @@ def test_file_set_is_exactly_the_contract(exported) -> None:
     assert scenario_data["not_claimed"]
     counts = scenario_data["task_counts"]
     assert counts["total"] == counts["search"] + counts["report"]
+    assert counts["search"] == 10
+    assert counts["report"] == 5
     assert "report" not in scenario_data["task_sets"]
     assert scenario_data["holdout"] == {"task_count": counts["report"], "detail": "not-exported"}
     assert scenario_data["budget"]["execution_budget_usd"] is not None
@@ -124,7 +133,7 @@ def test_report_results_holdout_is_aggregate_only(exported) -> None:
         }
         assert report_runs["count"] > 0
         assert sum(report_runs["by_status"].values()) == report_runs["count"]
-    assert data["report_runs_total"]["count"] == 2
+    assert data["report_runs_total"]["count"] == 10
 
 
 def test_holdout_detail_never_appears_in_export(exported) -> None:
@@ -132,7 +141,8 @@ def test_holdout_detail_never_appears_in_export(exported) -> None:
     hits = [
         str(path.relative_to(out))
         for path in out.rglob("*")
-        if path.is_file() and "holdout-even" in path.read_text(encoding="utf-8")
+        if path.is_file()
+        and any(task_id in path.read_text(encoding="utf-8") for task_id in HOLDOUT_IDS)
     ]
     assert hits == [], f"holdout 逐题 id 泄漏: {hits}"
     report_events = [
@@ -379,10 +389,11 @@ def test_committed_sample_and_readme_are_usable() -> None:
     leaked = [
         str(path.relative_to(sample))
         for path in sample.rglob("*")
-        if path.is_file() and "holdout-even" in path.read_text(encoding="utf-8")
+        if path.is_file()
+        and any(task_id in path.read_text(encoding="utf-8") for task_id in HOLDOUT_IDS)
     ]
     assert leaked == []
-    assert index["counts"]["report_runs"] == 2
+    assert index["counts"]["report_runs"] == 10
 
     readme = (ROOT / "web" / "README.md").read_text(encoding="utf-8")
     for needle in ("molt export", "index.json", "aggregate", "holdout", "fixture"):
@@ -395,5 +406,5 @@ def test_export_accepts_state_path(demo_artifacts, tmp_path: Path) -> None:
     index = export_web_data(ROOT, scenario, Path(store.root), out)
     search_runs = [run for run in StateStore(store.root).list_runs() if run.scope == "search"]
     assert index["counts"]["runs"] == len(search_runs)
-    assert index["counts"]["report_runs"] == 2
+    assert index["counts"]["report_runs"] == 10
     assert (out / "variants.json").is_file()
