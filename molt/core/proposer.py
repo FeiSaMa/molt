@@ -341,6 +341,8 @@ def build_proposal(
         if evidence is not None:
             chosen = _overlay_evidence(chosen, evidence)
 
+    if fallback_reason is None and chosen.fallback_used:
+        fallback_reason = chosen.fallback_reason or "grid"
     fallback_used = bool(chosen.fallback_used or fallback_reason is not None)
     ext = {
         "diagnosis": chosen.diagnosis,
