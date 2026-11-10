@@ -2,16 +2,23 @@
 runs/*
 !runs/.gitkeep
 
+# B1 状态目录（本地采纳/回退、事件、账本）
+state/
+evidence/
+
 .venv/
 venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
+*.egg-info/
+dist/
+build/
 
 node_modules/
 npm-debug.log*
 
 # 本地覆盖与凭据
 .env
-.pi/sol-pi.local.json
+.pi/

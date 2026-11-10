@@ -1,5 +1,11 @@
 # 42 小时落地方案（最终取舍）
 
+> 2026-11-10 标注：**superseded**。实现与契约以
+> [`docs/protocol.md`](../protocol.md)、[`schemas/v1/`](../../schemas/v1)、
+> [ADR-0002](../decisions/0002-protocol-v1.md)、[ADR-0003](../decisions/0003-scoring.md)、
+> [ADR-0004](../decisions/0004-shell-and-dims.md) 为准。本文件保留作取舍记录；
+> 其中「明确禁止装回 SoL-Pi」的结论仍有效。
+
 目标不是"做出自进化 agent"，而是交付一个**能被检验的结论**：在固定题集上，某个 harness 配置在成功率不降的前提下把单题成本降了多少，且每个改动都能回退、能复现。
 
 ## 1. 取舍

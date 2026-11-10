@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "archive_id": "arc-0001-deadbeef",
+  "generation": 1,
+  "genome_id": "sha256:e61508295c0bbb4c3832f0b56e0496f4fa0df631dfe0b8bdaa803f1547833db4",
+  "parent_id": null,
+  "adopted_at": "2026-01-01T00:00:00Z",
+  "snapshot_id": "snap-1",
+  "result_refs": [
+    "result-1"
+  ],
+  "note": "fixture",
+  "ext": {}
+}

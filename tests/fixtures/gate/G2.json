@@ -1,0 +1,147 @@
+{
+  "name": "G2",
+  "scenario_version": "gate-1",
+  "policy": {
+    "k": 0,
+    "invalid_ratio_max": 0.2,
+    "budget": {
+      "execution_budget_usd": 12.0,
+      "search_overhead_budget_usd": 2.0
+    }
+  },
+  "baseline": {
+    "genome_id": "g-base",
+    "limits": {
+      "tokens": 200000,
+      "wall_ms": 120000,
+      "turns": 64,
+      "attempts": 1
+    },
+    "invalid_ratio": 0.0,
+    "overhead_spend_usd": 0.0,
+    "tasks": [
+      {
+        "task_id": "t01",
+        "passed": true,
+        "cost_usd": 1.0
+      },
+      {
+        "task_id": "t02",
+        "passed": true,
+        "cost_usd": 1.0
+      },
+      {
+        "task_id": "t03",
+        "passed": true,
+        "cost_usd": 1.0
+      },
+      {
+        "task_id": "t04",
+        "passed": true,
+        "cost_usd": 1.0
+      },
+      {
+        "task_id": "t05",
+        "passed": true,
+        "cost_usd": 1.0
+      },
+      {
+        "task_id": "t06",
+        "passed": true,
+        "cost_usd": 1.0
+      },
+      {
+        "task_id": "t07",
+        "passed": true,
+        "cost_usd": 1.0
+      },
+      {
+        "task_id": "t08",
+        "passed": true,
+        "cost_usd": 1.0
+      },
+      {
+        "task_id": "t09",
+        "passed": true,
+        "cost_usd": 1.0
+      },
+      {
+        "task_id": "t10",
+        "passed": true,
+        "cost_usd": 1.0
+      }
+    ]
+  },
+  "candidate": {
+    "genome_id": "g-cand",
+    "limits": {
+      "tokens": 200000,
+      "wall_ms": 120000,
+      "turns": 64,
+      "attempts": 1
+    },
+    "invalid_ratio": 0.0,
+    "overhead_spend_usd": 0.0,
+    "tasks": [
+      {
+        "task_id": "t01",
+        "passed": true,
+        "cost_usd": 0.8
+      },
+      {
+        "task_id": "t02",
+        "passed": true,
+        "cost_usd": 0.8
+      },
+      {
+        "task_id": "t03",
+        "passed": true,
+        "cost_usd": 0.8
+      },
+      {
+        "task_id": "t04",
+        "passed": true,
+        "cost_usd": 0.8
+      },
+      {
+        "task_id": "t05",
+        "passed": true,
+        "cost_usd": 0.8
+      },
+      {
+        "task_id": "t06",
+        "passed": true,
+        "cost_usd": 0.8
+      },
+      {
+        "task_id": "t07",
+        "passed": true,
+        "cost_usd": 0.8
+      },
+      {
+        "task_id": "t08",
+        "passed": true,
+        "cost_usd": 0.8
+      },
+      {
+        "task_id": "t09",
+        "passed": true,
+        "cost_usd": 0.8
+      },
+      {
+        "task_id": "t10",
+        "passed": false,
+        "cost_usd": 0.8
+      }
+    ]
+  },
+  "expected": {
+    "verdict": "reject",
+    "reason": "solved_dropped",
+    "budget_check": {
+      "execution_exceeded": false,
+      "overhead_exceeded": false,
+      "reason": "ok"
+    }
+  }
+}

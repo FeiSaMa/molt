@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "shell_id": "code-repair",
+  "locked": true,
+  "dimensions": {
+    "thinking": {
+      "values": ["off", "low", "high"],
+      "default": "low",
+      "note": "v1 锁定；第四维 / compaction 一律拒绝"
+    },
+    "context": {
+      "values": ["full", "minimal"],
+      "default": "full"
+    },
+    "tools": {
+      "values": ["default", "lean"],
+      "default": "default",
+      "note": "只控制工具集，不含工具输出截断"
+    }
+  },
+  "combinations": 12,
+  "ext": {}
+}

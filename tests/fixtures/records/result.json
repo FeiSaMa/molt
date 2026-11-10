@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "result_id": "result-1",
+  "scenario_version": "demo-1",
+  "genome_id": "sha256:e61508295c0bbb4c3832f0b56e0496f4fa0df631dfe0b8bdaa803f1547833db4",
+  "scope": "report",
+  "seed_control": "none",
+  "run_refs": [
+    "run-1"
+  ],
+  "scores": {
+    "search": {
+      "solved": 1,
+      "total": 1,
+      "pass_at_1_first_attempt": 1.0,
+      "cost_total_usd": 1.84,
+      "cost_per_solved_usd": 1.84,
+      "invalid_ratio": 0.0
+    },
+    "holdout": {
+      "solved": 1,
+      "total": 1,
+      "pass_at_1_first_attempt": 1.0,
+      "cost_total_usd": 1.84,
+      "cost_per_solved_usd": 1.84,
+      "invalid_ratio": 0.0
+    }
+  },
+  "generated_at": "2026-01-01T00:00:02Z",
+  "ext": {}
+}

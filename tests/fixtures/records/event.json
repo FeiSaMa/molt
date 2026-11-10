@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "event_id": "ev-1",
+  "scope": "search",
+  "type": "run.started",
+  "ts": "2026-01-01T00:00:00Z",
+  "run_id": "run-1",
+  "payload": {
+    "task_id": "smoke-add",
+    "genome_id": "sha256:e61508295c0bbb4c3832f0b56e0496f4fa0df631dfe0b8bdaa803f1547833db4"
+  },
+  "ext": {}
+}

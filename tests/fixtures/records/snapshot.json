@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "snapshot_id": "snap-1",
+  "generation": 1,
+  "created_at": "2026-01-01T00:00:00Z",
+  "roots": [
+    "shells/code-repair"
+  ],
+  "tree_hash": "b087df973d926a329cf8faba66ec166e9488cab5d6dcb684b10adaad708c1f0e",
+  "files": {
+    "shells/code-repair": {
+      "harness.py": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "verifier.py": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  "ext": {}
+}

@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "decision_id": "dec-1",
+  "scenario_version": "demo-1",
+  "shell_version": "1.0.0",
+  "verifier_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "baseline_genome_id": "sha256:e61508295c0bbb4c3832f0b56e0496f4fa0df631dfe0b8bdaa803f1547833db4",
+  "candidate_genome_id": "sha256:e61508295c0bbb4c3832f0b56e0496f4fa0df631dfe0b8bdaa803f1547833db4",
+  "verdict": "adopt",
+  "reason": "lower_cost_per_solved",
+  "k": 0,
+  "limits_identical": true,
+  "budget_check": {
+    "execution_exceeded": false,
+    "overhead_exceeded": false,
+    "reason": "ok"
+  },
+  "invalid_ratio": {
+    "baseline": 0.0,
+    "candidate": 0.0,
+    "threshold": 0.25
+  },
+  "scores": {
+    "baseline": {
+      "genome_id": "sha256:e61508295c0bbb4c3832f0b56e0496f4fa0df631dfe0b8bdaa803f1547833db4",
+      "solved": 2,
+      "total": 2,
+      "cost_per_solved_usd": 1.0
+    },
+    "candidate": {
+      "genome_id": "sha256:e61508295c0bbb4c3832f0b56e0496f4fa0df631dfe0b8bdaa803f1547833db4",
+      "solved": 2,
+      "total": 2,
+      "cost_per_solved_usd": 0.8
+    }
+  },
+  "paired": [
+    {
+      "task_id": "smoke-add",
+      "baseline_passed": true,
+      "candidate_passed": true,
+      "baseline_cost_usd": 1.0,
+      "candidate_cost_usd": 0.8
+    },
+    {
+      "task_id": "smoke-even",
+      "baseline_passed": true,
+      "candidate_passed": true,
+      "baseline_cost_usd": 1.0,
+      "candidate_cost_usd": 0.8
+    }
+  ],
+  "created_at": "2026-01-01T00:00:00Z",
+  "ext": {}
+}
