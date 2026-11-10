@@ -23,6 +23,7 @@ from molt.core.store import StateStore
 from molt.core.types import (
     Genome,
     HistoryEntry,
+    Proposal,
     Result,
     Run,
     SearchHistory,
@@ -283,6 +284,38 @@ class Engine:
 
     def propose(self, genome: Genome, history: SearchHistory):
         return self.harness.propose(history, genome)
+
+    def record_proposal(
+        self,
+        proposal: Proposal,
+        *,
+        event_id: str | None = None,
+        ts: str | None = None,
+    ) -> None:
+        """Proposal + overhead ledger + ``proposal.generated`` 事件的唯一落盘口径。"""
+        self.store.write_proposal(proposal)
+        entries = self.ledger.read(proposal.proposal_id)
+        if not any(entry.get("kind") == "overhead" for entry in entries):
+            self.ledger.append(
+                proposal.proposal_id,
+                {
+                    "kind": "overhead",
+                    "cost_usd": proposal.cost_usd,
+                    "source": proposal.ext.get("source"),
+                    "model": proposal.ext.get("model"),
+                    "counted_as": proposal.ext.get("counted_as"),
+                },
+            )
+        self.events.emit(
+            scope="search",
+            event_type="proposal.generated",
+            payload={
+                "proposal_id": proposal.proposal_id,
+                "parent_genome_id": proposal.parent_id,
+            },
+            event_id=event_id,
+            ts=ts,
+        )
 
     def metrics(
         self,

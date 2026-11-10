@@ -1,7 +1,7 @@
 # 架构
 
 molt 把"搜索候选 → 执行题集 → 判分 → 门禁 → 采纳 / 回退"做成一条可复算的流水线。
-本文件描述 B1 的实际分层；字段级契约以 [`protocol.md`](protocol.md) 与 `schemas/v1/` 为准。
+本文件描述 B1 + B2a 的实际分层；字段级契约以 [`protocol.md`](protocol.md) 与 `schemas/v1/` 为准。
 
 ## 一、三层与依赖方向
 
@@ -14,9 +14,9 @@ shell        adapter
 
 | 层 | 组件 | 职责 | 不负责 |
 | --- | --- | --- | --- |
-| core | `molt/core/` | 11 类协议记录、门禁、指标、快照事务、事件 / 账本、审计、脱敏 | 调模型、跑 pytest、读题面 |
-| shell | `shells/code-repair/` | 题集加载、prompt 渲染、调用 Runtime、运行外部 Verifier | 定义门禁阈值、写 `scenario.policy` |
-| adapter | `molt/adapters/fixture/` | 唯一执行入口；B1 为确定性 fixture，不联网 | 判分、采纳、写证据链 |
+| core | `molt/core/` | 11 类协议记录、门禁、指标、快照事务、事件 / 账本、审计、脱敏、提案核心（`proposer.py`） | 调模型、跑 pytest、读题面 |
+| shell | `shells/code-repair/` | 题集加载、prompt 渲染、调用 Runtime、运行外部 Verifier、注入 LLM/grid 提案策略 | 定义门禁阈值、写 `scenario.policy` |
+| adapter | `molt/adapters/` | `fixture/` 执行入口；`llm_proposer.py` 负责 DeepSeek transport | 判分、采纳、写证据链 |
 
 `molt/core/**` 只 import stdlib 与 `molt.core.*`（I11）。`python -m molt doctor --deps` 做 AST 检查；
 `tests/test_boundary.py` 还会屏蔽第三方 importer 后 import core。
@@ -59,6 +59,11 @@ task.json ──workspace───┘                         │
 `result.scope=report` 必须同时含 `scores.search` 与 `scores.holdout`。
 `SearchHistory` 与 `ReportArchive` 是两个类型，`Harness.propose` 只接受前者。
 
+提案分支（B2a）：`SearchHistory` → `Engine.propose` → shell 注入的 LLM 策略或
+`molt.core.proposer` 网格 → `Proposal`（扩展字段全在 `ext`）→
+`proposals/<id>.json` + `ledger/<prop-id>.jsonl`（`kind=overhead`）+
+`proposal.generated` 事件。提案成本不进入 `cost_per_solved`。
+
 ## 四、门禁口径
 
 判定顺序固定：
@@ -72,6 +77,11 @@ task.json ──workspace───┘                         │
 
 `cost_per_solved` 的分母是有效通过题数，分子是全部执行 run（含 invalid / 超时 / 超预算 /
 判废）的成本；提案成本只进 overhead cap。结论必须携带逐题配对表。
+
+门禁夹具的 `SIDE_KEYS` 不含 `scenario_version`；逐侧版本用
+`baseline_scenario_version` / `candidate_scenario_version` 覆盖，缺省回落到 case 级版本。
+`SideEval.scenario_version` 必须与 scenario 一致，否则 `policy.decide` 抛
+`IncomparableError`（禁止跨版本比较）。
 
 ## 五、裁判隔离
 
@@ -109,7 +119,8 @@ state/
 ```
 
 采纳顺序固定：journal（`O_EXCL`）→ generation（临时目录 rename）→ snapshot → archive →
-pointer（最后）。中途失败或 `kill -9` 后 `doctor --recover` 只会恢复到旧态或新态，且幂等。
+pointer（最后）。`adopt` / `revert` 入口会先自动调用锁内的 `_recover_locked`，把上次未完成
+事务恢复到旧态或新态；`doctor --recover` 作为显式兜底，重复调用幂等。
 读者校验「指针 + generation + tree hash」，有界重试 3 次，超限 `stale_read`。
 快照覆盖 manifest 声明的全部 roots，`roots` 与 `files` 同键，缺一即拒绝。
 
@@ -123,3 +134,19 @@ gate，并断言 search 流零 holdout id、report 流至少一条 `holdout.acce
 `switches.schema.json`、`bench/**` 任一变更。
 新增候选文件（`genomes/`、`prompts/`、`tools/` 中的新文件）只产生新 `genome_id`；
 原地修改已被既有 genome 引用的文件视为破坏性变更。禁止跨 `scenario_version` 比较。
+
+## 八、提案层（B2a）
+
+- **LLM proposer 是一等公民**：输入只能是当前 `scenario_version` 的 `SearchHistory`；
+  `parent` 的 `genome_id`、`switches`、允许的三维枚举进入 prompt，holdout / report /
+  gate 阈值不进入。
+- **proposal.ext 契约**：`diagnosis`、`model`、`prompt_sha256`、`response_sha256`、
+  `usage{input,output,cache_read,cache_write,reasoning,total}`、`cost_source`、
+  `counted_as="search_overhead"`、`fallback{used,reason}`、`source`、`history`。
+  顶层字段保持 B1 冻结的 10 项（见 ADR-0005）。
+- **失败回落**：越域 / 空候选 / 坏 JSON / 超预算 / 缺 key / 网络错误都回落到通用三维网格，
+  `source=grid`、`fallback.used=true`，仍写 Proposal 与 overhead ledger。
+- **成本归属**：`cost_usd` 只在 `ledger/<prop-id>.jsonl` 的 `kind=overhead` 中出现；
+  `cost_per_solved` 与 `result.scores.*` 不含提案成本，audit 按 `prop-*` 全量对账。
+- **可追责**：每个被评估候选的 `proposal_id` 可回到 `ext.source=llm|grid` 与
+  `proposal.generated` 事件。

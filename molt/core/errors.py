@@ -75,3 +75,13 @@ class AuditError(MoltError):
     """审计重算结果与已存结果不一致。"""
 
     code = "audit_error"
+
+
+class ProposalError(MoltError, ValueError):
+    """提案越域、不可解析或成本超限；``reason`` 直接写入 ``ext.fallback.reason``。"""
+
+    code = "proposal_error"
+
+    def __init__(self, reason: str, message: str | None = None) -> None:
+        self.reason = reason
+        super().__init__(message or reason)

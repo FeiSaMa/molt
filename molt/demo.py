@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -17,12 +18,11 @@ from molt.core.events import EventLog
 from molt.core.gate import Gate
 from molt.core.genome import child_genome, verify_genome
 from molt.core.hash import sha256_file
-from molt.core.ledger import Ledger
 from molt.core.metrics import paired_rows_from_runs
 from molt.core.policy import SideEval, TaskEval
 from molt.core.redact import evidence_bundle, redact_evidence, write_redaction_manifest
 from molt.core.store import StateStore
-from molt.core.types import Genome, Scenario
+from molt.core.types import Genome, Proposal, Scenario, SearchHistory
 from molt.shell_loader import load_shell_module
 
 FIXED_TS = "2026-01-01T00:00:00Z"
@@ -54,6 +54,9 @@ def build_engine(
     store: StateStore,
     work_root: Path,
     seed_control: str = "none",
+    *,
+    domains: Mapping[str, Sequence[str]] | None = None,
+    llm_proposer: Callable[[SearchHistory, Genome], Proposal] | None = None,
 ) -> Engine:
     """组装 B1 的 fixture 引擎（shell loader + fixture runtime + 真 pytest verifier）。"""
     repo_root = Path(repo_root)
@@ -77,6 +80,8 @@ def build_engine(
         shell_id=scenario.shell_id,
         shell_version=scenario.shell_version,
         clock=fixed_clock,
+        domains=domains,
+        llm_proposer=llm_proposer,
     )
     return Engine(
         store,
@@ -105,7 +110,6 @@ def build_demo_state(
     engine = build_engine(repo_root, scenario, store, work_root / "work")
     provider = engine.task_provider
     events = EventLog(store.root)
-    ledger = Ledger(store.root)
 
     baseline = load_genome(repo_root)
     store.write_genome(baseline)
@@ -121,21 +125,7 @@ def build_demo_state(
 
     history = engine.search_history(baseline, baseline_search_runs)
     proposal = engine.propose(baseline, history)
-    store.write_proposal(proposal)
-    ledger.append(
-        proposal.proposal_id,
-        {"kind": "overhead", "cost_usd": proposal.cost_usd, "proposer": proposal.proposer_id},
-    )
-    events.emit(
-        scope="search",
-        event_type="proposal.generated",
-        payload={
-            "proposal_id": proposal.proposal_id,
-            "parent_genome_id": proposal.parent_id,
-        },
-        event_id="ev-demo-proposal",
-        ts=FIXED_TS,
-    )
+    engine.record_proposal(proposal, event_id="ev-demo-proposal", ts=FIXED_TS)
     candidate = child_genome(baseline, proposal.switches, repo_root=repo_root)
     store.write_genome(candidate)
     candidate_search_runs = engine.run_suite(candidate, search_tasks, scope="search")

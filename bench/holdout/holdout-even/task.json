@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "task_id": "holdout-even",
-  "scenario_version": "demo-1",
+  "scenario_version": "demo-2",
   "shell_id": "code-repair",
   "scope": "report",
   "title": "留出题：is_even 泛化",
@@ -12,7 +12,10 @@
     "fixture": {
       "target": "solution.py",
       "solution": "def is_even(n):\n    return n % 2 == 0\n",
-      "solvable_at": ["low", "high"],
+      "solvable_at": [
+        "low",
+        "high"
+      ],
       "base_cost_usd": 1.0
     }
   }

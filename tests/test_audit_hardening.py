@@ -116,7 +116,7 @@ def test_single_decision_overhead_reconciles(demo_artifacts) -> None:
 def test_decision_scenario_version_mismatch_fails(demo_copy) -> None:
     store, scenario, _ = demo_copy
     data = _decision_data(store)
-    data["scenario_version"] = "demo-2"
+    data["scenario_version"] = scenario.scenario_version + "-other"
     _rewrite(store, data)
     with pytest.raises(AuditError) as excinfo:
         audit_state(store, scenario)
