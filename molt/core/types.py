@@ -490,6 +490,7 @@ class Scenario(_Record):
     title: str
     shell_id: str
     shell_version: str
+    bench_hash: str
     task_sets: dict[str, list[str]]
     policy: Policy
     isolation: Isolation
@@ -511,6 +512,7 @@ class Scenario(_Record):
                 "title",
                 "shell_id",
                 "shell_version",
+                "bench_hash",
                 "task_sets",
                 "policy",
                 "isolation",
@@ -533,6 +535,7 @@ class Scenario(_Record):
             title=_as_str(obj["title"], f"{path}.title"),
             shell_id=_as_str(obj["shell_id"], f"{path}.shell_id"),
             shell_version=_as_str(obj["shell_version"], f"{path}.shell_version"),
+            bench_hash=_as_sha256(obj["bench_hash"], f"{path}.bench_hash"),
             task_sets=task_sets,
             policy=Policy.from_dict(obj["policy"], f"{path}.policy"),
             isolation=Isolation.from_dict(obj["isolation"], f"{path}.isolation"),
@@ -547,6 +550,7 @@ class Scenario(_Record):
             "title": self.title,
             "shell_id": self.shell_id,
             "shell_version": self.shell_version,
+            "bench_hash": self.bench_hash,
             "task_sets": {scope: list(self.task_sets[scope]) for scope in SCOPES},
             "policy": self.policy.to_dict(),
             "isolation": self.isolation.to_dict(),

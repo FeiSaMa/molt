@@ -41,6 +41,12 @@ class GateError(MoltError):
     code = "gate_error"
 
 
+class IncomparableError(GateError, ValueError):
+    """跨 ``scenario_version`` 的比较被拒绝；两个基类便于调用方按任一 idiom 捕获。"""
+
+    code = "incomparable"
+
+
 class TxLocked(MoltError):
     """拿不到独占写锁；立即失败，不排队。"""
 

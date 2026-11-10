@@ -15,7 +15,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from molt.core.errors import MoltError
+from molt.core.errors import MoltError, ValidationError
 from molt.core.genome import compute_genome_id, verify_genome
 from molt.core.policy import decide, task_side
 from molt.core.store import StateStore
@@ -126,10 +126,13 @@ def cmd_schema(args: argparse.Namespace) -> int:
         print(f"schema validate --all: {len(validated)} 条记录通过")
         return 0
     if command == "docs":
-        path = schema.write_protocol_docs(root)
         if args.output:
-            args.output.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+            # --output 只写目标文件，不碰仓库内 docs/protocol.md。
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(schema.render_protocol_docs(root), encoding="utf-8")
             path = args.output
+        else:
+            path = schema.write_protocol_docs(root)
         print(f"wrote {path}")
         return 0
     print("用法: molt schema {validate --all|docs}")
@@ -207,7 +210,7 @@ def cmd_search(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 
-def _side(case: dict[str, Any], root: Path):
+def _side(case: dict[str, Any], root: Path, scenario_version: str):
     tasks = []
     for item in case["tasks"]:
         tasks.append(
@@ -222,7 +225,8 @@ def _side(case: dict[str, Any], root: Path):
         tasks,
         Budget.from_dict(case["limits"], f"{case.get('genome_id', 'side')}.limits"),
         float(case["invalid_ratio"]),
-        float(case.get("overhead_spend_usd", 0.0)),
+        scenario_version=scenario_version,
+        overhead_spend_usd=float(case.get("overhead_spend_usd", 0.0)),
     )
 
 
@@ -249,11 +253,48 @@ def _gate_cases(path: Path) -> list[dict[str, Any]]:
 def _compare(expected: dict[str, Any], actual: dict[str, Any], prefix: str = "") -> list[str]:
     errors = []
     for key, value in expected.items():
-        got = actual.get(key)
+        if key not in actual:
+            errors.append(f"{prefix}{key}: 缺失（actual 无此键）")
+            continue
+        got = actual[key]
         if isinstance(value, dict) and isinstance(got, dict):
             errors.extend(_compare(value, got, f"{prefix}{key}."))
         elif got != value:
             errors.append(f"{prefix}{key}: 期望 {value!r} 实际 {got!r}")
+    return errors
+
+
+def _paired_errors(case: dict[str, Any], actual: dict[str, Any]) -> list[str]:
+    """夹具逐题断言配对表与 total；不依赖 expected 是否写了这些键。"""
+    errors: list[str] = []
+    baseline_tasks = case["baseline"]["tasks"]
+    candidate_tasks = case["candidate"]["tasks"]
+    if len(baseline_tasks) != len(candidate_tasks):
+        return [
+            f"夹具 baseline/candidate 题数不一致：{len(baseline_tasks)} vs {len(candidate_tasks)}"
+        ]
+    expected_rows = [
+        {
+            "task_id": base["task_id"],
+            "baseline_passed": bool(base["passed"]),
+            "candidate_passed": bool(cand["passed"]),
+            "baseline_cost_usd": float(base["cost_usd"]),
+            "candidate_cost_usd": float(cand["cost_usd"]),
+        }
+        for base, cand in zip(baseline_tasks, candidate_tasks, strict=False)
+    ]
+    rows = actual.get("paired")
+    if not isinstance(rows, list) or len(rows) != len(expected_rows):
+        return [f"paired: 期望 {len(expected_rows)} 行，实际 {rows!r}"]
+    for index, (expected, row) in enumerate(zip(expected_rows, rows, strict=True)):
+        errors.extend(_compare(expected, row, f"paired[{index}]."))
+    for side in ("baseline", "candidate"):
+        expected_total = len(case[side]["tasks"])
+        expected_solved = sum(1 for task in case[side]["tasks"] if task["passed"])
+        scores = actual.get("scores", {}).get(side, {})
+        for key, value in (("total", expected_total), ("solved", expected_solved)):
+            if scores.get(key) != value:
+                errors.append(f"scores.{side}.{key}: 期望 {value!r} 实际 {scores.get(key)!r}")
     return errors
 
 
@@ -262,8 +303,8 @@ def cmd_gate(args: argparse.Namespace) -> int:
     failures = 0
     for case in _gate_cases(args.fixture):
         policy = Policy.from_dict(case["policy"])
-        baseline = _side(case["baseline"], root)
-        candidate = _side(case["candidate"], root)
+        baseline = _side(case["baseline"], root, case["scenario_version"])
+        candidate = _side(case["candidate"], root, case["scenario_version"])
         decision = decide(
             policy,
             baseline,
@@ -280,6 +321,7 @@ def cmd_gate(args: argparse.Namespace) -> int:
         expected = {key: value for key, value in expected.items() if value is not None}
         actual = decision.to_dict()
         errors = _compare(expected, actual)
+        errors.extend(_paired_errors(case, actual))
         baseline_score = decision.scores["baseline"]
         candidate_score = decision.scores["candidate"]
         print(
@@ -371,6 +413,20 @@ def cmd_scenario(args: argparse.Namespace) -> int:
                 )
             if task.shell_id != scenario.shell_id:
                 failures.append(f"task {task_id} shell_id 与 scenario 不一致")
+
+    # 题面内容也必须进哈希：只改 metadata 或题面都会让 validate 失败。
+    from molt.bench import compute_bench_hash
+
+    referenced = [*scenario.task_sets["search"], *scenario.task_sets["report"]]
+    try:
+        actual_hash = compute_bench_hash(root, referenced)
+    except (ValidationError, FileNotFoundError) as exc:
+        failures.append(f"bench_hash 无法重算: {exc}")
+    else:
+        if actual_hash != scenario.bench_hash:
+            failures.append(
+                f"bench_hash 不一致: declared={scenario.bench_hash} recomputed={actual_hash}"
+            )
 
     if failures:
         for failure in failures:

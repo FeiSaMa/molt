@@ -41,6 +41,7 @@ class StateStore:
 
     def __init__(self, root: Path) -> None:
         self.root = Path(root)
+        self.last_recovery: list[str] = []
 
     # -- 目录 ------------------------------------------------------------
     def ensure(self) -> None:
@@ -231,6 +232,7 @@ class StateStore:
         """单写者单事务：快照 → generation → snapshot/archive → 指针。"""
         self.ensure()
         with _Lock(self.lock_path, blocking=False):
+            self._recover_locked()
             pointer = self.current()
             generation = int(pointer["generation"]) + 1 if pointer else 1
             snapshot = build_snapshot(
@@ -308,6 +310,7 @@ class StateStore:
         """把指针切回某次归档的内容；生成新 generation，旧内容不改。"""
         self.ensure()
         with _Lock(self.lock_path, blocking=False):
+            self._recover_locked()
             pointer = self.current()
             target = self.archive.get(archive_id)
             snapshot = self.read_snapshot(target.snapshot_id)
@@ -365,49 +368,57 @@ class StateStore:
     def recover(self) -> list[str]:
         """恢复未完成事务；幂等，结果只会是旧态或新态。"""
         self.ensure()
-        actions: list[str] = []
         with _Lock(self.lock_path, blocking=False):
-            for tmp in sorted((self.root / "generations").glob(".tmp-*")):
-                shutil.rmtree(tmp, ignore_errors=True)
-                actions.append(f"removed-tmp:{tmp.name}")
-            current = self.current()
-            current_gen = int(current["generation"]) if current else 0
-            for journal_path in sorted((self.root / "journal").glob("*.json")):
-                entry = json.loads(journal_path.read_text(encoding="utf-8"))
-                generation = int(entry["generation"])
-                if generation <= current_gen:
-                    journal_path.unlink()
-                    actions.append(f"already-committed:{generation}")
-                    continue
-                generation_dir = self.root / "generations" / f"{generation:08d}"
-                snapshot_path = self.root / "snapshots" / f"{entry['snapshot_id']}.json"
-                archive_path = self.root / "archive" / f"{entry['archive_id']}.json"
-                complete = (
-                    generation_dir.exists() and snapshot_path.exists() and archive_path.exists()
-                )
-                if complete:
-                    snapshot = self.read_snapshot(entry["snapshot_id"])
-                    if verify_generation(generation_dir, snapshot):
-                        self._commit_pointer(
-                            {
-                                "generation": generation,
-                                "snapshot_id": entry["snapshot_id"],
-                                "genome_id": entry["genome_id"],
-                                "archive_id": entry["archive_id"],
-                                "tree_hash": snapshot.tree_hash,
-                            }
-                        )
-                        journal_path.unlink()
-                        actions.append(f"completed:{generation}")
-                        current_gen = generation
-                        continue
-                shutil.rmtree(generation_dir, ignore_errors=True)
-                for path in (snapshot_path, archive_path):
-                    if path.exists():
-                        path.unlink()
+            return self._recover_locked()
+
+    def _recover_locked(self) -> list[str]:
+        """在已持有写锁时恢复未完成事务；adopt/revert 开头复用。
+
+        调用方必须是锁持有者：这里不再取锁，避免自锁。恢复只落旧态或新态，
+        读者仍只看到两态之一。
+        """
+        self.ensure()
+        actions: list[str] = []
+        for tmp in sorted((self.root / "generations").glob(".tmp-*")):
+            shutil.rmtree(tmp, ignore_errors=True)
+            actions.append(f"removed-tmp:{tmp.name}")
+        current = self.current()
+        current_gen = int(current["generation"]) if current else 0
+        for journal_path in sorted((self.root / "journal").glob("*.json")):
+            entry = json.loads(journal_path.read_text(encoding="utf-8"))
+            generation = int(entry["generation"])
+            if generation <= current_gen:
                 journal_path.unlink()
-                actions.append(f"aborted:{generation}")
-            fsync_dir(self.root / "journal")
+                actions.append(f"already-committed:{generation}")
+                continue
+            generation_dir = self.root / "generations" / f"{generation:08d}"
+            snapshot_path = self.root / "snapshots" / f"{entry['snapshot_id']}.json"
+            archive_path = self.root / "archive" / f"{entry['archive_id']}.json"
+            complete = generation_dir.exists() and snapshot_path.exists() and archive_path.exists()
+            if complete:
+                snapshot = self.read_snapshot(entry["snapshot_id"])
+                if verify_generation(generation_dir, snapshot):
+                    self._commit_pointer(
+                        {
+                            "generation": generation,
+                            "snapshot_id": entry["snapshot_id"],
+                            "genome_id": entry["genome_id"],
+                            "archive_id": entry["archive_id"],
+                            "tree_hash": snapshot.tree_hash,
+                        }
+                    )
+                    journal_path.unlink()
+                    actions.append(f"completed:{generation}")
+                    current_gen = generation
+                    continue
+            shutil.rmtree(generation_dir, ignore_errors=True)
+            for path in (snapshot_path, archive_path):
+                if path.exists():
+                    path.unlink()
+            journal_path.unlink()
+            actions.append(f"aborted:{generation}")
+        fsync_dir(self.root / "journal")
+        self.last_recovery = actions
         return actions
 
 

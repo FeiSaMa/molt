@@ -95,6 +95,28 @@ def evidence_metrics(value: Any) -> dict[str, Any]:
     return _metrics(value)
 
 
+def evidence_bundle(
+    *,
+    scenario_id: str,
+    scenario_version: str,
+    runs: Iterable[Any],
+    results: Iterable[Any],
+    decisions: Iterable[Any],
+) -> dict[str, Any]:
+    """把一次证据链收成 canonical evidence；写 manifest 与审计共用同一形状。"""
+    return {
+        "scenario_id": scenario_id,
+        "scenario_version": scenario_version,
+        "runs": [record.to_dict() for record in sorted(runs, key=lambda item: item.run_id)],
+        "results": [
+            record.to_dict() for record in sorted(results, key=lambda item: item.result_id)
+        ],
+        "decisions": [
+            record.to_dict() for record in sorted(decisions, key=lambda item: item.decision_id)
+        ],
+    }
+
+
 def _redact_string(value: str, rules: Iterable[RedactionRule]) -> tuple[str, int]:
     total = 0
     result = value
@@ -150,12 +172,21 @@ def redact_evidence(
     return result, manifest
 
 
-def write_redaction_manifest(state_root: Path, owner_id: str, manifest: dict[str, Any]) -> Path:
-    """把脱敏 manifest 落到 ``state/redaction/<owner>.json``。"""
+def _safe_owner(owner_id: str) -> str:
     safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in owner_id)
     if not safe:
         raise RedactionError(f"非法 owner_id: {owner_id!r}")
-    target = Path(state_root) / "redaction" / f"{safe}.json"
+    return safe
+
+
+def redaction_manifest_path(state_root: Path, owner_id: str) -> Path:
+    """manifest 的固定落点，写入与审计共用。"""
+    return Path(state_root) / "redaction" / f"{_safe_owner(owner_id)}.json"
+
+
+def write_redaction_manifest(state_root: Path, owner_id: str, manifest: dict[str, Any]) -> Path:
+    """把脱敏 manifest 落到 ``state/redaction/<owner>.json``。"""
+    target = redaction_manifest_path(state_root, owner_id)
     atomic_write_text(target, canonical_json_bytes(manifest).decode("utf-8"))
     return target
 

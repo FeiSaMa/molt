@@ -25,6 +25,7 @@
 | `title` | string | 是 |  |
 | `shell_id` | string | 是 |  |
 | `shell_version` | string | 是 |  |
+| `bench_hash` | sha256 | 是 | scenario 引用题集的题面树哈希：task.json + workspace + tests 全部文件 |
 | `task_sets` | task_sets | 是 |  |
 | `policy` | policy | 是 |  |
 | `isolation` | isolation | 是 |  |

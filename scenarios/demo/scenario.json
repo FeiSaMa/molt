@@ -5,6 +5,7 @@
   "title": "B1 demo：两题搜索集 + 一题留出集",
   "shell_id": "code-repair",
   "shell_version": "1.0.0",
+  "bench_hash": "fede4029d6095e035923afef309feeccf1fc9c178ce1f21a6222cb547b8107cb",
   "task_sets": {
     "search": ["smoke-add", "smoke-even"],
     "report": ["holdout-even"]

@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from molt.core.errors import GateError
+from molt.core.errors import GateError, IncomparableError
 from molt.core.types import Budget, GateDecision, Policy
 
 
@@ -28,6 +28,7 @@ class SideEval:
     """门禁一侧的输入。``overhead_spend_usd`` 是提案成本，单独计。"""
 
     genome_id: str
+    scenario_version: str
     tasks: tuple[TaskEval, ...]
     limits: Budget
     invalid_ratio: float
@@ -68,6 +69,13 @@ def decide(
     created_at: str,
 ) -> GateDecision:
     """按唯一不等式集合给出结论，并携带逐题配对表。"""
+    versions = {baseline.scenario_version, candidate.scenario_version, scenario_version}
+    if len(versions) > 1:
+        raise IncomparableError(
+            "跨 scenario_version 禁止比较："
+            f"baseline={baseline.scenario_version!r} "
+            f"candidate={candidate.scenario_version!r} scenario={scenario_version!r}"
+        )
     if baseline.total != candidate.total:
         raise GateError(f"配对题数不一致：{baseline.total} vs {candidate.total}")
     baseline_ids = [task.task_id for task in baseline.tasks]
@@ -166,11 +174,14 @@ def side_from_tasks(
     tasks: list[TaskEval],
     limits: Budget,
     invalid_ratio: float,
+    *,
+    scenario_version: str,
     overhead_spend_usd: float = 0.0,
 ) -> SideEval:
     """便捷构造器，保持 task 顺序。"""
     return SideEval(
         genome_id=genome_id,
+        scenario_version=scenario_version,
         tasks=tuple(tasks),
         limits=limits,
         invalid_ratio=invalid_ratio,
@@ -183,6 +194,8 @@ def task_side(
     tasks: list[dict[str, Any]],
     limits: Budget,
     invalid_ratio: float,
+    *,
+    scenario_version: str,
     overhead_spend_usd: float = 0.0,
 ) -> SideEval:
     """从 ``{task_id, passed, cost_usd}`` 列表构造一侧。"""
@@ -194,4 +207,11 @@ def task_side(
         )
         for item in tasks
     ]
-    return side_from_tasks(genome_id, parsed, limits, invalid_ratio, overhead_spend_usd)
+    return side_from_tasks(
+        genome_id,
+        parsed,
+        limits,
+        invalid_ratio,
+        scenario_version=scenario_version,
+        overhead_spend_usd=overhead_spend_usd,
+    )

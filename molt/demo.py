@@ -20,6 +20,7 @@ from molt.core.hash import sha256_file
 from molt.core.ledger import Ledger
 from molt.core.metrics import paired_rows_from_runs
 from molt.core.policy import SideEval, TaskEval
+from molt.core.redact import evidence_bundle, redact_evidence, write_redaction_manifest
 from molt.core.store import StateStore
 from molt.core.types import Genome, Scenario
 from molt.shell_loader import load_shell_module
@@ -212,6 +213,17 @@ def build_demo_state(
     events.materialize("search")
     events.materialize("report")
 
+    # 证据落盘后立刻脱敏并留 manifest；无 secret 时 metrics 相同、manifest 仍生成。
+    bundle = evidence_bundle(
+        scenario_id=scenario.scenario_id,
+        scenario_version=scenario.scenario_version,
+        runs=store.list_runs(),
+        results=store.list_results(),
+        decisions=store.list_decisions(),
+    )
+    _, redaction_manifest = redact_evidence(bundle)
+    manifest_path = write_redaction_manifest(store.root, scenario.scenario_id, redaction_manifest)
+
     summary = {
         "baseline_genome": baseline.genome_id,
         "candidate_genome": candidate.genome_id,
@@ -219,6 +231,7 @@ def build_demo_state(
         "decision": decision.verdict,
         "reason": decision.reason,
         "paired": paired,
+        "redaction_manifest": str(manifest_path),
         "baseline_report": baseline_report.scores["holdout"].to_dict(),
         "candidate_report": candidate_report.scores["holdout"].to_dict(),
     }
@@ -256,6 +269,7 @@ def _side(
         )
     return SideEval(
         genome_id=genome.genome_id,
+        scenario_version=scenario.scenario_version,
         tasks=tuple(tasks),
         limits=genome.budget,
         invalid_ratio=metrics.invalid_ratio,

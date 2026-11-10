@@ -120,6 +120,53 @@ store.adopt(genome, roots, result_refs=['r1'], note='crash', adopted_at='{FIXED}
     assert store.read_current()["generation"] == 1
 
 
+def _kill_mid_transaction(tmp_path: Path, roots: dict[str, Path]) -> subprocess.CompletedProcess:
+    script = f"""
+import os, signal, sys, json
+from pathlib import Path
+sys.path.insert(0, {str(ROOT)!r})
+from molt.core.store import StateStore
+from molt.core.types import Genome
+store = StateStore(Path({str(tmp_path / "state")!r}))
+genome = Genome.from_dict(json.loads(Path({str(ROOT / "shells/code-repair/genomes/v0.json")!r}).read_text()))
+roots = {{'molt/core': Path({str(roots["molt/core"])!r}), 'shells/code-repair': Path({str(roots["shells/code-repair"])!r})}}
+store._commit_pointer = lambda pointer: os.kill(os.getpid(), signal.SIGKILL)
+store.adopt(genome, roots, result_refs=['r1'], note='crash', adopted_at='{FIXED}')
+"""
+    env = dict(os.environ)
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    completed = subprocess.run(
+        [sys.executable, "-c", script], env=env, capture_output=True, text=True, check=False
+    )
+    assert completed.returncode == -signal.SIGKILL
+    return completed
+
+
+def test_adopt_auto_recovers_after_sigkill(tmp_path: Path) -> None:
+    roots = make_roots(tmp_path)
+    _kill_mid_transaction(tmp_path, roots)
+    store = StateStore(tmp_path / "state")
+    assert list((store.root / "journal").glob("*.json")), "被杀后应留下 journal"
+
+    archive = store.adopt(
+        load_genome(), roots, result_refs=["r2"], note="after-crash", adopted_at=FIXED
+    )
+    assert store.last_recovery == ["completed:1"]
+    assert archive.generation == 2
+    assert store.current()["generation"] == 2
+    assert not list((store.root / "journal").glob("*.json"))
+    assert store.read_current()["generation"] == 2
+    assert store.recover() == []
+
+
+def test_adopt_without_journal_reports_no_recovery(tmp_path: Path) -> None:
+    roots = make_roots(tmp_path)
+    store = StateStore(tmp_path / "state")
+    store.adopt(load_genome(), roots, result_refs=["r1"], note="", adopted_at=FIXED)
+    assert store.last_recovery == []
+    assert store.recover() == []
+
+
 def test_incomplete_journal_aborts_to_old_state(tmp_path: Path) -> None:
     store = StateStore(tmp_path / "state")
     store.ensure()

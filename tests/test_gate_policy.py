@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from pathlib import Path
 
@@ -38,7 +39,8 @@ def _side(case: dict, key: str):
         value["tasks"],
         Budget.from_dict(value["limits"]),
         float(value["invalid_ratio"]),
-        float(value.get("overhead_spend_usd", 0.0)),
+        scenario_version=case["scenario_version"],
+        overhead_spend_usd=float(value.get("overhead_spend_usd", 0.0)),
     )
 
 
@@ -135,6 +137,7 @@ def test_cost_per_solved_excludes_overhead() -> None:
         ],
         candidate.limits,
         candidate.invalid_ratio,
+        scenario_version="gate-1",
         overhead_spend_usd=1.5,
     )
     with_overhead = decide(
@@ -159,6 +162,7 @@ def test_pairing_mismatch_raises() -> None:
     candidate = _side(base, "candidate")
     shortened = candidate.__class__(
         genome_id=candidate.genome_id,
+        scenario_version=candidate.scenario_version,
         tasks=candidate.tasks[:-1],
         limits=candidate.limits,
         invalid_ratio=candidate.invalid_ratio,
@@ -169,6 +173,42 @@ def test_pairing_mismatch_raises() -> None:
             baseline,
             shortened,
             decision_id="d",
+            scenario_version="gate-1",
+            shell_version="1.0.0",
+            verifier_hash="a" * 64,
+            created_at="2026-01-01T00:00:00Z",
+        )
+
+
+def test_cross_scenario_version_is_rejected() -> None:
+    base = _cases()[0]
+    baseline = _side(base, "baseline")
+    candidate = _side(base, "candidate")
+    with pytest.raises(ValueError) as excinfo:
+        decide(
+            Policy.from_dict(base["policy"]),
+            baseline,
+            candidate,
+            decision_id="d-cross",
+            scenario_version="gate-2",
+            shell_version="1.0.0",
+            verifier_hash="a" * 64,
+            created_at="2026-01-01T00:00:00Z",
+        )
+    assert isinstance(excinfo.value, GateError)
+    assert isinstance(excinfo.value, ValueError)
+
+
+def test_side_scenario_version_must_match_scenario() -> None:
+    base = _cases()[0]
+    baseline = _side(base, "baseline")
+    candidate = dataclasses.replace(_side(base, "candidate"), scenario_version="gate-2")
+    with pytest.raises(GateError):
+        decide(
+            Policy.from_dict(base["policy"]),
+            baseline,
+            candidate,
+            decision_id="d-cross",
             scenario_version="gate-1",
             shell_version="1.0.0",
             verifier_hash="a" * 64,

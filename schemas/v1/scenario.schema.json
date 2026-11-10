@@ -12,6 +12,7 @@
     "title",
     "shell_id",
     "shell_version",
+    "bench_hash",
     "task_sets",
     "policy",
     "isolation",
@@ -43,6 +44,10 @@
     "shell_version": {
       "type": "string",
       "minLength": 1
+    },
+    "bench_hash": {
+      "$ref": "#/$defs/sha256",
+      "description": "scenario 引用题集的题面树哈希：task.json + workspace + tests 全部文件"
     },
     "task_sets": {
       "$ref": "#/$defs/task_sets"

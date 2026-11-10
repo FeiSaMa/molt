@@ -14,13 +14,28 @@ from pathlib import Path
 from typing import Any
 
 from molt.core.errors import AuditError, ValidationError
+from molt.core.hash import canonical_json_bytes, content_hash, sha256_bytes
 from molt.core.metrics import metrics_from_runs
 from molt.core.policy import SideEval, TaskEval, decide
-from molt.core.redact import scan_secrets
+from molt.core.redact import (
+    REDACTION_VERSION,
+    evidence_bundle,
+    evidence_metrics,
+    redaction_manifest_path,
+    scan_secrets,
+)
 from molt.core.store import StateStore
 from molt.core.types import GateDecision, Result, Run, Scenario, ScoreBlock
 
 TOLERANCE = 1e-9
+OVERHEAD_OWNER_PREFIX = "prop-"
+REDACTION_MANIFEST_KEYS: tuple[str, ...] = (
+    "redaction_version",
+    "source_hash",
+    "metrics_hash",
+    "pre_metrics",
+    "post_metrics",
+)
 
 
 def _score_equal(left: ScoreBlock, right: ScoreBlock) -> bool:
@@ -65,6 +80,7 @@ def _side_from_decision(
     limits,
     invalid_ratio: float,
     overhead_spend_usd: float,
+    scenario_version: str,
 ) -> SideEval:
     tasks = []
     for row in decision.paired:
@@ -77,11 +93,45 @@ def _side_from_decision(
         )
     return SideEval(
         genome_id=decision.scores[side]["genome_id"],
+        scenario_version=scenario_version,
         tasks=tuple(tasks),
         limits=limits,
         invalid_ratio=invalid_ratio,
         overhead_spend_usd=overhead_spend_usd,
     )
+
+
+def _runs_for_result(result: Result, runs: dict[str, Run]) -> tuple[list[Run], list[str]]:
+    """按 ``run_refs`` 取 run；缺失引用单独返回，不静默丢弃。"""
+    found: list[Run] = []
+    missing: list[str] = []
+    for ref in result.run_refs:
+        run = runs.get(ref)
+        if run is None:
+            missing.append(ref)
+        else:
+            found.append(run)
+    return found, missing
+
+
+def _overhead_from_ledger(ledger, inputs: dict[str, Any]) -> float:
+    """``kind=="overhead"`` 条目求和；默认只看 ``prop-*.jsonl``。
+
+    ``inputs.proposal_ids`` 存在时只对账这些提案（多决策场景）。
+    """
+    selected = inputs.get("proposal_ids")
+    selected_owners = {str(item) for item in selected} if isinstance(selected, list) else None
+    total = 0.0
+    for owner in ledger.owners():
+        if selected_owners is not None:
+            if owner not in selected_owners:
+                continue
+        elif not owner.startswith(OVERHEAD_OWNER_PREFIX):
+            continue
+        for entry in ledger.read(owner):
+            if entry.get("kind") == "overhead":
+                total += float(entry.get("cost_usd", 0.0))
+    return total
 
 
 def _iter_state_text_files(root: Path) -> Iterable[Path]:
@@ -125,6 +175,7 @@ def audit_state(
         if abs(total - run.usage.cost_usd) > TOLERANCE:
             errors.append(f"run {run.run_id} 成本与账本不一致: {run.usage.cost_usd} != {total}")
 
+    ledger = store_ledger(store)
     for decision in decisions:
         try:
             baseline_genome = store.read_genome(decision.baseline_genome_id)
@@ -132,26 +183,78 @@ def audit_state(
         except ValidationError as exc:
             errors.append(f"decision {decision.decision_id} 缺少 genome: {exc}")
             continue
-        inputs = decision.ext.get("inputs", {})
-        overhead = float(decision.ext.get("overhead_spend_usd", 0.0))
-        baseline_ratio = decision.invalid_ratio["baseline"]
-        candidate_ratio = decision.invalid_ratio["candidate"]
+        if decision.scenario_version != scenario.scenario_version:
+            errors.append(
+                f"decision {decision.decision_id}.scenario_version="
+                f"{decision.scenario_version!r} 与 scenario={scenario.scenario_version!r} 不一致"
+            )
+        # invalid ratio 只能从 run 重算；ext.inputs 缺失即失败，不得回退到 decision 自述值。
+        inputs = decision.ext.get("inputs")
+        if not isinstance(inputs, dict):
+            errors.append(
+                f"decision {decision.decision_id} 缺少 ext.inputs，"
+                "无法从 run 重算 invalid_ratio（拒绝回退到 decision 自述值）"
+            )
+            continue
         baseline_result = _maybe_result(results, inputs.get("baseline_result_id"))
         candidate_result = _maybe_result(results, inputs.get("candidate_result_id"))
-        if baseline_result is not None and candidate_result is not None:
-            baseline_runs = [runs[ref] for ref in baseline_result.run_refs if ref in runs]
-            candidate_runs = [runs[ref] for ref in candidate_result.run_refs if ref in runs]
-            baseline_ratio = metrics_from_runs(
-                baseline_runs, scenario.task_sets["search"]
-            ).invalid_ratio
-            candidate_ratio = metrics_from_runs(
-                candidate_runs, scenario.task_sets["search"]
-            ).invalid_ratio
+        if baseline_result is None or candidate_result is None:
+            errors.append(
+                f"decision {decision.decision_id} ext.inputs 引用的 result 不存在: "
+                f"{baseline_result is None} baseline / {candidate_result is None} candidate"
+            )
+            continue
+        baseline_runs, missing = _runs_for_result(baseline_result, runs)
+        if missing:
+            errors.append(
+                f"decision {decision.decision_id} baseline result 引用不存在的 run {missing}"
+            )
+            continue
+        candidate_runs, missing = _runs_for_result(candidate_result, runs)
+        if missing:
+            errors.append(
+                f"decision {decision.decision_id} candidate result 引用不存在的 run {missing}"
+            )
+            continue
+        baseline_ratio = metrics_from_runs(
+            [run for run in baseline_runs if run.scope == "search"],
+            scenario.task_sets["search"],
+        ).invalid_ratio
+        candidate_ratio = metrics_from_runs(
+            [run for run in candidate_runs if run.scope == "search"],
+            scenario.task_sets["search"],
+        ).invalid_ratio
+        # overhead 只能与 prop-*.jsonl 的 overhead 条目对账。
+        ledger_overhead = _overhead_from_ledger(ledger, inputs)
+        declared_overhead = decision.ext.get("overhead_spend_usd")
+        if isinstance(declared_overhead, bool) or not isinstance(declared_overhead, int | float):
+            errors.append(
+                f"decision {decision.decision_id} 缺少合法的 ext.overhead_spend_usd"
+                f"（ledger 实际 {ledger_overhead}）"
+            )
+            continue
+        overhead = float(declared_overhead)
+        if abs(overhead - ledger_overhead) > TOLERANCE:
+            errors.append(
+                f"decision {decision.decision_id}.ext.overhead_spend_usd={overhead} "
+                f"与 ledger overhead 合计 {ledger_overhead} 不一致"
+            )
+            continue
         baseline = _side_from_decision(
-            decision, "baseline", baseline_genome.budget, baseline_ratio, 0.0
+            decision,
+            "baseline",
+            baseline_genome.budget,
+            baseline_ratio,
+            0.0,
+            scenario.scenario_version,
         )
         candidate = _side_from_decision(
-            decision, "candidate", candidate_genome.budget, candidate_ratio, overhead
+            decision,
+            "candidate",
+            candidate_genome.budget,
+            candidate_ratio,
+            overhead,
+            scenario.scenario_version,
         )
         replayed_decision = decide(
             scenario.policy,
@@ -182,6 +285,8 @@ def audit_state(
     if not any(event.type == "holdout.accessed" for event in report_events):
         errors.append("report 流缺少 holdout.accessed 事件")
 
+    _check_redaction_manifest(store, scenario, list(runs.values()), results, decisions, errors)
+
     if check_secrets:
         for path in _iter_state_text_files(store.root):
             hits = scan_secrets(path.read_text(encoding="utf-8"))
@@ -197,6 +302,55 @@ def audit_state(
         "events": len(events),
         "report_events": len(report_events),
     }
+
+
+def _check_redaction_manifest(
+    store: StateStore,
+    scenario: Scenario,
+    runs: list[Run],
+    results: list[Result],
+    decisions: list[GateDecision],
+    errors: list[str],
+) -> None:
+    """manifest 必须存在，且 pre/post 指标与当前证据链重算一致。"""
+    path = redaction_manifest_path(store.root, scenario.scenario_id)
+    if not path.exists():
+        errors.append(f"缺少脱敏 manifest: {path}")
+        return
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        errors.append(f"脱敏 manifest 不可解析 {path}: {exc}")
+        return
+    if not isinstance(manifest, dict):
+        errors.append(f"脱敏 manifest 必须是 object: {path}")
+        return
+    missing = [key for key in REDACTION_MANIFEST_KEYS if key not in manifest]
+    if missing:
+        errors.append(f"脱敏 manifest 缺少字段 {missing}: {path}")
+        return
+    if manifest["redaction_version"] != REDACTION_VERSION:
+        errors.append(
+            f"脱敏 manifest redaction_version={manifest['redaction_version']!r} "
+            f"与 {REDACTION_VERSION!r} 不一致"
+        )
+    pre = manifest["pre_metrics"]
+    post = manifest["post_metrics"]
+    if pre != post:
+        errors.append("脱敏前后指标不一致: pre_metrics != post_metrics")
+    if manifest["metrics_hash"] != content_hash(pre):
+        errors.append("脱敏 manifest.metrics_hash 与 pre_metrics 内容哈希不一致")
+    bundle = evidence_bundle(
+        scenario_id=scenario.scenario_id,
+        scenario_version=scenario.scenario_version,
+        runs=runs,
+        results=results,
+        decisions=decisions,
+    )
+    if manifest["source_hash"] != sha256_bytes(canonical_json_bytes(bundle)):
+        errors.append("脱敏 manifest.source_hash 与当前证据链不一致")
+    if content_hash(pre) != content_hash(evidence_metrics(bundle)):
+        errors.append("脱敏 manifest.pre_metrics 与当前证据链重算不一致")
 
 
 def _maybe_result(results: list[Result], result_id: Any) -> Result | None:
