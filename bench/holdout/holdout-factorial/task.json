@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "holdout-factorial",
+  "scenario_version": "demo-6",
+  "shell_id": "code-repair",
+  "scope": "report",
+  "title": "留出题：阶乘基例",
+  "workspace_ref": "bench/holdout/holdout-factorial/workspace",
+  "tests_ref": "bench/holdout/holdout-factorial/tests",
+  "timeout_s": 30,
+  "ext": {
+    "fixture": {
+      "target": "solution.py",
+      "solution": "def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n",
+      "solvable_at": [
+        "high"
+      ],
+      "base_cost_usd": 0.2
+    }
+  }
+}

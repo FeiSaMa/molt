@@ -294,7 +294,7 @@ def test_harness_defaults_to_grid() -> None:
     assert proposal.ext["source"] == "grid"
     assert proposal.ext["fallback"] == {"used": False, "reason": None}
     assert proposal.switches.to_dict() == {
-        "thinking": "low",
+        "thinking": "off",
         "context": "full",
         "tools": "bash",
     }

@@ -1,4 +1,4 @@
 {"event_id":"ev-demo-result-baseline-report","ext":{},"payload":{"result_id":"result-baseline-report"},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-01-01T00:00:00Z","type":"report.scored"}
 {"event_id":"ev-demo-result-candidate-report","ext":{},"payload":{"result_id":"result-candidate-report"},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-01-01T00:00:00Z","type":"report.scored"}
-{"event_id":"ev-3e2848cbe4404557","ext":{},"payload":{"count":1},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-11-10T15:41:53Z","type":"holdout.accessed"}
-{"event_id":"ev-d2394254f42a47b3","ext":{},"payload":{"count":1},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-11-10T15:41:53Z","type":"holdout.accessed"}
+{"event_id":"ev-5228bd0c817d4936","ext":{},"payload":{"count":5},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-11-10T15:56:08Z","type":"holdout.accessed"}
+{"event_id":"ev-98163645417d4450","ext":{},"payload":{"count":5},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-11-10T15:56:08Z","type":"holdout.accessed"}

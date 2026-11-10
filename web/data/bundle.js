@@ -8,26 +8,26 @@ window.MOLT_VIEW = {
         "adopted_at": null,
         "archive_id": null,
         "generation": null,
-        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
-        "parent_id": null
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+        "parent_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c"
       },
       {
         "adopted": false,
         "adopted_at": null,
         "archive_id": null,
         "generation": null,
-        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
-        "parent_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504"
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+        "parent_id": null
       }
     ]
   },
   "audit": {
     "checked": {
       "decisions": 1,
-      "events": 14,
+      "events": 46,
       "report_events": 4,
       "results": 4,
-      "runs": 6
+      "runs": 30
     },
     "mismatches": [],
     "ok": true
@@ -59,27 +59,27 @@ window.MOLT_VIEW = {
         "type": "report.scored"
       },
       {
-        "event_id": "ev-3e2848cbe4404557",
+        "event_id": "ev-5228bd0c817d4936",
         "ext": {},
         "payload": {
-          "count": 1
+          "count": 5
         },
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T15:41:53Z",
+        "ts": "2026-11-10T15:56:08Z",
         "type": "holdout.accessed"
       },
       {
-        "event_id": "ev-d2394254f42a47b3",
+        "event_id": "ev-98163645417d4450",
         "ext": {},
         "payload": {
-          "count": 1
+          "count": 5
         },
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T15:41:53Z",
+        "ts": "2026-11-10T15:56:08Z",
         "type": "holdout.accessed"
       }
     ],
@@ -101,8 +101,8 @@ window.MOLT_VIEW = {
         "event_id": "ev-demo-proposal",
         "ext": {},
         "payload": {
-          "parent_genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
-          "proposal_id": "prop-bd64141f69a0b44a"
+          "parent_genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+          "proposal_id": "prop-e9901fc4901d9f76"
         },
         "run_id": null,
         "schema_version": "1.0.0",
@@ -111,107 +111,523 @@ window.MOLT_VIEW = {
         "type": "proposal.generated"
       },
       {
-        "event_id": "ev-0ad2f47771334556",
+        "event_id": "ev-3565033acb294d1e",
         "ext": {},
         "payload": {
-          "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+          "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
           "task_id": "smoke-add"
         },
-        "run_id": "ec10a3a2-smoke-add-a1-f004c4",
+        "run_id": "6b492ef0-smoke-add-a1-ce6ccf",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:41:53Z",
+        "ts": "2026-11-10T15:56:05Z",
         "type": "run.started"
       },
       {
-        "event_id": "ev-4016c66ae0f34741",
+        "event_id": "ev-52018e081d2542d2",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-add"
         },
-        "run_id": "6574e7ca-smoke-add-a1-1ff5e8",
+        "run_id": "6b492ef0-smoke-add-a1-ce6ccf",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:41:53Z",
+        "ts": "2026-11-10T15:56:05Z",
         "type": "run.finished"
       },
       {
-        "event_id": "ev-79698822919043ed",
+        "event_id": "ev-7f07656a0172481e",
         "ext": {},
         "payload": {
-          "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
-          "task_id": "smoke-add"
+          "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+          "task_id": "search-off-by-one"
         },
-        "run_id": "6574e7ca-smoke-add-a1-1ff5e8",
+        "run_id": "6b492ef0-search-off-by-one-a1-20e432",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:41:53Z",
+        "ts": "2026-11-10T15:56:05Z",
         "type": "run.started"
       },
       {
-        "event_id": "ev-79886f5640584539",
-        "ext": {},
-        "payload": {
-          "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
-          "task_id": "smoke-even"
-        },
-        "run_id": "ec10a3a2-smoke-even-a1-e5e11c",
-        "schema_version": "1.0.0",
-        "scope": "search",
-        "ts": "2026-11-10T15:41:53Z",
-        "type": "run.started"
-      },
-      {
-        "event_id": "ev-89b07130d90840cb",
+        "event_id": "ev-813fad37af4a4eec",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-even"
         },
-        "run_id": "ec10a3a2-smoke-even-a1-e5e11c",
+        "run_id": "6b492ef0-smoke-even-a1-798742",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:41:53Z",
+        "ts": "2026-11-10T15:56:05Z",
         "type": "run.finished"
       },
       {
-        "event_id": "ev-d35672b819ce45b4",
+        "event_id": "ev-b63e53b4013e4d8b",
         "ext": {},
         "payload": {
-          "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+          "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
           "task_id": "smoke-even"
         },
-        "run_id": "6574e7ca-smoke-even-a1-4a3919",
+        "run_id": "6b492ef0-smoke-even-a1-798742",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:41:53Z",
+        "ts": "2026-11-10T15:56:05Z",
         "type": "run.started"
       },
       {
-        "event_id": "ev-d56cc39926b24e14",
+        "event_id": "ev-055f5502a4d948a0",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+          "task_id": "search-missing-return"
+        },
+        "run_id": "6b492ef0-search-missing-return-a1-710ec6",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-080ddbd80cff4e72",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+          "task_id": "search-slug"
+        },
+        "run_id": "6b492ef0-search-slug-a1-48ace4",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-09a279fc9bc24f58",
+        "ext": {},
+        "payload": {
+          "outcome": "failed",
+          "task_id": "search-mean"
+        },
+        "run_id": "6b492ef0-search-mean-a1-a561c8",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-28540f2d21964888",
+        "ext": {},
+        "payload": {
+          "outcome": "failed",
+          "task_id": "search-wrong-var"
+        },
+        "run_id": "6b492ef0-search-wrong-var-a1-f7308d",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-32b9fbe383504b95",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+          "task_id": "search-max-two"
+        },
+        "run_id": "6b492ef0-search-max-two-a1-da2c8f",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-3e249851731e4fd5",
+        "ext": {},
+        "payload": {
+          "outcome": "failed",
+          "task_id": "search-clamp"
+        },
+        "run_id": "6b492ef0-search-clamp-a1-326c50",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-82eb0e222b5e4905",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+          "task_id": "search-clamp"
+        },
+        "run_id": "6b492ef0-search-clamp-a1-326c50",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-8330db5fcbf24edf",
+        "ext": {},
+        "payload": {
+          "outcome": "failed",
+          "task_id": "search-max-two"
+        },
+        "run_id": "6b492ef0-search-max-two-a1-da2c8f",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-91628ccf24924037",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+          "task_id": "search-wrong-var"
+        },
+        "run_id": "6b492ef0-search-wrong-var-a1-f7308d",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-a6af6441dee14a24",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "search-off-by-one"
+        },
+        "run_id": "6b492ef0-search-off-by-one-a1-20e432",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-b0820aa328d74cee",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+          "task_id": "smoke-add"
+        },
+        "run_id": "4cdd5ba5-smoke-add-a1-000a4a",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-c2a53cb812944a5b",
+        "ext": {},
+        "payload": {
+          "outcome": "failed",
+          "task_id": "search-missing-return"
+        },
+        "run_id": "6b492ef0-search-missing-return-a1-710ec6",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-cbec779c491f4c0c",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+          "task_id": "search-slice"
+        },
+        "run_id": "6b492ef0-search-slice-a1-ee7ef6",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-daa5cec488ad4186",
+        "ext": {},
+        "payload": {
+          "outcome": "failed",
+          "task_id": "search-slug"
+        },
+        "run_id": "6b492ef0-search-slug-a1-48ace4",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-e10a116881a84712",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+          "task_id": "search-mean"
+        },
+        "run_id": "6b492ef0-search-mean-a1-a561c8",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-f7ebdfc86255492e",
+        "ext": {},
+        "payload": {
+          "outcome": "failed",
+          "task_id": "search-slice"
+        },
+        "run_id": "6b492ef0-search-slice-a1-ee7ef6",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:06Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-0407b82d7bc044f6",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "search-mean"
+        },
+        "run_id": "4cdd5ba5-search-mean-a1-346f96",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-06273068200646f9",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+          "task_id": "search-clamp"
+        },
+        "run_id": "4cdd5ba5-search-clamp-a1-503430",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-06f74ad11dc540ce",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+          "task_id": "smoke-even"
+        },
+        "run_id": "4cdd5ba5-smoke-even-a1-19b52b",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-070a98537ea64caf",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-even"
         },
-        "run_id": "6574e7ca-smoke-even-a1-4a3919",
+        "run_id": "4cdd5ba5-smoke-even-a1-19b52b",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:41:53Z",
+        "ts": "2026-11-10T15:56:07Z",
         "type": "run.finished"
       },
       {
-        "event_id": "ev-e74a6fd916364a66",
+        "event_id": "ev-082c2a8bfc3b46e5",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "search-wrong-var"
+        },
+        "run_id": "4cdd5ba5-search-wrong-var-a1-cffb04",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-174911e8630b45b1",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-add"
         },
-        "run_id": "ec10a3a2-smoke-add-a1-f004c4",
+        "run_id": "4cdd5ba5-smoke-add-a1-000a4a",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:41:53Z",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-1eb2c4d75b9d4e73",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+          "task_id": "search-max-two"
+        },
+        "run_id": "4cdd5ba5-search-max-two-a1-fe5353",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-34efadfc473c4546",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "search-max-two"
+        },
+        "run_id": "4cdd5ba5-search-max-two-a1-fe5353",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-390f6cf054804f04",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+          "task_id": "search-mean"
+        },
+        "run_id": "4cdd5ba5-search-mean-a1-346f96",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-57315191ac474faf",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+          "task_id": "search-wrong-var"
+        },
+        "run_id": "4cdd5ba5-search-wrong-var-a1-cffb04",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-740fc4ea5379443c",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+          "task_id": "search-slice"
+        },
+        "run_id": "4cdd5ba5-search-slice-a1-bb322e",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-74da39737228452e",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+          "task_id": "search-off-by-one"
+        },
+        "run_id": "4cdd5ba5-search-off-by-one-a1-7dfd6f",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-8dbc37c6c4f843dc",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "search-slug"
+        },
+        "run_id": "4cdd5ba5-search-slug-a1-703936",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-90360c78d6484a5e",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+          "task_id": "search-slug"
+        },
+        "run_id": "4cdd5ba5-search-slug-a1-703936",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-9d3ebec752e24cb6",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "search-off-by-one"
+        },
+        "run_id": "4cdd5ba5-search-off-by-one-a1-7dfd6f",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-ace20f6ec4834941",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "search-missing-return"
+        },
+        "run_id": "4cdd5ba5-search-missing-return-a1-241290",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-ba8a57ddd48b46de",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "search-slice"
+        },
+        "run_id": "4cdd5ba5-search-slice-a1-bb322e",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-f91354fceb3f4b15",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+          "task_id": "search-missing-return"
+        },
+        "run_id": "4cdd5ba5-search-missing-return-a1-241290",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:07Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-bbfc31ba822d4219",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "search-clamp"
+        },
+        "run_id": "4cdd5ba5-search-clamp-a1-503430",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:56:08Z",
         "type": "run.finished"
       }
     ]
@@ -220,19 +636,19 @@ window.MOLT_VIEW = {
     "decision_count": 1,
     "decisions": [
       {
-        "baseline_genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+        "baseline_genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
         "budget_check": {
           "execution_exceeded": false,
           "overhead_exceeded": false,
           "reason": "ok"
         },
-        "candidate_genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+        "candidate_genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
         "created_at": "2026-01-01T00:00:00Z",
         "decision_id": "demo-decision-1",
         "deltas": {
-          "cost_per_solved_usd": -0.92,
-          "cost_total_usd": -1.84,
-          "solved": 0
+          "cost_per_solved_usd": -0.245333,
+          "cost_total_usd": 1.84,
+          "solved": 7
         },
         "ext": {
           "inputs": {
@@ -250,22 +666,94 @@ window.MOLT_VIEW = {
         "limits_identical": true,
         "pairs": [
           {
-            "baseline_cost_usd": 1.84,
+            "baseline_cost_usd": 0.184,
             "baseline_passed": true,
-            "candidate_cost_usd": 0.92,
+            "candidate_cost_usd": 0.368,
             "candidate_passed": true,
-            "cost_delta_usd": -0.92,
+            "cost_delta_usd": 0.184,
             "passed_delta": 0,
             "task_id": "smoke-add"
           },
           {
-            "baseline_cost_usd": 1.84,
+            "baseline_cost_usd": 0.184,
             "baseline_passed": true,
-            "candidate_cost_usd": 0.92,
+            "candidate_cost_usd": 0.368,
             "candidate_passed": true,
-            "cost_delta_usd": -0.92,
+            "cost_delta_usd": 0.184,
             "passed_delta": 0,
             "task_id": "smoke-even"
+          },
+          {
+            "baseline_cost_usd": 0.184,
+            "baseline_passed": true,
+            "candidate_cost_usd": 0.368,
+            "candidate_passed": true,
+            "cost_delta_usd": 0.184,
+            "passed_delta": 0,
+            "task_id": "search-off-by-one"
+          },
+          {
+            "baseline_cost_usd": 0.184,
+            "baseline_passed": false,
+            "candidate_cost_usd": 0.368,
+            "candidate_passed": true,
+            "cost_delta_usd": 0.184,
+            "passed_delta": 1,
+            "task_id": "search-max-two"
+          },
+          {
+            "baseline_cost_usd": 0.184,
+            "baseline_passed": false,
+            "candidate_cost_usd": 0.368,
+            "candidate_passed": true,
+            "cost_delta_usd": 0.184,
+            "passed_delta": 1,
+            "task_id": "search-missing-return"
+          },
+          {
+            "baseline_cost_usd": 0.184,
+            "baseline_passed": false,
+            "candidate_cost_usd": 0.368,
+            "candidate_passed": true,
+            "cost_delta_usd": 0.184,
+            "passed_delta": 1,
+            "task_id": "search-wrong-var"
+          },
+          {
+            "baseline_cost_usd": 0.184,
+            "baseline_passed": false,
+            "candidate_cost_usd": 0.368,
+            "candidate_passed": true,
+            "cost_delta_usd": 0.184,
+            "passed_delta": 1,
+            "task_id": "search-slice"
+          },
+          {
+            "baseline_cost_usd": 0.184,
+            "baseline_passed": false,
+            "candidate_cost_usd": 0.368,
+            "candidate_passed": true,
+            "cost_delta_usd": 0.184,
+            "passed_delta": 1,
+            "task_id": "search-mean"
+          },
+          {
+            "baseline_cost_usd": 0.184,
+            "baseline_passed": false,
+            "candidate_cost_usd": 0.368,
+            "candidate_passed": true,
+            "cost_delta_usd": 0.184,
+            "passed_delta": 1,
+            "task_id": "search-slug"
+          },
+          {
+            "baseline_cost_usd": 0.184,
+            "baseline_passed": false,
+            "candidate_cost_usd": 0.368,
+            "candidate_passed": true,
+            "cost_delta_usd": 0.184,
+            "passed_delta": 1,
+            "task_id": "search-clamp"
           }
         ],
         "reason": "lower_cost_per_solved",
@@ -274,16 +762,16 @@ window.MOLT_VIEW = {
         ],
         "scores": {
           "baseline": {
-            "cost_per_solved_usd": 1.84,
-            "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
-            "solved": 2,
-            "total": 2
+            "cost_per_solved_usd": 0.6133333333333333,
+            "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+            "solved": 3,
+            "total": 10
           },
           "candidate": {
-            "cost_per_solved_usd": 0.92,
-            "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
-            "solved": 2,
-            "total": 2
+            "cost_per_solved_usd": 0.368,
+            "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+            "solved": 10,
+            "total": 10
           }
         },
         "verdict": "adopt"
@@ -308,13 +796,13 @@ window.MOLT_VIEW = {
             "used": false
           },
           "history": {
-            "entries": 2,
+            "entries": 10,
             "excluded": 0,
-            "scenario_version": "demo-5"
+            "scenario_version": "demo-6"
           },
           "model": "grid",
-          "prompt_sha256": "cfbbf0bf5c86d6748ab4099bb175e908ac24823fab6532fc304d3cee20bae2ad",
-          "response_sha256": "4882586f82eabe8bec05db050b740f6cf08007a9fb679f63672d93d7bc4b2cec",
+          "prompt_sha256": "ff91987ccce8b39daddae700aa981684dfd92703030c3b1b9d90524a6380a7ee",
+          "response_sha256": "733bd12f2c6273fd56fba9ca828f6a95967719003d1f9b39cc80194de16b683d",
           "source": "grid",
           "usage": {
             "cache_read": 0,
@@ -325,23 +813,23 @@ window.MOLT_VIEW = {
             "total": 0
           }
         },
-        "parent_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
-        "proposal_id": "prop-bd64141f69a0b44a",
+        "parent_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+        "proposal_id": "prop-e9901fc4901d9f76",
         "proposer_id": "grid",
         "rationale": "grid step: 三维枚举",
-        "scenario_version": "demo-5",
+        "scenario_version": "demo-6",
         "schema_version": "1.0.0",
         "switches": {
           "context": "full",
-          "thinking": "low",
+          "thinking": "high",
           "tools": "bash"
         }
       }
     ]
   },
   "redaction": {
-    "canonical_hash": "1809eab3acf6f879b99e5d83fdb1ed5be91a2d199eae52ce4cbc0506d1792cd1",
-    "metrics_hash": "2536285d795b9c8f9dde4863f3cdcc81b1501b2f161a7138eefb4e6bcf20c8eb",
+    "canonical_hash": "00d16e386b11a634551b9d536841b1b76c8943c9cbb428c69cefdc623f91dd5c",
+    "metrics_hash": "8325d0ddd3c6b0459542383b8f2abd23f3a779c7bd4026ee49a449c5fd9cbaed",
     "post_metrics": {
       "keys": [
         "$.decisions",
@@ -375,6 +863,46 @@ window.MOLT_VIEW = {
         "$.decisions[0].paired[1].candidate_cost_usd",
         "$.decisions[0].paired[1].candidate_passed",
         "$.decisions[0].paired[1].task_id",
+        "$.decisions[0].paired[2].baseline_cost_usd",
+        "$.decisions[0].paired[2].baseline_passed",
+        "$.decisions[0].paired[2].candidate_cost_usd",
+        "$.decisions[0].paired[2].candidate_passed",
+        "$.decisions[0].paired[2].task_id",
+        "$.decisions[0].paired[3].baseline_cost_usd",
+        "$.decisions[0].paired[3].baseline_passed",
+        "$.decisions[0].paired[3].candidate_cost_usd",
+        "$.decisions[0].paired[3].candidate_passed",
+        "$.decisions[0].paired[3].task_id",
+        "$.decisions[0].paired[4].baseline_cost_usd",
+        "$.decisions[0].paired[4].baseline_passed",
+        "$.decisions[0].paired[4].candidate_cost_usd",
+        "$.decisions[0].paired[4].candidate_passed",
+        "$.decisions[0].paired[4].task_id",
+        "$.decisions[0].paired[5].baseline_cost_usd",
+        "$.decisions[0].paired[5].baseline_passed",
+        "$.decisions[0].paired[5].candidate_cost_usd",
+        "$.decisions[0].paired[5].candidate_passed",
+        "$.decisions[0].paired[5].task_id",
+        "$.decisions[0].paired[6].baseline_cost_usd",
+        "$.decisions[0].paired[6].baseline_passed",
+        "$.decisions[0].paired[6].candidate_cost_usd",
+        "$.decisions[0].paired[6].candidate_passed",
+        "$.decisions[0].paired[6].task_id",
+        "$.decisions[0].paired[7].baseline_cost_usd",
+        "$.decisions[0].paired[7].baseline_passed",
+        "$.decisions[0].paired[7].candidate_cost_usd",
+        "$.decisions[0].paired[7].candidate_passed",
+        "$.decisions[0].paired[7].task_id",
+        "$.decisions[0].paired[8].baseline_cost_usd",
+        "$.decisions[0].paired[8].baseline_passed",
+        "$.decisions[0].paired[8].candidate_cost_usd",
+        "$.decisions[0].paired[8].candidate_passed",
+        "$.decisions[0].paired[8].task_id",
+        "$.decisions[0].paired[9].baseline_cost_usd",
+        "$.decisions[0].paired[9].baseline_passed",
+        "$.decisions[0].paired[9].candidate_cost_usd",
+        "$.decisions[0].paired[9].candidate_passed",
+        "$.decisions[0].paired[9].task_id",
         "$.decisions[0].reason",
         "$.decisions[0].scenario_version",
         "$.decisions[0].schema_version",
@@ -644,6 +1172,667 @@ window.MOLT_VIEW = {
         "$.runs[5].verification.tests_hash_after",
         "$.runs[5].verification.tests_hash_before",
         "$.runs[5].verifier_hash",
+        "$.runs[6].artifacts",
+        "$.runs[6].artifacts.solution.py",
+        "$.runs[6].attempt",
+        "$.runs[6].ext",
+        "$.runs[6].ext.abnormal",
+        "$.runs[6].ext.thinking",
+        "$.runs[6].finished_at",
+        "$.runs[6].genome_id",
+        "$.runs[6].outcome",
+        "$.runs[6].run_id",
+        "$.runs[6].scenario_version",
+        "$.runs[6].schema_version",
+        "$.runs[6].scope",
+        "$.runs[6].seed_control",
+        "$.runs[6].shell_version",
+        "$.runs[6].started_at",
+        "$.runs[6].task_id",
+        "$.runs[6].usage",
+        "$.runs[6].usage.cost_usd",
+        "$.runs[6].usage.tokens_in",
+        "$.runs[6].usage.tokens_out",
+        "$.runs[6].usage.turns",
+        "$.runs[6].usage.wall_ms",
+        "$.runs[6].verification",
+        "$.runs[6].verification.matches",
+        "$.runs[6].verification.tests_hash_after",
+        "$.runs[6].verification.tests_hash_before",
+        "$.runs[6].verifier_hash",
+        "$.runs[7].artifacts",
+        "$.runs[7].artifacts.solution.py",
+        "$.runs[7].attempt",
+        "$.runs[7].ext",
+        "$.runs[7].ext.abnormal",
+        "$.runs[7].ext.thinking",
+        "$.runs[7].finished_at",
+        "$.runs[7].genome_id",
+        "$.runs[7].outcome",
+        "$.runs[7].run_id",
+        "$.runs[7].scenario_version",
+        "$.runs[7].schema_version",
+        "$.runs[7].scope",
+        "$.runs[7].seed_control",
+        "$.runs[7].shell_version",
+        "$.runs[7].started_at",
+        "$.runs[7].task_id",
+        "$.runs[7].usage",
+        "$.runs[7].usage.cost_usd",
+        "$.runs[7].usage.tokens_in",
+        "$.runs[7].usage.tokens_out",
+        "$.runs[7].usage.turns",
+        "$.runs[7].usage.wall_ms",
+        "$.runs[7].verification",
+        "$.runs[7].verification.matches",
+        "$.runs[7].verification.tests_hash_after",
+        "$.runs[7].verification.tests_hash_before",
+        "$.runs[7].verifier_hash",
+        "$.runs[8].artifacts",
+        "$.runs[8].artifacts.solution.py",
+        "$.runs[8].attempt",
+        "$.runs[8].ext",
+        "$.runs[8].ext.abnormal",
+        "$.runs[8].ext.thinking",
+        "$.runs[8].finished_at",
+        "$.runs[8].genome_id",
+        "$.runs[8].outcome",
+        "$.runs[8].run_id",
+        "$.runs[8].scenario_version",
+        "$.runs[8].schema_version",
+        "$.runs[8].scope",
+        "$.runs[8].seed_control",
+        "$.runs[8].shell_version",
+        "$.runs[8].started_at",
+        "$.runs[8].task_id",
+        "$.runs[8].usage",
+        "$.runs[8].usage.cost_usd",
+        "$.runs[8].usage.tokens_in",
+        "$.runs[8].usage.tokens_out",
+        "$.runs[8].usage.turns",
+        "$.runs[8].usage.wall_ms",
+        "$.runs[8].verification",
+        "$.runs[8].verification.matches",
+        "$.runs[8].verification.tests_hash_after",
+        "$.runs[8].verification.tests_hash_before",
+        "$.runs[8].verifier_hash",
+        "$.runs[9].artifacts",
+        "$.runs[9].artifacts.solution.py",
+        "$.runs[9].attempt",
+        "$.runs[9].ext",
+        "$.runs[9].ext.abnormal",
+        "$.runs[9].ext.thinking",
+        "$.runs[9].finished_at",
+        "$.runs[9].genome_id",
+        "$.runs[9].outcome",
+        "$.runs[9].run_id",
+        "$.runs[9].scenario_version",
+        "$.runs[9].schema_version",
+        "$.runs[9].scope",
+        "$.runs[9].seed_control",
+        "$.runs[9].shell_version",
+        "$.runs[9].started_at",
+        "$.runs[9].task_id",
+        "$.runs[9].usage",
+        "$.runs[9].usage.cost_usd",
+        "$.runs[9].usage.tokens_in",
+        "$.runs[9].usage.tokens_out",
+        "$.runs[9].usage.turns",
+        "$.runs[9].usage.wall_ms",
+        "$.runs[9].verification",
+        "$.runs[9].verification.matches",
+        "$.runs[9].verification.tests_hash_after",
+        "$.runs[9].verification.tests_hash_before",
+        "$.runs[9].verifier_hash",
+        "$.runs[10].artifacts",
+        "$.runs[10].artifacts.solution.py",
+        "$.runs[10].attempt",
+        "$.runs[10].ext",
+        "$.runs[10].ext.abnormal",
+        "$.runs[10].ext.thinking",
+        "$.runs[10].finished_at",
+        "$.runs[10].genome_id",
+        "$.runs[10].outcome",
+        "$.runs[10].run_id",
+        "$.runs[10].scenario_version",
+        "$.runs[10].schema_version",
+        "$.runs[10].scope",
+        "$.runs[10].seed_control",
+        "$.runs[10].shell_version",
+        "$.runs[10].started_at",
+        "$.runs[10].task_id",
+        "$.runs[10].usage",
+        "$.runs[10].usage.cost_usd",
+        "$.runs[10].usage.tokens_in",
+        "$.runs[10].usage.tokens_out",
+        "$.runs[10].usage.turns",
+        "$.runs[10].usage.wall_ms",
+        "$.runs[10].verification",
+        "$.runs[10].verification.matches",
+        "$.runs[10].verification.tests_hash_after",
+        "$.runs[10].verification.tests_hash_before",
+        "$.runs[10].verifier_hash",
+        "$.runs[11].artifacts",
+        "$.runs[11].artifacts.solution.py",
+        "$.runs[11].attempt",
+        "$.runs[11].ext",
+        "$.runs[11].ext.abnormal",
+        "$.runs[11].ext.thinking",
+        "$.runs[11].finished_at",
+        "$.runs[11].genome_id",
+        "$.runs[11].outcome",
+        "$.runs[11].run_id",
+        "$.runs[11].scenario_version",
+        "$.runs[11].schema_version",
+        "$.runs[11].scope",
+        "$.runs[11].seed_control",
+        "$.runs[11].shell_version",
+        "$.runs[11].started_at",
+        "$.runs[11].task_id",
+        "$.runs[11].usage",
+        "$.runs[11].usage.cost_usd",
+        "$.runs[11].usage.tokens_in",
+        "$.runs[11].usage.tokens_out",
+        "$.runs[11].usage.turns",
+        "$.runs[11].usage.wall_ms",
+        "$.runs[11].verification",
+        "$.runs[11].verification.matches",
+        "$.runs[11].verification.tests_hash_after",
+        "$.runs[11].verification.tests_hash_before",
+        "$.runs[11].verifier_hash",
+        "$.runs[12].artifacts",
+        "$.runs[12].artifacts.solution.py",
+        "$.runs[12].attempt",
+        "$.runs[12].ext",
+        "$.runs[12].ext.abnormal",
+        "$.runs[12].ext.thinking",
+        "$.runs[12].finished_at",
+        "$.runs[12].genome_id",
+        "$.runs[12].outcome",
+        "$.runs[12].run_id",
+        "$.runs[12].scenario_version",
+        "$.runs[12].schema_version",
+        "$.runs[12].scope",
+        "$.runs[12].seed_control",
+        "$.runs[12].shell_version",
+        "$.runs[12].started_at",
+        "$.runs[12].task_id",
+        "$.runs[12].usage",
+        "$.runs[12].usage.cost_usd",
+        "$.runs[12].usage.tokens_in",
+        "$.runs[12].usage.tokens_out",
+        "$.runs[12].usage.turns",
+        "$.runs[12].usage.wall_ms",
+        "$.runs[12].verification",
+        "$.runs[12].verification.matches",
+        "$.runs[12].verification.tests_hash_after",
+        "$.runs[12].verification.tests_hash_before",
+        "$.runs[12].verifier_hash",
+        "$.runs[13].artifacts",
+        "$.runs[13].artifacts.solution.py",
+        "$.runs[13].attempt",
+        "$.runs[13].ext",
+        "$.runs[13].ext.abnormal",
+        "$.runs[13].ext.thinking",
+        "$.runs[13].finished_at",
+        "$.runs[13].genome_id",
+        "$.runs[13].outcome",
+        "$.runs[13].run_id",
+        "$.runs[13].scenario_version",
+        "$.runs[13].schema_version",
+        "$.runs[13].scope",
+        "$.runs[13].seed_control",
+        "$.runs[13].shell_version",
+        "$.runs[13].started_at",
+        "$.runs[13].task_id",
+        "$.runs[13].usage",
+        "$.runs[13].usage.cost_usd",
+        "$.runs[13].usage.tokens_in",
+        "$.runs[13].usage.tokens_out",
+        "$.runs[13].usage.turns",
+        "$.runs[13].usage.wall_ms",
+        "$.runs[13].verification",
+        "$.runs[13].verification.matches",
+        "$.runs[13].verification.tests_hash_after",
+        "$.runs[13].verification.tests_hash_before",
+        "$.runs[13].verifier_hash",
+        "$.runs[14].artifacts",
+        "$.runs[14].artifacts.solution.py",
+        "$.runs[14].attempt",
+        "$.runs[14].ext",
+        "$.runs[14].ext.abnormal",
+        "$.runs[14].ext.thinking",
+        "$.runs[14].finished_at",
+        "$.runs[14].genome_id",
+        "$.runs[14].outcome",
+        "$.runs[14].run_id",
+        "$.runs[14].scenario_version",
+        "$.runs[14].schema_version",
+        "$.runs[14].scope",
+        "$.runs[14].seed_control",
+        "$.runs[14].shell_version",
+        "$.runs[14].started_at",
+        "$.runs[14].task_id",
+        "$.runs[14].usage",
+        "$.runs[14].usage.cost_usd",
+        "$.runs[14].usage.tokens_in",
+        "$.runs[14].usage.tokens_out",
+        "$.runs[14].usage.turns",
+        "$.runs[14].usage.wall_ms",
+        "$.runs[14].verification",
+        "$.runs[14].verification.matches",
+        "$.runs[14].verification.tests_hash_after",
+        "$.runs[14].verification.tests_hash_before",
+        "$.runs[14].verifier_hash",
+        "$.runs[15].artifacts",
+        "$.runs[15].attempt",
+        "$.runs[15].ext",
+        "$.runs[15].ext.abnormal",
+        "$.runs[15].ext.thinking",
+        "$.runs[15].finished_at",
+        "$.runs[15].genome_id",
+        "$.runs[15].outcome",
+        "$.runs[15].run_id",
+        "$.runs[15].scenario_version",
+        "$.runs[15].schema_version",
+        "$.runs[15].scope",
+        "$.runs[15].seed_control",
+        "$.runs[15].shell_version",
+        "$.runs[15].started_at",
+        "$.runs[15].task_id",
+        "$.runs[15].usage",
+        "$.runs[15].usage.cost_usd",
+        "$.runs[15].usage.tokens_in",
+        "$.runs[15].usage.tokens_out",
+        "$.runs[15].usage.turns",
+        "$.runs[15].usage.wall_ms",
+        "$.runs[15].verification",
+        "$.runs[15].verification.matches",
+        "$.runs[15].verification.tests_hash_after",
+        "$.runs[15].verification.tests_hash_before",
+        "$.runs[15].verifier_hash",
+        "$.runs[16].artifacts",
+        "$.runs[16].artifacts.solution.py",
+        "$.runs[16].attempt",
+        "$.runs[16].ext",
+        "$.runs[16].ext.abnormal",
+        "$.runs[16].ext.thinking",
+        "$.runs[16].finished_at",
+        "$.runs[16].genome_id",
+        "$.runs[16].outcome",
+        "$.runs[16].run_id",
+        "$.runs[16].scenario_version",
+        "$.runs[16].schema_version",
+        "$.runs[16].scope",
+        "$.runs[16].seed_control",
+        "$.runs[16].shell_version",
+        "$.runs[16].started_at",
+        "$.runs[16].task_id",
+        "$.runs[16].usage",
+        "$.runs[16].usage.cost_usd",
+        "$.runs[16].usage.tokens_in",
+        "$.runs[16].usage.tokens_out",
+        "$.runs[16].usage.turns",
+        "$.runs[16].usage.wall_ms",
+        "$.runs[16].verification",
+        "$.runs[16].verification.matches",
+        "$.runs[16].verification.tests_hash_after",
+        "$.runs[16].verification.tests_hash_before",
+        "$.runs[16].verifier_hash",
+        "$.runs[17].artifacts",
+        "$.runs[17].attempt",
+        "$.runs[17].ext",
+        "$.runs[17].ext.abnormal",
+        "$.runs[17].ext.thinking",
+        "$.runs[17].finished_at",
+        "$.runs[17].genome_id",
+        "$.runs[17].outcome",
+        "$.runs[17].run_id",
+        "$.runs[17].scenario_version",
+        "$.runs[17].schema_version",
+        "$.runs[17].scope",
+        "$.runs[17].seed_control",
+        "$.runs[17].shell_version",
+        "$.runs[17].started_at",
+        "$.runs[17].task_id",
+        "$.runs[17].usage",
+        "$.runs[17].usage.cost_usd",
+        "$.runs[17].usage.tokens_in",
+        "$.runs[17].usage.tokens_out",
+        "$.runs[17].usage.turns",
+        "$.runs[17].usage.wall_ms",
+        "$.runs[17].verification",
+        "$.runs[17].verification.matches",
+        "$.runs[17].verification.tests_hash_after",
+        "$.runs[17].verification.tests_hash_before",
+        "$.runs[17].verifier_hash",
+        "$.runs[18].artifacts",
+        "$.runs[18].attempt",
+        "$.runs[18].ext",
+        "$.runs[18].ext.abnormal",
+        "$.runs[18].ext.thinking",
+        "$.runs[18].finished_at",
+        "$.runs[18].genome_id",
+        "$.runs[18].outcome",
+        "$.runs[18].run_id",
+        "$.runs[18].scenario_version",
+        "$.runs[18].schema_version",
+        "$.runs[18].scope",
+        "$.runs[18].seed_control",
+        "$.runs[18].shell_version",
+        "$.runs[18].started_at",
+        "$.runs[18].task_id",
+        "$.runs[18].usage",
+        "$.runs[18].usage.cost_usd",
+        "$.runs[18].usage.tokens_in",
+        "$.runs[18].usage.tokens_out",
+        "$.runs[18].usage.turns",
+        "$.runs[18].usage.wall_ms",
+        "$.runs[18].verification",
+        "$.runs[18].verification.matches",
+        "$.runs[18].verification.tests_hash_after",
+        "$.runs[18].verification.tests_hash_before",
+        "$.runs[18].verifier_hash",
+        "$.runs[19].artifacts",
+        "$.runs[19].attempt",
+        "$.runs[19].ext",
+        "$.runs[19].ext.abnormal",
+        "$.runs[19].ext.thinking",
+        "$.runs[19].finished_at",
+        "$.runs[19].genome_id",
+        "$.runs[19].outcome",
+        "$.runs[19].run_id",
+        "$.runs[19].scenario_version",
+        "$.runs[19].schema_version",
+        "$.runs[19].scope",
+        "$.runs[19].seed_control",
+        "$.runs[19].shell_version",
+        "$.runs[19].started_at",
+        "$.runs[19].task_id",
+        "$.runs[19].usage",
+        "$.runs[19].usage.cost_usd",
+        "$.runs[19].usage.tokens_in",
+        "$.runs[19].usage.tokens_out",
+        "$.runs[19].usage.turns",
+        "$.runs[19].usage.wall_ms",
+        "$.runs[19].verification",
+        "$.runs[19].verification.matches",
+        "$.runs[19].verification.tests_hash_after",
+        "$.runs[19].verification.tests_hash_before",
+        "$.runs[19].verifier_hash",
+        "$.runs[20].artifacts",
+        "$.runs[20].attempt",
+        "$.runs[20].ext",
+        "$.runs[20].ext.abnormal",
+        "$.runs[20].ext.thinking",
+        "$.runs[20].finished_at",
+        "$.runs[20].genome_id",
+        "$.runs[20].outcome",
+        "$.runs[20].run_id",
+        "$.runs[20].scenario_version",
+        "$.runs[20].schema_version",
+        "$.runs[20].scope",
+        "$.runs[20].seed_control",
+        "$.runs[20].shell_version",
+        "$.runs[20].started_at",
+        "$.runs[20].task_id",
+        "$.runs[20].usage",
+        "$.runs[20].usage.cost_usd",
+        "$.runs[20].usage.tokens_in",
+        "$.runs[20].usage.tokens_out",
+        "$.runs[20].usage.turns",
+        "$.runs[20].usage.wall_ms",
+        "$.runs[20].verification",
+        "$.runs[20].verification.matches",
+        "$.runs[20].verification.tests_hash_after",
+        "$.runs[20].verification.tests_hash_before",
+        "$.runs[20].verifier_hash",
+        "$.runs[21].artifacts",
+        "$.runs[21].attempt",
+        "$.runs[21].ext",
+        "$.runs[21].ext.abnormal",
+        "$.runs[21].ext.thinking",
+        "$.runs[21].finished_at",
+        "$.runs[21].genome_id",
+        "$.runs[21].outcome",
+        "$.runs[21].run_id",
+        "$.runs[21].scenario_version",
+        "$.runs[21].schema_version",
+        "$.runs[21].scope",
+        "$.runs[21].seed_control",
+        "$.runs[21].shell_version",
+        "$.runs[21].started_at",
+        "$.runs[21].task_id",
+        "$.runs[21].usage",
+        "$.runs[21].usage.cost_usd",
+        "$.runs[21].usage.tokens_in",
+        "$.runs[21].usage.tokens_out",
+        "$.runs[21].usage.turns",
+        "$.runs[21].usage.wall_ms",
+        "$.runs[21].verification",
+        "$.runs[21].verification.matches",
+        "$.runs[21].verification.tests_hash_after",
+        "$.runs[21].verification.tests_hash_before",
+        "$.runs[21].verifier_hash",
+        "$.runs[22].artifacts",
+        "$.runs[22].attempt",
+        "$.runs[22].ext",
+        "$.runs[22].ext.abnormal",
+        "$.runs[22].ext.thinking",
+        "$.runs[22].finished_at",
+        "$.runs[22].genome_id",
+        "$.runs[22].outcome",
+        "$.runs[22].run_id",
+        "$.runs[22].scenario_version",
+        "$.runs[22].schema_version",
+        "$.runs[22].scope",
+        "$.runs[22].seed_control",
+        "$.runs[22].shell_version",
+        "$.runs[22].started_at",
+        "$.runs[22].task_id",
+        "$.runs[22].usage",
+        "$.runs[22].usage.cost_usd",
+        "$.runs[22].usage.tokens_in",
+        "$.runs[22].usage.tokens_out",
+        "$.runs[22].usage.turns",
+        "$.runs[22].usage.wall_ms",
+        "$.runs[22].verification",
+        "$.runs[22].verification.matches",
+        "$.runs[22].verification.tests_hash_after",
+        "$.runs[22].verification.tests_hash_before",
+        "$.runs[22].verifier_hash",
+        "$.runs[23].artifacts",
+        "$.runs[23].attempt",
+        "$.runs[23].ext",
+        "$.runs[23].ext.abnormal",
+        "$.runs[23].ext.thinking",
+        "$.runs[23].finished_at",
+        "$.runs[23].genome_id",
+        "$.runs[23].outcome",
+        "$.runs[23].run_id",
+        "$.runs[23].scenario_version",
+        "$.runs[23].schema_version",
+        "$.runs[23].scope",
+        "$.runs[23].seed_control",
+        "$.runs[23].shell_version",
+        "$.runs[23].started_at",
+        "$.runs[23].task_id",
+        "$.runs[23].usage",
+        "$.runs[23].usage.cost_usd",
+        "$.runs[23].usage.tokens_in",
+        "$.runs[23].usage.tokens_out",
+        "$.runs[23].usage.turns",
+        "$.runs[23].usage.wall_ms",
+        "$.runs[23].verification",
+        "$.runs[23].verification.matches",
+        "$.runs[23].verification.tests_hash_after",
+        "$.runs[23].verification.tests_hash_before",
+        "$.runs[23].verifier_hash",
+        "$.runs[24].artifacts",
+        "$.runs[24].artifacts.solution.py",
+        "$.runs[24].attempt",
+        "$.runs[24].ext",
+        "$.runs[24].ext.abnormal",
+        "$.runs[24].ext.thinking",
+        "$.runs[24].finished_at",
+        "$.runs[24].genome_id",
+        "$.runs[24].outcome",
+        "$.runs[24].run_id",
+        "$.runs[24].scenario_version",
+        "$.runs[24].schema_version",
+        "$.runs[24].scope",
+        "$.runs[24].seed_control",
+        "$.runs[24].shell_version",
+        "$.runs[24].started_at",
+        "$.runs[24].task_id",
+        "$.runs[24].usage",
+        "$.runs[24].usage.cost_usd",
+        "$.runs[24].usage.tokens_in",
+        "$.runs[24].usage.tokens_out",
+        "$.runs[24].usage.turns",
+        "$.runs[24].usage.wall_ms",
+        "$.runs[24].verification",
+        "$.runs[24].verification.matches",
+        "$.runs[24].verification.tests_hash_after",
+        "$.runs[24].verification.tests_hash_before",
+        "$.runs[24].verifier_hash",
+        "$.runs[25].artifacts",
+        "$.runs[25].attempt",
+        "$.runs[25].ext",
+        "$.runs[25].ext.abnormal",
+        "$.runs[25].ext.thinking",
+        "$.runs[25].finished_at",
+        "$.runs[25].genome_id",
+        "$.runs[25].outcome",
+        "$.runs[25].run_id",
+        "$.runs[25].scenario_version",
+        "$.runs[25].schema_version",
+        "$.runs[25].scope",
+        "$.runs[25].seed_control",
+        "$.runs[25].shell_version",
+        "$.runs[25].started_at",
+        "$.runs[25].task_id",
+        "$.runs[25].usage",
+        "$.runs[25].usage.cost_usd",
+        "$.runs[25].usage.tokens_in",
+        "$.runs[25].usage.tokens_out",
+        "$.runs[25].usage.turns",
+        "$.runs[25].usage.wall_ms",
+        "$.runs[25].verification",
+        "$.runs[25].verification.matches",
+        "$.runs[25].verification.tests_hash_after",
+        "$.runs[25].verification.tests_hash_before",
+        "$.runs[25].verifier_hash",
+        "$.runs[26].artifacts",
+        "$.runs[26].attempt",
+        "$.runs[26].ext",
+        "$.runs[26].ext.abnormal",
+        "$.runs[26].ext.thinking",
+        "$.runs[26].finished_at",
+        "$.runs[26].genome_id",
+        "$.runs[26].outcome",
+        "$.runs[26].run_id",
+        "$.runs[26].scenario_version",
+        "$.runs[26].schema_version",
+        "$.runs[26].scope",
+        "$.runs[26].seed_control",
+        "$.runs[26].shell_version",
+        "$.runs[26].started_at",
+        "$.runs[26].task_id",
+        "$.runs[26].usage",
+        "$.runs[26].usage.cost_usd",
+        "$.runs[26].usage.tokens_in",
+        "$.runs[26].usage.tokens_out",
+        "$.runs[26].usage.turns",
+        "$.runs[26].usage.wall_ms",
+        "$.runs[26].verification",
+        "$.runs[26].verification.matches",
+        "$.runs[26].verification.tests_hash_after",
+        "$.runs[26].verification.tests_hash_before",
+        "$.runs[26].verifier_hash",
+        "$.runs[27].artifacts",
+        "$.runs[27].attempt",
+        "$.runs[27].ext",
+        "$.runs[27].ext.abnormal",
+        "$.runs[27].ext.thinking",
+        "$.runs[27].finished_at",
+        "$.runs[27].genome_id",
+        "$.runs[27].outcome",
+        "$.runs[27].run_id",
+        "$.runs[27].scenario_version",
+        "$.runs[27].schema_version",
+        "$.runs[27].scope",
+        "$.runs[27].seed_control",
+        "$.runs[27].shell_version",
+        "$.runs[27].started_at",
+        "$.runs[27].task_id",
+        "$.runs[27].usage",
+        "$.runs[27].usage.cost_usd",
+        "$.runs[27].usage.tokens_in",
+        "$.runs[27].usage.tokens_out",
+        "$.runs[27].usage.turns",
+        "$.runs[27].usage.wall_ms",
+        "$.runs[27].verification",
+        "$.runs[27].verification.matches",
+        "$.runs[27].verification.tests_hash_after",
+        "$.runs[27].verification.tests_hash_before",
+        "$.runs[27].verifier_hash",
+        "$.runs[28].artifacts",
+        "$.runs[28].artifacts.solution.py",
+        "$.runs[28].attempt",
+        "$.runs[28].ext",
+        "$.runs[28].ext.abnormal",
+        "$.runs[28].ext.thinking",
+        "$.runs[28].finished_at",
+        "$.runs[28].genome_id",
+        "$.runs[28].outcome",
+        "$.runs[28].run_id",
+        "$.runs[28].scenario_version",
+        "$.runs[28].schema_version",
+        "$.runs[28].scope",
+        "$.runs[28].seed_control",
+        "$.runs[28].shell_version",
+        "$.runs[28].started_at",
+        "$.runs[28].task_id",
+        "$.runs[28].usage",
+        "$.runs[28].usage.cost_usd",
+        "$.runs[28].usage.tokens_in",
+        "$.runs[28].usage.tokens_out",
+        "$.runs[28].usage.turns",
+        "$.runs[28].usage.wall_ms",
+        "$.runs[28].verification",
+        "$.runs[28].verification.matches",
+        "$.runs[28].verification.tests_hash_after",
+        "$.runs[28].verification.tests_hash_before",
+        "$.runs[28].verifier_hash",
+        "$.runs[29].artifacts",
+        "$.runs[29].artifacts.solution.py",
+        "$.runs[29].attempt",
+        "$.runs[29].ext",
+        "$.runs[29].ext.abnormal",
+        "$.runs[29].ext.thinking",
+        "$.runs[29].finished_at",
+        "$.runs[29].genome_id",
+        "$.runs[29].outcome",
+        "$.runs[29].run_id",
+        "$.runs[29].scenario_version",
+        "$.runs[29].schema_version",
+        "$.runs[29].scope",
+        "$.runs[29].seed_control",
+        "$.runs[29].shell_version",
+        "$.runs[29].started_at",
+        "$.runs[29].task_id",
+        "$.runs[29].usage",
+        "$.runs[29].usage.cost_usd",
+        "$.runs[29].usage.tokens_in",
+        "$.runs[29].usage.tokens_out",
+        "$.runs[29].usage.turns",
+        "$.runs[29].usage.wall_ms",
+        "$.runs[29].verification",
+        "$.runs[29].verification.matches",
+        "$.runs[29].verification.tests_hash_after",
+        "$.runs[29].verification.tests_hash_before",
+        "$.runs[29].verifier_hash",
         "$.scenario_id",
         "$.scenario_version"
       ],
@@ -670,51 +1859,115 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].paired[0].baseline_cost_usd",
-          1.84
+          0.184
         ],
         [
           "$.decisions[0].paired[0].candidate_cost_usd",
-          0.92
+          0.368
         ],
         [
           "$.decisions[0].paired[1].baseline_cost_usd",
-          1.84
+          0.184
         ],
         [
           "$.decisions[0].paired[1].candidate_cost_usd",
-          0.92
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[2].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[2].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[3].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[3].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[4].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[4].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[5].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[5].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[6].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[6].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[7].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[7].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[8].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[8].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[9].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[9].candidate_cost_usd",
+          0.368
         ],
         [
           "$.decisions[0].scores.baseline.cost_per_solved_usd",
-          1.84
+          0.6133333333333333
         ],
         [
           "$.decisions[0].scores.baseline.solved",
-          2.0
+          3.0
         ],
         [
           "$.decisions[0].scores.baseline.total",
-          2.0
+          10.0
         ],
         [
           "$.decisions[0].scores.candidate.cost_per_solved_usd",
-          0.92
+          0.368
         ],
         [
           "$.decisions[0].scores.candidate.solved",
-          2.0
+          10.0
         ],
         [
           "$.decisions[0].scores.candidate.total",
-          2.0
+          10.0
         ],
         [
           "$.results[0].scores.holdout.cost_per_solved_usd",
-          1.84
+          0.9199999999999999
         ],
         [
           "$.results[0].scores.holdout.cost_total_usd",
-          1.84
+          0.9199999999999999
         ],
         [
           "$.results[0].scores.holdout.invalid_ratio",
@@ -722,7 +1975,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[0].scores.holdout.pass_at_1_first_attempt",
-          1.0
+          0.2
         ],
         [
           "$.results[0].scores.holdout.solved",
@@ -730,15 +1983,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[0].scores.holdout.total",
-          1.0
+          5.0
         ],
         [
           "$.results[0].scores.search.cost_per_solved_usd",
-          1.84
+          0.6133333333333333
         ],
         [
           "$.results[0].scores.search.cost_total_usd",
-          3.68
+          1.8399999999999999
         ],
         [
           "$.results[0].scores.search.invalid_ratio",
@@ -746,23 +1999,23 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[0].scores.search.pass_at_1_first_attempt",
-          1.0
+          0.3
         ],
         [
           "$.results[0].scores.search.solved",
-          2.0
+          3.0
         ],
         [
           "$.results[0].scores.search.total",
-          2.0
+          10.0
         ],
         [
           "$.results[1].scores.search.cost_per_solved_usd",
-          1.84
+          0.6133333333333333
         ],
         [
           "$.results[1].scores.search.cost_total_usd",
-          3.68
+          1.8399999999999999
         ],
         [
           "$.results[1].scores.search.invalid_ratio",
@@ -770,23 +2023,23 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[1].scores.search.pass_at_1_first_attempt",
-          1.0
+          0.3
         ],
         [
           "$.results[1].scores.search.solved",
-          2.0
+          3.0
         ],
         [
           "$.results[1].scores.search.total",
-          2.0
+          10.0
         ],
         [
           "$.results[2].scores.holdout.cost_per_solved_usd",
-          0.92
+          0.368
         ],
         [
           "$.results[2].scores.holdout.cost_total_usd",
-          0.92
+          1.8399999999999999
         ],
         [
           "$.results[2].scores.holdout.invalid_ratio",
@@ -798,19 +2051,19 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].scores.holdout.solved",
-          1.0
+          5.0
         ],
         [
           "$.results[2].scores.holdout.total",
-          1.0
+          5.0
         ],
         [
           "$.results[2].scores.search.cost_per_solved_usd",
-          0.92
+          0.368
         ],
         [
           "$.results[2].scores.search.cost_total_usd",
-          1.84
+          3.6799999999999997
         ],
         [
           "$.results[2].scores.search.invalid_ratio",
@@ -822,19 +2075,19 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].scores.search.solved",
-          2.0
+          10.0
         ],
         [
           "$.results[2].scores.search.total",
-          2.0
+          10.0
         ],
         [
           "$.results[3].scores.search.cost_per_solved_usd",
-          0.92
+          0.368
         ],
         [
           "$.results[3].scores.search.cost_total_usd",
-          1.84
+          3.6799999999999997
         ],
         [
           "$.results[3].scores.search.invalid_ratio",
@@ -846,11 +2099,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[3].scores.search.solved",
-          2.0
+          10.0
         ],
         [
           "$.results[3].scores.search.total",
-          2.0
+          10.0
         ],
         [
           "$.runs[0].attempt",
@@ -858,7 +2111,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.cost_usd",
-          1.84
+          0.368
         ],
         [
           "$.runs[0].usage.tokens_in",
@@ -874,7 +2127,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.wall_ms",
-          1840.0
+          368.0
         ],
         [
           "$.runs[1].attempt",
@@ -882,7 +2135,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[1].usage.cost_usd",
-          1.84
+          0.368
         ],
         [
           "$.runs[1].usage.tokens_in",
@@ -898,7 +2151,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[1].usage.wall_ms",
-          1840.0
+          368.0
         ],
         [
           "$.runs[2].attempt",
@@ -906,7 +2159,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[2].usage.cost_usd",
-          1.84
+          0.368
         ],
         [
           "$.runs[2].usage.tokens_in",
@@ -922,7 +2175,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[2].usage.wall_ms",
-          1840.0
+          368.0
         ],
         [
           "$.runs[3].attempt",
@@ -930,7 +2183,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[3].usage.cost_usd",
-          0.92
+          0.368
         ],
         [
           "$.runs[3].usage.tokens_in",
@@ -938,15 +2191,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[3].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[3].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[3].usage.wall_ms",
-          920.0
+          368.0
         ],
         [
           "$.runs[4].attempt",
@@ -954,7 +2207,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[4].usage.cost_usd",
-          0.92
+          0.368
         ],
         [
           "$.runs[4].usage.tokens_in",
@@ -962,15 +2215,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[4].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[4].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[4].usage.wall_ms",
-          920.0
+          368.0
         ],
         [
           "$.runs[5].attempt",
@@ -978,7 +2231,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[5].usage.cost_usd",
-          0.92
+          0.368
         ],
         [
           "$.runs[5].usage.tokens_in",
@@ -986,15 +2239,591 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[5].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[5].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[5].usage.wall_ms",
-          920.0
+          368.0
+        ],
+        [
+          "$.runs[6].attempt",
+          1.0
+        ],
+        [
+          "$.runs[6].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[6].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[6].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[6].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[6].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[7].attempt",
+          1.0
+        ],
+        [
+          "$.runs[7].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[7].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[7].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[7].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[7].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[8].attempt",
+          1.0
+        ],
+        [
+          "$.runs[8].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[8].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[8].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[8].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[8].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[9].attempt",
+          1.0
+        ],
+        [
+          "$.runs[9].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[9].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[9].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[9].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[9].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[10].attempt",
+          1.0
+        ],
+        [
+          "$.runs[10].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[10].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[10].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[10].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[10].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[11].attempt",
+          1.0
+        ],
+        [
+          "$.runs[11].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[11].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[11].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[11].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[11].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[12].attempt",
+          1.0
+        ],
+        [
+          "$.runs[12].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[12].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[12].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[12].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[12].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[13].attempt",
+          1.0
+        ],
+        [
+          "$.runs[13].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[13].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[13].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[13].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[13].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[14].attempt",
+          1.0
+        ],
+        [
+          "$.runs[14].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[14].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[14].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[14].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[14].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[15].attempt",
+          1.0
+        ],
+        [
+          "$.runs[15].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[15].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[15].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[15].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[15].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[16].attempt",
+          1.0
+        ],
+        [
+          "$.runs[16].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[16].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[16].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[16].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[16].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[17].attempt",
+          1.0
+        ],
+        [
+          "$.runs[17].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[17].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[17].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[17].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[17].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[18].attempt",
+          1.0
+        ],
+        [
+          "$.runs[18].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[18].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[18].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[18].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[18].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[19].attempt",
+          1.0
+        ],
+        [
+          "$.runs[19].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[19].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[19].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[19].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[19].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[20].attempt",
+          1.0
+        ],
+        [
+          "$.runs[20].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[20].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[20].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[20].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[20].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[21].attempt",
+          1.0
+        ],
+        [
+          "$.runs[21].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[21].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[21].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[21].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[21].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[22].attempt",
+          1.0
+        ],
+        [
+          "$.runs[22].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[22].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[22].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[22].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[22].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[23].attempt",
+          1.0
+        ],
+        [
+          "$.runs[23].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[23].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[23].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[23].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[23].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[24].attempt",
+          1.0
+        ],
+        [
+          "$.runs[24].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[24].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[24].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[24].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[24].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[25].attempt",
+          1.0
+        ],
+        [
+          "$.runs[25].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[25].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[25].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[25].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[25].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[26].attempt",
+          1.0
+        ],
+        [
+          "$.runs[26].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[26].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[26].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[26].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[26].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[27].attempt",
+          1.0
+        ],
+        [
+          "$.runs[27].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[27].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[27].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[27].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[27].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[28].attempt",
+          1.0
+        ],
+        [
+          "$.runs[28].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[28].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[28].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[28].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[28].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[29].attempt",
+          1.0
+        ],
+        [
+          "$.runs[29].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[29].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[29].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[29].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[29].usage.wall_ms",
+          184.0
         ]
       ],
       "shape": [
@@ -1088,7 +2917,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].paired",
-          "array[2]"
+          "array[10]"
         ],
         [
           "$.decisions[0].paired[0]",
@@ -1136,6 +2965,198 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].paired[1].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[2]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[2].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[2].baseline_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[2].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[2].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[2].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[3]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[3].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[3].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[3].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[3].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[3].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[4]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[4].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[4].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[4].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[4].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[4].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[5]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[5].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[5].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[5].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[5].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[5].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[6]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[6].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[6].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[6].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[6].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[6].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[7]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[7].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[7].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[7].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[7].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[7].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[8]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[8].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[8].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[8].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[8].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[8].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[9]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[9].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[9].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[9].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[9].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[9].task_id",
           "string"
         ],
         [
@@ -1232,7 +3253,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[0].run_refs",
-          "array[3]"
+          "array[15]"
         ],
         [
           "$.results[0].run_refs[0]",
@@ -1244,6 +3265,54 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[0].run_refs[2]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[3]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[4]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[5]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[6]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[7]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[8]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[9]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[10]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[11]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[12]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[13]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[14]",
           "string"
         ],
         [
@@ -1344,7 +3413,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[1].run_refs",
-          "array[2]"
+          "array[10]"
         ],
         [
           "$.results[1].run_refs[0]",
@@ -1352,6 +3421,38 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[1].run_refs[1]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[2]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[3]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[4]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[5]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[6]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[7]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[8]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[9]",
           "string"
         ],
         [
@@ -1424,7 +3525,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].run_refs",
-          "array[3]"
+          "array[15]"
         ],
         [
           "$.results[2].run_refs[0]",
@@ -1436,6 +3537,54 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].run_refs[2]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[3]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[4]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[5]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[6]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[7]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[8]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[9]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[10]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[11]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[12]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[13]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[14]",
           "string"
         ],
         [
@@ -1536,7 +3685,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[3].run_refs",
-          "array[2]"
+          "array[10]"
         ],
         [
           "$.results[3].run_refs[0]",
@@ -1544,6 +3693,38 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[3].run_refs[1]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[2]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[3]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[4]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[5]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[6]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[7]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[8]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[9]",
           "string"
         ],
         [
@@ -1596,7 +3777,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs",
-          "array[6]"
+          "array[30]"
         ],
         [
           "$.runs[0]",
@@ -2292,6 +4473,2746 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[5].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[6]",
+          "object"
+        ],
+        [
+          "$.runs[6].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[6].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[6].attempt",
+          "number"
+        ],
+        [
+          "$.runs[6].ext",
+          "object"
+        ],
+        [
+          "$.runs[6].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[6].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[6].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[6].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[6].outcome",
+          "string"
+        ],
+        [
+          "$.runs[6].run_id",
+          "string"
+        ],
+        [
+          "$.runs[6].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[6].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[6].scope",
+          "string"
+        ],
+        [
+          "$.runs[6].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[6].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[6].started_at",
+          "string"
+        ],
+        [
+          "$.runs[6].task_id",
+          "string"
+        ],
+        [
+          "$.runs[6].usage",
+          "object"
+        ],
+        [
+          "$.runs[6].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[6].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[6].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[6].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[6].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[6].verification",
+          "object"
+        ],
+        [
+          "$.runs[6].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[6].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[6].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[6].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[7]",
+          "object"
+        ],
+        [
+          "$.runs[7].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[7].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[7].attempt",
+          "number"
+        ],
+        [
+          "$.runs[7].ext",
+          "object"
+        ],
+        [
+          "$.runs[7].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[7].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[7].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[7].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[7].outcome",
+          "string"
+        ],
+        [
+          "$.runs[7].run_id",
+          "string"
+        ],
+        [
+          "$.runs[7].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[7].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[7].scope",
+          "string"
+        ],
+        [
+          "$.runs[7].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[7].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[7].started_at",
+          "string"
+        ],
+        [
+          "$.runs[7].task_id",
+          "string"
+        ],
+        [
+          "$.runs[7].usage",
+          "object"
+        ],
+        [
+          "$.runs[7].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[7].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[7].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[7].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[7].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[7].verification",
+          "object"
+        ],
+        [
+          "$.runs[7].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[7].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[7].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[7].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[8]",
+          "object"
+        ],
+        [
+          "$.runs[8].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[8].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[8].attempt",
+          "number"
+        ],
+        [
+          "$.runs[8].ext",
+          "object"
+        ],
+        [
+          "$.runs[8].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[8].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[8].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[8].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[8].outcome",
+          "string"
+        ],
+        [
+          "$.runs[8].run_id",
+          "string"
+        ],
+        [
+          "$.runs[8].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[8].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[8].scope",
+          "string"
+        ],
+        [
+          "$.runs[8].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[8].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[8].started_at",
+          "string"
+        ],
+        [
+          "$.runs[8].task_id",
+          "string"
+        ],
+        [
+          "$.runs[8].usage",
+          "object"
+        ],
+        [
+          "$.runs[8].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[8].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[8].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[8].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[8].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[8].verification",
+          "object"
+        ],
+        [
+          "$.runs[8].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[8].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[8].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[8].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[9]",
+          "object"
+        ],
+        [
+          "$.runs[9].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[9].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[9].attempt",
+          "number"
+        ],
+        [
+          "$.runs[9].ext",
+          "object"
+        ],
+        [
+          "$.runs[9].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[9].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[9].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[9].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[9].outcome",
+          "string"
+        ],
+        [
+          "$.runs[9].run_id",
+          "string"
+        ],
+        [
+          "$.runs[9].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[9].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[9].scope",
+          "string"
+        ],
+        [
+          "$.runs[9].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[9].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[9].started_at",
+          "string"
+        ],
+        [
+          "$.runs[9].task_id",
+          "string"
+        ],
+        [
+          "$.runs[9].usage",
+          "object"
+        ],
+        [
+          "$.runs[9].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[9].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[9].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[9].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[9].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[9].verification",
+          "object"
+        ],
+        [
+          "$.runs[9].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[9].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[9].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[9].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[10]",
+          "object"
+        ],
+        [
+          "$.runs[10].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[10].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[10].attempt",
+          "number"
+        ],
+        [
+          "$.runs[10].ext",
+          "object"
+        ],
+        [
+          "$.runs[10].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[10].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[10].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[10].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[10].outcome",
+          "string"
+        ],
+        [
+          "$.runs[10].run_id",
+          "string"
+        ],
+        [
+          "$.runs[10].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[10].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[10].scope",
+          "string"
+        ],
+        [
+          "$.runs[10].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[10].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[10].started_at",
+          "string"
+        ],
+        [
+          "$.runs[10].task_id",
+          "string"
+        ],
+        [
+          "$.runs[10].usage",
+          "object"
+        ],
+        [
+          "$.runs[10].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[10].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[10].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[10].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[10].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[10].verification",
+          "object"
+        ],
+        [
+          "$.runs[10].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[10].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[10].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[10].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[11]",
+          "object"
+        ],
+        [
+          "$.runs[11].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[11].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[11].attempt",
+          "number"
+        ],
+        [
+          "$.runs[11].ext",
+          "object"
+        ],
+        [
+          "$.runs[11].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[11].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[11].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[11].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[11].outcome",
+          "string"
+        ],
+        [
+          "$.runs[11].run_id",
+          "string"
+        ],
+        [
+          "$.runs[11].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[11].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[11].scope",
+          "string"
+        ],
+        [
+          "$.runs[11].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[11].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[11].started_at",
+          "string"
+        ],
+        [
+          "$.runs[11].task_id",
+          "string"
+        ],
+        [
+          "$.runs[11].usage",
+          "object"
+        ],
+        [
+          "$.runs[11].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[11].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[11].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[11].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[11].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[11].verification",
+          "object"
+        ],
+        [
+          "$.runs[11].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[11].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[11].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[11].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[12]",
+          "object"
+        ],
+        [
+          "$.runs[12].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[12].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[12].attempt",
+          "number"
+        ],
+        [
+          "$.runs[12].ext",
+          "object"
+        ],
+        [
+          "$.runs[12].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[12].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[12].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[12].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[12].outcome",
+          "string"
+        ],
+        [
+          "$.runs[12].run_id",
+          "string"
+        ],
+        [
+          "$.runs[12].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[12].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[12].scope",
+          "string"
+        ],
+        [
+          "$.runs[12].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[12].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[12].started_at",
+          "string"
+        ],
+        [
+          "$.runs[12].task_id",
+          "string"
+        ],
+        [
+          "$.runs[12].usage",
+          "object"
+        ],
+        [
+          "$.runs[12].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[12].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[12].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[12].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[12].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[12].verification",
+          "object"
+        ],
+        [
+          "$.runs[12].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[12].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[12].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[12].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[13]",
+          "object"
+        ],
+        [
+          "$.runs[13].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[13].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[13].attempt",
+          "number"
+        ],
+        [
+          "$.runs[13].ext",
+          "object"
+        ],
+        [
+          "$.runs[13].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[13].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[13].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[13].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[13].outcome",
+          "string"
+        ],
+        [
+          "$.runs[13].run_id",
+          "string"
+        ],
+        [
+          "$.runs[13].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[13].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[13].scope",
+          "string"
+        ],
+        [
+          "$.runs[13].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[13].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[13].started_at",
+          "string"
+        ],
+        [
+          "$.runs[13].task_id",
+          "string"
+        ],
+        [
+          "$.runs[13].usage",
+          "object"
+        ],
+        [
+          "$.runs[13].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[13].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[13].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[13].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[13].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[13].verification",
+          "object"
+        ],
+        [
+          "$.runs[13].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[13].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[13].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[13].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[14]",
+          "object"
+        ],
+        [
+          "$.runs[14].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[14].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[14].attempt",
+          "number"
+        ],
+        [
+          "$.runs[14].ext",
+          "object"
+        ],
+        [
+          "$.runs[14].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[14].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[14].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[14].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[14].outcome",
+          "string"
+        ],
+        [
+          "$.runs[14].run_id",
+          "string"
+        ],
+        [
+          "$.runs[14].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[14].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[14].scope",
+          "string"
+        ],
+        [
+          "$.runs[14].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[14].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[14].started_at",
+          "string"
+        ],
+        [
+          "$.runs[14].task_id",
+          "string"
+        ],
+        [
+          "$.runs[14].usage",
+          "object"
+        ],
+        [
+          "$.runs[14].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[14].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[14].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[14].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[14].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[14].verification",
+          "object"
+        ],
+        [
+          "$.runs[14].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[14].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[14].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[14].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[15]",
+          "object"
+        ],
+        [
+          "$.runs[15].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[15].attempt",
+          "number"
+        ],
+        [
+          "$.runs[15].ext",
+          "object"
+        ],
+        [
+          "$.runs[15].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[15].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[15].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[15].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[15].outcome",
+          "string"
+        ],
+        [
+          "$.runs[15].run_id",
+          "string"
+        ],
+        [
+          "$.runs[15].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[15].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[15].scope",
+          "string"
+        ],
+        [
+          "$.runs[15].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[15].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[15].started_at",
+          "string"
+        ],
+        [
+          "$.runs[15].task_id",
+          "string"
+        ],
+        [
+          "$.runs[15].usage",
+          "object"
+        ],
+        [
+          "$.runs[15].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[15].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[15].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[15].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[15].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[15].verification",
+          "object"
+        ],
+        [
+          "$.runs[15].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[15].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[15].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[15].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[16]",
+          "object"
+        ],
+        [
+          "$.runs[16].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[16].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[16].attempt",
+          "number"
+        ],
+        [
+          "$.runs[16].ext",
+          "object"
+        ],
+        [
+          "$.runs[16].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[16].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[16].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[16].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[16].outcome",
+          "string"
+        ],
+        [
+          "$.runs[16].run_id",
+          "string"
+        ],
+        [
+          "$.runs[16].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[16].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[16].scope",
+          "string"
+        ],
+        [
+          "$.runs[16].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[16].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[16].started_at",
+          "string"
+        ],
+        [
+          "$.runs[16].task_id",
+          "string"
+        ],
+        [
+          "$.runs[16].usage",
+          "object"
+        ],
+        [
+          "$.runs[16].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[16].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[16].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[16].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[16].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[16].verification",
+          "object"
+        ],
+        [
+          "$.runs[16].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[16].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[16].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[16].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[17]",
+          "object"
+        ],
+        [
+          "$.runs[17].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[17].attempt",
+          "number"
+        ],
+        [
+          "$.runs[17].ext",
+          "object"
+        ],
+        [
+          "$.runs[17].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[17].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[17].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[17].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[17].outcome",
+          "string"
+        ],
+        [
+          "$.runs[17].run_id",
+          "string"
+        ],
+        [
+          "$.runs[17].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[17].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[17].scope",
+          "string"
+        ],
+        [
+          "$.runs[17].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[17].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[17].started_at",
+          "string"
+        ],
+        [
+          "$.runs[17].task_id",
+          "string"
+        ],
+        [
+          "$.runs[17].usage",
+          "object"
+        ],
+        [
+          "$.runs[17].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[17].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[17].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[17].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[17].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[17].verification",
+          "object"
+        ],
+        [
+          "$.runs[17].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[17].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[17].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[17].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[18]",
+          "object"
+        ],
+        [
+          "$.runs[18].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[18].attempt",
+          "number"
+        ],
+        [
+          "$.runs[18].ext",
+          "object"
+        ],
+        [
+          "$.runs[18].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[18].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[18].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[18].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[18].outcome",
+          "string"
+        ],
+        [
+          "$.runs[18].run_id",
+          "string"
+        ],
+        [
+          "$.runs[18].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[18].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[18].scope",
+          "string"
+        ],
+        [
+          "$.runs[18].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[18].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[18].started_at",
+          "string"
+        ],
+        [
+          "$.runs[18].task_id",
+          "string"
+        ],
+        [
+          "$.runs[18].usage",
+          "object"
+        ],
+        [
+          "$.runs[18].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[18].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[18].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[18].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[18].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[18].verification",
+          "object"
+        ],
+        [
+          "$.runs[18].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[18].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[18].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[18].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[19]",
+          "object"
+        ],
+        [
+          "$.runs[19].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[19].attempt",
+          "number"
+        ],
+        [
+          "$.runs[19].ext",
+          "object"
+        ],
+        [
+          "$.runs[19].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[19].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[19].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[19].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[19].outcome",
+          "string"
+        ],
+        [
+          "$.runs[19].run_id",
+          "string"
+        ],
+        [
+          "$.runs[19].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[19].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[19].scope",
+          "string"
+        ],
+        [
+          "$.runs[19].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[19].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[19].started_at",
+          "string"
+        ],
+        [
+          "$.runs[19].task_id",
+          "string"
+        ],
+        [
+          "$.runs[19].usage",
+          "object"
+        ],
+        [
+          "$.runs[19].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[19].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[19].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[19].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[19].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[19].verification",
+          "object"
+        ],
+        [
+          "$.runs[19].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[19].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[19].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[19].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[20]",
+          "object"
+        ],
+        [
+          "$.runs[20].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[20].attempt",
+          "number"
+        ],
+        [
+          "$.runs[20].ext",
+          "object"
+        ],
+        [
+          "$.runs[20].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[20].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[20].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[20].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[20].outcome",
+          "string"
+        ],
+        [
+          "$.runs[20].run_id",
+          "string"
+        ],
+        [
+          "$.runs[20].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[20].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[20].scope",
+          "string"
+        ],
+        [
+          "$.runs[20].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[20].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[20].started_at",
+          "string"
+        ],
+        [
+          "$.runs[20].task_id",
+          "string"
+        ],
+        [
+          "$.runs[20].usage",
+          "object"
+        ],
+        [
+          "$.runs[20].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[20].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[20].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[20].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[20].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[20].verification",
+          "object"
+        ],
+        [
+          "$.runs[20].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[20].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[20].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[20].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[21]",
+          "object"
+        ],
+        [
+          "$.runs[21].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[21].attempt",
+          "number"
+        ],
+        [
+          "$.runs[21].ext",
+          "object"
+        ],
+        [
+          "$.runs[21].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[21].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[21].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[21].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[21].outcome",
+          "string"
+        ],
+        [
+          "$.runs[21].run_id",
+          "string"
+        ],
+        [
+          "$.runs[21].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[21].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[21].scope",
+          "string"
+        ],
+        [
+          "$.runs[21].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[21].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[21].started_at",
+          "string"
+        ],
+        [
+          "$.runs[21].task_id",
+          "string"
+        ],
+        [
+          "$.runs[21].usage",
+          "object"
+        ],
+        [
+          "$.runs[21].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[21].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[21].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[21].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[21].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[21].verification",
+          "object"
+        ],
+        [
+          "$.runs[21].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[21].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[21].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[21].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[22]",
+          "object"
+        ],
+        [
+          "$.runs[22].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[22].attempt",
+          "number"
+        ],
+        [
+          "$.runs[22].ext",
+          "object"
+        ],
+        [
+          "$.runs[22].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[22].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[22].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[22].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[22].outcome",
+          "string"
+        ],
+        [
+          "$.runs[22].run_id",
+          "string"
+        ],
+        [
+          "$.runs[22].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[22].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[22].scope",
+          "string"
+        ],
+        [
+          "$.runs[22].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[22].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[22].started_at",
+          "string"
+        ],
+        [
+          "$.runs[22].task_id",
+          "string"
+        ],
+        [
+          "$.runs[22].usage",
+          "object"
+        ],
+        [
+          "$.runs[22].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[22].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[22].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[22].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[22].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[22].verification",
+          "object"
+        ],
+        [
+          "$.runs[22].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[22].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[22].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[22].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[23]",
+          "object"
+        ],
+        [
+          "$.runs[23].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[23].attempt",
+          "number"
+        ],
+        [
+          "$.runs[23].ext",
+          "object"
+        ],
+        [
+          "$.runs[23].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[23].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[23].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[23].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[23].outcome",
+          "string"
+        ],
+        [
+          "$.runs[23].run_id",
+          "string"
+        ],
+        [
+          "$.runs[23].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[23].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[23].scope",
+          "string"
+        ],
+        [
+          "$.runs[23].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[23].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[23].started_at",
+          "string"
+        ],
+        [
+          "$.runs[23].task_id",
+          "string"
+        ],
+        [
+          "$.runs[23].usage",
+          "object"
+        ],
+        [
+          "$.runs[23].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[23].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[23].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[23].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[23].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[23].verification",
+          "object"
+        ],
+        [
+          "$.runs[23].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[23].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[23].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[23].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[24]",
+          "object"
+        ],
+        [
+          "$.runs[24].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[24].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[24].attempt",
+          "number"
+        ],
+        [
+          "$.runs[24].ext",
+          "object"
+        ],
+        [
+          "$.runs[24].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[24].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[24].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[24].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[24].outcome",
+          "string"
+        ],
+        [
+          "$.runs[24].run_id",
+          "string"
+        ],
+        [
+          "$.runs[24].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[24].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[24].scope",
+          "string"
+        ],
+        [
+          "$.runs[24].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[24].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[24].started_at",
+          "string"
+        ],
+        [
+          "$.runs[24].task_id",
+          "string"
+        ],
+        [
+          "$.runs[24].usage",
+          "object"
+        ],
+        [
+          "$.runs[24].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[24].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[24].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[24].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[24].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[24].verification",
+          "object"
+        ],
+        [
+          "$.runs[24].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[24].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[24].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[24].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[25]",
+          "object"
+        ],
+        [
+          "$.runs[25].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[25].attempt",
+          "number"
+        ],
+        [
+          "$.runs[25].ext",
+          "object"
+        ],
+        [
+          "$.runs[25].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[25].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[25].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[25].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[25].outcome",
+          "string"
+        ],
+        [
+          "$.runs[25].run_id",
+          "string"
+        ],
+        [
+          "$.runs[25].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[25].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[25].scope",
+          "string"
+        ],
+        [
+          "$.runs[25].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[25].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[25].started_at",
+          "string"
+        ],
+        [
+          "$.runs[25].task_id",
+          "string"
+        ],
+        [
+          "$.runs[25].usage",
+          "object"
+        ],
+        [
+          "$.runs[25].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[25].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[25].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[25].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[25].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[25].verification",
+          "object"
+        ],
+        [
+          "$.runs[25].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[25].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[25].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[25].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[26]",
+          "object"
+        ],
+        [
+          "$.runs[26].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[26].attempt",
+          "number"
+        ],
+        [
+          "$.runs[26].ext",
+          "object"
+        ],
+        [
+          "$.runs[26].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[26].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[26].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[26].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[26].outcome",
+          "string"
+        ],
+        [
+          "$.runs[26].run_id",
+          "string"
+        ],
+        [
+          "$.runs[26].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[26].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[26].scope",
+          "string"
+        ],
+        [
+          "$.runs[26].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[26].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[26].started_at",
+          "string"
+        ],
+        [
+          "$.runs[26].task_id",
+          "string"
+        ],
+        [
+          "$.runs[26].usage",
+          "object"
+        ],
+        [
+          "$.runs[26].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[26].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[26].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[26].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[26].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[26].verification",
+          "object"
+        ],
+        [
+          "$.runs[26].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[26].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[26].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[26].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[27]",
+          "object"
+        ],
+        [
+          "$.runs[27].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[27].attempt",
+          "number"
+        ],
+        [
+          "$.runs[27].ext",
+          "object"
+        ],
+        [
+          "$.runs[27].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[27].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[27].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[27].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[27].outcome",
+          "string"
+        ],
+        [
+          "$.runs[27].run_id",
+          "string"
+        ],
+        [
+          "$.runs[27].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[27].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[27].scope",
+          "string"
+        ],
+        [
+          "$.runs[27].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[27].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[27].started_at",
+          "string"
+        ],
+        [
+          "$.runs[27].task_id",
+          "string"
+        ],
+        [
+          "$.runs[27].usage",
+          "object"
+        ],
+        [
+          "$.runs[27].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[27].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[27].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[27].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[27].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[27].verification",
+          "object"
+        ],
+        [
+          "$.runs[27].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[27].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[27].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[27].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[28]",
+          "object"
+        ],
+        [
+          "$.runs[28].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[28].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[28].attempt",
+          "number"
+        ],
+        [
+          "$.runs[28].ext",
+          "object"
+        ],
+        [
+          "$.runs[28].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[28].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[28].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[28].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[28].outcome",
+          "string"
+        ],
+        [
+          "$.runs[28].run_id",
+          "string"
+        ],
+        [
+          "$.runs[28].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[28].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[28].scope",
+          "string"
+        ],
+        [
+          "$.runs[28].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[28].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[28].started_at",
+          "string"
+        ],
+        [
+          "$.runs[28].task_id",
+          "string"
+        ],
+        [
+          "$.runs[28].usage",
+          "object"
+        ],
+        [
+          "$.runs[28].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[28].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[28].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[28].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[28].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[28].verification",
+          "object"
+        ],
+        [
+          "$.runs[28].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[28].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[28].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[28].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[29]",
+          "object"
+        ],
+        [
+          "$.runs[29].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[29].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[29].attempt",
+          "number"
+        ],
+        [
+          "$.runs[29].ext",
+          "object"
+        ],
+        [
+          "$.runs[29].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[29].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[29].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[29].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[29].outcome",
+          "string"
+        ],
+        [
+          "$.runs[29].run_id",
+          "string"
+        ],
+        [
+          "$.runs[29].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[29].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[29].scope",
+          "string"
+        ],
+        [
+          "$.runs[29].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[29].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[29].started_at",
+          "string"
+        ],
+        [
+          "$.runs[29].task_id",
+          "string"
+        ],
+        [
+          "$.runs[29].usage",
+          "object"
+        ],
+        [
+          "$.runs[29].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[29].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[29].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[29].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[29].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[29].verification",
+          "object"
+        ],
+        [
+          "$.runs[29].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[29].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[29].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[29].verifier_hash",
           "string"
         ],
         [
@@ -2337,6 +7258,46 @@ window.MOLT_VIEW = {
         "$.decisions[0].paired[1].candidate_cost_usd",
         "$.decisions[0].paired[1].candidate_passed",
         "$.decisions[0].paired[1].task_id",
+        "$.decisions[0].paired[2].baseline_cost_usd",
+        "$.decisions[0].paired[2].baseline_passed",
+        "$.decisions[0].paired[2].candidate_cost_usd",
+        "$.decisions[0].paired[2].candidate_passed",
+        "$.decisions[0].paired[2].task_id",
+        "$.decisions[0].paired[3].baseline_cost_usd",
+        "$.decisions[0].paired[3].baseline_passed",
+        "$.decisions[0].paired[3].candidate_cost_usd",
+        "$.decisions[0].paired[3].candidate_passed",
+        "$.decisions[0].paired[3].task_id",
+        "$.decisions[0].paired[4].baseline_cost_usd",
+        "$.decisions[0].paired[4].baseline_passed",
+        "$.decisions[0].paired[4].candidate_cost_usd",
+        "$.decisions[0].paired[4].candidate_passed",
+        "$.decisions[0].paired[4].task_id",
+        "$.decisions[0].paired[5].baseline_cost_usd",
+        "$.decisions[0].paired[5].baseline_passed",
+        "$.decisions[0].paired[5].candidate_cost_usd",
+        "$.decisions[0].paired[5].candidate_passed",
+        "$.decisions[0].paired[5].task_id",
+        "$.decisions[0].paired[6].baseline_cost_usd",
+        "$.decisions[0].paired[6].baseline_passed",
+        "$.decisions[0].paired[6].candidate_cost_usd",
+        "$.decisions[0].paired[6].candidate_passed",
+        "$.decisions[0].paired[6].task_id",
+        "$.decisions[0].paired[7].baseline_cost_usd",
+        "$.decisions[0].paired[7].baseline_passed",
+        "$.decisions[0].paired[7].candidate_cost_usd",
+        "$.decisions[0].paired[7].candidate_passed",
+        "$.decisions[0].paired[7].task_id",
+        "$.decisions[0].paired[8].baseline_cost_usd",
+        "$.decisions[0].paired[8].baseline_passed",
+        "$.decisions[0].paired[8].candidate_cost_usd",
+        "$.decisions[0].paired[8].candidate_passed",
+        "$.decisions[0].paired[8].task_id",
+        "$.decisions[0].paired[9].baseline_cost_usd",
+        "$.decisions[0].paired[9].baseline_passed",
+        "$.decisions[0].paired[9].candidate_cost_usd",
+        "$.decisions[0].paired[9].candidate_passed",
+        "$.decisions[0].paired[9].task_id",
         "$.decisions[0].reason",
         "$.decisions[0].scenario_version",
         "$.decisions[0].schema_version",
@@ -2606,6 +7567,667 @@ window.MOLT_VIEW = {
         "$.runs[5].verification.tests_hash_after",
         "$.runs[5].verification.tests_hash_before",
         "$.runs[5].verifier_hash",
+        "$.runs[6].artifacts",
+        "$.runs[6].artifacts.solution.py",
+        "$.runs[6].attempt",
+        "$.runs[6].ext",
+        "$.runs[6].ext.abnormal",
+        "$.runs[6].ext.thinking",
+        "$.runs[6].finished_at",
+        "$.runs[6].genome_id",
+        "$.runs[6].outcome",
+        "$.runs[6].run_id",
+        "$.runs[6].scenario_version",
+        "$.runs[6].schema_version",
+        "$.runs[6].scope",
+        "$.runs[6].seed_control",
+        "$.runs[6].shell_version",
+        "$.runs[6].started_at",
+        "$.runs[6].task_id",
+        "$.runs[6].usage",
+        "$.runs[6].usage.cost_usd",
+        "$.runs[6].usage.tokens_in",
+        "$.runs[6].usage.tokens_out",
+        "$.runs[6].usage.turns",
+        "$.runs[6].usage.wall_ms",
+        "$.runs[6].verification",
+        "$.runs[6].verification.matches",
+        "$.runs[6].verification.tests_hash_after",
+        "$.runs[6].verification.tests_hash_before",
+        "$.runs[6].verifier_hash",
+        "$.runs[7].artifacts",
+        "$.runs[7].artifacts.solution.py",
+        "$.runs[7].attempt",
+        "$.runs[7].ext",
+        "$.runs[7].ext.abnormal",
+        "$.runs[7].ext.thinking",
+        "$.runs[7].finished_at",
+        "$.runs[7].genome_id",
+        "$.runs[7].outcome",
+        "$.runs[7].run_id",
+        "$.runs[7].scenario_version",
+        "$.runs[7].schema_version",
+        "$.runs[7].scope",
+        "$.runs[7].seed_control",
+        "$.runs[7].shell_version",
+        "$.runs[7].started_at",
+        "$.runs[7].task_id",
+        "$.runs[7].usage",
+        "$.runs[7].usage.cost_usd",
+        "$.runs[7].usage.tokens_in",
+        "$.runs[7].usage.tokens_out",
+        "$.runs[7].usage.turns",
+        "$.runs[7].usage.wall_ms",
+        "$.runs[7].verification",
+        "$.runs[7].verification.matches",
+        "$.runs[7].verification.tests_hash_after",
+        "$.runs[7].verification.tests_hash_before",
+        "$.runs[7].verifier_hash",
+        "$.runs[8].artifacts",
+        "$.runs[8].artifacts.solution.py",
+        "$.runs[8].attempt",
+        "$.runs[8].ext",
+        "$.runs[8].ext.abnormal",
+        "$.runs[8].ext.thinking",
+        "$.runs[8].finished_at",
+        "$.runs[8].genome_id",
+        "$.runs[8].outcome",
+        "$.runs[8].run_id",
+        "$.runs[8].scenario_version",
+        "$.runs[8].schema_version",
+        "$.runs[8].scope",
+        "$.runs[8].seed_control",
+        "$.runs[8].shell_version",
+        "$.runs[8].started_at",
+        "$.runs[8].task_id",
+        "$.runs[8].usage",
+        "$.runs[8].usage.cost_usd",
+        "$.runs[8].usage.tokens_in",
+        "$.runs[8].usage.tokens_out",
+        "$.runs[8].usage.turns",
+        "$.runs[8].usage.wall_ms",
+        "$.runs[8].verification",
+        "$.runs[8].verification.matches",
+        "$.runs[8].verification.tests_hash_after",
+        "$.runs[8].verification.tests_hash_before",
+        "$.runs[8].verifier_hash",
+        "$.runs[9].artifacts",
+        "$.runs[9].artifacts.solution.py",
+        "$.runs[9].attempt",
+        "$.runs[9].ext",
+        "$.runs[9].ext.abnormal",
+        "$.runs[9].ext.thinking",
+        "$.runs[9].finished_at",
+        "$.runs[9].genome_id",
+        "$.runs[9].outcome",
+        "$.runs[9].run_id",
+        "$.runs[9].scenario_version",
+        "$.runs[9].schema_version",
+        "$.runs[9].scope",
+        "$.runs[9].seed_control",
+        "$.runs[9].shell_version",
+        "$.runs[9].started_at",
+        "$.runs[9].task_id",
+        "$.runs[9].usage",
+        "$.runs[9].usage.cost_usd",
+        "$.runs[9].usage.tokens_in",
+        "$.runs[9].usage.tokens_out",
+        "$.runs[9].usage.turns",
+        "$.runs[9].usage.wall_ms",
+        "$.runs[9].verification",
+        "$.runs[9].verification.matches",
+        "$.runs[9].verification.tests_hash_after",
+        "$.runs[9].verification.tests_hash_before",
+        "$.runs[9].verifier_hash",
+        "$.runs[10].artifacts",
+        "$.runs[10].artifacts.solution.py",
+        "$.runs[10].attempt",
+        "$.runs[10].ext",
+        "$.runs[10].ext.abnormal",
+        "$.runs[10].ext.thinking",
+        "$.runs[10].finished_at",
+        "$.runs[10].genome_id",
+        "$.runs[10].outcome",
+        "$.runs[10].run_id",
+        "$.runs[10].scenario_version",
+        "$.runs[10].schema_version",
+        "$.runs[10].scope",
+        "$.runs[10].seed_control",
+        "$.runs[10].shell_version",
+        "$.runs[10].started_at",
+        "$.runs[10].task_id",
+        "$.runs[10].usage",
+        "$.runs[10].usage.cost_usd",
+        "$.runs[10].usage.tokens_in",
+        "$.runs[10].usage.tokens_out",
+        "$.runs[10].usage.turns",
+        "$.runs[10].usage.wall_ms",
+        "$.runs[10].verification",
+        "$.runs[10].verification.matches",
+        "$.runs[10].verification.tests_hash_after",
+        "$.runs[10].verification.tests_hash_before",
+        "$.runs[10].verifier_hash",
+        "$.runs[11].artifacts",
+        "$.runs[11].artifacts.solution.py",
+        "$.runs[11].attempt",
+        "$.runs[11].ext",
+        "$.runs[11].ext.abnormal",
+        "$.runs[11].ext.thinking",
+        "$.runs[11].finished_at",
+        "$.runs[11].genome_id",
+        "$.runs[11].outcome",
+        "$.runs[11].run_id",
+        "$.runs[11].scenario_version",
+        "$.runs[11].schema_version",
+        "$.runs[11].scope",
+        "$.runs[11].seed_control",
+        "$.runs[11].shell_version",
+        "$.runs[11].started_at",
+        "$.runs[11].task_id",
+        "$.runs[11].usage",
+        "$.runs[11].usage.cost_usd",
+        "$.runs[11].usage.tokens_in",
+        "$.runs[11].usage.tokens_out",
+        "$.runs[11].usage.turns",
+        "$.runs[11].usage.wall_ms",
+        "$.runs[11].verification",
+        "$.runs[11].verification.matches",
+        "$.runs[11].verification.tests_hash_after",
+        "$.runs[11].verification.tests_hash_before",
+        "$.runs[11].verifier_hash",
+        "$.runs[12].artifacts",
+        "$.runs[12].artifacts.solution.py",
+        "$.runs[12].attempt",
+        "$.runs[12].ext",
+        "$.runs[12].ext.abnormal",
+        "$.runs[12].ext.thinking",
+        "$.runs[12].finished_at",
+        "$.runs[12].genome_id",
+        "$.runs[12].outcome",
+        "$.runs[12].run_id",
+        "$.runs[12].scenario_version",
+        "$.runs[12].schema_version",
+        "$.runs[12].scope",
+        "$.runs[12].seed_control",
+        "$.runs[12].shell_version",
+        "$.runs[12].started_at",
+        "$.runs[12].task_id",
+        "$.runs[12].usage",
+        "$.runs[12].usage.cost_usd",
+        "$.runs[12].usage.tokens_in",
+        "$.runs[12].usage.tokens_out",
+        "$.runs[12].usage.turns",
+        "$.runs[12].usage.wall_ms",
+        "$.runs[12].verification",
+        "$.runs[12].verification.matches",
+        "$.runs[12].verification.tests_hash_after",
+        "$.runs[12].verification.tests_hash_before",
+        "$.runs[12].verifier_hash",
+        "$.runs[13].artifacts",
+        "$.runs[13].artifacts.solution.py",
+        "$.runs[13].attempt",
+        "$.runs[13].ext",
+        "$.runs[13].ext.abnormal",
+        "$.runs[13].ext.thinking",
+        "$.runs[13].finished_at",
+        "$.runs[13].genome_id",
+        "$.runs[13].outcome",
+        "$.runs[13].run_id",
+        "$.runs[13].scenario_version",
+        "$.runs[13].schema_version",
+        "$.runs[13].scope",
+        "$.runs[13].seed_control",
+        "$.runs[13].shell_version",
+        "$.runs[13].started_at",
+        "$.runs[13].task_id",
+        "$.runs[13].usage",
+        "$.runs[13].usage.cost_usd",
+        "$.runs[13].usage.tokens_in",
+        "$.runs[13].usage.tokens_out",
+        "$.runs[13].usage.turns",
+        "$.runs[13].usage.wall_ms",
+        "$.runs[13].verification",
+        "$.runs[13].verification.matches",
+        "$.runs[13].verification.tests_hash_after",
+        "$.runs[13].verification.tests_hash_before",
+        "$.runs[13].verifier_hash",
+        "$.runs[14].artifacts",
+        "$.runs[14].artifacts.solution.py",
+        "$.runs[14].attempt",
+        "$.runs[14].ext",
+        "$.runs[14].ext.abnormal",
+        "$.runs[14].ext.thinking",
+        "$.runs[14].finished_at",
+        "$.runs[14].genome_id",
+        "$.runs[14].outcome",
+        "$.runs[14].run_id",
+        "$.runs[14].scenario_version",
+        "$.runs[14].schema_version",
+        "$.runs[14].scope",
+        "$.runs[14].seed_control",
+        "$.runs[14].shell_version",
+        "$.runs[14].started_at",
+        "$.runs[14].task_id",
+        "$.runs[14].usage",
+        "$.runs[14].usage.cost_usd",
+        "$.runs[14].usage.tokens_in",
+        "$.runs[14].usage.tokens_out",
+        "$.runs[14].usage.turns",
+        "$.runs[14].usage.wall_ms",
+        "$.runs[14].verification",
+        "$.runs[14].verification.matches",
+        "$.runs[14].verification.tests_hash_after",
+        "$.runs[14].verification.tests_hash_before",
+        "$.runs[14].verifier_hash",
+        "$.runs[15].artifacts",
+        "$.runs[15].attempt",
+        "$.runs[15].ext",
+        "$.runs[15].ext.abnormal",
+        "$.runs[15].ext.thinking",
+        "$.runs[15].finished_at",
+        "$.runs[15].genome_id",
+        "$.runs[15].outcome",
+        "$.runs[15].run_id",
+        "$.runs[15].scenario_version",
+        "$.runs[15].schema_version",
+        "$.runs[15].scope",
+        "$.runs[15].seed_control",
+        "$.runs[15].shell_version",
+        "$.runs[15].started_at",
+        "$.runs[15].task_id",
+        "$.runs[15].usage",
+        "$.runs[15].usage.cost_usd",
+        "$.runs[15].usage.tokens_in",
+        "$.runs[15].usage.tokens_out",
+        "$.runs[15].usage.turns",
+        "$.runs[15].usage.wall_ms",
+        "$.runs[15].verification",
+        "$.runs[15].verification.matches",
+        "$.runs[15].verification.tests_hash_after",
+        "$.runs[15].verification.tests_hash_before",
+        "$.runs[15].verifier_hash",
+        "$.runs[16].artifacts",
+        "$.runs[16].artifacts.solution.py",
+        "$.runs[16].attempt",
+        "$.runs[16].ext",
+        "$.runs[16].ext.abnormal",
+        "$.runs[16].ext.thinking",
+        "$.runs[16].finished_at",
+        "$.runs[16].genome_id",
+        "$.runs[16].outcome",
+        "$.runs[16].run_id",
+        "$.runs[16].scenario_version",
+        "$.runs[16].schema_version",
+        "$.runs[16].scope",
+        "$.runs[16].seed_control",
+        "$.runs[16].shell_version",
+        "$.runs[16].started_at",
+        "$.runs[16].task_id",
+        "$.runs[16].usage",
+        "$.runs[16].usage.cost_usd",
+        "$.runs[16].usage.tokens_in",
+        "$.runs[16].usage.tokens_out",
+        "$.runs[16].usage.turns",
+        "$.runs[16].usage.wall_ms",
+        "$.runs[16].verification",
+        "$.runs[16].verification.matches",
+        "$.runs[16].verification.tests_hash_after",
+        "$.runs[16].verification.tests_hash_before",
+        "$.runs[16].verifier_hash",
+        "$.runs[17].artifacts",
+        "$.runs[17].attempt",
+        "$.runs[17].ext",
+        "$.runs[17].ext.abnormal",
+        "$.runs[17].ext.thinking",
+        "$.runs[17].finished_at",
+        "$.runs[17].genome_id",
+        "$.runs[17].outcome",
+        "$.runs[17].run_id",
+        "$.runs[17].scenario_version",
+        "$.runs[17].schema_version",
+        "$.runs[17].scope",
+        "$.runs[17].seed_control",
+        "$.runs[17].shell_version",
+        "$.runs[17].started_at",
+        "$.runs[17].task_id",
+        "$.runs[17].usage",
+        "$.runs[17].usage.cost_usd",
+        "$.runs[17].usage.tokens_in",
+        "$.runs[17].usage.tokens_out",
+        "$.runs[17].usage.turns",
+        "$.runs[17].usage.wall_ms",
+        "$.runs[17].verification",
+        "$.runs[17].verification.matches",
+        "$.runs[17].verification.tests_hash_after",
+        "$.runs[17].verification.tests_hash_before",
+        "$.runs[17].verifier_hash",
+        "$.runs[18].artifacts",
+        "$.runs[18].attempt",
+        "$.runs[18].ext",
+        "$.runs[18].ext.abnormal",
+        "$.runs[18].ext.thinking",
+        "$.runs[18].finished_at",
+        "$.runs[18].genome_id",
+        "$.runs[18].outcome",
+        "$.runs[18].run_id",
+        "$.runs[18].scenario_version",
+        "$.runs[18].schema_version",
+        "$.runs[18].scope",
+        "$.runs[18].seed_control",
+        "$.runs[18].shell_version",
+        "$.runs[18].started_at",
+        "$.runs[18].task_id",
+        "$.runs[18].usage",
+        "$.runs[18].usage.cost_usd",
+        "$.runs[18].usage.tokens_in",
+        "$.runs[18].usage.tokens_out",
+        "$.runs[18].usage.turns",
+        "$.runs[18].usage.wall_ms",
+        "$.runs[18].verification",
+        "$.runs[18].verification.matches",
+        "$.runs[18].verification.tests_hash_after",
+        "$.runs[18].verification.tests_hash_before",
+        "$.runs[18].verifier_hash",
+        "$.runs[19].artifacts",
+        "$.runs[19].attempt",
+        "$.runs[19].ext",
+        "$.runs[19].ext.abnormal",
+        "$.runs[19].ext.thinking",
+        "$.runs[19].finished_at",
+        "$.runs[19].genome_id",
+        "$.runs[19].outcome",
+        "$.runs[19].run_id",
+        "$.runs[19].scenario_version",
+        "$.runs[19].schema_version",
+        "$.runs[19].scope",
+        "$.runs[19].seed_control",
+        "$.runs[19].shell_version",
+        "$.runs[19].started_at",
+        "$.runs[19].task_id",
+        "$.runs[19].usage",
+        "$.runs[19].usage.cost_usd",
+        "$.runs[19].usage.tokens_in",
+        "$.runs[19].usage.tokens_out",
+        "$.runs[19].usage.turns",
+        "$.runs[19].usage.wall_ms",
+        "$.runs[19].verification",
+        "$.runs[19].verification.matches",
+        "$.runs[19].verification.tests_hash_after",
+        "$.runs[19].verification.tests_hash_before",
+        "$.runs[19].verifier_hash",
+        "$.runs[20].artifacts",
+        "$.runs[20].attempt",
+        "$.runs[20].ext",
+        "$.runs[20].ext.abnormal",
+        "$.runs[20].ext.thinking",
+        "$.runs[20].finished_at",
+        "$.runs[20].genome_id",
+        "$.runs[20].outcome",
+        "$.runs[20].run_id",
+        "$.runs[20].scenario_version",
+        "$.runs[20].schema_version",
+        "$.runs[20].scope",
+        "$.runs[20].seed_control",
+        "$.runs[20].shell_version",
+        "$.runs[20].started_at",
+        "$.runs[20].task_id",
+        "$.runs[20].usage",
+        "$.runs[20].usage.cost_usd",
+        "$.runs[20].usage.tokens_in",
+        "$.runs[20].usage.tokens_out",
+        "$.runs[20].usage.turns",
+        "$.runs[20].usage.wall_ms",
+        "$.runs[20].verification",
+        "$.runs[20].verification.matches",
+        "$.runs[20].verification.tests_hash_after",
+        "$.runs[20].verification.tests_hash_before",
+        "$.runs[20].verifier_hash",
+        "$.runs[21].artifacts",
+        "$.runs[21].attempt",
+        "$.runs[21].ext",
+        "$.runs[21].ext.abnormal",
+        "$.runs[21].ext.thinking",
+        "$.runs[21].finished_at",
+        "$.runs[21].genome_id",
+        "$.runs[21].outcome",
+        "$.runs[21].run_id",
+        "$.runs[21].scenario_version",
+        "$.runs[21].schema_version",
+        "$.runs[21].scope",
+        "$.runs[21].seed_control",
+        "$.runs[21].shell_version",
+        "$.runs[21].started_at",
+        "$.runs[21].task_id",
+        "$.runs[21].usage",
+        "$.runs[21].usage.cost_usd",
+        "$.runs[21].usage.tokens_in",
+        "$.runs[21].usage.tokens_out",
+        "$.runs[21].usage.turns",
+        "$.runs[21].usage.wall_ms",
+        "$.runs[21].verification",
+        "$.runs[21].verification.matches",
+        "$.runs[21].verification.tests_hash_after",
+        "$.runs[21].verification.tests_hash_before",
+        "$.runs[21].verifier_hash",
+        "$.runs[22].artifacts",
+        "$.runs[22].attempt",
+        "$.runs[22].ext",
+        "$.runs[22].ext.abnormal",
+        "$.runs[22].ext.thinking",
+        "$.runs[22].finished_at",
+        "$.runs[22].genome_id",
+        "$.runs[22].outcome",
+        "$.runs[22].run_id",
+        "$.runs[22].scenario_version",
+        "$.runs[22].schema_version",
+        "$.runs[22].scope",
+        "$.runs[22].seed_control",
+        "$.runs[22].shell_version",
+        "$.runs[22].started_at",
+        "$.runs[22].task_id",
+        "$.runs[22].usage",
+        "$.runs[22].usage.cost_usd",
+        "$.runs[22].usage.tokens_in",
+        "$.runs[22].usage.tokens_out",
+        "$.runs[22].usage.turns",
+        "$.runs[22].usage.wall_ms",
+        "$.runs[22].verification",
+        "$.runs[22].verification.matches",
+        "$.runs[22].verification.tests_hash_after",
+        "$.runs[22].verification.tests_hash_before",
+        "$.runs[22].verifier_hash",
+        "$.runs[23].artifacts",
+        "$.runs[23].attempt",
+        "$.runs[23].ext",
+        "$.runs[23].ext.abnormal",
+        "$.runs[23].ext.thinking",
+        "$.runs[23].finished_at",
+        "$.runs[23].genome_id",
+        "$.runs[23].outcome",
+        "$.runs[23].run_id",
+        "$.runs[23].scenario_version",
+        "$.runs[23].schema_version",
+        "$.runs[23].scope",
+        "$.runs[23].seed_control",
+        "$.runs[23].shell_version",
+        "$.runs[23].started_at",
+        "$.runs[23].task_id",
+        "$.runs[23].usage",
+        "$.runs[23].usage.cost_usd",
+        "$.runs[23].usage.tokens_in",
+        "$.runs[23].usage.tokens_out",
+        "$.runs[23].usage.turns",
+        "$.runs[23].usage.wall_ms",
+        "$.runs[23].verification",
+        "$.runs[23].verification.matches",
+        "$.runs[23].verification.tests_hash_after",
+        "$.runs[23].verification.tests_hash_before",
+        "$.runs[23].verifier_hash",
+        "$.runs[24].artifacts",
+        "$.runs[24].artifacts.solution.py",
+        "$.runs[24].attempt",
+        "$.runs[24].ext",
+        "$.runs[24].ext.abnormal",
+        "$.runs[24].ext.thinking",
+        "$.runs[24].finished_at",
+        "$.runs[24].genome_id",
+        "$.runs[24].outcome",
+        "$.runs[24].run_id",
+        "$.runs[24].scenario_version",
+        "$.runs[24].schema_version",
+        "$.runs[24].scope",
+        "$.runs[24].seed_control",
+        "$.runs[24].shell_version",
+        "$.runs[24].started_at",
+        "$.runs[24].task_id",
+        "$.runs[24].usage",
+        "$.runs[24].usage.cost_usd",
+        "$.runs[24].usage.tokens_in",
+        "$.runs[24].usage.tokens_out",
+        "$.runs[24].usage.turns",
+        "$.runs[24].usage.wall_ms",
+        "$.runs[24].verification",
+        "$.runs[24].verification.matches",
+        "$.runs[24].verification.tests_hash_after",
+        "$.runs[24].verification.tests_hash_before",
+        "$.runs[24].verifier_hash",
+        "$.runs[25].artifacts",
+        "$.runs[25].attempt",
+        "$.runs[25].ext",
+        "$.runs[25].ext.abnormal",
+        "$.runs[25].ext.thinking",
+        "$.runs[25].finished_at",
+        "$.runs[25].genome_id",
+        "$.runs[25].outcome",
+        "$.runs[25].run_id",
+        "$.runs[25].scenario_version",
+        "$.runs[25].schema_version",
+        "$.runs[25].scope",
+        "$.runs[25].seed_control",
+        "$.runs[25].shell_version",
+        "$.runs[25].started_at",
+        "$.runs[25].task_id",
+        "$.runs[25].usage",
+        "$.runs[25].usage.cost_usd",
+        "$.runs[25].usage.tokens_in",
+        "$.runs[25].usage.tokens_out",
+        "$.runs[25].usage.turns",
+        "$.runs[25].usage.wall_ms",
+        "$.runs[25].verification",
+        "$.runs[25].verification.matches",
+        "$.runs[25].verification.tests_hash_after",
+        "$.runs[25].verification.tests_hash_before",
+        "$.runs[25].verifier_hash",
+        "$.runs[26].artifacts",
+        "$.runs[26].attempt",
+        "$.runs[26].ext",
+        "$.runs[26].ext.abnormal",
+        "$.runs[26].ext.thinking",
+        "$.runs[26].finished_at",
+        "$.runs[26].genome_id",
+        "$.runs[26].outcome",
+        "$.runs[26].run_id",
+        "$.runs[26].scenario_version",
+        "$.runs[26].schema_version",
+        "$.runs[26].scope",
+        "$.runs[26].seed_control",
+        "$.runs[26].shell_version",
+        "$.runs[26].started_at",
+        "$.runs[26].task_id",
+        "$.runs[26].usage",
+        "$.runs[26].usage.cost_usd",
+        "$.runs[26].usage.tokens_in",
+        "$.runs[26].usage.tokens_out",
+        "$.runs[26].usage.turns",
+        "$.runs[26].usage.wall_ms",
+        "$.runs[26].verification",
+        "$.runs[26].verification.matches",
+        "$.runs[26].verification.tests_hash_after",
+        "$.runs[26].verification.tests_hash_before",
+        "$.runs[26].verifier_hash",
+        "$.runs[27].artifacts",
+        "$.runs[27].attempt",
+        "$.runs[27].ext",
+        "$.runs[27].ext.abnormal",
+        "$.runs[27].ext.thinking",
+        "$.runs[27].finished_at",
+        "$.runs[27].genome_id",
+        "$.runs[27].outcome",
+        "$.runs[27].run_id",
+        "$.runs[27].scenario_version",
+        "$.runs[27].schema_version",
+        "$.runs[27].scope",
+        "$.runs[27].seed_control",
+        "$.runs[27].shell_version",
+        "$.runs[27].started_at",
+        "$.runs[27].task_id",
+        "$.runs[27].usage",
+        "$.runs[27].usage.cost_usd",
+        "$.runs[27].usage.tokens_in",
+        "$.runs[27].usage.tokens_out",
+        "$.runs[27].usage.turns",
+        "$.runs[27].usage.wall_ms",
+        "$.runs[27].verification",
+        "$.runs[27].verification.matches",
+        "$.runs[27].verification.tests_hash_after",
+        "$.runs[27].verification.tests_hash_before",
+        "$.runs[27].verifier_hash",
+        "$.runs[28].artifacts",
+        "$.runs[28].artifacts.solution.py",
+        "$.runs[28].attempt",
+        "$.runs[28].ext",
+        "$.runs[28].ext.abnormal",
+        "$.runs[28].ext.thinking",
+        "$.runs[28].finished_at",
+        "$.runs[28].genome_id",
+        "$.runs[28].outcome",
+        "$.runs[28].run_id",
+        "$.runs[28].scenario_version",
+        "$.runs[28].schema_version",
+        "$.runs[28].scope",
+        "$.runs[28].seed_control",
+        "$.runs[28].shell_version",
+        "$.runs[28].started_at",
+        "$.runs[28].task_id",
+        "$.runs[28].usage",
+        "$.runs[28].usage.cost_usd",
+        "$.runs[28].usage.tokens_in",
+        "$.runs[28].usage.tokens_out",
+        "$.runs[28].usage.turns",
+        "$.runs[28].usage.wall_ms",
+        "$.runs[28].verification",
+        "$.runs[28].verification.matches",
+        "$.runs[28].verification.tests_hash_after",
+        "$.runs[28].verification.tests_hash_before",
+        "$.runs[28].verifier_hash",
+        "$.runs[29].artifacts",
+        "$.runs[29].artifacts.solution.py",
+        "$.runs[29].attempt",
+        "$.runs[29].ext",
+        "$.runs[29].ext.abnormal",
+        "$.runs[29].ext.thinking",
+        "$.runs[29].finished_at",
+        "$.runs[29].genome_id",
+        "$.runs[29].outcome",
+        "$.runs[29].run_id",
+        "$.runs[29].scenario_version",
+        "$.runs[29].schema_version",
+        "$.runs[29].scope",
+        "$.runs[29].seed_control",
+        "$.runs[29].shell_version",
+        "$.runs[29].started_at",
+        "$.runs[29].task_id",
+        "$.runs[29].usage",
+        "$.runs[29].usage.cost_usd",
+        "$.runs[29].usage.tokens_in",
+        "$.runs[29].usage.tokens_out",
+        "$.runs[29].usage.turns",
+        "$.runs[29].usage.wall_ms",
+        "$.runs[29].verification",
+        "$.runs[29].verification.matches",
+        "$.runs[29].verification.tests_hash_after",
+        "$.runs[29].verification.tests_hash_before",
+        "$.runs[29].verifier_hash",
         "$.scenario_id",
         "$.scenario_version"
       ],
@@ -2632,51 +8254,115 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].paired[0].baseline_cost_usd",
-          1.84
+          0.184
         ],
         [
           "$.decisions[0].paired[0].candidate_cost_usd",
-          0.92
+          0.368
         ],
         [
           "$.decisions[0].paired[1].baseline_cost_usd",
-          1.84
+          0.184
         ],
         [
           "$.decisions[0].paired[1].candidate_cost_usd",
-          0.92
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[2].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[2].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[3].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[3].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[4].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[4].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[5].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[5].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[6].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[6].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[7].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[7].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[8].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[8].candidate_cost_usd",
+          0.368
+        ],
+        [
+          "$.decisions[0].paired[9].baseline_cost_usd",
+          0.184
+        ],
+        [
+          "$.decisions[0].paired[9].candidate_cost_usd",
+          0.368
         ],
         [
           "$.decisions[0].scores.baseline.cost_per_solved_usd",
-          1.84
+          0.6133333333333333
         ],
         [
           "$.decisions[0].scores.baseline.solved",
-          2.0
+          3.0
         ],
         [
           "$.decisions[0].scores.baseline.total",
-          2.0
+          10.0
         ],
         [
           "$.decisions[0].scores.candidate.cost_per_solved_usd",
-          0.92
+          0.368
         ],
         [
           "$.decisions[0].scores.candidate.solved",
-          2.0
+          10.0
         ],
         [
           "$.decisions[0].scores.candidate.total",
-          2.0
+          10.0
         ],
         [
           "$.results[0].scores.holdout.cost_per_solved_usd",
-          1.84
+          0.9199999999999999
         ],
         [
           "$.results[0].scores.holdout.cost_total_usd",
-          1.84
+          0.9199999999999999
         ],
         [
           "$.results[0].scores.holdout.invalid_ratio",
@@ -2684,7 +8370,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[0].scores.holdout.pass_at_1_first_attempt",
-          1.0
+          0.2
         ],
         [
           "$.results[0].scores.holdout.solved",
@@ -2692,15 +8378,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[0].scores.holdout.total",
-          1.0
+          5.0
         ],
         [
           "$.results[0].scores.search.cost_per_solved_usd",
-          1.84
+          0.6133333333333333
         ],
         [
           "$.results[0].scores.search.cost_total_usd",
-          3.68
+          1.8399999999999999
         ],
         [
           "$.results[0].scores.search.invalid_ratio",
@@ -2708,23 +8394,23 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[0].scores.search.pass_at_1_first_attempt",
-          1.0
+          0.3
         ],
         [
           "$.results[0].scores.search.solved",
-          2.0
+          3.0
         ],
         [
           "$.results[0].scores.search.total",
-          2.0
+          10.0
         ],
         [
           "$.results[1].scores.search.cost_per_solved_usd",
-          1.84
+          0.6133333333333333
         ],
         [
           "$.results[1].scores.search.cost_total_usd",
-          3.68
+          1.8399999999999999
         ],
         [
           "$.results[1].scores.search.invalid_ratio",
@@ -2732,23 +8418,23 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[1].scores.search.pass_at_1_first_attempt",
-          1.0
+          0.3
         ],
         [
           "$.results[1].scores.search.solved",
-          2.0
+          3.0
         ],
         [
           "$.results[1].scores.search.total",
-          2.0
+          10.0
         ],
         [
           "$.results[2].scores.holdout.cost_per_solved_usd",
-          0.92
+          0.368
         ],
         [
           "$.results[2].scores.holdout.cost_total_usd",
-          0.92
+          1.8399999999999999
         ],
         [
           "$.results[2].scores.holdout.invalid_ratio",
@@ -2760,19 +8446,19 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].scores.holdout.solved",
-          1.0
+          5.0
         ],
         [
           "$.results[2].scores.holdout.total",
-          1.0
+          5.0
         ],
         [
           "$.results[2].scores.search.cost_per_solved_usd",
-          0.92
+          0.368
         ],
         [
           "$.results[2].scores.search.cost_total_usd",
-          1.84
+          3.6799999999999997
         ],
         [
           "$.results[2].scores.search.invalid_ratio",
@@ -2784,19 +8470,19 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].scores.search.solved",
-          2.0
+          10.0
         ],
         [
           "$.results[2].scores.search.total",
-          2.0
+          10.0
         ],
         [
           "$.results[3].scores.search.cost_per_solved_usd",
-          0.92
+          0.368
         ],
         [
           "$.results[3].scores.search.cost_total_usd",
-          1.84
+          3.6799999999999997
         ],
         [
           "$.results[3].scores.search.invalid_ratio",
@@ -2808,11 +8494,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[3].scores.search.solved",
-          2.0
+          10.0
         ],
         [
           "$.results[3].scores.search.total",
-          2.0
+          10.0
         ],
         [
           "$.runs[0].attempt",
@@ -2820,7 +8506,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.cost_usd",
-          1.84
+          0.368
         ],
         [
           "$.runs[0].usage.tokens_in",
@@ -2836,7 +8522,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.wall_ms",
-          1840.0
+          368.0
         ],
         [
           "$.runs[1].attempt",
@@ -2844,7 +8530,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[1].usage.cost_usd",
-          1.84
+          0.368
         ],
         [
           "$.runs[1].usage.tokens_in",
@@ -2860,7 +8546,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[1].usage.wall_ms",
-          1840.0
+          368.0
         ],
         [
           "$.runs[2].attempt",
@@ -2868,7 +8554,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[2].usage.cost_usd",
-          1.84
+          0.368
         ],
         [
           "$.runs[2].usage.tokens_in",
@@ -2884,7 +8570,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[2].usage.wall_ms",
-          1840.0
+          368.0
         ],
         [
           "$.runs[3].attempt",
@@ -2892,7 +8578,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[3].usage.cost_usd",
-          0.92
+          0.368
         ],
         [
           "$.runs[3].usage.tokens_in",
@@ -2900,15 +8586,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[3].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[3].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[3].usage.wall_ms",
-          920.0
+          368.0
         ],
         [
           "$.runs[4].attempt",
@@ -2916,7 +8602,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[4].usage.cost_usd",
-          0.92
+          0.368
         ],
         [
           "$.runs[4].usage.tokens_in",
@@ -2924,15 +8610,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[4].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[4].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[4].usage.wall_ms",
-          920.0
+          368.0
         ],
         [
           "$.runs[5].attempt",
@@ -2940,7 +8626,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[5].usage.cost_usd",
-          0.92
+          0.368
         ],
         [
           "$.runs[5].usage.tokens_in",
@@ -2948,15 +8634,591 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[5].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[5].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[5].usage.wall_ms",
-          920.0
+          368.0
+        ],
+        [
+          "$.runs[6].attempt",
+          1.0
+        ],
+        [
+          "$.runs[6].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[6].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[6].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[6].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[6].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[7].attempt",
+          1.0
+        ],
+        [
+          "$.runs[7].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[7].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[7].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[7].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[7].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[8].attempt",
+          1.0
+        ],
+        [
+          "$.runs[8].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[8].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[8].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[8].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[8].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[9].attempt",
+          1.0
+        ],
+        [
+          "$.runs[9].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[9].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[9].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[9].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[9].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[10].attempt",
+          1.0
+        ],
+        [
+          "$.runs[10].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[10].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[10].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[10].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[10].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[11].attempt",
+          1.0
+        ],
+        [
+          "$.runs[11].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[11].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[11].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[11].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[11].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[12].attempt",
+          1.0
+        ],
+        [
+          "$.runs[12].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[12].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[12].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[12].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[12].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[13].attempt",
+          1.0
+        ],
+        [
+          "$.runs[13].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[13].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[13].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[13].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[13].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[14].attempt",
+          1.0
+        ],
+        [
+          "$.runs[14].usage.cost_usd",
+          0.368
+        ],
+        [
+          "$.runs[14].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[14].usage.tokens_out",
+          800.0
+        ],
+        [
+          "$.runs[14].usage.turns",
+          4.0
+        ],
+        [
+          "$.runs[14].usage.wall_ms",
+          368.0
+        ],
+        [
+          "$.runs[15].attempt",
+          1.0
+        ],
+        [
+          "$.runs[15].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[15].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[15].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[15].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[15].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[16].attempt",
+          1.0
+        ],
+        [
+          "$.runs[16].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[16].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[16].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[16].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[16].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[17].attempt",
+          1.0
+        ],
+        [
+          "$.runs[17].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[17].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[17].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[17].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[17].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[18].attempt",
+          1.0
+        ],
+        [
+          "$.runs[18].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[18].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[18].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[18].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[18].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[19].attempt",
+          1.0
+        ],
+        [
+          "$.runs[19].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[19].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[19].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[19].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[19].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[20].attempt",
+          1.0
+        ],
+        [
+          "$.runs[20].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[20].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[20].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[20].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[20].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[21].attempt",
+          1.0
+        ],
+        [
+          "$.runs[21].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[21].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[21].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[21].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[21].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[22].attempt",
+          1.0
+        ],
+        [
+          "$.runs[22].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[22].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[22].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[22].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[22].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[23].attempt",
+          1.0
+        ],
+        [
+          "$.runs[23].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[23].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[23].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[23].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[23].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[24].attempt",
+          1.0
+        ],
+        [
+          "$.runs[24].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[24].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[24].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[24].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[24].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[25].attempt",
+          1.0
+        ],
+        [
+          "$.runs[25].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[25].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[25].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[25].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[25].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[26].attempt",
+          1.0
+        ],
+        [
+          "$.runs[26].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[26].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[26].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[26].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[26].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[27].attempt",
+          1.0
+        ],
+        [
+          "$.runs[27].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[27].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[27].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[27].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[27].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[28].attempt",
+          1.0
+        ],
+        [
+          "$.runs[28].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[28].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[28].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[28].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[28].usage.wall_ms",
+          184.0
+        ],
+        [
+          "$.runs[29].attempt",
+          1.0
+        ],
+        [
+          "$.runs[29].usage.cost_usd",
+          0.184
+        ],
+        [
+          "$.runs[29].usage.tokens_in",
+          1150.0
+        ],
+        [
+          "$.runs[29].usage.tokens_out",
+          400.0
+        ],
+        [
+          "$.runs[29].usage.turns",
+          2.0
+        ],
+        [
+          "$.runs[29].usage.wall_ms",
+          184.0
         ]
       ],
       "shape": [
@@ -3050,7 +9312,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].paired",
-          "array[2]"
+          "array[10]"
         ],
         [
           "$.decisions[0].paired[0]",
@@ -3098,6 +9360,198 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].paired[1].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[2]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[2].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[2].baseline_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[2].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[2].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[2].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[3]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[3].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[3].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[3].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[3].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[3].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[4]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[4].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[4].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[4].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[4].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[4].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[5]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[5].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[5].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[5].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[5].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[5].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[6]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[6].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[6].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[6].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[6].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[6].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[7]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[7].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[7].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[7].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[7].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[7].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[8]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[8].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[8].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[8].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[8].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[8].task_id",
+          "string"
+        ],
+        [
+          "$.decisions[0].paired[9]",
+          "object"
+        ],
+        [
+          "$.decisions[0].paired[9].baseline_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[9].baseline_passed",
+          "bool:False"
+        ],
+        [
+          "$.decisions[0].paired[9].candidate_cost_usd",
+          "number"
+        ],
+        [
+          "$.decisions[0].paired[9].candidate_passed",
+          "bool:True"
+        ],
+        [
+          "$.decisions[0].paired[9].task_id",
           "string"
         ],
         [
@@ -3194,7 +9648,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[0].run_refs",
-          "array[3]"
+          "array[15]"
         ],
         [
           "$.results[0].run_refs[0]",
@@ -3206,6 +9660,54 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[0].run_refs[2]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[3]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[4]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[5]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[6]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[7]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[8]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[9]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[10]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[11]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[12]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[13]",
+          "string"
+        ],
+        [
+          "$.results[0].run_refs[14]",
           "string"
         ],
         [
@@ -3306,7 +9808,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[1].run_refs",
-          "array[2]"
+          "array[10]"
         ],
         [
           "$.results[1].run_refs[0]",
@@ -3314,6 +9816,38 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[1].run_refs[1]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[2]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[3]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[4]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[5]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[6]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[7]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[8]",
+          "string"
+        ],
+        [
+          "$.results[1].run_refs[9]",
           "string"
         ],
         [
@@ -3386,7 +9920,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].run_refs",
-          "array[3]"
+          "array[15]"
         ],
         [
           "$.results[2].run_refs[0]",
@@ -3398,6 +9932,54 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].run_refs[2]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[3]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[4]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[5]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[6]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[7]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[8]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[9]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[10]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[11]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[12]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[13]",
+          "string"
+        ],
+        [
+          "$.results[2].run_refs[14]",
           "string"
         ],
         [
@@ -3498,7 +10080,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[3].run_refs",
-          "array[2]"
+          "array[10]"
         ],
         [
           "$.results[3].run_refs[0]",
@@ -3506,6 +10088,38 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[3].run_refs[1]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[2]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[3]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[4]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[5]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[6]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[7]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[8]",
+          "string"
+        ],
+        [
+          "$.results[3].run_refs[9]",
           "string"
         ],
         [
@@ -3558,7 +10172,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs",
-          "array[6]"
+          "array[30]"
         ],
         [
           "$.runs[0]",
@@ -4257,6 +10871,2746 @@ window.MOLT_VIEW = {
           "string"
         ],
         [
+          "$.runs[6]",
+          "object"
+        ],
+        [
+          "$.runs[6].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[6].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[6].attempt",
+          "number"
+        ],
+        [
+          "$.runs[6].ext",
+          "object"
+        ],
+        [
+          "$.runs[6].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[6].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[6].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[6].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[6].outcome",
+          "string"
+        ],
+        [
+          "$.runs[6].run_id",
+          "string"
+        ],
+        [
+          "$.runs[6].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[6].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[6].scope",
+          "string"
+        ],
+        [
+          "$.runs[6].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[6].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[6].started_at",
+          "string"
+        ],
+        [
+          "$.runs[6].task_id",
+          "string"
+        ],
+        [
+          "$.runs[6].usage",
+          "object"
+        ],
+        [
+          "$.runs[6].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[6].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[6].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[6].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[6].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[6].verification",
+          "object"
+        ],
+        [
+          "$.runs[6].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[6].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[6].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[6].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[7]",
+          "object"
+        ],
+        [
+          "$.runs[7].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[7].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[7].attempt",
+          "number"
+        ],
+        [
+          "$.runs[7].ext",
+          "object"
+        ],
+        [
+          "$.runs[7].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[7].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[7].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[7].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[7].outcome",
+          "string"
+        ],
+        [
+          "$.runs[7].run_id",
+          "string"
+        ],
+        [
+          "$.runs[7].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[7].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[7].scope",
+          "string"
+        ],
+        [
+          "$.runs[7].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[7].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[7].started_at",
+          "string"
+        ],
+        [
+          "$.runs[7].task_id",
+          "string"
+        ],
+        [
+          "$.runs[7].usage",
+          "object"
+        ],
+        [
+          "$.runs[7].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[7].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[7].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[7].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[7].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[7].verification",
+          "object"
+        ],
+        [
+          "$.runs[7].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[7].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[7].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[7].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[8]",
+          "object"
+        ],
+        [
+          "$.runs[8].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[8].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[8].attempt",
+          "number"
+        ],
+        [
+          "$.runs[8].ext",
+          "object"
+        ],
+        [
+          "$.runs[8].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[8].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[8].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[8].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[8].outcome",
+          "string"
+        ],
+        [
+          "$.runs[8].run_id",
+          "string"
+        ],
+        [
+          "$.runs[8].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[8].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[8].scope",
+          "string"
+        ],
+        [
+          "$.runs[8].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[8].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[8].started_at",
+          "string"
+        ],
+        [
+          "$.runs[8].task_id",
+          "string"
+        ],
+        [
+          "$.runs[8].usage",
+          "object"
+        ],
+        [
+          "$.runs[8].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[8].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[8].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[8].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[8].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[8].verification",
+          "object"
+        ],
+        [
+          "$.runs[8].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[8].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[8].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[8].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[9]",
+          "object"
+        ],
+        [
+          "$.runs[9].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[9].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[9].attempt",
+          "number"
+        ],
+        [
+          "$.runs[9].ext",
+          "object"
+        ],
+        [
+          "$.runs[9].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[9].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[9].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[9].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[9].outcome",
+          "string"
+        ],
+        [
+          "$.runs[9].run_id",
+          "string"
+        ],
+        [
+          "$.runs[9].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[9].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[9].scope",
+          "string"
+        ],
+        [
+          "$.runs[9].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[9].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[9].started_at",
+          "string"
+        ],
+        [
+          "$.runs[9].task_id",
+          "string"
+        ],
+        [
+          "$.runs[9].usage",
+          "object"
+        ],
+        [
+          "$.runs[9].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[9].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[9].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[9].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[9].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[9].verification",
+          "object"
+        ],
+        [
+          "$.runs[9].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[9].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[9].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[9].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[10]",
+          "object"
+        ],
+        [
+          "$.runs[10].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[10].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[10].attempt",
+          "number"
+        ],
+        [
+          "$.runs[10].ext",
+          "object"
+        ],
+        [
+          "$.runs[10].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[10].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[10].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[10].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[10].outcome",
+          "string"
+        ],
+        [
+          "$.runs[10].run_id",
+          "string"
+        ],
+        [
+          "$.runs[10].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[10].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[10].scope",
+          "string"
+        ],
+        [
+          "$.runs[10].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[10].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[10].started_at",
+          "string"
+        ],
+        [
+          "$.runs[10].task_id",
+          "string"
+        ],
+        [
+          "$.runs[10].usage",
+          "object"
+        ],
+        [
+          "$.runs[10].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[10].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[10].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[10].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[10].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[10].verification",
+          "object"
+        ],
+        [
+          "$.runs[10].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[10].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[10].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[10].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[11]",
+          "object"
+        ],
+        [
+          "$.runs[11].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[11].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[11].attempt",
+          "number"
+        ],
+        [
+          "$.runs[11].ext",
+          "object"
+        ],
+        [
+          "$.runs[11].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[11].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[11].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[11].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[11].outcome",
+          "string"
+        ],
+        [
+          "$.runs[11].run_id",
+          "string"
+        ],
+        [
+          "$.runs[11].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[11].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[11].scope",
+          "string"
+        ],
+        [
+          "$.runs[11].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[11].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[11].started_at",
+          "string"
+        ],
+        [
+          "$.runs[11].task_id",
+          "string"
+        ],
+        [
+          "$.runs[11].usage",
+          "object"
+        ],
+        [
+          "$.runs[11].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[11].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[11].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[11].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[11].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[11].verification",
+          "object"
+        ],
+        [
+          "$.runs[11].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[11].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[11].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[11].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[12]",
+          "object"
+        ],
+        [
+          "$.runs[12].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[12].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[12].attempt",
+          "number"
+        ],
+        [
+          "$.runs[12].ext",
+          "object"
+        ],
+        [
+          "$.runs[12].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[12].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[12].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[12].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[12].outcome",
+          "string"
+        ],
+        [
+          "$.runs[12].run_id",
+          "string"
+        ],
+        [
+          "$.runs[12].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[12].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[12].scope",
+          "string"
+        ],
+        [
+          "$.runs[12].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[12].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[12].started_at",
+          "string"
+        ],
+        [
+          "$.runs[12].task_id",
+          "string"
+        ],
+        [
+          "$.runs[12].usage",
+          "object"
+        ],
+        [
+          "$.runs[12].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[12].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[12].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[12].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[12].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[12].verification",
+          "object"
+        ],
+        [
+          "$.runs[12].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[12].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[12].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[12].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[13]",
+          "object"
+        ],
+        [
+          "$.runs[13].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[13].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[13].attempt",
+          "number"
+        ],
+        [
+          "$.runs[13].ext",
+          "object"
+        ],
+        [
+          "$.runs[13].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[13].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[13].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[13].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[13].outcome",
+          "string"
+        ],
+        [
+          "$.runs[13].run_id",
+          "string"
+        ],
+        [
+          "$.runs[13].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[13].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[13].scope",
+          "string"
+        ],
+        [
+          "$.runs[13].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[13].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[13].started_at",
+          "string"
+        ],
+        [
+          "$.runs[13].task_id",
+          "string"
+        ],
+        [
+          "$.runs[13].usage",
+          "object"
+        ],
+        [
+          "$.runs[13].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[13].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[13].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[13].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[13].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[13].verification",
+          "object"
+        ],
+        [
+          "$.runs[13].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[13].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[13].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[13].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[14]",
+          "object"
+        ],
+        [
+          "$.runs[14].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[14].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[14].attempt",
+          "number"
+        ],
+        [
+          "$.runs[14].ext",
+          "object"
+        ],
+        [
+          "$.runs[14].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[14].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[14].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[14].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[14].outcome",
+          "string"
+        ],
+        [
+          "$.runs[14].run_id",
+          "string"
+        ],
+        [
+          "$.runs[14].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[14].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[14].scope",
+          "string"
+        ],
+        [
+          "$.runs[14].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[14].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[14].started_at",
+          "string"
+        ],
+        [
+          "$.runs[14].task_id",
+          "string"
+        ],
+        [
+          "$.runs[14].usage",
+          "object"
+        ],
+        [
+          "$.runs[14].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[14].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[14].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[14].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[14].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[14].verification",
+          "object"
+        ],
+        [
+          "$.runs[14].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[14].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[14].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[14].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[15]",
+          "object"
+        ],
+        [
+          "$.runs[15].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[15].attempt",
+          "number"
+        ],
+        [
+          "$.runs[15].ext",
+          "object"
+        ],
+        [
+          "$.runs[15].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[15].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[15].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[15].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[15].outcome",
+          "string"
+        ],
+        [
+          "$.runs[15].run_id",
+          "string"
+        ],
+        [
+          "$.runs[15].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[15].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[15].scope",
+          "string"
+        ],
+        [
+          "$.runs[15].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[15].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[15].started_at",
+          "string"
+        ],
+        [
+          "$.runs[15].task_id",
+          "string"
+        ],
+        [
+          "$.runs[15].usage",
+          "object"
+        ],
+        [
+          "$.runs[15].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[15].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[15].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[15].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[15].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[15].verification",
+          "object"
+        ],
+        [
+          "$.runs[15].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[15].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[15].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[15].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[16]",
+          "object"
+        ],
+        [
+          "$.runs[16].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[16].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[16].attempt",
+          "number"
+        ],
+        [
+          "$.runs[16].ext",
+          "object"
+        ],
+        [
+          "$.runs[16].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[16].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[16].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[16].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[16].outcome",
+          "string"
+        ],
+        [
+          "$.runs[16].run_id",
+          "string"
+        ],
+        [
+          "$.runs[16].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[16].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[16].scope",
+          "string"
+        ],
+        [
+          "$.runs[16].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[16].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[16].started_at",
+          "string"
+        ],
+        [
+          "$.runs[16].task_id",
+          "string"
+        ],
+        [
+          "$.runs[16].usage",
+          "object"
+        ],
+        [
+          "$.runs[16].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[16].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[16].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[16].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[16].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[16].verification",
+          "object"
+        ],
+        [
+          "$.runs[16].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[16].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[16].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[16].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[17]",
+          "object"
+        ],
+        [
+          "$.runs[17].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[17].attempt",
+          "number"
+        ],
+        [
+          "$.runs[17].ext",
+          "object"
+        ],
+        [
+          "$.runs[17].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[17].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[17].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[17].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[17].outcome",
+          "string"
+        ],
+        [
+          "$.runs[17].run_id",
+          "string"
+        ],
+        [
+          "$.runs[17].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[17].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[17].scope",
+          "string"
+        ],
+        [
+          "$.runs[17].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[17].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[17].started_at",
+          "string"
+        ],
+        [
+          "$.runs[17].task_id",
+          "string"
+        ],
+        [
+          "$.runs[17].usage",
+          "object"
+        ],
+        [
+          "$.runs[17].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[17].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[17].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[17].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[17].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[17].verification",
+          "object"
+        ],
+        [
+          "$.runs[17].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[17].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[17].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[17].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[18]",
+          "object"
+        ],
+        [
+          "$.runs[18].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[18].attempt",
+          "number"
+        ],
+        [
+          "$.runs[18].ext",
+          "object"
+        ],
+        [
+          "$.runs[18].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[18].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[18].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[18].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[18].outcome",
+          "string"
+        ],
+        [
+          "$.runs[18].run_id",
+          "string"
+        ],
+        [
+          "$.runs[18].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[18].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[18].scope",
+          "string"
+        ],
+        [
+          "$.runs[18].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[18].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[18].started_at",
+          "string"
+        ],
+        [
+          "$.runs[18].task_id",
+          "string"
+        ],
+        [
+          "$.runs[18].usage",
+          "object"
+        ],
+        [
+          "$.runs[18].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[18].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[18].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[18].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[18].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[18].verification",
+          "object"
+        ],
+        [
+          "$.runs[18].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[18].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[18].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[18].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[19]",
+          "object"
+        ],
+        [
+          "$.runs[19].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[19].attempt",
+          "number"
+        ],
+        [
+          "$.runs[19].ext",
+          "object"
+        ],
+        [
+          "$.runs[19].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[19].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[19].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[19].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[19].outcome",
+          "string"
+        ],
+        [
+          "$.runs[19].run_id",
+          "string"
+        ],
+        [
+          "$.runs[19].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[19].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[19].scope",
+          "string"
+        ],
+        [
+          "$.runs[19].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[19].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[19].started_at",
+          "string"
+        ],
+        [
+          "$.runs[19].task_id",
+          "string"
+        ],
+        [
+          "$.runs[19].usage",
+          "object"
+        ],
+        [
+          "$.runs[19].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[19].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[19].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[19].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[19].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[19].verification",
+          "object"
+        ],
+        [
+          "$.runs[19].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[19].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[19].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[19].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[20]",
+          "object"
+        ],
+        [
+          "$.runs[20].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[20].attempt",
+          "number"
+        ],
+        [
+          "$.runs[20].ext",
+          "object"
+        ],
+        [
+          "$.runs[20].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[20].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[20].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[20].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[20].outcome",
+          "string"
+        ],
+        [
+          "$.runs[20].run_id",
+          "string"
+        ],
+        [
+          "$.runs[20].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[20].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[20].scope",
+          "string"
+        ],
+        [
+          "$.runs[20].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[20].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[20].started_at",
+          "string"
+        ],
+        [
+          "$.runs[20].task_id",
+          "string"
+        ],
+        [
+          "$.runs[20].usage",
+          "object"
+        ],
+        [
+          "$.runs[20].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[20].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[20].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[20].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[20].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[20].verification",
+          "object"
+        ],
+        [
+          "$.runs[20].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[20].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[20].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[20].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[21]",
+          "object"
+        ],
+        [
+          "$.runs[21].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[21].attempt",
+          "number"
+        ],
+        [
+          "$.runs[21].ext",
+          "object"
+        ],
+        [
+          "$.runs[21].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[21].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[21].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[21].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[21].outcome",
+          "string"
+        ],
+        [
+          "$.runs[21].run_id",
+          "string"
+        ],
+        [
+          "$.runs[21].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[21].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[21].scope",
+          "string"
+        ],
+        [
+          "$.runs[21].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[21].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[21].started_at",
+          "string"
+        ],
+        [
+          "$.runs[21].task_id",
+          "string"
+        ],
+        [
+          "$.runs[21].usage",
+          "object"
+        ],
+        [
+          "$.runs[21].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[21].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[21].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[21].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[21].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[21].verification",
+          "object"
+        ],
+        [
+          "$.runs[21].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[21].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[21].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[21].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[22]",
+          "object"
+        ],
+        [
+          "$.runs[22].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[22].attempt",
+          "number"
+        ],
+        [
+          "$.runs[22].ext",
+          "object"
+        ],
+        [
+          "$.runs[22].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[22].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[22].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[22].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[22].outcome",
+          "string"
+        ],
+        [
+          "$.runs[22].run_id",
+          "string"
+        ],
+        [
+          "$.runs[22].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[22].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[22].scope",
+          "string"
+        ],
+        [
+          "$.runs[22].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[22].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[22].started_at",
+          "string"
+        ],
+        [
+          "$.runs[22].task_id",
+          "string"
+        ],
+        [
+          "$.runs[22].usage",
+          "object"
+        ],
+        [
+          "$.runs[22].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[22].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[22].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[22].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[22].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[22].verification",
+          "object"
+        ],
+        [
+          "$.runs[22].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[22].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[22].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[22].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[23]",
+          "object"
+        ],
+        [
+          "$.runs[23].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[23].attempt",
+          "number"
+        ],
+        [
+          "$.runs[23].ext",
+          "object"
+        ],
+        [
+          "$.runs[23].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[23].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[23].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[23].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[23].outcome",
+          "string"
+        ],
+        [
+          "$.runs[23].run_id",
+          "string"
+        ],
+        [
+          "$.runs[23].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[23].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[23].scope",
+          "string"
+        ],
+        [
+          "$.runs[23].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[23].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[23].started_at",
+          "string"
+        ],
+        [
+          "$.runs[23].task_id",
+          "string"
+        ],
+        [
+          "$.runs[23].usage",
+          "object"
+        ],
+        [
+          "$.runs[23].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[23].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[23].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[23].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[23].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[23].verification",
+          "object"
+        ],
+        [
+          "$.runs[23].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[23].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[23].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[23].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[24]",
+          "object"
+        ],
+        [
+          "$.runs[24].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[24].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[24].attempt",
+          "number"
+        ],
+        [
+          "$.runs[24].ext",
+          "object"
+        ],
+        [
+          "$.runs[24].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[24].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[24].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[24].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[24].outcome",
+          "string"
+        ],
+        [
+          "$.runs[24].run_id",
+          "string"
+        ],
+        [
+          "$.runs[24].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[24].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[24].scope",
+          "string"
+        ],
+        [
+          "$.runs[24].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[24].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[24].started_at",
+          "string"
+        ],
+        [
+          "$.runs[24].task_id",
+          "string"
+        ],
+        [
+          "$.runs[24].usage",
+          "object"
+        ],
+        [
+          "$.runs[24].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[24].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[24].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[24].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[24].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[24].verification",
+          "object"
+        ],
+        [
+          "$.runs[24].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[24].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[24].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[24].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[25]",
+          "object"
+        ],
+        [
+          "$.runs[25].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[25].attempt",
+          "number"
+        ],
+        [
+          "$.runs[25].ext",
+          "object"
+        ],
+        [
+          "$.runs[25].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[25].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[25].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[25].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[25].outcome",
+          "string"
+        ],
+        [
+          "$.runs[25].run_id",
+          "string"
+        ],
+        [
+          "$.runs[25].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[25].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[25].scope",
+          "string"
+        ],
+        [
+          "$.runs[25].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[25].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[25].started_at",
+          "string"
+        ],
+        [
+          "$.runs[25].task_id",
+          "string"
+        ],
+        [
+          "$.runs[25].usage",
+          "object"
+        ],
+        [
+          "$.runs[25].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[25].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[25].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[25].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[25].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[25].verification",
+          "object"
+        ],
+        [
+          "$.runs[25].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[25].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[25].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[25].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[26]",
+          "object"
+        ],
+        [
+          "$.runs[26].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[26].attempt",
+          "number"
+        ],
+        [
+          "$.runs[26].ext",
+          "object"
+        ],
+        [
+          "$.runs[26].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[26].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[26].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[26].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[26].outcome",
+          "string"
+        ],
+        [
+          "$.runs[26].run_id",
+          "string"
+        ],
+        [
+          "$.runs[26].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[26].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[26].scope",
+          "string"
+        ],
+        [
+          "$.runs[26].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[26].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[26].started_at",
+          "string"
+        ],
+        [
+          "$.runs[26].task_id",
+          "string"
+        ],
+        [
+          "$.runs[26].usage",
+          "object"
+        ],
+        [
+          "$.runs[26].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[26].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[26].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[26].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[26].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[26].verification",
+          "object"
+        ],
+        [
+          "$.runs[26].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[26].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[26].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[26].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[27]",
+          "object"
+        ],
+        [
+          "$.runs[27].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[27].attempt",
+          "number"
+        ],
+        [
+          "$.runs[27].ext",
+          "object"
+        ],
+        [
+          "$.runs[27].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[27].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[27].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[27].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[27].outcome",
+          "string"
+        ],
+        [
+          "$.runs[27].run_id",
+          "string"
+        ],
+        [
+          "$.runs[27].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[27].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[27].scope",
+          "string"
+        ],
+        [
+          "$.runs[27].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[27].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[27].started_at",
+          "string"
+        ],
+        [
+          "$.runs[27].task_id",
+          "string"
+        ],
+        [
+          "$.runs[27].usage",
+          "object"
+        ],
+        [
+          "$.runs[27].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[27].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[27].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[27].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[27].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[27].verification",
+          "object"
+        ],
+        [
+          "$.runs[27].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[27].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[27].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[27].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[28]",
+          "object"
+        ],
+        [
+          "$.runs[28].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[28].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[28].attempt",
+          "number"
+        ],
+        [
+          "$.runs[28].ext",
+          "object"
+        ],
+        [
+          "$.runs[28].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[28].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[28].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[28].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[28].outcome",
+          "string"
+        ],
+        [
+          "$.runs[28].run_id",
+          "string"
+        ],
+        [
+          "$.runs[28].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[28].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[28].scope",
+          "string"
+        ],
+        [
+          "$.runs[28].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[28].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[28].started_at",
+          "string"
+        ],
+        [
+          "$.runs[28].task_id",
+          "string"
+        ],
+        [
+          "$.runs[28].usage",
+          "object"
+        ],
+        [
+          "$.runs[28].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[28].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[28].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[28].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[28].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[28].verification",
+          "object"
+        ],
+        [
+          "$.runs[28].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[28].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[28].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[28].verifier_hash",
+          "string"
+        ],
+        [
+          "$.runs[29]",
+          "object"
+        ],
+        [
+          "$.runs[29].artifacts",
+          "object"
+        ],
+        [
+          "$.runs[29].artifacts.solution.py",
+          "string"
+        ],
+        [
+          "$.runs[29].attempt",
+          "number"
+        ],
+        [
+          "$.runs[29].ext",
+          "object"
+        ],
+        [
+          "$.runs[29].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[29].ext.thinking",
+          "string"
+        ],
+        [
+          "$.runs[29].finished_at",
+          "string"
+        ],
+        [
+          "$.runs[29].genome_id",
+          "string"
+        ],
+        [
+          "$.runs[29].outcome",
+          "string"
+        ],
+        [
+          "$.runs[29].run_id",
+          "string"
+        ],
+        [
+          "$.runs[29].scenario_version",
+          "string"
+        ],
+        [
+          "$.runs[29].schema_version",
+          "string"
+        ],
+        [
+          "$.runs[29].scope",
+          "string"
+        ],
+        [
+          "$.runs[29].seed_control",
+          "string"
+        ],
+        [
+          "$.runs[29].shell_version",
+          "string"
+        ],
+        [
+          "$.runs[29].started_at",
+          "string"
+        ],
+        [
+          "$.runs[29].task_id",
+          "string"
+        ],
+        [
+          "$.runs[29].usage",
+          "object"
+        ],
+        [
+          "$.runs[29].usage.cost_usd",
+          "number"
+        ],
+        [
+          "$.runs[29].usage.tokens_in",
+          "number"
+        ],
+        [
+          "$.runs[29].usage.tokens_out",
+          "number"
+        ],
+        [
+          "$.runs[29].usage.turns",
+          "number"
+        ],
+        [
+          "$.runs[29].usage.wall_ms",
+          "number"
+        ],
+        [
+          "$.runs[29].verification",
+          "object"
+        ],
+        [
+          "$.runs[29].verification.matches",
+          "bool:True"
+        ],
+        [
+          "$.runs[29].verification.tests_hash_after",
+          "string"
+        ],
+        [
+          "$.runs[29].verification.tests_hash_before",
+          "string"
+        ],
+        [
+          "$.runs[29].verifier_hash",
+          "string"
+        ],
+        [
           "$.scenario_id",
           "string"
         ],
@@ -4275,94 +13629,96 @@ window.MOLT_VIEW = {
       "key_value_secret",
       "home_path"
     ],
-    "source_hash": "1809eab3acf6f879b99e5d83fdb1ed5be91a2d199eae52ce4cbc0506d1792cd1"
+    "source_hash": "00d16e386b11a634551b9d536841b1b76c8943c9cbb428c69cefdc623f91dd5c"
   },
   "report_results": {
     "report_runs_total": {
       "by_status": {
-        "passed": 2
+        "failed": 4,
+        "passed": 6
       },
       "cost_usd": 2.76,
-      "count": 2,
-      "solved": 2,
+      "count": 10,
+      "solved": 6,
       "tokens": {
-        "in": 2300,
-        "out": 1200
+        "in": 11500,
+        "out": 6000
       },
       "wall_ms": 2760
     },
     "results": [
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
         "report_runs": {
           "by_status": {
+            "failed": 4,
             "passed": 1
           },
-          "cost_usd": 1.84,
-          "count": 1,
+          "cost_usd": 0.92,
+          "count": 5,
           "solved": 1,
           "tokens": {
-            "in": 1150,
-            "out": 800
+            "in": 5750,
+            "out": 2000
           },
-          "wall_ms": 1840
+          "wall_ms": 920
         },
         "result_id": "result-baseline-report",
         "scope": "report",
         "scores": {
           "holdout": {
-            "cost_per_solved_usd": 1.84,
-            "cost_total_usd": 1.84,
+            "cost_per_solved_usd": 0.9199999999999999,
+            "cost_total_usd": 0.9199999999999999,
             "invalid_ratio": 0.0,
-            "pass_at_1_first_attempt": 1.0,
+            "pass_at_1_first_attempt": 0.2,
             "solved": 1,
-            "total": 1
+            "total": 5
           },
           "search": {
-            "cost_per_solved_usd": 1.84,
-            "cost_total_usd": 3.68,
+            "cost_per_solved_usd": 0.6133333333333333,
+            "cost_total_usd": 1.8399999999999999,
             "invalid_ratio": 0.0,
-            "pass_at_1_first_attempt": 1.0,
-            "solved": 2,
-            "total": 2
+            "pass_at_1_first_attempt": 0.3,
+            "solved": 3,
+            "total": 10
           }
         }
       },
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
         "report_runs": {
           "by_status": {
-            "passed": 1
+            "passed": 5
           },
-          "cost_usd": 0.92,
-          "count": 1,
-          "solved": 1,
+          "cost_usd": 1.84,
+          "count": 5,
+          "solved": 5,
           "tokens": {
-            "in": 1150,
-            "out": 400
+            "in": 5750,
+            "out": 4000
           },
-          "wall_ms": 920
+          "wall_ms": 1840
         },
         "result_id": "result-candidate-report",
         "scope": "report",
         "scores": {
           "holdout": {
-            "cost_per_solved_usd": 0.92,
-            "cost_total_usd": 0.92,
+            "cost_per_solved_usd": 0.368,
+            "cost_total_usd": 1.8399999999999999,
             "invalid_ratio": 0.0,
             "pass_at_1_first_attempt": 1.0,
-            "solved": 1,
-            "total": 1
+            "solved": 5,
+            "total": 5
           },
           "search": {
-            "cost_per_solved_usd": 0.92,
-            "cost_total_usd": 1.84,
+            "cost_per_solved_usd": 0.368,
+            "cost_total_usd": 3.6799999999999997,
             "invalid_ratio": 0.0,
             "pass_at_1_first_attempt": 1.0,
-            "solved": 2,
-            "total": 2
+            "solved": 10,
+            "total": 10
           }
         }
       }
@@ -4373,19 +13729,259 @@ window.MOLT_VIEW = {
     "runs": [
       {
         "attempt": 1,
-        "cost_usd": 1.84,
-        "finished_at": "2026-11-10T15:41:53Z",
-        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+        "cost_usd": 0.368,
+        "finished_at": "2026-11-10T15:56:08Z",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
         "provenance": {
           "kind": "fixture",
           "live": false,
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "6574e7ca-smoke-add-a1-1ff5e8",
+        "run_id": "4cdd5ba5-search-clamp-a1-503430",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:41:53Z",
+        "started_at": "2026-11-10T15:56:07Z",
+        "status": "passed",
+        "task_id": "search-clamp",
+        "tokens": {
+          "in": 1150,
+          "out": 800
+        },
+        "turns": 4,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 368
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.368,
+        "finished_at": "2026-11-10T15:56:07Z",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "4cdd5ba5-search-max-two-a1-fe5353",
+        "scope": "search",
+        "solved": true,
+        "started_at": "2026-11-10T15:56:07Z",
+        "status": "passed",
+        "task_id": "search-max-two",
+        "tokens": {
+          "in": 1150,
+          "out": 800
+        },
+        "turns": 4,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 368
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.368,
+        "finished_at": "2026-11-10T15:56:07Z",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "4cdd5ba5-search-mean-a1-346f96",
+        "scope": "search",
+        "solved": true,
+        "started_at": "2026-11-10T15:56:07Z",
+        "status": "passed",
+        "task_id": "search-mean",
+        "tokens": {
+          "in": 1150,
+          "out": 800
+        },
+        "turns": 4,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 368
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.368,
+        "finished_at": "2026-11-10T15:56:07Z",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "4cdd5ba5-search-missing-return-a1-241290",
+        "scope": "search",
+        "solved": true,
+        "started_at": "2026-11-10T15:56:07Z",
+        "status": "passed",
+        "task_id": "search-missing-return",
+        "tokens": {
+          "in": 1150,
+          "out": 800
+        },
+        "turns": 4,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 368
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.368,
+        "finished_at": "2026-11-10T15:56:07Z",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "4cdd5ba5-search-off-by-one-a1-7dfd6f",
+        "scope": "search",
+        "solved": true,
+        "started_at": "2026-11-10T15:56:07Z",
+        "status": "passed",
+        "task_id": "search-off-by-one",
+        "tokens": {
+          "in": 1150,
+          "out": 800
+        },
+        "turns": 4,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 368
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.368,
+        "finished_at": "2026-11-10T15:56:07Z",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "4cdd5ba5-search-slice-a1-bb322e",
+        "scope": "search",
+        "solved": true,
+        "started_at": "2026-11-10T15:56:07Z",
+        "status": "passed",
+        "task_id": "search-slice",
+        "tokens": {
+          "in": 1150,
+          "out": 800
+        },
+        "turns": 4,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 368
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.368,
+        "finished_at": "2026-11-10T15:56:07Z",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "4cdd5ba5-search-slug-a1-703936",
+        "scope": "search",
+        "solved": true,
+        "started_at": "2026-11-10T15:56:07Z",
+        "status": "passed",
+        "task_id": "search-slug",
+        "tokens": {
+          "in": 1150,
+          "out": 800
+        },
+        "turns": 4,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 368
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.368,
+        "finished_at": "2026-11-10T15:56:07Z",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "4cdd5ba5-search-wrong-var-a1-cffb04",
+        "scope": "search",
+        "solved": true,
+        "started_at": "2026-11-10T15:56:07Z",
+        "status": "passed",
+        "task_id": "search-wrong-var",
+        "tokens": {
+          "in": 1150,
+          "out": 800
+        },
+        "turns": 4,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 368
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.368,
+        "finished_at": "2026-11-10T15:56:07Z",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "4cdd5ba5-smoke-add-a1-000a4a",
+        "scope": "search",
+        "solved": true,
+        "started_at": "2026-11-10T15:56:06Z",
         "status": "passed",
         "task_id": "smoke-add",
         "tokens": {
@@ -4396,26 +13992,26 @@ window.MOLT_VIEW = {
         "verifier": {
           "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
           "matches": true,
-          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
-          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
         },
-        "wall_ms": 1840
+        "wall_ms": 368
       },
       {
         "attempt": 1,
-        "cost_usd": 1.84,
-        "finished_at": "2026-11-10T15:41:53Z",
-        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+        "cost_usd": 0.368,
+        "finished_at": "2026-11-10T15:56:07Z",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
         "provenance": {
           "kind": "fixture",
           "live": false,
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "6574e7ca-smoke-even-a1-4a3919",
+        "run_id": "4cdd5ba5-smoke-even-a1-19b52b",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:41:53Z",
+        "started_at": "2026-11-10T15:56:07Z",
         "status": "passed",
         "task_id": "smoke-even",
         "tokens": {
@@ -4426,26 +14022,266 @@ window.MOLT_VIEW = {
         "verifier": {
           "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
           "matches": true,
-          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
-          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
         },
-        "wall_ms": 1840
+        "wall_ms": 368
       },
       {
         "attempt": 1,
-        "cost_usd": 0.92,
-        "finished_at": "2026-11-10T15:41:53Z",
-        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+        "cost_usd": 0.184,
+        "finished_at": "2026-11-10T15:56:06Z",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
         "provenance": {
           "kind": "fixture",
           "live": false,
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "ec10a3a2-smoke-add-a1-f004c4",
+        "run_id": "6b492ef0-search-clamp-a1-326c50",
+        "scope": "search",
+        "solved": false,
+        "started_at": "2026-11-10T15:56:06Z",
+        "status": "failed",
+        "task_id": "search-clamp",
+        "tokens": {
+          "in": 1150,
+          "out": 400
+        },
+        "turns": 2,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 184
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.184,
+        "finished_at": "2026-11-10T15:56:06Z",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "6b492ef0-search-max-two-a1-da2c8f",
+        "scope": "search",
+        "solved": false,
+        "started_at": "2026-11-10T15:56:06Z",
+        "status": "failed",
+        "task_id": "search-max-two",
+        "tokens": {
+          "in": 1150,
+          "out": 400
+        },
+        "turns": 2,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 184
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.184,
+        "finished_at": "2026-11-10T15:56:06Z",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "6b492ef0-search-mean-a1-a561c8",
+        "scope": "search",
+        "solved": false,
+        "started_at": "2026-11-10T15:56:06Z",
+        "status": "failed",
+        "task_id": "search-mean",
+        "tokens": {
+          "in": 1150,
+          "out": 400
+        },
+        "turns": 2,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 184
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.184,
+        "finished_at": "2026-11-10T15:56:06Z",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "6b492ef0-search-missing-return-a1-710ec6",
+        "scope": "search",
+        "solved": false,
+        "started_at": "2026-11-10T15:56:06Z",
+        "status": "failed",
+        "task_id": "search-missing-return",
+        "tokens": {
+          "in": 1150,
+          "out": 400
+        },
+        "turns": 2,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 184
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.184,
+        "finished_at": "2026-11-10T15:56:06Z",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "6b492ef0-search-off-by-one-a1-20e432",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:41:53Z",
+        "started_at": "2026-11-10T15:56:05Z",
+        "status": "passed",
+        "task_id": "search-off-by-one",
+        "tokens": {
+          "in": 1150,
+          "out": 400
+        },
+        "turns": 2,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 184
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.184,
+        "finished_at": "2026-11-10T15:56:06Z",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "6b492ef0-search-slice-a1-ee7ef6",
+        "scope": "search",
+        "solved": false,
+        "started_at": "2026-11-10T15:56:06Z",
+        "status": "failed",
+        "task_id": "search-slice",
+        "tokens": {
+          "in": 1150,
+          "out": 400
+        },
+        "turns": 2,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 184
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.184,
+        "finished_at": "2026-11-10T15:56:06Z",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "6b492ef0-search-slug-a1-48ace4",
+        "scope": "search",
+        "solved": false,
+        "started_at": "2026-11-10T15:56:06Z",
+        "status": "failed",
+        "task_id": "search-slug",
+        "tokens": {
+          "in": 1150,
+          "out": 400
+        },
+        "turns": 2,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 184
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.184,
+        "finished_at": "2026-11-10T15:56:06Z",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "6b492ef0-search-wrong-var-a1-f7308d",
+        "scope": "search",
+        "solved": false,
+        "started_at": "2026-11-10T15:56:06Z",
+        "status": "failed",
+        "task_id": "search-wrong-var",
+        "tokens": {
+          "in": 1150,
+          "out": 400
+        },
+        "turns": 2,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
+        },
+        "wall_ms": 184
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.184,
+        "finished_at": "2026-11-10T15:56:05Z",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "6b492ef0-smoke-add-a1-ce6ccf",
+        "scope": "search",
+        "solved": true,
+        "started_at": "2026-11-10T15:56:05Z",
         "status": "passed",
         "task_id": "smoke-add",
         "tokens": {
@@ -4456,26 +14292,26 @@ window.MOLT_VIEW = {
         "verifier": {
           "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
           "matches": true,
-          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
-          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
         },
-        "wall_ms": 920
+        "wall_ms": 184
       },
       {
         "attempt": 1,
-        "cost_usd": 0.92,
-        "finished_at": "2026-11-10T15:41:53Z",
-        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+        "cost_usd": 0.184,
+        "finished_at": "2026-11-10T15:56:05Z",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
         "provenance": {
           "kind": "fixture",
           "live": false,
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "ec10a3a2-smoke-even-a1-e5e11c",
+        "run_id": "6b492ef0-smoke-even-a1-798742",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:41:53Z",
+        "started_at": "2026-11-10T15:56:05Z",
         "status": "passed",
         "task_id": "smoke-even",
         "tokens": {
@@ -4486,15 +14322,15 @@ window.MOLT_VIEW = {
         "verifier": {
           "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
           "matches": true,
-          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
-          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
+          "tests_hash_after": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+          "tests_hash_before": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81"
         },
-        "wall_ms": 920
+        "wall_ms": 184
       }
     ]
   },
   "scenario": {
-    "bench_hash": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
+    "bench_hash": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
     "budget": {
       "execution_budget_usd": 5.0,
       "search_overhead_budget_usd": 2.0
@@ -4507,11 +14343,11 @@ window.MOLT_VIEW = {
       "runtime": "fixture"
     },
     "ext": {
-      "note": "fixture demo 不产生真实模型调用；Pi runtime 为可选 live 路径"
+      "note": "10 search + 5 holdout 的 fixture demo；holdout 只进 scope=report 的 result，隔离依赖 runtime 边界。fixture 不产生真实模型调用；Pi runtime 为可选 live 路径。"
     },
     "holdout": {
       "detail": "not-exported",
-      "task_count": 1
+      "task_count": 5
     },
     "isolation": {
       "network": "provider_only"
@@ -4531,56 +14367,64 @@ window.MOLT_VIEW = {
       "k": 0
     },
     "scenario_id": "demo",
-    "scenario_version": "demo-5",
+    "scenario_version": "demo-6",
     "schema_version": "1.0.0",
     "shell": {
       "shell_id": "code-repair",
       "shell_version": "1.0.0"
     },
     "task_counts": {
-      "report": 1,
-      "search": 2,
-      "total": 3
+      "report": 5,
+      "search": 10,
+      "total": 15
     },
     "task_sets": {
       "search": [
         "smoke-add",
-        "smoke-even"
+        "smoke-even",
+        "search-off-by-one",
+        "search-max-two",
+        "search-missing-return",
+        "search-wrong-var",
+        "search-slice",
+        "search-mean",
+        "search-slug",
+        "search-clamp"
       ]
     },
-    "title": "B1 demo：两题搜索集 + 一题留出集"
+    "title": "B2c demo：10 题搜索集 + 5 题留出集"
   },
   "search_results": {
     "results": [
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+        "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
         "result_id": "result-baseline-search",
         "scope": "search",
         "scores": {
           "search": {
-            "cost_per_solved_usd": 1.84,
-            "cost_total_usd": 3.68,
+            "cost_per_solved_usd": 0.6133333333333333,
+            "cost_total_usd": 1.8399999999999999,
             "invalid_ratio": 0.0,
-            "pass_at_1_first_attempt": 1.0,
-            "solved": 2,
-            "total": 2
+            "pass_at_1_first_attempt": 0.3,
+            "solved": 3,
+            "total": 10
           }
         }
       },
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+        "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
         "result_id": "result-candidate-search",
         "scope": "search",
         "scores": {
           "search": {
-            "cost_per_solved_usd": 0.92,
-            "cost_total_usd": 1.84,
+            "cost_per_solved_usd": 0.368,
+            "cost_total_usd": 3.6799999999999997,
             "invalid_ratio": 0.0,
             "pass_at_1_first_attempt": 1.0,
-            "solved": 2,
-            "total": 2
+            "solved": 10,
+            "total": 10
           }
         }
       }
@@ -4600,13 +14444,13 @@ window.MOLT_VIEW = {
           "turns": 64,
           "wall_ms": 120000
         },
-        "id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
-        "parent": null,
+        "id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+        "parent": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
         "runtime": {
           "runtime_id": "fixture",
           "version": "fixture-1"
         },
-        "scenario_version": "demo-5",
+        "scenario_version": "demo-6",
         "switches": {
           "context": "full",
           "thinking": "high",
@@ -4621,13 +14465,13 @@ window.MOLT_VIEW = {
           "turns": 64,
           "wall_ms": 120000
         },
-        "id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
-        "parent": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+        "id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+        "parent": null,
         "runtime": {
           "runtime_id": "fixture",
           "version": "fixture-1"
         },
-        "scenario_version": "demo-5",
+        "scenario_version": "demo-6",
         "switches": {
           "context": "full",
           "thinking": "low",

@@ -1,10 +1,10 @@
 {
   "checked": {
     "decisions": 1,
-    "events": 14,
+    "events": 46,
     "report_events": 4,
     "results": 4,
-    "runs": 6
+    "runs": 30
   },
   "mismatches": [],
   "ok": true
