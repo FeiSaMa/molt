@@ -85,4 +85,5 @@ base_url `https://api.deepseek.com`，key 从环境读取。测试注入纯函�
 - 每个被评估候选都可追到 Proposal：`ext.source=llm|grid`，`proposal_id` 进 ledger 与事件。
 - proposal 顶层 schema 与七端口白名单不变；`policy.decide` 判定顺序不变。
 - `harness.py` 改动触发 `scenario_version` 升级；B2a 时 demo 从 `demo-1` 升到 `demo-2`，
-  B2b（bash-only）继续升到 `demo-4`，`bench_hash` 与 v0 genome artifact 哈希同步重算。
+  B2b（bash-only）继续升到 `demo-4`，B2b 复核（guard 覆盖全 bench）再升到 `demo-5`，
+  `bench_hash` 与 v0 genome artifact 哈希同步重算。

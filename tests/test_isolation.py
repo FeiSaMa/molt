@@ -31,9 +31,19 @@ def test_mapping_is_exact_and_matches_enum() -> None:
 def test_sandbox_unavailable_degrades_with_marker() -> None:
     policy = IsolationPolicy.resolve("none", sandbox_available=False)
     assert policy.level == "permissions-only"
-    assert policy.network == "none"
+    assert policy.network == "open"
     assert policy.degraded is True
     assert policy.sandbox_unavailable is True
+    assert policy.claim_marker == SANDBOX_UNAVAILABLE_MARKER
+
+
+@pytest.mark.parametrize("network", ["none", "provider_only"])
+def test_sandbox_unavailable_never_claims_provider_only(network: str) -> None:
+    """bwrap 不可用时网络实际开放，不能继续声称 none/provider_only。"""
+    policy = IsolationPolicy.resolve(network, sandbox_available=False)
+    assert policy.network == "open"
+    assert policy.level == "permissions-only"
+    assert policy.degraded is True
     assert policy.claim_marker == SANDBOX_UNAVAILABLE_MARKER
 
 

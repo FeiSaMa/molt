@@ -2,7 +2,7 @@
 
 一个 run = 一次 ``pi -p --mode json``；只从 session JSONL / JSON 流读取 usage，
 不猜成本。bash 由 ``.pi/settings.json`` 的 ``shellPath`` 指向 bwrap wrapper；
-读工具不经过 shellPath，因此 argv 固定排除 read/grep/find/ls。
+argv 用 ``--tools bash`` allowlist，read/grep/find/ls/write/edit 全部不启用。
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from molt.adapters.pi.argv import (
-    BUILTIN_READ_TOOLS,
     assert_required_flags,
     build_pi_argv,
     safe_session_id,
@@ -310,7 +309,6 @@ class PiRuntime:
                 "isolation": isolation_payload(policy),
                 "sandbox": sandbox.to_dict(),
                 "tools_allowlist": ["bash"],
-                "read_tools_excluded": list(BUILTIN_READ_TOOLS),
                 "cost_source": cost_source,
                 "usage": usage_source.to_dict(),
                 "budget": {
@@ -370,7 +368,6 @@ class PiRuntime:
                     ),
                     "sandbox": sandbox.to_dict(),
                     "tools_allowlist": ["bash"],
-                    "read_tools_excluded": list(BUILTIN_READ_TOOLS),
                 }
             },
         )

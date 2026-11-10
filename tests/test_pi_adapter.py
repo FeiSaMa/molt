@@ -248,6 +248,19 @@ def test_argv_contains_required_flags() -> None:
     assert ("--no-" + "tools") not in argv
 
 
+def test_pi_runtime_rejects_none_network_claim(tmp_path: Path) -> None:
+    """scenario 声明 none 时不静默改写为 provider_only，直接拒绝。"""
+    from molt.core.types import Scenario
+    from molt.demo import build_engine
+
+    data = json.loads((ROOT / "scenarios/demo/scenario.json").read_text(encoding="utf-8"))
+    data["isolation"]["network"] = "none"
+    scenario = Scenario.from_dict(data)
+    store = StateStore(tmp_path / "state")
+    with pytest.raises(ValueError, match="provider_only"):
+        build_engine(ROOT, scenario, store, tmp_path / "work", runtime="pi")
+
+
 def test_tools_mode_mapping_is_bash_only() -> None:
     module = harness_module()
     assert module.tools_argv_for("bash") == ["--tools", "bash"]
@@ -325,7 +338,8 @@ def test_runtime_normal_run_and_artifacts(tmp_path: Path) -> None:
     assert runtime_meta["project_trust"] == "cli_approve"
     assert runtime_meta["provenance"] == "live"
     assert runtime_meta["isolation"]["level"] == "provider-sandboxed"
-    assert runtime_meta["read_tools_excluded"] == list(BUILTIN_READ_TOOLS)
+    assert runtime_meta["tools_allowlist"] == ["bash"]
+    assert "read_tools_excluded" not in runtime_meta
     assert runtime_meta["ledger"]["matches"] is True
     assert state["argv"][:2] == ["pi", "-p"]
     assert_required_flags(state["argv"])
@@ -401,8 +415,10 @@ def test_runtime_without_wrapper_degrades_to_permissions_only(tmp_path: Path) ->
     runtime.spawn = spawn
     result = runtime.run(genome(), task(), tmp_path / "work")
     isolation = result.diagnostic["runtime"]["isolation"]
+    assert isolation["network"] == "open"
     assert isolation["level"] == "permissions-only"
     assert isolation["degraded"] is True
+    assert isolation["sandbox_unavailable"] is True
     assert isolation["claim_marker"] == "sandbox unavailable"
     assert result.diagnostic["runtime"]["project_trust"] == "not_required"
     assert state["argv"] is not None

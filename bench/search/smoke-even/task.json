@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "task_id": "smoke-even",
-  "scenario_version": "demo-4",
+  "scenario_version": "demo-5",
   "shell_id": "code-repair",
   "scope": "search",
   "title": "修好 is_even",

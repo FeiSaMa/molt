@@ -1,6 +1,6 @@
 {
-  "canonical_hash": "ab3c8bf4f880eaa367a8db213e172486ffd882c551e71b40bae875c745808bcd",
-  "metrics_hash": "a8273932075a4560663d9a97bafc17e9650a748cc1a7fbf3f593d613f244164c",
+  "canonical_hash": "1809eab3acf6f879b99e5d83fdb1ed5be91a2d199eae52ce4cbc0506d1792cd1",
+  "metrics_hash": "2536285d795b9c8f9dde4863f3cdcc81b1501b2f161a7138eefb4e6bcf20c8eb",
   "post_metrics": {
     "keys": [
       "$.decisions",
@@ -517,7 +517,7 @@
       ],
       [
         "$.runs[0].usage.cost_usd",
-        0.92
+        1.84
       ],
       [
         "$.runs[0].usage.tokens_in",
@@ -525,15 +525,15 @@
       ],
       [
         "$.runs[0].usage.tokens_out",
-        400.0
+        800.0
       ],
       [
         "$.runs[0].usage.turns",
-        2.0
+        4.0
       ],
       [
         "$.runs[0].usage.wall_ms",
-        920.0
+        1840.0
       ],
       [
         "$.runs[1].attempt",
@@ -541,7 +541,7 @@
       ],
       [
         "$.runs[1].usage.cost_usd",
-        0.92
+        1.84
       ],
       [
         "$.runs[1].usage.tokens_in",
@@ -549,15 +549,15 @@
       ],
       [
         "$.runs[1].usage.tokens_out",
-        400.0
+        800.0
       ],
       [
         "$.runs[1].usage.turns",
-        2.0
+        4.0
       ],
       [
         "$.runs[1].usage.wall_ms",
-        920.0
+        1840.0
       ],
       [
         "$.runs[2].attempt",
@@ -565,7 +565,7 @@
       ],
       [
         "$.runs[2].usage.cost_usd",
-        0.92
+        1.84
       ],
       [
         "$.runs[2].usage.tokens_in",
@@ -573,15 +573,15 @@
       ],
       [
         "$.runs[2].usage.tokens_out",
-        400.0
+        800.0
       ],
       [
         "$.runs[2].usage.turns",
-        2.0
+        4.0
       ],
       [
         "$.runs[2].usage.wall_ms",
-        920.0
+        1840.0
       ],
       [
         "$.runs[3].attempt",
@@ -589,7 +589,7 @@
       ],
       [
         "$.runs[3].usage.cost_usd",
-        1.84
+        0.92
       ],
       [
         "$.runs[3].usage.tokens_in",
@@ -597,15 +597,15 @@
       ],
       [
         "$.runs[3].usage.tokens_out",
-        800.0
+        400.0
       ],
       [
         "$.runs[3].usage.turns",
-        4.0
+        2.0
       ],
       [
         "$.runs[3].usage.wall_ms",
-        1840.0
+        920.0
       ],
       [
         "$.runs[4].attempt",
@@ -613,7 +613,7 @@
       ],
       [
         "$.runs[4].usage.cost_usd",
-        1.84
+        0.92
       ],
       [
         "$.runs[4].usage.tokens_in",
@@ -621,15 +621,15 @@
       ],
       [
         "$.runs[4].usage.tokens_out",
-        800.0
+        400.0
       ],
       [
         "$.runs[4].usage.turns",
-        4.0
+        2.0
       ],
       [
         "$.runs[4].usage.wall_ms",
-        1840.0
+        920.0
       ],
       [
         "$.runs[5].attempt",
@@ -637,7 +637,7 @@
       ],
       [
         "$.runs[5].usage.cost_usd",
-        1.84
+        0.92
       ],
       [
         "$.runs[5].usage.tokens_in",
@@ -645,15 +645,15 @@
       ],
       [
         "$.runs[5].usage.tokens_out",
-        800.0
+        400.0
       ],
       [
         "$.runs[5].usage.turns",
-        4.0
+        2.0
       ],
       [
         "$.runs[5].usage.wall_ms",
-        1840.0
+        920.0
       ]
     ],
     "shape": [
@@ -2479,7 +2479,7 @@
       ],
       [
         "$.runs[0].usage.cost_usd",
-        0.92
+        1.84
       ],
       [
         "$.runs[0].usage.tokens_in",
@@ -2487,15 +2487,15 @@
       ],
       [
         "$.runs[0].usage.tokens_out",
-        400.0
+        800.0
       ],
       [
         "$.runs[0].usage.turns",
-        2.0
+        4.0
       ],
       [
         "$.runs[0].usage.wall_ms",
-        920.0
+        1840.0
       ],
       [
         "$.runs[1].attempt",
@@ -2503,7 +2503,7 @@
       ],
       [
         "$.runs[1].usage.cost_usd",
-        0.92
+        1.84
       ],
       [
         "$.runs[1].usage.tokens_in",
@@ -2511,15 +2511,15 @@
       ],
       [
         "$.runs[1].usage.tokens_out",
-        400.0
+        800.0
       ],
       [
         "$.runs[1].usage.turns",
-        2.0
+        4.0
       ],
       [
         "$.runs[1].usage.wall_ms",
-        920.0
+        1840.0
       ],
       [
         "$.runs[2].attempt",
@@ -2527,7 +2527,7 @@
       ],
       [
         "$.runs[2].usage.cost_usd",
-        0.92
+        1.84
       ],
       [
         "$.runs[2].usage.tokens_in",
@@ -2535,15 +2535,15 @@
       ],
       [
         "$.runs[2].usage.tokens_out",
-        400.0
+        800.0
       ],
       [
         "$.runs[2].usage.turns",
-        2.0
+        4.0
       ],
       [
         "$.runs[2].usage.wall_ms",
-        920.0
+        1840.0
       ],
       [
         "$.runs[3].attempt",
@@ -2551,7 +2551,7 @@
       ],
       [
         "$.runs[3].usage.cost_usd",
-        1.84
+        0.92
       ],
       [
         "$.runs[3].usage.tokens_in",
@@ -2559,15 +2559,15 @@
       ],
       [
         "$.runs[3].usage.tokens_out",
-        800.0
+        400.0
       ],
       [
         "$.runs[3].usage.turns",
-        4.0
+        2.0
       ],
       [
         "$.runs[3].usage.wall_ms",
-        1840.0
+        920.0
       ],
       [
         "$.runs[4].attempt",
@@ -2575,7 +2575,7 @@
       ],
       [
         "$.runs[4].usage.cost_usd",
-        1.84
+        0.92
       ],
       [
         "$.runs[4].usage.tokens_in",
@@ -2583,15 +2583,15 @@
       ],
       [
         "$.runs[4].usage.tokens_out",
-        800.0
+        400.0
       ],
       [
         "$.runs[4].usage.turns",
-        4.0
+        2.0
       ],
       [
         "$.runs[4].usage.wall_ms",
-        1840.0
+        920.0
       ],
       [
         "$.runs[5].attempt",
@@ -2599,7 +2599,7 @@
       ],
       [
         "$.runs[5].usage.cost_usd",
-        1.84
+        0.92
       ],
       [
         "$.runs[5].usage.tokens_in",
@@ -2607,15 +2607,15 @@
       ],
       [
         "$.runs[5].usage.tokens_out",
-        800.0
+        400.0
       ],
       [
         "$.runs[5].usage.turns",
-        4.0
+        2.0
       ],
       [
         "$.runs[5].usage.wall_ms",
-        1840.0
+        920.0
       ]
     ],
     "shape": [
@@ -3934,5 +3934,5 @@
     "key_value_secret",
     "home_path"
   ],
-  "source_hash": "ab3c8bf4f880eaa367a8db213e172486ffd882c551e71b40bae875c745808bcd"
+  "source_hash": "1809eab3acf6f879b99e5d83fdb1ed5be91a2d199eae52ce4cbc0506d1792cd1"
 }

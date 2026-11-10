@@ -49,7 +49,9 @@ wrapper 只做一件事：清理 proxy 环境变量后 `exec bwrap --unshare-net
 2. `.molt/shell-path.log` 非空（证明 wrapper 被调用，而不是默认 bash）。
 
 两者缺一即 `trust_missing`，不产生可采纳 run。缓存键 `(shell_version, settings_hash)`，
-成功预检的 usage/cost 记录在 `run.ext.runtime.trust`。
+只复用「决策 + project_trust + 预检 usage」；`settings_path` / `sentinel_path` / `log_path`
+始终指向当前 run 的 workdir，`cache_hit=true` 时也不得回放上一 run 的路径。成功预检的
+usage/cost 记录在 `run.ext.runtime.trust`。
 
 ## 3. 为什么只留 bash（实测，不是假设）
 
@@ -81,7 +83,9 @@ agent 只能通过 sandboxed bash 读写。这样 claim 可以说「agent 工具
 - 预算：wall 由 adapter 超时 kill（进程组 SIGKILL，记 invalid，账本成本照算）；
   turns 按 assistant message 计数；tokens 按账本总量；超限均 invalid。demo 并发 1。
 - Verifier 的 before 指纹由 `Harness.run` 在 runtime 启动前调用 `Verifier.guard` 取得，
-  agent 结束后只取 after；测试目录或题面被改写即 `matches=false`、run 判废。
+  agent 结束后只取 after；指纹覆盖整个 `bench/**`（全部 task.json + workspace + tests），
+  改当前题、其他 search 题或 holdout 题都会 `matches=false`、run 判废。holdout 只参与哈希，
+  内容不进入 agent 可见路径。
 
 ## 5. Project trust 与降级
 
@@ -97,10 +101,11 @@ agent 只能通过 sandboxed bash 读写。这样 claim 可以说「agent 工具
 
 B1 的 `run` 顶层冻结，没有 `runtime` 字段；D2 的 `run.runtime.*` 一律写入
 `run.ext.runtime`（`provenance=live`、`project_trust`、`isolation`、`session_path`、
-`log_ref`、`stderr_ref`、`argv`、`ledger`、`budget`）。`run.usage` 仍是执行侧唯一成本来源。
+`log_ref`、`stderr_ref`、`argv`、`tools_allowlist`、`ledger`、`budget`）。`run.usage` 仍是执行侧唯一成本来源。
 
 ## 7. 协议域收窄说明
 
 B2b 裁决 A 把 `tools` 从 `{default, lean}` 收窄为单值 `{bash}`，因此搜索空间从 12 组
 变为 6 组。顶层字段没有新增/删除，`schema_version` 仍为 1.0.0；该收窄随
-`scenario_version=demo-4` 生效，禁止与 `demo-3` 及更早的 12 组结果跨版本比较。
+`scenario_version=demo-5` 生效，禁止与 `demo-4` 及更早结果跨版本比较
+（12 组语义止于 `demo-3`）。

@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "demo-4",
+  "scenario_version": "demo-5",
   "scenario_id": "demo",
   "title": "B1 demo：两题搜索集 + 一题留出集",
   "shell_id": "code-repair",
   "shell_version": "1.0.0",
-  "bench_hash": "5575d12ae0b52913b6ee1888a1d7e7c980cfb6ccd81b615f7ac62d1f5f42ccdf",
+  "bench_hash": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
   "task_sets": {
     "search": [
       "smoke-add",
@@ -24,9 +24,9 @@
     }
   },
   "isolation": {
-    "network": "none"
+    "network": "provider_only"
   },
   "ext": {
-    "note": "demo 只用 fixture runtime；不产生真实模型调用"
+    "note": "fixture demo 不产生真实模型调用；Pi runtime 为可选 live 路径"
   }
 }

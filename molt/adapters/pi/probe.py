@@ -1,8 +1,7 @@
 """Sandbox probe：网络三连 + 仓库不可见 + 写入可用。
 
-bash 侧必须失败的项目：provider、example、仓库 ``bench/``。读工具不经过
-``shellPath``，其隔离由 argv 的 ``--exclude-tools read,grep,find,ls`` 承担
-（实测见 ADR-0006）。
+bash 侧必须失败的项目：provider、example、仓库 ``bench/``。工具面由 argv 的
+``--tools bash`` allowlist 收窄，read/grep/find/ls 不启用（实测见 ADR-0006）。
 """
 
 from __future__ import annotations

@@ -8,16 +8,16 @@ window.MOLT_VIEW = {
         "adopted_at": null,
         "archive_id": null,
         "generation": null,
-        "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
-        "parent_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828"
+        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+        "parent_id": null
       },
       {
         "adopted": false,
         "adopted_at": null,
         "archive_id": null,
         "generation": null,
-        "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
-        "parent_id": null
+        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+        "parent_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504"
       }
     ]
   },
@@ -59,7 +59,7 @@ window.MOLT_VIEW = {
         "type": "report.scored"
       },
       {
-        "event_id": "ev-65053b1bf4a04096",
+        "event_id": "ev-3e2848cbe4404557",
         "ext": {},
         "payload": {
           "count": 1
@@ -67,11 +67,11 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T15:24:50Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "holdout.accessed"
       },
       {
-        "event_id": "ev-ba01b647522a4d6a",
+        "event_id": "ev-d2394254f42a47b3",
         "ext": {},
         "payload": {
           "count": 1
@@ -79,7 +79,7 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T15:24:50Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "holdout.accessed"
       }
     ],
@@ -101,8 +101,8 @@ window.MOLT_VIEW = {
         "event_id": "ev-demo-proposal",
         "ext": {},
         "payload": {
-          "parent_genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
-          "proposal_id": "prop-5f8541d81b8cc9d3"
+          "parent_genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+          "proposal_id": "prop-bd64141f69a0b44a"
         },
         "run_id": null,
         "schema_version": "1.0.0",
@@ -111,108 +111,108 @@ window.MOLT_VIEW = {
         "type": "proposal.generated"
       },
       {
-        "event_id": "ev-5b5f1b1fab764d3b",
+        "event_id": "ev-0ad2f47771334556",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+          "task_id": "smoke-add"
+        },
+        "run_id": "ec10a3a2-smoke-add-a1-f004c4",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:41:53Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-4016c66ae0f34741",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-add"
         },
-        "run_id": "f8656cb2-smoke-add-a1-821aef",
+        "run_id": "6574e7ca-smoke-add-a1-1ff5e8",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:24:50Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "run.finished"
       },
       {
-        "event_id": "ev-695aeaea1ae44358",
+        "event_id": "ev-79698822919043ed",
         "ext": {},
         "payload": {
-          "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
-          "task_id": "smoke-even"
+          "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+          "task_id": "smoke-add"
         },
-        "run_id": "b6bff164-smoke-even-a1-61017b",
+        "run_id": "6574e7ca-smoke-add-a1-1ff5e8",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:24:50Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "run.started"
       },
       {
-        "event_id": "ev-77b655f13d484d67",
+        "event_id": "ev-79886f5640584539",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+          "task_id": "smoke-even"
+        },
+        "run_id": "ec10a3a2-smoke-even-a1-e5e11c",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:41:53Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-89b07130d90840cb",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-even"
         },
-        "run_id": "b6bff164-smoke-even-a1-61017b",
+        "run_id": "ec10a3a2-smoke-even-a1-e5e11c",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:24:50Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "run.finished"
       },
       {
-        "event_id": "ev-79b1d1ff750f4dc8",
+        "event_id": "ev-d35672b819ce45b4",
         "ext": {},
         "payload": {
-          "outcome": "passed",
-          "task_id": "smoke-add"
-        },
-        "run_id": "b6bff164-smoke-add-a1-cd14c1",
-        "schema_version": "1.0.0",
-        "scope": "search",
-        "ts": "2026-11-10T15:24:50Z",
-        "type": "run.finished"
-      },
-      {
-        "event_id": "ev-872ca056f46c42f5",
-        "ext": {},
-        "payload": {
-          "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+          "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
           "task_id": "smoke-even"
         },
-        "run_id": "f8656cb2-smoke-even-a1-87e05e",
+        "run_id": "6574e7ca-smoke-even-a1-4a3919",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:24:50Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "run.started"
       },
       {
-        "event_id": "ev-c4199ba44c6f4fbb",
-        "ext": {},
-        "payload": {
-          "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
-          "task_id": "smoke-add"
-        },
-        "run_id": "f8656cb2-smoke-add-a1-821aef",
-        "schema_version": "1.0.0",
-        "scope": "search",
-        "ts": "2026-11-10T15:24:50Z",
-        "type": "run.started"
-      },
-      {
-        "event_id": "ev-c5d0a972f4a44015",
+        "event_id": "ev-d56cc39926b24e14",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-even"
         },
-        "run_id": "f8656cb2-smoke-even-a1-87e05e",
+        "run_id": "6574e7ca-smoke-even-a1-4a3919",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:24:50Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "run.finished"
       },
       {
-        "event_id": "ev-e0427cb1101c4a59",
+        "event_id": "ev-e74a6fd916364a66",
         "ext": {},
         "payload": {
-          "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
+          "outcome": "passed",
           "task_id": "smoke-add"
         },
-        "run_id": "b6bff164-smoke-add-a1-cd14c1",
+        "run_id": "ec10a3a2-smoke-add-a1-f004c4",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:24:50Z",
-        "type": "run.started"
+        "ts": "2026-11-10T15:41:53Z",
+        "type": "run.finished"
       }
     ]
   },
@@ -220,13 +220,13 @@ window.MOLT_VIEW = {
     "decision_count": 1,
     "decisions": [
       {
-        "baseline_genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+        "baseline_genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "budget_check": {
           "execution_exceeded": false,
           "overhead_exceeded": false,
           "reason": "ok"
         },
-        "candidate_genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
+        "candidate_genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
         "created_at": "2026-01-01T00:00:00Z",
         "decision_id": "demo-decision-1",
         "deltas": {
@@ -275,13 +275,13 @@ window.MOLT_VIEW = {
         "scores": {
           "baseline": {
             "cost_per_solved_usd": 1.84,
-            "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+            "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
             "solved": 2,
             "total": 2
           },
           "candidate": {
             "cost_per_solved_usd": 0.92,
-            "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
+            "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
             "solved": 2,
             "total": 2
           }
@@ -310,10 +310,10 @@ window.MOLT_VIEW = {
           "history": {
             "entries": 2,
             "excluded": 0,
-            "scenario_version": "demo-4"
+            "scenario_version": "demo-5"
           },
           "model": "grid",
-          "prompt_sha256": "ec3d1f3c7c3a3b8fca2d3b9ce0ee3f752537e8a042fb6b0dbb50ca35cfe48b7c",
+          "prompt_sha256": "cfbbf0bf5c86d6748ab4099bb175e908ac24823fab6532fc304d3cee20bae2ad",
           "response_sha256": "4882586f82eabe8bec05db050b740f6cf08007a9fb679f63672d93d7bc4b2cec",
           "source": "grid",
           "usage": {
@@ -325,11 +325,11 @@ window.MOLT_VIEW = {
             "total": 0
           }
         },
-        "parent_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
-        "proposal_id": "prop-5f8541d81b8cc9d3",
+        "parent_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+        "proposal_id": "prop-bd64141f69a0b44a",
         "proposer_id": "grid",
         "rationale": "grid step: 三维枚举",
-        "scenario_version": "demo-4",
+        "scenario_version": "demo-5",
         "schema_version": "1.0.0",
         "switches": {
           "context": "full",
@@ -340,8 +340,8 @@ window.MOLT_VIEW = {
     ]
   },
   "redaction": {
-    "canonical_hash": "ab3c8bf4f880eaa367a8db213e172486ffd882c551e71b40bae875c745808bcd",
-    "metrics_hash": "a8273932075a4560663d9a97bafc17e9650a748cc1a7fbf3f593d613f244164c",
+    "canonical_hash": "1809eab3acf6f879b99e5d83fdb1ed5be91a2d199eae52ce4cbc0506d1792cd1",
+    "metrics_hash": "2536285d795b9c8f9dde4863f3cdcc81b1501b2f161a7138eefb4e6bcf20c8eb",
     "post_metrics": {
       "keys": [
         "$.decisions",
@@ -858,7 +858,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.cost_usd",
-          0.92
+          1.84
         ],
         [
           "$.runs[0].usage.tokens_in",
@@ -866,15 +866,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[0].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[0].usage.wall_ms",
-          920.0
+          1840.0
         ],
         [
           "$.runs[1].attempt",
@@ -882,7 +882,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[1].usage.cost_usd",
-          0.92
+          1.84
         ],
         [
           "$.runs[1].usage.tokens_in",
@@ -890,15 +890,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[1].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[1].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[1].usage.wall_ms",
-          920.0
+          1840.0
         ],
         [
           "$.runs[2].attempt",
@@ -906,7 +906,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[2].usage.cost_usd",
-          0.92
+          1.84
         ],
         [
           "$.runs[2].usage.tokens_in",
@@ -914,15 +914,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[2].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[2].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[2].usage.wall_ms",
-          920.0
+          1840.0
         ],
         [
           "$.runs[3].attempt",
@@ -930,7 +930,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[3].usage.cost_usd",
-          1.84
+          0.92
         ],
         [
           "$.runs[3].usage.tokens_in",
@@ -938,15 +938,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[3].usage.tokens_out",
-          800.0
+          400.0
         ],
         [
           "$.runs[3].usage.turns",
-          4.0
+          2.0
         ],
         [
           "$.runs[3].usage.wall_ms",
-          1840.0
+          920.0
         ],
         [
           "$.runs[4].attempt",
@@ -954,7 +954,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[4].usage.cost_usd",
-          1.84
+          0.92
         ],
         [
           "$.runs[4].usage.tokens_in",
@@ -962,15 +962,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[4].usage.tokens_out",
-          800.0
+          400.0
         ],
         [
           "$.runs[4].usage.turns",
-          4.0
+          2.0
         ],
         [
           "$.runs[4].usage.wall_ms",
-          1840.0
+          920.0
         ],
         [
           "$.runs[5].attempt",
@@ -978,7 +978,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[5].usage.cost_usd",
-          1.84
+          0.92
         ],
         [
           "$.runs[5].usage.tokens_in",
@@ -986,15 +986,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[5].usage.tokens_out",
-          800.0
+          400.0
         ],
         [
           "$.runs[5].usage.turns",
-          4.0
+          2.0
         ],
         [
           "$.runs[5].usage.wall_ms",
-          1840.0
+          920.0
         ]
       ],
       "shape": [
@@ -2820,7 +2820,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.cost_usd",
-          0.92
+          1.84
         ],
         [
           "$.runs[0].usage.tokens_in",
@@ -2828,15 +2828,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[0].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[0].usage.wall_ms",
-          920.0
+          1840.0
         ],
         [
           "$.runs[1].attempt",
@@ -2844,7 +2844,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[1].usage.cost_usd",
-          0.92
+          1.84
         ],
         [
           "$.runs[1].usage.tokens_in",
@@ -2852,15 +2852,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[1].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[1].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[1].usage.wall_ms",
-          920.0
+          1840.0
         ],
         [
           "$.runs[2].attempt",
@@ -2868,7 +2868,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[2].usage.cost_usd",
-          0.92
+          1.84
         ],
         [
           "$.runs[2].usage.tokens_in",
@@ -2876,15 +2876,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[2].usage.tokens_out",
-          400.0
+          800.0
         ],
         [
           "$.runs[2].usage.turns",
-          2.0
+          4.0
         ],
         [
           "$.runs[2].usage.wall_ms",
-          920.0
+          1840.0
         ],
         [
           "$.runs[3].attempt",
@@ -2892,7 +2892,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[3].usage.cost_usd",
-          1.84
+          0.92
         ],
         [
           "$.runs[3].usage.tokens_in",
@@ -2900,15 +2900,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[3].usage.tokens_out",
-          800.0
+          400.0
         ],
         [
           "$.runs[3].usage.turns",
-          4.0
+          2.0
         ],
         [
           "$.runs[3].usage.wall_ms",
-          1840.0
+          920.0
         ],
         [
           "$.runs[4].attempt",
@@ -2916,7 +2916,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[4].usage.cost_usd",
-          1.84
+          0.92
         ],
         [
           "$.runs[4].usage.tokens_in",
@@ -2924,15 +2924,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[4].usage.tokens_out",
-          800.0
+          400.0
         ],
         [
           "$.runs[4].usage.turns",
-          4.0
+          2.0
         ],
         [
           "$.runs[4].usage.wall_ms",
-          1840.0
+          920.0
         ],
         [
           "$.runs[5].attempt",
@@ -2940,7 +2940,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[5].usage.cost_usd",
-          1.84
+          0.92
         ],
         [
           "$.runs[5].usage.tokens_in",
@@ -2948,15 +2948,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[5].usage.tokens_out",
-          800.0
+          400.0
         ],
         [
           "$.runs[5].usage.turns",
-          4.0
+          2.0
         ],
         [
           "$.runs[5].usage.wall_ms",
-          1840.0
+          920.0
         ]
       ],
       "shape": [
@@ -4275,7 +4275,7 @@ window.MOLT_VIEW = {
       "key_value_secret",
       "home_path"
     ],
-    "source_hash": "ab3c8bf4f880eaa367a8db213e172486ffd882c551e71b40bae875c745808bcd"
+    "source_hash": "1809eab3acf6f879b99e5d83fdb1ed5be91a2d199eae52ce4cbc0506d1792cd1"
   },
   "report_results": {
     "report_runs_total": {
@@ -4294,7 +4294,7 @@ window.MOLT_VIEW = {
     "results": [
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "report_runs": {
           "by_status": {
             "passed": 1
@@ -4331,7 +4331,7 @@ window.MOLT_VIEW = {
       },
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
+        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
         "report_runs": {
           "by_status": {
             "passed": 1
@@ -4373,79 +4373,19 @@ window.MOLT_VIEW = {
     "runs": [
       {
         "attempt": 1,
-        "cost_usd": 0.92,
-        "finished_at": "2026-11-10T15:24:50Z",
-        "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
-        "provenance": {
-          "kind": "fixture",
-          "live": false,
-          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
-          "runtime_id": "fixture"
-        },
-        "run_id": "b6bff164-smoke-add-a1-cd14c1",
-        "scope": "search",
-        "solved": true,
-        "started_at": "2026-11-10T15:24:50Z",
-        "status": "passed",
-        "task_id": "smoke-add",
-        "tokens": {
-          "in": 1150,
-          "out": 400
-        },
-        "turns": 2,
-        "verifier": {
-          "hash": "be8de01616fac73d5f2c8674cf82ec481aeb670fc44213d6a45ee898f83a5709",
-          "matches": true,
-          "tests_hash_after": "578dc9ac873c6a6ebfb851109e87dbeed3c8062b56f1bcfe656fea8e09b05ccc",
-          "tests_hash_before": "578dc9ac873c6a6ebfb851109e87dbeed3c8062b56f1bcfe656fea8e09b05ccc"
-        },
-        "wall_ms": 920
-      },
-      {
-        "attempt": 1,
-        "cost_usd": 0.92,
-        "finished_at": "2026-11-10T15:24:50Z",
-        "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
-        "provenance": {
-          "kind": "fixture",
-          "live": false,
-          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
-          "runtime_id": "fixture"
-        },
-        "run_id": "b6bff164-smoke-even-a1-61017b",
-        "scope": "search",
-        "solved": true,
-        "started_at": "2026-11-10T15:24:50Z",
-        "status": "passed",
-        "task_id": "smoke-even",
-        "tokens": {
-          "in": 1150,
-          "out": 400
-        },
-        "turns": 2,
-        "verifier": {
-          "hash": "be8de01616fac73d5f2c8674cf82ec481aeb670fc44213d6a45ee898f83a5709",
-          "matches": true,
-          "tests_hash_after": "f54a719b02a8ae8c7d2f33779bbff28775e04519b47bd7484f1e5dac8545f754",
-          "tests_hash_before": "f54a719b02a8ae8c7d2f33779bbff28775e04519b47bd7484f1e5dac8545f754"
-        },
-        "wall_ms": 920
-      },
-      {
-        "attempt": 1,
         "cost_usd": 1.84,
-        "finished_at": "2026-11-10T15:24:50Z",
-        "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+        "finished_at": "2026-11-10T15:41:53Z",
+        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "provenance": {
           "kind": "fixture",
           "live": false,
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "f8656cb2-smoke-add-a1-821aef",
+        "run_id": "6574e7ca-smoke-add-a1-1ff5e8",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:24:50Z",
+        "started_at": "2026-11-10T15:41:53Z",
         "status": "passed",
         "task_id": "smoke-add",
         "tokens": {
@@ -4454,28 +4394,28 @@ window.MOLT_VIEW = {
         },
         "turns": 4,
         "verifier": {
-          "hash": "be8de01616fac73d5f2c8674cf82ec481aeb670fc44213d6a45ee898f83a5709",
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
           "matches": true,
-          "tests_hash_after": "578dc9ac873c6a6ebfb851109e87dbeed3c8062b56f1bcfe656fea8e09b05ccc",
-          "tests_hash_before": "578dc9ac873c6a6ebfb851109e87dbeed3c8062b56f1bcfe656fea8e09b05ccc"
+          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
+          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
         },
         "wall_ms": 1840
       },
       {
         "attempt": 1,
         "cost_usd": 1.84,
-        "finished_at": "2026-11-10T15:24:50Z",
-        "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+        "finished_at": "2026-11-10T15:41:53Z",
+        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "provenance": {
           "kind": "fixture",
           "live": false,
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "f8656cb2-smoke-even-a1-87e05e",
+        "run_id": "6574e7ca-smoke-even-a1-4a3919",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:24:50Z",
+        "started_at": "2026-11-10T15:41:53Z",
         "status": "passed",
         "task_id": "smoke-even",
         "tokens": {
@@ -4484,17 +4424,77 @@ window.MOLT_VIEW = {
         },
         "turns": 4,
         "verifier": {
-          "hash": "be8de01616fac73d5f2c8674cf82ec481aeb670fc44213d6a45ee898f83a5709",
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
           "matches": true,
-          "tests_hash_after": "f54a719b02a8ae8c7d2f33779bbff28775e04519b47bd7484f1e5dac8545f754",
-          "tests_hash_before": "f54a719b02a8ae8c7d2f33779bbff28775e04519b47bd7484f1e5dac8545f754"
+          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
+          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
         },
         "wall_ms": 1840
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.92,
+        "finished_at": "2026-11-10T15:41:53Z",
+        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "ec10a3a2-smoke-add-a1-f004c4",
+        "scope": "search",
+        "solved": true,
+        "started_at": "2026-11-10T15:41:53Z",
+        "status": "passed",
+        "task_id": "smoke-add",
+        "tokens": {
+          "in": 1150,
+          "out": 400
+        },
+        "turns": 2,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
+          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
+        },
+        "wall_ms": 920
+      },
+      {
+        "attempt": 1,
+        "cost_usd": 0.92,
+        "finished_at": "2026-11-10T15:41:53Z",
+        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+        "provenance": {
+          "kind": "fixture",
+          "live": false,
+          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+          "runtime_id": "fixture"
+        },
+        "run_id": "ec10a3a2-smoke-even-a1-e5e11c",
+        "scope": "search",
+        "solved": true,
+        "started_at": "2026-11-10T15:41:53Z",
+        "status": "passed",
+        "task_id": "smoke-even",
+        "tokens": {
+          "in": 1150,
+          "out": 400
+        },
+        "turns": 2,
+        "verifier": {
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+          "matches": true,
+          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
+          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
+        },
+        "wall_ms": 920
       }
     ]
   },
   "scenario": {
-    "bench_hash": "5575d12ae0b52913b6ee1888a1d7e7c980cfb6ccd81b615f7ac62d1f5f42ccdf",
+    "bench_hash": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
     "budget": {
       "execution_budget_usd": 5.0,
       "search_overhead_budget_usd": 2.0
@@ -4507,14 +4507,14 @@ window.MOLT_VIEW = {
       "runtime": "fixture"
     },
     "ext": {
-      "note": "demo 只用 fixture runtime；不产生真实模型调用"
+      "note": "fixture demo 不产生真实模型调用；Pi runtime 为可选 live 路径"
     },
     "holdout": {
       "detail": "not-exported",
       "task_count": 1
     },
     "isolation": {
-      "network": "none"
+      "network": "provider_only"
     },
     "not_claimed": [
       "live 模型的质量或成本",
@@ -4531,7 +4531,7 @@ window.MOLT_VIEW = {
       "k": 0
     },
     "scenario_id": "demo",
-    "scenario_version": "demo-4",
+    "scenario_version": "demo-5",
     "schema_version": "1.0.0",
     "shell": {
       "shell_id": "code-repair",
@@ -4554,7 +4554,7 @@ window.MOLT_VIEW = {
     "results": [
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "result_id": "result-baseline-search",
         "scope": "search",
         "scores": {
@@ -4570,7 +4570,7 @@ window.MOLT_VIEW = {
       },
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
+        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
         "result_id": "result-candidate-search",
         "scope": "search",
         "scores": {
@@ -4600,16 +4600,16 @@ window.MOLT_VIEW = {
           "turns": 64,
           "wall_ms": 120000
         },
-        "id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
-        "parent": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+        "id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+        "parent": null,
         "runtime": {
           "runtime_id": "fixture",
           "version": "fixture-1"
         },
-        "scenario_version": "demo-4",
+        "scenario_version": "demo-5",
         "switches": {
           "context": "full",
-          "thinking": "low",
+          "thinking": "high",
           "tools": "bash"
         }
       },
@@ -4621,16 +4621,16 @@ window.MOLT_VIEW = {
           "turns": 64,
           "wall_ms": 120000
         },
-        "id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
-        "parent": null,
+        "id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+        "parent": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "runtime": {
           "runtime_id": "fixture",
           "version": "fixture-1"
         },
-        "scenario_version": "demo-4",
+        "scenario_version": "demo-5",
         "switches": {
           "context": "full",
-          "thinking": "high",
+          "thinking": "low",
           "tools": "bash"
         }
       }

@@ -2,13 +2,13 @@
   "decision_count": 1,
   "decisions": [
     {
-      "baseline_genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+      "baseline_genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
       "budget_check": {
         "execution_exceeded": false,
         "overhead_exceeded": false,
         "reason": "ok"
       },
-      "candidate_genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
+      "candidate_genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
       "created_at": "2026-01-01T00:00:00Z",
       "decision_id": "demo-decision-1",
       "deltas": {
@@ -57,13 +57,13 @@
       "scores": {
         "baseline": {
           "cost_per_solved_usd": 1.84,
-          "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+          "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
           "solved": 2,
           "total": 2
         },
         "candidate": {
           "cost_per_solved_usd": 0.92,
-          "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
+          "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
           "solved": 2,
           "total": 2
         }

@@ -85,10 +85,11 @@ task.json ──workspace───┘                         │
 
 ## 五、裁判隔离
 
-- 测试目录在候选工作区之外，Verifier 运行前后取树哈希，不一致判废；
+- 测试目录在候选工作区之外，Verifier 运行前后对整个 `bench/**`（全部 task.json +
+  workspace + tests）取树哈希，不一致判废；改其他题或 holdout 题同样 visible；
 - `isolation.network` 三档写死映射：`none → sandboxed`、`provider_only → provider-sandboxed`、
   `open → permissions-only`；
-- 无法建立沙箱时降级为 `permissions-only`，`degraded=true`，claim 必须写
+- 无法建立沙箱时降级为 `network=open` + `permissions-only`，`degraded=true`，claim 必须写
   `sandbox unavailable`，不得静默降级；
 - agent / bash 侧禁止读取 `bench/**`、`web/**`、`evidence/**`；bash 在 `sandboxed` /
   `provider-sandboxed` 下一律无网络；
@@ -161,13 +162,15 @@ gate，并断言 search 流零 holdout id、report 流至少一条 `holdout.acce
   去掉网络、proxy、仓库挂载。trust preflight 必须证明 wrapper 被调用（`preflight.txt` +
   `.molt/shell-path.log`）；失败 `trust_missing`，run 不可采纳。
 - **网络**：Pi 主进程保留 `provider_only` 语义但**没有进程级 egress allowlist**；bash 子进程无网络。bwrap 不可用时降级
-  `permissions-only` 并记录 `sandbox unavailable`。
+  `network=open` + `permissions-only`，并记录 `sandbox unavailable`。
 - **账本**：session JSONL v3 全部 usage-bearing entry（含 `compaction` / 未知 type）按 entry id
   去重；成本链 `totalFromProvider → cost.total → 目录估算`；与 JSON 流 message_end 交叉校验，
   偏差超阈 `ledger_mismatch`。
 - **预算**：wall 超时 kill 进程组；turns 按 assistant message；tokens 按账本总量；超限 invalid。
 - **落盘**：B1 `run` 顶层冻结，runtime 元数据写 `run.ext.runtime`（`provenance`、
-  `project_trust`、`isolation`、`session_path`、`log_ref`、`ledger`、`budget`）。
+  `project_trust`、`isolation`、`tools_allowlist=["bash"]`、`session_path`、`log_ref`、
+  `ledger`、`budget`）。
 - **verifier**：`Harness.run` 在 runtime 启动前调用 `Verifier.guard` 保存 before 指纹，agent 结束后
-  只取 after；测试目录或题面被改写即 `matches=false`，run 判废。
-- **版本**：harness/verifier 改动把 demo 从 `demo-3` 升到 `demo-4`，`bench_hash` / genome artifact 同步。
+  只取 after；指纹覆盖整个 `bench/**`（全部 task.json + workspace + tests），任一文件被改写即
+  `matches=false`，run 判废。
+- **版本**：harness/verifier 改动把 demo 从 `demo-4` 升到 `demo-5`，`bench_hash` / genome artifact 同步。

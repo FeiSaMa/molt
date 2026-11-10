@@ -69,6 +69,7 @@ def test_file_set_is_exactly_the_contract(exported) -> None:
     assert "report" not in scenario_data["task_sets"]
     assert scenario_data["holdout"] == {"task_count": counts["report"], "detail": "not-exported"}
     assert scenario_data["budget"]["execution_budget_usd"] is not None
+    assert scenario_data["isolation"]["network"] == "provider_only"
 
 
 def test_revision_is_stable_for_same_state(demo_artifacts, exported, tmp_path: Path) -> None:

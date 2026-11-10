@@ -51,8 +51,9 @@ class IsolationPolicy:
         if network == "open":
             return cls(network, "permissions-only", False, sandbox_available, paths)
         if not sandbox_available:
-            # 无法建立隔离：降级为 open 的 level，但必须显式标记。
-            return cls(network, "permissions-only", True, False, paths)
+            # 无法建立隔离时不能再声称 provider_only/sandboxed：网络实际是开放的，
+            # 因此把 network 也降为 open，并用 degraded/marker 显式标记。
+            return cls("open", "permissions-only", True, False, paths)
         return cls(network, NETWORK_TO_LEVEL[network], False, True, paths)
 
     @property

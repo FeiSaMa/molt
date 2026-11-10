@@ -12,7 +12,7 @@ import os
 import shutil
 import subprocess
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -136,14 +136,28 @@ class TrustProbe:
     ) -> TrustResult:
         workdir = Path(workdir).resolve()
         settings_path, _, settings_hash = write_project_settings(workdir, shell_path)
+        log_path = workdir / ".molt" / "shell-path.log"
+        sentinel = workdir / "preflight.txt"
+
         cache_path = self._cache_path(shell_version, settings_hash)
         if cache_path is not None:
             cached = self._read_cache(cache_path)
             if cached is not None:
-                return cached
+                # 缓存只复用「决策 + project_trust + 预检 usage」；路径必须指向
+                # 当前 run 的 workdir，否则两题批次会把 run 2 的证据串到 run 1。
+                # settings_hash 相同即 shellPath 相同，wrapper 在当前 workdir 的
+                # 绑定由 adapter 注入的 WORKDIR 决定（见 sandbox_bash.sh）。
+                return replace(
+                    cached,
+                    cache_hit=True,
+                    settings_hash=settings_hash,
+                    settings_path=str(settings_path),
+                    sentinel_path=str(sentinel),
+                    log_path=str(log_path),
+                    session_id="",
+                    session_path="",
+                )
 
-        log_path = workdir / ".molt" / "shell-path.log"
-        sentinel = workdir / "preflight.txt"
         for path in (log_path, sentinel):
             if path.exists():
                 path.unlink()

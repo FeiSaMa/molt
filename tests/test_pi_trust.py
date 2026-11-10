@@ -112,6 +112,33 @@ def test_missing_pi_binary_is_trust_missing(tmp_path: Path) -> None:
     assert calls == []
 
 
+def test_cache_hit_reuses_decision_but_not_paths(tmp_path: Path) -> None:
+    """两题批次共享缓存，但每个 run 的 settings/log/sentinel 必须指向自己。"""
+    runner, calls = runner_factory()
+    probe = TrustProbe(
+        pi_executable=sys.executable,
+        cache_dir=tmp_path / "cache",
+        runner=runner,
+    )
+    first_work = tmp_path / "run-1" / "workspace"
+    second_work = tmp_path / "run-2" / "workspace"
+    first = probe.ensure(first_work, shell_version="1.0.0", shell_path=WRAPPER)
+    second = probe.ensure(second_work, shell_version="1.0.0", shell_path=WRAPPER)
+
+    assert first.cache_hit is False
+    assert second.cache_hit is True
+    assert len(calls) == 1
+    assert first.log_path == str(first_work.resolve() / ".molt/shell-path.log")
+    assert second.log_path == str(second_work.resolve() / ".molt/shell-path.log")
+    assert first.log_path != second.log_path
+    assert second.settings_path == str(second_work.resolve() / ".pi/settings.json")
+    assert second.sentinel_path == str(second_work.resolve() / "preflight.txt")
+    assert second.session_path == ""
+    # 决策与预检 usage 仍复用上一 run 的结论。
+    assert second.project_trust == first.project_trust == "cli_approve"
+    assert second.preflight_tokens == first.preflight_tokens
+
+
 def test_settings_changes_invalidate_cache(tmp_path: Path) -> None:
     runner, calls = runner_factory()
     probe = TrustProbe(

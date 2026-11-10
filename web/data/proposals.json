@@ -14,10 +14,10 @@
         "history": {
           "entries": 2,
           "excluded": 0,
-          "scenario_version": "demo-4"
+          "scenario_version": "demo-5"
         },
         "model": "grid",
-        "prompt_sha256": "ec3d1f3c7c3a3b8fca2d3b9ce0ee3f752537e8a042fb6b0dbb50ca35cfe48b7c",
+        "prompt_sha256": "cfbbf0bf5c86d6748ab4099bb175e908ac24823fab6532fc304d3cee20bae2ad",
         "response_sha256": "4882586f82eabe8bec05db050b740f6cf08007a9fb679f63672d93d7bc4b2cec",
         "source": "grid",
         "usage": {
@@ -29,11 +29,11 @@
           "total": 0
         }
       },
-      "parent_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
-      "proposal_id": "prop-5f8541d81b8cc9d3",
+      "parent_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+      "proposal_id": "prop-bd64141f69a0b44a",
       "proposer_id": "grid",
       "rationale": "grid step: 三维枚举",
-      "scenario_version": "demo-4",
+      "scenario_version": "demo-5",
       "schema_version": "1.0.0",
       "switches": {
         "context": "full",

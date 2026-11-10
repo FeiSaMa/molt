@@ -6,16 +6,16 @@
       "adopted_at": null,
       "archive_id": null,
       "generation": null,
-      "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
-      "parent_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828"
+      "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+      "parent_id": null
     },
     {
       "adopted": false,
       "adopted_at": null,
       "archive_id": null,
       "generation": null,
-      "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
-      "parent_id": null
+      "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+      "parent_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504"
     }
   ]
 }

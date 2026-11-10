@@ -81,8 +81,13 @@ def build_engine(
         options = dict(pi_options or {})
         model = str(options.get("model", "deepseek/deepseek-flash"))
         network = scenario.isolation.network
-        if network not in ("provider_only", "open"):
-            network = "provider_only"
+        if network == "none":
+            # Pi 主进程必须保留 provider 网络，声明 none 与事实不符；
+            # 拒绝静默改写，要求 scenario 明确写 provider_only / open。
+            raise ValueError(
+                "Pi runtime 需要 scenario.isolation.network=provider_only 或 open；"
+                "none 无法切断 Pi 主进程的 provider 网络"
+            )
         runtime_obj: Any = PiRuntime(
             repo_root=repo_root,
             tools_argv_fn=harness_mod.tools_argv_for,
