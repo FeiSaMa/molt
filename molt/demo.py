@@ -1,7 +1,8 @@
-"""demo 证据链：两题搜索集 + 一题留出集，全程 fixture runtime。
+"""证据链装配：按 scenario 的 shell manifest 装载 shell 模块 + runtime + Engine。
 
-``molt audit --scenario demo`` 会在临时目录重建这条链，再只读审计；
-仓库内不落 ``runs/`` 原始产物。
+``molt audit --scenario <id>`` 会在临时目录重建该 scenario 的证据链，再只读审计；
+仓库内不落 ``runs/`` 原始产物。``demo`` 只是其中一个 scenario（code-repair + fixture），
+``svc-config`` 是第二个（svc-config + deterministic）。
 """
 
 from __future__ import annotations
@@ -23,11 +24,18 @@ from molt.core.policy import SideEval, TaskEval
 from molt.core.redact import evidence_bundle, redact_evidence, write_redaction_manifest
 from molt.core.store import StateStore
 from molt.core.types import Genome, Proposal, Scenario, SearchHistory
-from molt.shell_loader import load_shell_module
+from molt.shell_bundle import (
+    ShellBundle,
+    build_harness,
+    build_task_provider,
+    build_verifier,
+    load_shell_bundle,
+)
 
 FIXED_TS = "2026-01-01T00:00:00Z"
 DEMO_SCENARIO = Path("scenarios") / "demo" / "scenario.json"
 DEMO_GENOME = Path("shells") / "code-repair" / "genomes" / "v0.json"
+RUNTIMES: tuple[str, ...] = ("fixture", "pi", "deterministic")
 
 
 def fixed_clock() -> str:
@@ -48,32 +56,46 @@ def load_genome(repo_root: Path, rel_path: Path = DEMO_GENOME) -> Genome:
     return genome
 
 
-def build_engine(
+def default_genome_path(repo_root: Path, scenario: Scenario) -> Path:
+    """该 scenario 的默认 genome：优先 ``v0.json``，否则取首个版本匹配的 genome。
+
+    先按 ``scenario_version`` 过滤，再看 ``shell_id``；两者的不一致由
+    ``molt scenario validate`` 与 ``build_engine`` 兜底拒绝。
+    """
+    shell_dir = Path(repo_root) / "shells" / scenario.shell_id / "genomes"
+    preferred = shell_dir / "v0.json"
+    candidates = [
+        preferred,
+        *sorted(path for path in shell_dir.glob("*.json") if path != preferred),
+    ]
+    for path in candidates:
+        if not path.is_file():
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("scenario_version") != scenario.scenario_version:
+            continue
+        if data.get("shell_id") != scenario.shell_id:
+            continue
+        return path
+    raise ValueError(
+        f"scenario {scenario.scenario_id}（{scenario.scenario_version}）没有匹配的 genome；"
+        f"查找目录 {shell_dir}"
+    )
+
+
+def _default_runtime(scenario: Scenario) -> str:
+    value = scenario.ext.get("default_runtime", "fixture")
+    return str(value)
+
+
+def _build_runtime(
     repo_root: Path,
     scenario: Scenario,
-    store: StateStore,
     work_root: Path,
-    seed_control: str = "none",
-    *,
-    domains: Mapping[str, Sequence[str]] | None = None,
-    llm_proposer: Callable[[SearchHistory, Genome], Proposal] | None = None,
-    runtime: str = "fixture",
-    pi_options: Mapping[str, Any] | None = None,
-) -> Engine:
-    """组装 B1 的 fixture 引擎（shell loader + fixture runtime + 真 pytest verifier）。"""
-    repo_root = Path(repo_root).resolve()
-    work_root = Path(work_root).resolve()
-    store.ensure()
-    provider_mod = load_shell_module(
-        repo_root, "shells/code-repair/task_provider.py", "molt_shell_task_provider"
-    )
-    harness_mod = load_shell_module(
-        repo_root, "shells/code-repair/harness.py", "molt_shell_harness"
-    )
-    verifier_mod = load_shell_module(
-        repo_root, "shells/code-repair/verifier.py", "molt_shell_verifier"
-    )
-    provider = provider_mod.BenchTaskProvider(repo_root)
+    runtime: str,
+    bundle: ShellBundle,
+    pi_options: Mapping[str, Any] | None,
+) -> Any:
     if runtime == "pi":
         from molt.adapters.pi.runtime import PiRuntime
         from molt.adapters.pi.trust import TrustProbe
@@ -88,9 +110,14 @@ def build_engine(
                 "Pi runtime 需要 scenario.isolation.network=provider_only 或 open；"
                 "none 无法切断 Pi 主进程的 provider 网络"
             )
-        runtime_obj: Any = PiRuntime(
+        tools_argv_fn = getattr(bundle.harness_module, "tools_argv_for", None)
+        if tools_argv_fn is None:
+            raise ValueError(
+                f"shell {scenario.shell_id} 未提供 tools_argv_for，不能使用 Pi runtime"
+            )
+        return PiRuntime(
             repo_root=repo_root,
-            tools_argv_fn=harness_mod.tools_argv_for,
+            tools_argv_fn=tools_argv_fn,
             sandbox_wrapper=options.get(
                 "sandbox_wrapper",
                 repo_root / "molt/adapters/pi/sandbox_bash.sh",
@@ -106,12 +133,42 @@ def build_engine(
             probe_runner=options.get("probe_runner"),
             spawn=options.get("spawn"),
         )
-    elif runtime == "fixture":
-        runtime_obj = FixtureRuntime()
-    else:
-        raise ValueError(f"未知 runtime: {runtime!r}")
-    verifier = verifier_mod.PytestVerifier(repo_root)
-    harness = harness_mod.CodeRepairHarness(
+    if runtime == "fixture":
+        return FixtureRuntime()
+    if runtime == "deterministic":
+        from molt.adapters.deterministic.runtime import DeterministicRuntime
+
+        return DeterministicRuntime()
+    raise ValueError(f"未知 runtime: {runtime!r}（合法值 {list(RUNTIMES)}）")
+
+
+def build_engine(
+    repo_root: Path,
+    scenario: Scenario,
+    store: StateStore,
+    work_root: Path,
+    seed_control: str = "none",
+    *,
+    domains: Mapping[str, Sequence[str]] | None = None,
+    llm_proposer: Callable[[SearchHistory, Genome], Proposal] | None = None,
+    runtime: str | None = None,
+    pi_options: Mapping[str, Any] | None = None,
+) -> Engine:
+    """按 scenario.shell_id 装载 manifest.entrypoints，装配 provider/harness/verifier。"""
+    repo_root = Path(repo_root).resolve()
+    work_root = Path(work_root).resolve()
+    store.ensure()
+    bundle = load_shell_bundle(
+        repo_root,
+        scenario.shell_id,
+        shell_version=scenario.shell_version,
+    )
+    provider = build_task_provider(bundle, repo_root)
+    runtime_name = runtime or _default_runtime(scenario)
+    runtime_obj = _build_runtime(repo_root, scenario, work_root, runtime_name, bundle, pi_options)
+    verifier = build_verifier(bundle, repo_root)
+    harness = build_harness(
+        bundle,
         runtime_obj,
         verifier,
         repo_root,
@@ -130,27 +187,45 @@ def build_engine(
             repo_root=repo_root,
             work_root=Path(work_root),
             shell_version=scenario.shell_version,
-            verifier_hash=sha256_file(repo_root / "shells/code-repair/verifier.py"),
+            verifier_hash=sha256_file(bundle.verifier_path),
             seed_control=seed_control,
         ),
     )
 
 
-def build_demo_state(
-    repo_root: Path, work_root: Path
+def build_scenario_state(
+    repo_root: Path,
+    work_root: Path,
+    *,
+    scenario: Scenario | None = None,
+    genome_path: Path | None = None,
+    runtime: str | None = None,
+    domains: Mapping[str, Sequence[str]] | None = None,
+    llm_proposer: Callable[[SearchHistory, Genome], Proposal] | None = None,
+    seed_control: str = "none",
 ) -> tuple[StateStore, Scenario, dict[str, Any]]:
     """在 ``work_root`` 下重建完整证据链，返回 store / scenario / 摘要。"""
     repo_root = Path(repo_root)
     work_root = Path(work_root)
-    scenario = load_demo_scenario(repo_root)
+    scenario = scenario or load_demo_scenario(repo_root)
     store = StateStore(work_root / "state")
     store.ensure()
-    engine = build_engine(repo_root, scenario, store, work_root / "work")
+    engine = build_engine(
+        repo_root,
+        scenario,
+        store,
+        work_root / "work",
+        seed_control,
+        domains=domains,
+        llm_proposer=llm_proposer,
+        runtime=runtime,
+    )
     provider = engine.task_provider
     events = EventLog(store.root)
 
-    baseline = load_genome(repo_root)
+    baseline = load_genome(repo_root, genome_path or default_genome_path(repo_root, scenario))
     store.write_genome(baseline)
+    slug = scenario.scenario_id
     search_tasks = [provider.load_task(task_id) for task_id in scenario.task_sets["search"]]
     baseline_search_runs = engine.run_suite(baseline, search_tasks, scope="search")
     baseline_search_result = engine.evaluate_search(
@@ -163,7 +238,7 @@ def build_demo_state(
 
     history = engine.search_history(baseline, baseline_search_runs)
     proposal = engine.propose(baseline, history)
-    engine.record_proposal(proposal, event_id="ev-demo-proposal", ts=FIXED_TS)
+    engine.record_proposal(proposal, event_id=f"ev-{slug}-proposal", ts=FIXED_TS)
     candidate = child_genome(baseline, proposal.switches, repo_root=repo_root)
     store.write_genome(candidate)
     candidate_search_runs = engine.run_suite(candidate, search_tasks, scope="search")
@@ -184,7 +259,7 @@ def build_demo_state(
     decision = Gate(scenario.policy).decide(
         baseline_side,
         candidate_side,
-        decision_id="demo-decision-1",
+        decision_id=f"{slug}-decision-1",
         scenario_version=scenario.scenario_version,
         shell_version=scenario.shell_version,
         verifier_hash=engine.config.verifier_hash,
@@ -204,7 +279,7 @@ def build_demo_state(
         scope="search",
         event_type="gate.decided",
         payload={"decision_id": decision.decision_id, "verdict": decision.verdict},
-        event_id="ev-demo-gate",
+        event_id=f"ev-{slug}-gate",
         ts=FIXED_TS,
     )
 
@@ -235,7 +310,7 @@ def build_demo_state(
             scope="report",
             event_type="report.scored",
             payload={"result_id": result.result_id},
-            event_id=f"ev-demo-{result.result_id}",
+            event_id=f"ev-{slug}-{result.result_id}",
             ts=FIXED_TS,
         )
     events.materialize("search")
@@ -266,10 +341,29 @@ def build_demo_state(
     return store, scenario, summary
 
 
-def run_demo_audit(repo_root: Path, work_root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
-    store, scenario, summary = build_demo_state(repo_root, work_root)
+def build_demo_state(
+    repo_root: Path, work_root: Path
+) -> tuple[StateStore, Scenario, dict[str, Any]]:
+    """兼容入口：demo scenario 的完整证据链。"""
+    return build_scenario_state(repo_root, work_root)
+
+
+def run_scenario_audit(
+    repo_root: Path,
+    work_root: Path,
+    scenario: Scenario,
+    *,
+    runtime: str | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    store, scenario, summary = build_scenario_state(
+        repo_root, work_root, scenario=scenario, runtime=runtime
+    )
     report = audit_state(store, scenario)
     return summary, report
+
+
+def run_demo_audit(repo_root: Path, work_root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    return run_scenario_audit(repo_root, work_root, load_demo_scenario(repo_root))
 
 
 def _side(

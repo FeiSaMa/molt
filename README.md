@@ -5,15 +5,17 @@
 
 B1 已完成 core v1 协议、门禁引擎、快照事务、事件 / 账本分片、隔离抽象与 fixture runtime。
 B2a 增加 LLM proposer；B2b 增加 Pi 1.5.0 adapter、bwrap bash sandbox、trust preflight、
-session 账本与预算执行。svc-config、HTML 报告与正式题集仍属于后续批次。
+session 账本与预算执行；B2c 增加第二个 shell `svc-config` 与确定性 runtime
+（零 LLM / 零网络 / 零成本），用来证明 shell 端口可迁移。HTML 报告与正式 10+5 题集
+仍属于后续批次。
 
 ## 分层
 
 | 层 | 位置 | 职责 |
 | --- | --- | --- |
 | core | `molt/core/` | 协议类型、门禁、存储事务、哈希、审计；**运行时零第三方依赖** |
-| shell | `shells/code-repair/` | Task / Harness / Verifier；6 组搜索空间与 bash-only prompt |
-| adapter | `molt/adapters/` | `fixture/` Runtime（不联网）；`llm_proposer.py` DeepSeek transport |
+| shell | `shells/code-repair/`、`shells/svc-config/` | Task / Harness / Verifier；code-repair 是 6 组 bash-only 搜索空间，svc-config 是 4 组确定性配置修复 |
+| adapter | `molt/adapters/` | `fixture/`、`deterministic/` Runtime（均不联网）；`llm_proposer.py` DeepSeek transport；`pi/` 为真实 runtime |
 | schema | `schemas/v1/` | 11 类记录的 JSON Schema，协议唯一事实源 |
 
 依赖单向：`core` 只 import stdlib 与 `molt.core.*`；shell 依赖 core；adapter 依赖 core。
@@ -30,6 +32,8 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt genome verify shells/code-rep
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt propose --scenario demo --state /tmp/molt-state --offline
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt gate --fixture tests/fixtures/gate/
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt audit --scenario demo
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt search --scenario svc-config --runtime deterministic
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt audit --scenario svc-config
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
 ```
 
@@ -40,7 +44,8 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
   [ADR-0003 评分](docs/decisions/0003-scoring.md)、
   [ADR-0004 shell 与搜索空间](docs/decisions/0004-shell-and-dims.md)、
   [ADR-0005 proposer](docs/decisions/0005-proposer.md)、
-  [ADR-0006 isolation](docs/decisions/0006-isolation.md)。
+  [ADR-0006 isolation](docs/decisions/0006-isolation.md)、
+  [ADR-0007 svc-config](docs/decisions/0007-svc-config.md)。
 - 旧契约已归档：[`docs/archive/contracts-v0.md`](docs/archive/contracts-v0.md)。
 
 ## 关键口径
@@ -53,11 +58,14 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
 - 采纳 / 回退是单写者单事务；读者校验指针 + generation + tree hash。
 - 搜索空间是 6 组：thinking × context；tools 锁定 bash，agent 只能用 sandboxed bash 读写，
   read/write/edit 不启用。Pi 主进程没有进程级 egress allowlist，只有 bash 被 bwrap 隔离。
+- shell 由 `shells/<shell_id>/manifest.json` 的 `entrypoints` 装载；`svc-config` 用
+  deterministic runtime，run 的 `usage` 全 0、`cost_source="none"`，不得与其它 shell 的分数比较。
 
 ## 状态
 
 - 已实现：schema / 类型双校验、genome 哈希冻结、G1–G8 门禁、快照与 kill -9 恢复、
   并发 adoption 单胜、per-run 事件与账本、holdout 类型隔离、审计重算、零写入测试、
   LLM/grid proposer、Pi 1.5.0 runtime（bash-only sandbox / trust / 账本 / 预算）、
+  第二 shell `svc-config` + deterministic runtime（零成本、manifest 驱动装载）、
   `export` 的 `web/data` 数据导出（无页面代码）。
-- 未实现：`svc-config` shell、HTML 报告、正式 10+5 题集、`demo` 命令。
+- 未实现：HTML 报告、正式 10+5 题集、`demo` 命令。

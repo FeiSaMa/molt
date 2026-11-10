@@ -137,7 +137,10 @@ def _provenance(run: Run, genomes: dict[str, Genome]) -> dict[str, Any]:
         "runtime_id": runtime_id or None,
     }
     if kind == "fixture":
-        result["note"] = "B1 fixture runtime：确定性回放，不是 live 模型调用"
+        if runtime_id.startswith("deterministic"):
+            result["note"] = "deterministic runtime：零成本确定性执行，不是 live 模型调用"
+        else:
+            result["note"] = "B1 fixture runtime：确定性回放，不是 live 模型调用"
     return result
 
 
@@ -165,7 +168,10 @@ def _scenario_payload(scenario: Scenario) -> dict[str, Any]:
         "policy": scenario.policy.to_dict(),
         "budget": scenario.policy.budget.to_dict(),
         "isolation": scenario.isolation.to_dict(),
-        "claim": dict(CLAIM),
+        "claim": {
+            **CLAIM,
+            "runtime": str(scenario.ext.get("default_runtime", "fixture")),
+        },
         "not_claimed": list(NOT_CLAIMED),
         "ext": dict(scenario.ext),
     }

@@ -1,0 +1,10 @@
+{
+  "app": "billing",
+  "logging": {
+    "level": "info",
+    "retries": 3
+  },
+  "features": {
+    "audit": true
+  }
+}

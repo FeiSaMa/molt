@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "svc-holdout-proxy",
+  "scenario_version": "svc-1",
+  "shell_id": "svc-config",
+  "scope": "report",
+  "title": "留出题：修好代理上游端口与超时",
+  "workspace_ref": "bench/holdout/svc-holdout-proxy/workspace",
+  "tests_ref": "bench/holdout/svc-holdout-proxy/tests",
+  "timeout_s": 30,
+  "ext": {
+    "deterministic": {
+      "edits": [
+        {
+          "kind": "json_set",
+          "path": "config/proxy.json",
+          "pointer": "/upstream/port",
+          "value": 8443
+        },
+        {
+          "kind": "json_set",
+          "path": "config/proxy.json",
+          "pointer": "/upstream/timeout_ms",
+          "value": 5000,
+          "when": {
+            "thinking": ["high"]
+          }
+        }
+      ]
+    }
+  }
+}

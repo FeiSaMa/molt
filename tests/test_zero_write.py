@@ -42,6 +42,7 @@ COMMANDS = [
     ["genome", "verify", "shells/code-repair/genomes/v0.json"],
     ["gate", "--fixture", "tests/fixtures/gate/"],
     ["audit", "--scenario", "demo"],
+    ["calibrate", "--scenario", "demo", "--min-pass", "0"],
 ]
 
 
