@@ -98,3 +98,9 @@ agent 只能通过 sandboxed bash 读写。这样 claim 可以说「agent 工具
 B1 的 `run` 顶层冻结，没有 `runtime` 字段；D2 的 `run.runtime.*` 一律写入
 `run.ext.runtime`（`provenance=live`、`project_trust`、`isolation`、`session_path`、
 `log_ref`、`stderr_ref`、`argv`、`ledger`、`budget`）。`run.usage` 仍是执行侧唯一成本来源。
+
+## 7. 协议域收窄说明
+
+B2b 裁决 A 把 `tools` 从 `{default, lean}` 收窄为单值 `{bash}`，因此搜索空间从 12 组
+变为 6 组。顶层字段没有新增/删除，`schema_version` 仍为 1.0.0；该收窄随
+`scenario_version=demo-4` 生效，禁止与 `demo-3` 及更早的 12 组结果跨版本比较。
