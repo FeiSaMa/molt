@@ -4,7 +4,8 @@
 并把每次执行变成可复算的证据。
 
 B1 已完成 core v1 协议、门禁引擎、快照事务、事件 / 账本分片、隔离抽象与 fixture runtime。
-Pi adapter、LLM proposer、HTML 报告与正式题集属于 B2。
+B2a 增加 LLM proposer（DeepSeek transport 可注入）与通用网格回退；Pi adapter、svc-config、
+HTML 报告与正式题集仍属于后续批次。
 
 ## 分层
 
@@ -12,7 +13,7 @@ Pi adapter、LLM proposer、HTML 报告与正式题集属于 B2。
 | --- | --- | --- |
 | core | `molt/core/` | 协议类型、门禁、存储事务、哈希、审计；**运行时零第三方依赖** |
 | shell | `shells/code-repair/` | Task / Harness / Verifier；三维开关与 prompt |
-| adapter | `molt/adapters/fixture/` | Runtime；B1 只有确定性 fixture，不联网 |
+| adapter | `molt/adapters/` | `fixture/` Runtime（不联网）；`llm_proposer.py` DeepSeek transport |
 | schema | `schemas/v1/` | 11 类记录的 JSON Schema，协议唯一事实源 |
 
 依赖单向：`core` 只 import stdlib 与 `molt.core.*`；shell 依赖 core；adapter 依赖 core。
@@ -26,6 +27,7 @@ uv pip install pytest ruff jsonschema      # 或 uv sync --extra dev
 
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt schema validate --all
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt genome verify shells/code-repair/genomes/v0.json
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt propose --scenario demo --state /tmp/molt-state --offline
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt gate --fixture tests/fixtures/gate/
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt audit --scenario demo
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
@@ -36,7 +38,8 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
 - 协议字段表：[`docs/protocol.md`](docs/protocol.md)（由 `molt schema docs` 从 schema 生成，禁止手改）。
 - 决策：[ADR-0002 协议](docs/decisions/0002-protocol-v1.md)、
   [ADR-0003 评分](docs/decisions/0003-scoring.md)、
-  [ADR-0004 shell 与三维](docs/decisions/0004-shell-and-dims.md)。
+  [ADR-0004 shell 与三维](docs/decisions/0004-shell-and-dims.md)、
+  [ADR-0005 proposer](docs/decisions/0005-proposer.md)。
 - 旧契约已归档：[`docs/archive/contracts-v0.md`](docs/archive/contracts-v0.md)。
 
 ## 关键口径
@@ -51,6 +54,6 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
 ## 状态
 
 - 已实现：schema / 类型双校验、genome 哈希冻结、G1–G8 门禁、快照与 kill -9 恢复、
-  并发 adoption 单胜、per-run 事件与账本、holdout 类型隔离、审计重算、零写入测试。
-- 未实现（B2）：Pi adapter、LLM proposer、`svc-config` shell、HTML 报告、正式 10+5 题集、
-  `export` / `demo` 命令。
+  并发 adoption 单胜、per-run 事件与账本、holdout 类型隔离、审计重算、零写入测试、
+  LLM/grid proposer（proposal.ext 契约、fallback、overhead 账本）。
+- 未实现：Pi adapter、`svc-config` shell、HTML 报告、正式 10+5 题集、`export` / `demo` 命令。

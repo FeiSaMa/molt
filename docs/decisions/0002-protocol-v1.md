@@ -31,6 +31,14 @@ v0 只有 `docs/contracts.md` 的 4 份落盘文件，字段缺 `model` / `think
 8. **文档**：`docs/protocol.md` 由 `python -m molt schema docs` 从 schema 生成，不手写字段表；
    `docs/contracts.md` 归档为 `docs/archive/contracts-v0.md`。
 
+## 门禁夹具的逐侧版本约定
+
+`SIDE_KEYS`（`molt/cli.py`）固定为 `genome_id`、`limits`、`invalid_ratio`、
+`overhead_spend_usd`、`tasks`，**不含** `scenario_version`。夹具可用
+`baseline_scenario_version` / `candidate_scenario_version` 逐侧覆盖版本，缺省回落到 case 级
+`scenario_version`；构造出的 `SideEval.scenario_version` 与 scenario 不一致时，
+`policy.decide` 抛 `IncomparableError`，禁止跨版本比较。
+
 ## 兼容矩阵
 
 | 变更 | 级别 | 处理 |

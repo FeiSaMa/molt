@@ -1,7 +1,8 @@
 """molt 命令行入口。
 
-B1 命令：``schema`` / ``genome`` / ``search`` / ``gate`` / ``adopt`` / ``revert`` /
-``audit`` / ``doctor``。``export`` 与 ``demo`` 留给 B2。
+B1/B2a 命令：``schema`` / ``genome`` / ``scenario`` / ``search`` / ``propose`` /
+``gate`` / ``adopt`` / ``revert`` / ``audit`` / ``doctor``。``export`` / ``demo`` /
+Pi adapter / svc-config 留给后续批次。
 """
 
 from __future__ import annotations
@@ -32,7 +33,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--root", type=Path, default=None, help="仓库根，默认自动向上查找")
     sub = parser.add_subparsers(
-        dest="command", metavar="{schema,genome,scenario,search,gate,adopt,revert,audit,doctor}"
+        dest="command",
+        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,doctor}",
     )
 
     p_schema = sub.add_parser("schema", help="schema 校验与文档生成")
@@ -53,6 +55,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_search.add_argument("--genome", type=Path, default=Path("shells/code-repair/genomes/v0.json"))
     p_search.add_argument("--state", type=Path, default=Path("state/search"))
     p_search.add_argument("--seed-control", choices=("none", "fixed"), default="none")
+
+    p_propose = sub.add_parser("propose", help="从 SearchHistory 生成 Proposal（grid/llm）")
+    p_propose.add_argument("--scenario", default="demo")
+    p_propose.add_argument(
+        "--genome", type=Path, default=Path("shells/code-repair/genomes/v0.json")
+    )
+    p_propose.add_argument("--state", type=Path, default=Path("state/propose"))
+    p_propose.add_argument("--proposer", choices=("grid", "llm"), default="grid")
+    p_propose.add_argument("--offline", action="store_true", help="强制 grid，不构造网络 transport")
 
     p_gate = sub.add_parser("gate", help="跑门禁夹具 G1–G8")
     p_gate.add_argument("--fixture", type=Path, required=True)
@@ -201,6 +212,108 @@ def cmd_search(args: argparse.Namespace) -> int:
     )
     print(
         f"search ok runs={len(runs)} result={result.result_id} solved={result.scores['search'].solved}"
+    )
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# propose
+# ---------------------------------------------------------------------------
+
+
+def _shell_domains(root: Path, scenario: Scenario) -> dict[str, list[str]] | None:
+    path = root / "shells" / scenario.shell_id / "switches.schema.json"
+    if not path.is_file():
+        return None
+    data = _load_json(path)
+    dimensions = data.get("dimensions")
+    if not isinstance(dimensions, dict):
+        return None
+    return {
+        name: list(spec["values"])
+        for name, spec in dimensions.items()
+        if isinstance(spec, dict) and "values" in spec
+    }
+
+
+def cmd_propose(args: argparse.Namespace) -> int:
+    root = _repo_root(args)
+    scenario_path = root / "scenarios" / args.scenario / "scenario.json"
+    if not scenario_path.is_file():
+        print(f"scenario 不存在: {scenario_path}", file=sys.stderr)
+        return 2
+    scenario = Scenario.from_dict(_load_json(scenario_path))
+    genome = _validated_genome(args.genome, root)
+    if genome.scenario_version != scenario.scenario_version:
+        print(
+            "genome 与 scenario 的 scenario_version 不一致："
+            f"{genome.scenario_version} != {scenario.scenario_version}",
+            file=sys.stderr,
+        )
+        return 2
+
+    store = StateStore(args.state)
+    store.ensure()
+    domains = _shell_domains(root, scenario)
+
+    llm_proposer = None
+    if args.proposer == "llm" and not args.offline:
+        from molt.adapters.llm_proposer import LLMProposer
+        from molt.core.ledger import Ledger
+
+        llm_proposer = LLMProposer(
+            ledger=Ledger(store.root),
+            max_cost_usd=scenario.policy.budget.search_overhead_budget_usd,
+            domains=domains,
+        ).propose
+
+    from molt.demo import build_engine
+
+    engine = build_engine(
+        root,
+        scenario,
+        store,
+        args.state / "work",
+        domains=domains,
+        llm_proposer=llm_proposer,
+    )
+    try:
+        store.read_genome(genome.genome_id)
+    except ValidationError:
+        store.write_genome(genome)
+
+    task_ids = list(scenario.task_sets["search"])
+    by_task = {}
+    for run in store.list_runs():
+        if (
+            run.genome_id != genome.genome_id
+            or run.scope != "search"
+            or run.scenario_version != scenario.scenario_version
+            or run.attempt != 1
+            or run.task_id not in task_ids
+        ):
+            continue
+        by_task.setdefault(run.task_id, run)
+
+    missing = [task_id for task_id in task_ids if task_id not in by_task]
+    if missing:
+        tasks = [engine.task_provider.load_task(task_id) for task_id in missing]
+        for run in engine.run_suite(genome, tasks, scope="search"):
+            by_task.setdefault(run.task_id, run)
+    runs = [by_task[task_id] for task_id in task_ids if task_id in by_task]
+    if not runs:
+        print("没有可用的 search run，无法构造 SearchHistory", file=sys.stderr)
+        return 1
+
+    history = engine.search_history(genome, runs)
+    proposal = engine.propose(genome, history)
+    engine.record_proposal(proposal)
+    ext = proposal.ext
+    fallback = ext.get("fallback", {})
+    print(
+        f"propose ok proposal={proposal.proposal_id} source={ext.get('source')} "
+        f"fallback={fallback.get('used')} reason={fallback.get('reason')} "
+        f"cost_usd={proposal.cost_usd}"
     )
     return 0
 
@@ -579,6 +692,7 @@ HANDLERS = {
     "genome": cmd_genome,
     "scenario": cmd_scenario,
     "search": cmd_search,
+    "propose": cmd_propose,
     "gate": cmd_gate,
     "adopt": cmd_adopt,
     "revert": cmd_revert,

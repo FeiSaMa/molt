@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "task_id": "smoke-add",
-  "scenario_version": "demo-1",
+  "scenario_version": "demo-2",
   "shell_id": "code-repair",
   "scope": "search",
   "title": "修好 add",
@@ -12,7 +12,11 @@
     "fixture": {
       "target": "solution.py",
       "solution": "def add(a, b):\n    return a + b\n",
-      "solvable_at": ["off", "low", "high"],
+      "solvable_at": [
+        "off",
+        "low",
+        "high"
+      ],
       "base_cost_usd": 1.0
     }
   }

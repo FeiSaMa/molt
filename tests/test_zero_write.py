@@ -8,6 +8,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,17 +50,22 @@ def test_commands_do_not_write_repository() -> None:
     env = dict(os.environ)
     env["PYTHONPATH"] = str(ROOT)
     env["PYTHONDONTWRITEBYTECODE"] = "1"
-    for command in COMMANDS:
-        completed = subprocess.run(
-            [sys.executable, "-m", "molt", *command],
-            cwd=ROOT,
-            env=env,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=240,
-        )
-        assert completed.returncode == 0, (command, completed.stdout, completed.stderr)
+    with tempfile.TemporaryDirectory(prefix="molt-propose-state-") as propose_state:
+        commands = [
+            *COMMANDS,
+            ["propose", "--scenario", "demo", "--state", propose_state, "--offline"],
+        ]
+        for command in commands:
+            completed = subprocess.run(
+                [sys.executable, "-m", "molt", *command],
+                cwd=ROOT,
+                env=env,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=240,
+            )
+            assert completed.returncode == 0, (command, completed.stdout, completed.stderr)
     after = tree_snapshot(ROOT)
     added = sorted(set(after) - set(before))
     removed = sorted(set(before) - set(after))
