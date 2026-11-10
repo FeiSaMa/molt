@@ -25,6 +25,7 @@ from molt.core.policy import decide, task_side
 from molt.core.store import StateStore
 from molt.core.types import (
     DIMENSIONS,
+    SCOPES,
     SWITCH_KEYS,
     Budget,
     Genome,
@@ -679,6 +680,48 @@ def _matching_genomes(root: Path, scenario: Scenario, failures: list[str]) -> li
     return matching
 
 
+def _validate_scenario_ext(scenario: Scenario) -> list[str]:
+    """scenario.ext 里的显式契约（demo 用；未声明则不强制，避免误伤 svc-config）。
+
+    - ``expected_task_counts = {"search": 10, "report": 5}``：题集规模硬约束；
+    - ``require_positive_budget = true``：两个 USD cap 都必须 > 0。
+    """
+    failures: list[str] = []
+    expected = scenario.ext.get("expected_task_counts")
+    if expected is not None:
+        if not isinstance(expected, dict):
+            failures.append("ext.expected_task_counts 必须是 object")
+        else:
+            unknown = sorted(set(expected) - set(SCOPES))
+            if unknown:
+                failures.append(f"ext.expected_task_counts 含未知 scope: {unknown}")
+            for scope in SCOPES:
+                if scope not in expected:
+                    failures.append(f"ext.expected_task_counts 缺少 {scope}")
+                    continue
+                want = expected[scope]
+                if isinstance(want, bool) or not isinstance(want, int) or want < 0:
+                    failures.append(f"ext.expected_task_counts.{scope} 必须是非负整数")
+                    continue
+                actual = len(scenario.task_sets[scope])
+                if actual != want:
+                    failures.append(
+                        f"ext.expected_task_counts.{scope}: 期望 {want} 题，实际 {actual} 题"
+                    )
+    flag = scenario.ext.get("require_positive_budget")
+    if flag is not None and not isinstance(flag, bool):
+        failures.append("ext.require_positive_budget 必须是布尔值")
+    elif flag:
+        for name in ("execution_budget_usd", "search_overhead_budget_usd"):
+            value = getattr(scenario.policy.budget, name)
+            if not value > 0:
+                failures.append(
+                    f"policy.budget.{name}: 期望 > 0（ext.require_positive_budget=true），"
+                    f"实际 {value}"
+                )
+    return failures
+
+
 def cmd_scenario(args: argparse.Namespace) -> int:
     from molt import schema
 
@@ -708,6 +751,7 @@ def cmd_scenario(args: argparse.Namespace) -> int:
     failures: list[str] = []
     matching = _matching_genomes(root, scenario, failures)
     failures.extend(_validate_shell_contract(root, scenario, manifest, matching))
+    failures.extend(_validate_scenario_ext(scenario))
 
     tasks = _task_index(root)
     for scope in ("search", "report"):
