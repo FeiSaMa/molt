@@ -106,12 +106,17 @@ feat(shell): 新增 svc-config shell 的三端口实现
 ## 九、CI 期望
 
 `.github/workflows/ci.yml` 六个作业必须全绿：`lint`、`schema`、`boundary`、`unit`、
-`audit`、`secret-scan`。`pi-smoke` 是独立的手动工作流（`workflow_dispatch`，带费用上限），
-不属于必需检查。CI 只用仓库 secrets，任何 key 都不得写进工作流文件。
+`audit`、`secret-scan`。`pi-smoke` 是独立的手动工作流（`workflow_dispatch`），不属于必需检查：
+只跑 1 条 live task，`max_cost_usd` 是**本次单 run** 的运行后验收上限（不是 scenario 总预算），
+超过即 fail。CI 只用仓库 secrets，任何 key 都不得写进工作流文件。
 
-已知兼容性缺口：CI 的 `unit` 目前只在 **3.12** 上跑（必需检查名为 `unit (3.12)`）。
-3.11 暂不进 CI：CPython 3.12 起内置 `sum()` 改用 Neumaier 补偿求和，
-`tests/fixtures/gate/` 里 `cost_per_solved_usd` 的期望值按 3.12 的浮点结果固化
-（3.11 下 4 条断言差 1e-16）。修复方向是统一取整或重生成夹具，需单独开 PR
-（会碰 `bench/**` 或 `tests/fixtures/`，按冻结面流程处理）；修好再把 3.11 加回矩阵。
-在此之前，本地用 3.11 跑出的 red 不代表本次改动有问题。
+已知兼容性缺口：CI 的 `unit` 只跑 **3.12**（必需检查名为 `unit (3.12)`）；3.11 仅做语法/本地
+兼容检查，不进 CI。3.11 下全量 `pytest -q` 有 4 例浮点差异——`test_gate_policy` 的 G1、G3，
+`test_gate_cli` 与 `test_zero_write`（都经 `gate --fixture`）。原因是 CPython 3.12 起内置
+`sum()` 改用 Neumaier 补偿求和，`tests/fixtures/gate/` 里 `cost_per_solved_usd` 的期望值
+按 3.12 的浮点结果固化，3.11 下差 1e-16。**CI 不因此阻塞**；修复需改 gate 夹具或引入容差，
+会碰 `bench/**` 或 `tests/fixtures/`，按冻结面流程另行开 PR，修好再把 3.11 加回矩阵。
+
+分支保护现状：仓库有**两个 active ruleset**（`main-protection` 与旧的 `protect-main`）。
+两者求并集，严格项为准（删除保护、禁 non-fast-forward、PR + 评审 + 六个必需检查）。
+旧 ruleset 是否删除由用户决定，未在本批次处理。

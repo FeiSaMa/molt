@@ -1,14 +1,20 @@
 name: pi-smoke
 
-# 真实 Pi 1.5.0 冒烟：手动触发，只跑 `pytest -m pi`（1 题，预算 ≤ 1 USD）。
+# 真实 Pi 1.5.0 冒烟：手动触发，只跑 1 条 live task（`pytest -m pi`）。
 # 不属于必需检查，不进入 PR 门禁；跑在装了 pi + bwrap 的自托管 runner 上。
 # 凭据只从仓库 secrets 注入，工作流文件里不出现任何 key。
+#
+# 费用口径（重要）：
+#   `max_cost_usd` 是**本次单 run**的验收上限（运行后判定），不是 scenario 总预算。
+#   前置硬顶由 `scenario.policy.budget.execution_budget_usd` 与 Pi 单次预算控制；
+#   本工作流在 run 结束后读 run 记录的 `usage.cost_usd`，超过 cap 即 fail。
+#   因此首次 dispatch 不会因为「scenario 预算 > cap」直接红。
 
 on:
   workflow_dispatch:
     inputs:
       max_cost_usd:
-        description: "本次冒烟的费用上限（美元，0 < x <= 1.0）"
+        description: "本次单 run 的费用上限（美元，0 < x <= 1.0；运行后判定）"
         required: true
         default: "1.0"
       reason:
@@ -42,15 +48,13 @@ jobs:
           cache-dependency-glob: uv.lock
       - run: uv sync --extra dev --locked
 
-      - name: 费用护栏（cap 与 scenario 预算取小）
+      - name: 解析 cap（只做输入合法性检查）
         env:
           MAX_COST_USD: ${{ inputs.max_cost_usd }}
           REASON: ${{ inputs.reason }}
         run: |
           uv run python - <<'PY'
-          import json
           import os
-          import pathlib
           import sys
 
           raw = os.environ.get("MAX_COST_USD", "1.0").strip()
@@ -60,19 +64,14 @@ jobs:
               sys.exit(f"max_cost_usd 不是数字: {raw!r}")
           if not (0 < cap <= 1.0):
               sys.exit("max_cost_usd 必须落在 (0, 1.0]：这是单次冒烟，不是压测")
-
-          scenario = json.loads(
-              pathlib.Path("scenarios/demo/scenario.json").read_text(encoding="utf-8")
-          )
-          budget = float(scenario["policy"]["budget"]["execution_budget_usd"])
           print(f"reason = {os.environ.get('REASON', '')}")
-          print(f"input cap = {cap} USD, scenario budget = {budget} USD")
-          if budget > cap:
-              sys.exit("scenario 预算高于本次 cap；请先调低 scenario.policy.budget 或提高 cap")
-          print(f"effective cap = {min(cap, budget)} USD")
+          print(f"cap = {cap} USD（本次单 run 的运行后验收上限，不是 scenario 总预算）")
+          print(f"PI_SMOKE_CAP={cap}")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
+              handle.write(f"PI_SMOKE_CAP={cap}\n")
           PY
 
-      - name: Pi live 冒烟（单题）
+      - name: Pi live 冒烟（1 条 task，保留 state 供校验）
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
@@ -80,7 +79,37 @@ jobs:
             echo "::error::缺少 DEEPSEEK_API_KEY secret"
             exit 1
           fi
-          uv run pytest -q -m pi
+          rm -rf /tmp/molt-pi-smoke
+          uv run pytest -q -m pi --basetemp=/tmp/molt-pi-smoke
+
+      - name: 运行后费用校验（run cost <= cap）
+        env:
+          CAP: ${{ env.PI_SMOKE_CAP }}
+        run: |
+          uv run python - <<'PY'
+          import json
+          import os
+          import pathlib
+          import sys
+
+          cap = float(os.environ["CAP"])
+          runs = sorted(pathlib.Path("/tmp/molt-pi-smoke").rglob("runs/*.json"))
+          if len(runs) != 1:
+              sys.exit(f"期望恰好 1 条 run，实际 {len(runs)}：{[str(p) for p in runs]}")
+
+          record = json.loads(runs[0].read_text(encoding="utf-8"))
+          cost = float(record["usage"]["cost_usd"])
+          runtime = record.get("ext", {}).get("runtime", {})
+          provenance = runtime.get("provenance")
+          print(f"run={record['run_id']} outcome={record['outcome']} cost={cost} USD provenance={provenance}")
+          print(f"cap={cap} USD")
+
+          if provenance != "live":
+              sys.exit(f"冒烟必须产生 live 证据，实际 provenance={provenance!r}")
+          if cost > cap:
+              sys.exit(f"单 run 成本 {cost} USD 超过 cap {cap} USD")
+          print("cost guard ok")
+          PY
 
       - name: 清理本地凭据残留
         if: always()

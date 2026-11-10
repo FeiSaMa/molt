@@ -157,6 +157,8 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 2. 改 `schemas/v1/**`（major 变更才新开 `schemas/v2/`），再跑 `molt schema docs` 生成
    `docs/protocol.md`，然后 `molt schema validate --all` + `molt scenario validate`。
 3. PR 需要 **2 人 approve**，其中至少 1 人来自 @FeiSaMa；`main` 由分支保护挡住直推与 force push。
+   当前仓库有**两个 active ruleset**（`main-protection` 与旧的 `protect-main`），求并集、严格项为准；
+   旧 ruleset 是否删除由用户决定。
 4. **冻结窗口：2026-11-12 18:00（UTC+8）之后**，契约只允许 `ext` 新增或新增记录类型；
    顶层字段改名 / 删除 / 语义变更一律推迟到窗口结束后的新批次。
 

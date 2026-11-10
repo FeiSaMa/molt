@@ -1,10 +1,12 @@
 name: ci
 
 # 六个必需作业：lint / schema / boundary / unit / audit / secret-scan。
-# 真实 Pi 调用不在本工作流内（见 pi-smoke.yml，手动触发 + 费用上限）。
+# 真实 Pi 调用不在本工作流内（见 pi-smoke.yml：手动触发，只跑 1 条 live task，
+# 费用 cap 为本次单 run 的运行后验收上限）。
 #
-# 提示：unit 是矩阵作业，检查项名字为 `unit (3.11)` 与 `unit (3.12)`；
-# 分支保护的 required status checks 要按这两个名字配置。
+# 提示：unit 只跑 3.12，检查项名字为 `unit (3.12)`；
+# 分支保护的 required status checks 按这六个名字配置。
+# 3.11 暂不进 CI（浮点夹具差异，见 CONTRIBUTING §九「已知缺口」）。
 
 on:
   push:
