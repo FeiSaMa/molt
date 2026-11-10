@@ -145,6 +145,10 @@ jobs:
         run: uv run python -m molt audit --scenario demo
       - name: 导出数据面（产物落 /tmp）
         run: uv run python -m molt export --scenario demo --out /tmp/molt-ci-web
+      - name: demo 闭环（replay 模式：0 live，10 题扫描回放单独成组）
+        run: |
+          uv run python -m molt demo --mode replay \
+            --state /tmp/molt-ci-demo --out /tmp/molt-ci-demo-web --max-wall 180
       - name: 导出文件集与 sha256 自洽
         run: |
           uv run python - <<'PY'

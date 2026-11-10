@@ -1059,7 +1059,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 def cmd_export(args: argparse.Namespace) -> int:
     from molt.demo import build_scenario_state
-    from molt.export import export_web_data
+    from molt.export import DATA_FILES, export_web_data
 
     root = _repo_root(args)
     try:
@@ -1091,7 +1091,10 @@ def cmd_export(args: argparse.Namespace) -> int:
             index = export_web_data(root, scenario, store, args.out)
         source = f"临时 {scenario.scenario_id} state（不写仓库）"
 
-    print(f"export ok out={args.out} files={len(index['files'])} revision={index['revision']}")
+    print(
+        f"export ok out={args.out} files={len(DATA_FILES)}（含 index.json） "
+        f"revision={index['revision']}"
+    )
     print(
         f"  scenario={index['scenario_id']} runs={index['counts']['runs']} "
         f"proposals={index['counts']['proposals']} events="

@@ -51,7 +51,7 @@ feat(shell): 新增 svc-config shell 的三端口实现
 | 其余：shell / bench / adapter / web / docs / CI | 1 | — |
 
 - 契约 PR 单人 approve 不得合并（这是 B2-D6 的硬要求；规则由分支保护 + CODEOWNERS 承载，
-  `molt doctor --repo-policy` 尚未实现，实现前评审时人工核对）。
+  `molt doctor --repo-policy` 可做只读自检：协作文件、冻结面、契约域缺失即退出 1）。
 - 评审意见未解决不合并；作者自己不能作为自己的 reviewer。
 - 合并方式用 squash，保留一条可读的提交信息。
 
@@ -106,7 +106,9 @@ feat(shell): 新增 svc-config shell 的三端口实现
 ## 九、CI 期望
 
 `.github/workflows/ci.yml` 六个作业必须全绿：`lint`、`schema`、`boundary`、`unit`、
-`audit`、`secret-scan`。`pi-smoke` 是独立的手动工作流（`workflow_dispatch`），不属于必需检查：
+`audit`、`secret-scan`。`audit` 作业同时跑 `molt demo --mode replay`（180s 上限、产物落
+`/tmp`），把 D7 的分组 / provenance / 15 文件导出纳入 CI。`pi-smoke` 是独立的手动工作流
+（`workflow_dispatch`），不属于必需检查：
 只跑 1 条 live task，`max_cost_usd` 是**本次单 run** 的运行后验收上限（不是 scenario 总预算），
 超过即 fail。CI 只用仓库 secrets，任何 key 都不得写进工作流文件。
 

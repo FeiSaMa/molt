@@ -22,9 +22,17 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 
 - 不声称「通用自提升」「已实现自进化」「统计显著优于基线」——样本量与 seed 都不支持。
 - 不声称 bash 之外的工具能力：搜索空间是 6 组（`thinking` × `context`），`tools` 锁定单值 `bash`。
-- 不跨 `scenario_version` 比较（当前 `demo-5`）。跨版本数字不可比，也不得放进同一张表。
-- 不声称 10+5 题集已落地：当前 `scenarios/demo/` 是 2 搜索 + 1 留出的演示题集，
-  正式 10+5 题集属于后续批次。
+- 不跨 `scenario_version` 比较（当前 `demo-6`）。跨版本数字不可比，也不得放进同一张表。
+- 不把 `demo` 的证据表述成「两次 live 运行」：现场闭环只有 1 条 live 候选 + 1 条 replay 基线，
+  10 题扫描是回放（`demo_group=scan10`），页面必须按 `runs[].provenance` 与
+  `runs[].demo_group` 分开标注。
+
+**已落地（2026-11-11）**
+
+- `demo-6`：10 搜索 + 5 holdout，`bench_hash` / genome / task 全量对齐。
+- 第二 shell `svc-config` + deterministic runtime（零成本、manifest 驱动装载）。
+- `molt demo`：1 live + 1 replay 闭环、10 题扫描回放、180s 硬上限（ADR-0008）。
+- `molt doctor --repo-policy`：只读检查协作文件、冻结面与契约域。
 
 ## 二、三层与七端口
 
@@ -64,7 +72,7 @@ run → result → gate_decision → archive → snapshot → event → redactio
 审计只做只读重算：从 run/ledger 重算 result，从配对表与 genome 上限重算 gate，
 并断言 search 流零 holdout id、report 流至少一条 `holdout.accessed`。
 
-**比较域是 `scenario_version`**（当前 `demo-5`）。每次 run 与 gate decision 带
+**比较域是 `scenario_version`**（当前 `demo-6`）。每次 run 与 gate decision 带
 `shell_version` 与 `verifier_hash`；版本不同即 `incomparable`，禁止比较。
 `live` 与 `replay` 必须在 `run.ext` 中如实标注：`live` 需 `model` 或 `pi*` runtime，
 `replay` 需 `ext.replay_of_run_id`，否则导出 fail closed。**不得把 fixture 结果标成 live。**
@@ -74,9 +82,10 @@ run → result → gate_decision → archive → snapshot → event → redactio
 ```bash
 uv sync --extra dev                                  # 装 dev 依赖（pytest / ruff / jsonschema）
 uv run ruff check .                                  # lint（line-length 100）
-uv run pytest -q                                     # 269 项；pi 标记默认 skip
-uv run python -m molt schema validate --all          # 18 条记录通过
-uv run python -m molt scenario validate              # scenario / genome / bench_hash 一致性
+uv run pytest -q                                     # 311 passed / 2 skipped；pi 标记默认 skip
+uv run python -m molt schema validate --all          # 36 条记录通过
+uv run python -m molt scenario validate              # demo 10/5 + svc-config 一致性
+uv run python -m molt calibrate --scenario demo --min-pass 3   # fixture 基线 solved=3
 uv run python -m molt search --runtime fixture       # 搜索集（fixture 确定性、零成本）
 uv run python -m molt search --runtime pi            # 真实 Pi：需本地 pi + bwrap，受预算约束
 uv run python -m molt propose --scenario demo --state /tmp/molt-state --offline
@@ -85,15 +94,19 @@ uv run python -m molt adopt --state /tmp/molt-state --genome shells/code-repair/
 uv run python -m molt revert --state /tmp/molt-state --to <archive_id>
 uv run python -m molt audit --scenario demo          # 只读重算
 uv run python -m molt export --scenario demo --out /tmp/molt-ci-web
+uv run python -m molt demo --mode replay --state /tmp/molt-demo --out /tmp/molt-demo-web
+uv run python -m molt demo --max-wall 180            # 现场：1 live + 1 replay + 10 题回放
 uv run python -m molt doctor --deps                  # core 依赖边界
+uv run python -m molt doctor --repo-policy           # 协作文件 / 冻结面 / 契约域自检
 uv run python -m molt doctor --recover --state state # 事务兜底恢复（幂等）
 ```
 
 - 进仓库的命令一律带 `PYTHONDONTWRITEBYTECODE=1`（`uv run` 已隔离 `.venv`，但脚本入口仍需显式设置）。
 - `--state` / `--out` 指到仓库之外（`/tmp/...`），不要提交 `runs/`、`state/`、`evidence/`。
-- **`molt demo` 尚未实现**（`argparse` 的 11 个子命令里没有 `demo`）；不要把它写进脚本或文档当作可用命令。
-- **`molt doctor --repo-policy` 尚未实现**（当前 `doctor` 只有 `--deps` / `--recover`）。
-  B2-D6 要求的「保护规则 + 冻结面清单」自检在实现前属于**待实现**项，评审时人工对照 §六。
+- `molt demo` 已实现：`--mode live` 跑 1 条真实 Pi 候选，`--mode replay` 全 fixture/replay
+  （CI 用）；证据里恰好 1 条 live（live 模式）或 0 条（replay 模式），`scan10` 是回放组。
+- `molt doctor --repo-policy` 已实现（B2c-2）：检查 `AGENTS.md` / `CONTRIBUTING.md` /
+  `.github/**` / 冻结面 / 契约域，缺失退出 1。
 
 ## 五、所有权（CODEOWNERS 的语义来源）
 
@@ -153,7 +166,7 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 
 ## 八、契约变更流程
 
-1. 先在 `docs/decisions/` 落 ADR（新增 `000N-*.md`，格式对齐现有 6 篇）。
+1. 先在 `docs/decisions/` 落 ADR（新增 `000N-*.md`，格式对齐现有 8 篇）。
 2. 改 `schemas/v1/**`（major 变更才新开 `schemas/v2/`），再跑 `molt schema docs` 生成
    `docs/protocol.md`，然后 `molt schema validate --all` + `molt scenario validate`。
 3. PR 需要 **2 人 approve**，其中至少 1 人来自 @FeiSaMa；`main` 由分支保护挡住直推与 force push。
@@ -191,4 +204,4 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 - [docs/style.md](docs/style.md)：代码 / JSON / Markdown / 时间 / 路径 / claim 语言。
 - [docs/architecture.md](docs/architecture.md)：三层、七端口、数据流、事务。
 - [docs/protocol.md](docs/protocol.md)：11 类记录字段表（生成物）。
-- [docs/decisions/](docs/decisions/)：ADR 0001–0006。
+- [docs/decisions/](docs/decisions/)：ADR 0001–0008。
