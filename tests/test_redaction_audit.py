@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,7 @@ from molt.core.redact import (
     redact_evidence,
     redact_file_bytes,
     scan_secrets,
+    write_redaction_manifest,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -85,6 +87,15 @@ def test_redact_file_bytes_returns_canonical() -> None:
     canonical, manifest = redact_file_bytes(payload)
     assert canonical.startswith(b'{"')
     assert manifest["canonical_hash"]
+
+
+def test_redaction_manifest_is_persisted_canonical(tmp_path: Path) -> None:
+    _, manifest = redact_evidence(evidence())
+    path = write_redaction_manifest(tmp_path, "run-1", manifest)
+    assert path == tmp_path / "redaction" / "run-1.json"
+    text = path.read_text(encoding="utf-8")
+    assert json.loads(text)["redaction_version"] == "1"
+    assert scan_secrets(text) == []
 
 
 def test_secret_scan_detects_constructor_fixture_paths() -> None:

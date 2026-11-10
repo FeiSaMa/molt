@@ -10,9 +10,11 @@ import copy
 import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from molt.core.errors import RedactionError
+from molt.core.fsutil import atomic_write_text
 from molt.core.hash import canonical_json_bytes, content_hash, sha256_bytes
 
 REDACTION_VERSION = "1"
@@ -146,6 +148,16 @@ def redact_evidence(
         "post_metrics": post,
     }
     return result, manifest
+
+
+def write_redaction_manifest(state_root: Path, owner_id: str, manifest: dict[str, Any]) -> Path:
+    """把脱敏 manifest 落到 ``state/redaction/<owner>.json``。"""
+    safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in owner_id)
+    if not safe:
+        raise RedactionError(f"非法 owner_id: {owner_id!r}")
+    target = Path(state_root) / "redaction" / f"{safe}.json"
+    atomic_write_text(target, canonical_json_bytes(manifest).decode("utf-8"))
+    return target
 
 
 def scan_secrets(text: str) -> list[str]:
