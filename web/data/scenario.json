@@ -6,13 +6,23 @@
   },
   "claim": {
     "holdout_export": "aggregate-only",
-    "live_model_calls": false,
+    "live_model_calls": true,
     "provenance": "runs[].provenance.kind ∈ {fixture, live, replay}；fixture 不是 live",
     "reproducibility": "指标一致；不承诺字节级复现（run_id 含随机后缀）",
-    "runtime": "fixture"
+    "runtime": "fixture + pi live（仅 closure 证据）"
   },
   "ext": {
-    "note": "10 search + 5 holdout 的 fixture demo；holdout 只进 scope=report 的 result，隔离依赖 runtime 边界。fixture 不产生真实模型调用；Pi runtime 为可选 live 路径。"
+    "allowed_runtimes": [
+      "fixture",
+      "pi"
+    ],
+    "default_runtime": "fixture",
+    "expected_task_counts": {
+      "report": 5,
+      "search": 10
+    },
+    "note": "10 search + 5 holdout 的 fixture demo；holdout 只进 scope=report 的 result，隔离依赖 runtime 边界。fixture 不产生真实模型调用；Pi runtime 为可选 live 路径。",
+    "require_positive_budget": true
   },
   "holdout": {
     "detail": "not-exported",
@@ -34,6 +44,11 @@
     },
     "invalid_ratio_max": 0.25,
     "k": 0
+  },
+  "provenance_counts": {
+    "fixture": 0,
+    "live": 1,
+    "replay": 20
   },
   "scenario_id": "demo",
   "scenario_version": "demo-6",

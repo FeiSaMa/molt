@@ -8,9 +8,9 @@
 | 文件 | 内容 | 来源 |
 |---|---|---|
 | `index.json` | `schema_version` / `scenario_id` / `revision` / `generated_at` / `files`（每文件 sha256+字节数）/ `counts` | 导出时计算；`revision` 是全部数据文件 sha256 的 `content_hash` |
-| `scenario.json` | `claim` / `not_claimed` / `policy` / `budget` / `task_counts` / `holdout{task_count,detail}` / shell 与 isolation 信息；只列 search 题 id | `scenario` 记录（`scenarios/<id>/scenario.json`），claim 文案是 `molt/export.py` 常量 |
+| `scenario.json` | `claim` / `not_claimed` / `policy` / `budget` / `task_counts` / `holdout{task_count,detail}` / `provenance_counts{fixture,live,replay}` / shell 与 isolation 信息；只列 search 题 id | `scenario` 记录 + 当前 search run；`claim.live_model_calls` 由证据中是否存在 `kind=live` 决定，不是常量 |
 | `variants.json` | `id` / `parent` / `switches` / `runtime` / `adopted` / `budget` | `state/genomes/*.json` + `state/archive/*.json` |
-| `runs.json` | **仅 `scope=search`** 的逐 run：`run_id` / `genome_id` / `task_id` / `scope` / `attempt` / `solved` / `status` / `cost_usd` / `tokens{in,out}` / `wall_ms` / `verifier` / `provenance` | `state/runs/*.json`；report run 整行不导出（见 `report_runs`） |
+| `runs.json` | **仅 `scope=search`** 的逐 run：`run_id` / `genome_id` / `task_id` / `scope` / `attempt` / `solved` / `status` / `cost_usd` / `tokens{in,out}` / `wall_ms` / `verifier` / `provenance` / `demo_group` | `state/runs/*.json`；report run 整行不导出（见 `report_runs`） |
 | `search_results.json` | 仅 `scope=search` 的聚合分 `{solved,total,pass_at_1_first_attempt,cost_total_usd,cost_per_solved_usd,invalid_ratio}` | `state/results/*.json` |
 | `report_results.json` | `scope=report`：`scores.search` + `scores.holdout` 两组**聚合分**；每个 result 带 `report_runs`，顶层带 `report_runs_total`（`count` / `solved` / `by_status` / `cost_usd` / `wall_ms` / `tokens`） | `state/results/*.json` + `state/runs/*.json`（report 段只做聚合） |
 | `gate.json` | `policy_sha256`、每条 decision 的 `verdict` / `reason` / `reasons` / `budget_check` / `scores` / `pairs[]`（逐题配对 + `passed_delta` / `cost_delta_usd`）/ `deltas` | `state/decisions/*.json` |
@@ -50,14 +50,35 @@ fail closed：`kind="live"` 同时带 `replay_of_run_id`、`kind="live"` 无 `mo
 每个 provenance 都有布尔 `live`；`fixture` 额外带 `note` 说明「不是 live 模型调用」。
 页面应在 UI 上显式标注，禁止把 fixture 展示成 live。
 
+## demo 证据分组（`runs[].demo_group`）
+
+`molt demo` 的现场闭环与 10 题扫描**必须分开标注**（ADR-0008）：
+
+| `demo_group` | 内容 | provenance |
+|---|---|---|
+| `closure` | 1 条 replay 基线 + 1 条同题候选 | baseline=`replay`（带 `replay_of_run_id`）；live 模式候选=`live` |
+| `scan10` | 10 题扫描的回放（每题的基线 run 各复制一次） | `replay`，每条带 `replay_of_run_id` |
+| `candidate-scan` | 候选在其余 9 题上的 fixture 执行（只为 10 题分母） | `fixture`，不是 live |
+| `null` | 普通 `search`/`export` 证据，无 demo 分组 | 按 genome runtime 推断 |
+
+- 「1 live + 1 replay」只指 `closure`；`scan10` 是**扫描回放**，不是 demo 的第二次运行。
+- live 模式下全文件恰好 1 条 `kind=live`；`--mode replay` 下恰 0 条，closure 候选标 `fixture`。
+- 页面讲法：closure 讲「基线回放 → 提案 → 真实候选 → 门禁」，scan10 讲「此前 10 题扫描的回放」。
+
 ## 重新生成
 
 ```bash
+# 现场闭环（live：1 条真实 Pi 候选；同时导出 web/data）
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
+
+# CI / 无 Pi：全 fixture/replay，证据里 0 live
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --mode replay --state /tmp/molt-demo --out web/data
+
 # 无 state：临时跑一遍 demo 证据链，只写 --out，不污染仓库
 molt export --scenario demo --out web/data
 
 # 有现成 state：直接读
-molt export --scenario demo --state state --out web/data
+molt export --scenario demo --state state/demo --out web/data
 ```
 
 - 缺省 `--state` 时：若 `./state/runs` 存在则读它，否则用临时 demo state。
@@ -66,8 +87,8 @@ molt export --scenario demo --state state --out web/data
 - 生成物里的本机绝对路径会被替换为 `<repo>` / `<state>` / `<home>`（复用现有脱敏思路）。
 - `revision` 标识**本次输入内容**；fixture demo 的 `run_id` 含随机后缀、`started_at` 取真实时钟，
   所以重新跑 demo 会得到新的 revision —— 只保证指标一致，不承诺字节级复现（ADR-0003）。
-- 本目录的样例来自 `molt export --scenario demo --out web/data`，可直接从 git 消费；
-  重新生成后 `audit.json` / `index.json` / `revision` 会随输入变化，属正常现象。
+- 本目录的样例来自 `molt demo`（`demo-6`：10 search + 5 holdout，closure + scan10 分组），
+  可直接从 git 消费；重新生成后 `audit.json` / `index.json` / `revision` 会随输入变化，属正常现象。
 
 ## 约束
 

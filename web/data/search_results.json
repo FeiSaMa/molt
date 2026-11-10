@@ -1,30 +1,30 @@
 {
   "results": [
     {
-      "generated_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-11-10T16:36:03Z",
       "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
-      "result_id": "result-baseline-search",
+      "result_id": "result-demo-baseline-search",
       "scope": "search",
       "scores": {
         "search": {
-          "cost_per_solved_usd": 0.6133333333333333,
-          "cost_total_usd": 1.8399999999999999,
+          "cost_per_solved_usd": 0.000997791,
+          "cost_total_usd": 0.00997791,
           "invalid_ratio": 0.0,
-          "pass_at_1_first_attempt": 0.3,
-          "solved": 3,
+          "pass_at_1_first_attempt": 1.0,
+          "solved": 10,
           "total": 10
         }
       }
     },
     {
-      "generated_at": "2026-01-01T00:00:00Z",
-      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
-      "result_id": "result-candidate-search",
+      "generated_at": "2026-11-10T16:36:03Z",
+      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
+      "result_id": "result-demo-candidate-search",
       "scope": "search",
       "scores": {
         "search": {
-          "cost_per_solved_usd": 0.368,
-          "cost_total_usd": 3.6799999999999997,
+          "cost_per_solved_usd": 0.0012161,
+          "cost_total_usd": 0.012161,
           "invalid_ratio": 0.0,
           "pass_at_1_first_attempt": 1.0,
           "solved": 10,

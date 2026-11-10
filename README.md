@@ -6,8 +6,9 @@
 B1 已完成 core v1 协议、门禁引擎、快照事务、事件 / 账本分片、隔离抽象与 fixture runtime。
 B2a 增加 LLM proposer；B2b 增加 Pi 1.5.0 adapter、bwrap bash sandbox、trust preflight、
 session 账本与预算执行；B2c 增加第二个 shell `svc-config` 与确定性 runtime
-（零 LLM / 零网络 / 零成本），用来证明 shell 端口可迁移。HTML 报告与正式 10+5 题集
-仍属于后续批次。
+（零 LLM / 零网络 / 零成本），并把 demo 题集扩到 **10 search + 5 holdout**（`demo-6`）；
+B2d 增加 `molt demo`（1 live 候选 + 1 replay 基线 + 10 题扫描回放）与协作六件套。
+HTML 报告页面仍属于后续批次。
 
 ## 分层
 
@@ -34,8 +35,18 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt gate --fixture tests/fixtures
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt audit --scenario demo
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt search --scenario svc-config --runtime deterministic
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt audit --scenario svc-config
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --mode replay --state /tmp/molt-demo --out /tmp/molt-demo-web
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
 ```
+
+现场演示（真实 Pi，180s 硬上限）：
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
+```
+
+`demo` 产出 1 条 live 候选 + 1 条 replay 基线（同一题，closure 组）与 10 条扫描回放
+（`scan10` 组），并直接导出 `web/data`；证据与分组见 ADR-0008。
 
 ## 契约
 
@@ -45,7 +56,8 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
   [ADR-0004 shell 与搜索空间](docs/decisions/0004-shell-and-dims.md)、
   [ADR-0005 proposer](docs/decisions/0005-proposer.md)、
   [ADR-0006 isolation](docs/decisions/0006-isolation.md)、
-  [ADR-0007 svc-config](docs/decisions/0007-svc-config.md)。
+  [ADR-0007 svc-config](docs/decisions/0007-svc-config.md)、
+  [ADR-0008 demo](docs/decisions/0008-demo.md)。
 - 旧契约已归档：[`docs/archive/contracts-v0.md`](docs/archive/contracts-v0.md)。
 
 ## 关键口径
@@ -60,6 +72,9 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
   read/write/edit 不启用。Pi 主进程没有进程级 egress allowlist，只有 bash 被 bwrap 隔离。
 - shell 由 `shells/<shell_id>/manifest.json` 的 `entrypoints` 装载；`svc-config` 用
   deterministic runtime，run 的 `usage` 全 0、`cost_source="none"`，不得与其它 shell 的分数比较。
+- `molt demo` 的现场闭环只有 **1 条 live 候选 + 1 条 replay 基线**（同一题）；10 题扫描是
+  **回放**（`demo_group=scan10`），不是 demo 的第二次运行。页面必须按
+  `runs[].demo_group` 与 `runs[].provenance` 分开标注，不得暗示两条都 live。
 
 ## 状态
 
@@ -67,5 +82,7 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
   并发 adoption 单胜、per-run 事件与账本、holdout 类型隔离、审计重算、零写入测试、
   LLM/grid proposer、Pi 1.5.0 runtime（bash-only sandbox / trust / 账本 / 预算）、
   第二 shell `svc-config` + deterministic runtime（零成本、manifest 驱动装载）、
-  `export` 的 `web/data` 数据导出（无页面代码）。
-- 未实现：HTML 报告、正式 10+5 题集、`demo` 命令。
+  `demo-6` 的 10 search + 5 holdout 题集、`calibrate` 基线校准、
+  `export` 的 `web/data` 数据导出（无页面代码）、
+  `demo` 现场闭环（1 live + 1 replay + 10 题扫描回放，180s 硬上限）。
+- 未实现：HTML 报告页面。

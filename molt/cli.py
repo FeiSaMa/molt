@@ -1,11 +1,11 @@
 """molt 命令行入口。
 
 命令：``schema`` / ``genome`` / ``scenario`` / ``search`` / ``propose`` / ``gate`` /
-``adopt`` / ``revert`` / ``audit`` / ``calibrate`` / ``doctor`` / ``export``。
-``search`` / ``propose`` / ``audit`` / ``export`` 的 ``--scenario`` 接受任意
+``adopt`` / ``revert`` / ``audit`` / ``calibrate`` / ``doctor`` / ``export`` / ``demo``。
+``search`` / ``propose`` / ``audit`` / ``export`` / ``demo`` 的 ``--scenario`` 接受任意
 ``scenarios/<id>/scenario.json``（``--shell`` 为同一参数的别名，可按 shell_id 反查）；
 ``--runtime`` 支持 ``fixture`` / ``pi`` / ``deterministic``。
-``export`` 只导出 ``web/data`` 数据，不含页面；``demo`` 留给后续批次。
+``export`` 只导出 ``web/data`` 数据，不含页面；``demo`` 是 B2-D7 的现场闭环。
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--root", type=Path, default=None, help="仓库根，默认自动向上查找")
     sub = parser.add_subparsers(
         dest="command",
-        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,calibrate,doctor,export}",
+        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,calibrate,doctor,export,demo}",
     )
 
     p_schema = sub.add_parser("schema", help="schema 校验与文档生成")
@@ -165,6 +165,43 @@ def build_parser() -> argparse.ArgumentParser:
     p_export.add_argument(
         "--allow-empty", action="store_true", help="允许 0 run 的 state，生成空数据面"
     )
+
+    p_demo = sub.add_parser(
+        "demo",
+        help="B2-D7 现场演示：1 live 候选 + 1 replay 基线 + 10 题扫描回放（180s 硬上限）",
+    )
+    p_demo.add_argument(
+        "--scenario",
+        "--shell",
+        dest="scenario",
+        default="demo",
+        help="scenario id；也接受 shell_id",
+    )
+    p_demo.add_argument(
+        "--mode",
+        choices=("live", "replay"),
+        default="live",
+        help="live=真实 Pi 候选 + fixture 兜底；replay=全 fixture/replay（CI 用）",
+    )
+    p_demo.add_argument("--max-wall", type=float, default=180.0, help="端到端硬上限（秒）")
+    p_demo.add_argument(
+        "--baseline-state",
+        type=Path,
+        default=None,
+        help="已录 baseline state；缺省录制/复用 <state>-baseline",
+    )
+    p_demo.add_argument(
+        "--candidate-state",
+        type=Path,
+        default=None,
+        help="已录候选 state（10 题扫描）；给出时其余 9 题复制为 replay，不再跑 fixture",
+    )
+    p_demo.add_argument("--state", type=Path, default=Path("state/demo"))
+    p_demo.add_argument("--out", type=Path, default=Path("web/data"))
+    p_demo.add_argument(
+        "--model", default="deepseek/deepseek-flash", help="live 候选的 Pi 模型"
+    )
+    p_demo.add_argument("--pi-executable", default="pi")
 
     return parser
 
@@ -1064,6 +1101,132 @@ def cmd_export(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# demo（B2-D7：1 live 候选 + 1 replay 基线 + 10 题扫描回放）
+# ---------------------------------------------------------------------------
+
+
+def _fmt_cost(value: float) -> str:
+    return f"${value:.4f}"
+
+
+def _print_closure(summary: dict[str, Any]) -> None:
+    closure = summary["closure"]
+    baseline = closure["baseline"]
+    candidate = closure["candidate"]
+    print(
+        f"closure task={closure['task_id']} "
+        f"baseline={baseline['provenance']['kind']} run={baseline['run_id']} "
+        f"replay_of={baseline['replay_of_run_id']} "
+        f"outcome={baseline['outcome']} cost={_fmt_cost(baseline['cost_usd'])}"
+    )
+    print(
+        f"closure task={closure['task_id']} "
+        f"candidate={candidate['provenance']['kind']} run={candidate['run_id']} "
+        f"outcome={candidate['outcome']} cost={_fmt_cost(candidate['cost_usd'])} "
+        f"wall_ms={candidate['wall_ms']}"
+    )
+
+
+def _print_gate(summary: dict[str, Any]) -> None:
+    gate = summary["gate"]
+    print(
+        f"gate decision={gate['decision_id']} verdict={gate['verdict']} "
+        f"reason={gate['reason']} solved={gate['baseline_solved']}->{gate['candidate_solved']}"
+    )
+
+
+def _print_overhead(summary: dict[str, Any]) -> None:
+    overhead = summary["overhead"]
+    if not overhead.get("measured"):
+        print(f"overhead n/a: {overhead.get('reason')}")
+        return
+    print(
+        f"overhead total={overhead['total_wall_ms']}ms "
+        f"pi_sub={overhead['pi_subprocess_wall_ms']}ms "
+        f"extra={overhead['orchestration_overhead_ms']}ms "
+        f"ratio={overhead['overhead_ratio'] * 100:.1f}% "
+        f"threshold={overhead['threshold'] * 100:.0f}% "
+        f"within={overhead['within_threshold']}"
+    )
+    if not overhead["within_threshold"]:
+        print(
+            "WARN 开销比超过 20%：按 ADR 0001 重开条件 2 记录，需触发 ADR 复查",
+            file=sys.stderr,
+        )
+
+
+def cmd_demo(args: argparse.Namespace) -> int:
+    from molt.demo import DemoTimeout, run_demo
+
+    root = _repo_root(args)
+    if args.max_wall <= 0:
+        print("--max-wall 必须 > 0", file=sys.stderr)
+        return 2
+    try:
+        scenario = _load_scenario(root, args.scenario)
+    except (FileNotFoundError, ValidationError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    try:
+        summary = run_demo(
+            root,
+            scenario,
+            state_root=args.state,
+            out_dir=args.out,
+            mode=args.mode,
+            max_wall_s=args.max_wall,
+            baseline_state=args.baseline_state,
+            candidate_state=args.candidate_state,
+            model=args.model,
+            pi_executable=args.pi_executable,
+        )
+    except DemoTimeout as exc:
+        print(f"demo 失败：{exc}", file=sys.stderr)
+        return 1
+    except (FileNotFoundError, ValidationError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    print(
+        f"demo mode={summary['mode']} scenario={summary['scenario_id']} "
+        f"elapsed={summary['elapsed_s']}s/{summary['max_wall_s']:.0f}s "
+        f"state={summary['state']}"
+    )
+    print(
+        f"propose proposal={summary['proposal']['proposal_id']} "
+        f"source={summary['proposal']['source']} "
+        f"cost={_fmt_cost(summary['proposal']['cost_usd'])} "
+        f"switches={summary['proposal']['switches']}"
+    )
+    _print_closure(summary)
+    print(f"scan10 replay_runs={len(summary['scan10'])}（10 题扫描的回放，不是第二次 demo 运行）")
+    print(
+        f"candidate_scan runs={len(summary['candidate_scan'])}"
+        "（closure 以外的候选题；--candidate-state 下为 replay，不是 live）"
+    )
+    _print_gate(summary)
+    action = summary["action"]
+    print(
+        f"action={action['kind']} archive={action['archive_id']} "
+        f"generation={action['generation']} baseline_archive={action['baseline_archive_id']}"
+    )
+    _print_overhead(summary)
+    audit = summary["audit"]
+    print(
+        f"audit ok runs={audit['runs']} results={audit['results']} "
+        f"decisions={audit['decisions']} events={audit['events']}"
+    )
+    export = summary["export"]
+    print(f"export out={export['out']} files={export['files']} revision={export['revision']}")
+    counts = summary["provenance_counts"]
+    print(
+        f"provenance live={counts['live']} replay={counts['replay']} fixture={counts['fixture']}"
+    )
+    print(f"summary {Path(summary['state']) / 'demo-summary.json'}")
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -1080,6 +1243,7 @@ HANDLERS = {
     "calibrate": cmd_calibrate,
     "doctor": cmd_doctor,
     "export": cmd_export,
+    "demo": cmd_demo,
 }
 
 

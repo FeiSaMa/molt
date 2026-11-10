@@ -1,21 +1,62 @@
 {
-  "archives": [],
+  "archives": [
+    {
+      "adopted_at": "2026-11-10T16:36:03Z",
+      "archive_id": "arc-0001-6b492ef0",
+      "ext": {},
+      "generation": 1,
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "note": "demo: baseline replay",
+      "parent_id": null,
+      "result_refs": [
+        "result-demo-baseline-search",
+        "result-demo-baseline-report"
+      ],
+      "schema_version": "1.0.0",
+      "snapshot_id": "snap-98576b1069d0ae90"
+    },
+    {
+      "adopted_at": "2026-11-10T16:36:03Z",
+      "archive_id": "arc-0002-revert-6b492ef0",
+      "ext": {
+        "reverted_from": "arc-0001-6b492ef0"
+      },
+      "generation": 2,
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "note": "demo: gate revert",
+      "parent_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "result_refs": [
+        "result-demo-baseline-search",
+        "result-demo-baseline-report"
+      ],
+      "schema_version": "1.0.0",
+      "snapshot_id": "snap-98576b1069d0ae90"
+    }
+  ],
   "lineage": [
     {
       "adopted": false,
       "adopted_at": null,
       "archive_id": null,
       "generation": null,
-      "genome_id": "sha256:4cdd5ba5e1a7c7421bddbeb8220834b4d6e9ee15e96da8b4ef90931a5c38de98",
+      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
       "parent_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c"
+    },
+    {
+      "adopted": true,
+      "adopted_at": "2026-11-10T16:36:03Z",
+      "archive_id": "arc-0002-revert-6b492ef0",
+      "generation": 2,
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "parent_id": null
     },
     {
       "adopted": false,
       "adopted_at": null,
       "archive_id": null,
       "generation": null,
-      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
-      "parent_id": null
+      "genome_id": "sha256:daedb2b1e132b199cacb3cf78b86ac9cd6af3c75e1a9b9938a2f615b310a30e5",
+      "parent_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c"
     }
   ]
 }

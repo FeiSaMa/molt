@@ -1,78 +1,78 @@
 {
   "counts": {
-    "archives": 0,
+    "archives": 2,
     "decisions": 1,
-    "events_report": 4,
-    "events_search": 42,
-    "genomes": 2,
+    "events_report": 3,
+    "events_search": 4,
+    "genomes": 3,
     "proposals": 1,
     "report_results": 2,
     "report_runs": 10,
     "results": 4,
-    "runs": 20,
+    "runs": 21,
     "search_results": 2,
-    "snapshots": 0
+    "snapshots": 1
   },
   "files": {
     "archive.json": {
-      "bytes": 575,
-      "sha256": "02249a93a726e6d5b4bdddacbb484a545bce5ad0e1b9f5f9f7bc5af53cee9878"
+      "bytes": 2005,
+      "sha256": "8cb9cef411996bc8a895d4df2ee50b659f179f9c5b1a4150aa650d0fc9ce75bb"
     },
     "audit.json": {
-      "bytes": 152,
-      "sha256": "0eef31c12d933829d25a797a0cf513ea5de6e975cee30403eb4bd5642b28dc80"
+      "bytes": 151,
+      "sha256": "dd2dce1e10eb3cd1b0db420d7051b276e9a6aeccb821e1377f95e30a3d7d8418"
     },
     "bundle.js": {
-      "bytes": 339646,
-      "sha256": "a4fcc38a9122fcab667f73a8540202e3b7bf56464a3f4490a8f4ddd143dcb79c"
+      "bytes": 2755760,
+      "sha256": "4d2629d668721bedbf18233952d13c53cfb2d1cd2b97fb8271912fc093963eb8"
     },
     "events/report.jsonl": {
-      "bytes": 776,
-      "sha256": "26f2fbaa2f14760f5f69df4fe320a90ad2419a28d44db29b09dcdc77e8ff2035"
+      "bytes": 620,
+      "sha256": "0450a783eb58de7eef1733217950c399ac1c12f052040c7beb5acd50a9137a3b"
     },
     "events/search.jsonl": {
-      "bytes": 11325,
-      "sha256": "0c985a15310ee3ebad951a8e68004c48f44b3c5a1044e771aaa6cca871c7aeac"
+      "bytes": 1037,
+      "sha256": "e3472c3c781b7aab03193b02e72d4e9844c7cfdb826347f1b1bfdb4f308b57b7"
     },
     "gate.json": {
-      "bytes": 4433,
-      "sha256": "8824e9ee803e033c95bf38a4d7cd97ef6c60a166ca86c1d2e7fbad9d8df2c628"
+      "bytes": 4642,
+      "sha256": "32ab86a50650d3570d588cbba72d4ca0a104b422136e9b06b5fc0cbeb28dbf30"
     },
     "proposals.json": {
-      "bytes": 1258,
-      "sha256": "4c956f8eb5078fe8b2f747607b527596fff2c7fcf9cca9564fcf8a10c8bc86b3"
+      "bytes": 1257,
+      "sha256": "384be2d1124a95caa458b31a251ca787b79351d9de5e591ff87e2f7108382b90"
     },
     "redaction.json": {
-      "bytes": 260472,
-      "sha256": "b3d6b2ea6066132d5cdc63530e4d3edf3e1a33909a26b38824662248194213ca"
+      "bytes": 2514480,
+      "sha256": "a71f76630d5d72f4ee96c61397570a3462657f68b80306ed2ad033c0a60bc03b"
     },
     "report_results.json": {
-      "bytes": 2278,
-      "sha256": "fb102cb8469bdf0d6505b99147f9ad1e6329b9b99ab25fd34999abe97c99bf9d"
+      "bytes": 2200,
+      "sha256": "ef01b374a97fb1e68296a6e1ec9e4cabfd6b6a8125e2483a4629e04bf4b22dd5"
     },
     "runs.json": {
-      "bytes": 20658,
-      "sha256": "0e6aeb899143bb492ce93e27d338333c2a2d4a3a6b9091d4b352920940feb4ca"
+      "bytes": 22315,
+      "sha256": "f21802097d33a00b80d2ea0fd59c96107ad1d6e30de570721c8c0f51c8d1e67c"
     },
     "scenario.json": {
-      "bytes": 1705,
-      "sha256": "cf5fe4e054ce35230e7a0e4ffa984710c7de668006085a99ad2cbc3649bafa0e"
+      "bytes": 2025,
+      "sha256": "badf004d4cc529fda593a8ccf478fe5dd840413b7e2c2afffb5f5116c1c41ed2"
     },
     "search_results.json": {
-      "bytes": 1030,
-      "sha256": "782868bf41fff42221c2c1b06071fbd34310e7e0e286649c4c5eb833d126c61a"
+      "bytes": 1020,
+      "sha256": "7f66c1845dc1c33bbc664add5f0c6e96abbb632328121f17d68644cf2cf5bf6f"
     },
     "snapshots.json": {
-      "bytes": 22,
-      "sha256": "b97c957dec6a2fc1ee3b9c7dda13f445917b0ac4185c46442b5c70db13ff405c"
+      "bytes": 358,
+      "sha256": "99d5ddcafe7f185445ea0479fc53478b974364e5e2be6f8efb56910432eea65e"
     },
     "variants.json": {
-      "bytes": 1099,
-      "sha256": "335e8fe7bec3e58c2bfda1164b6d171482d81604071ad44324022056d03a3511"
+      "bytes": 1660,
+      "sha256": "9d2d3b66c25b796d319d9f2b45aca953b2626697fbab77b16a6341adad8a2d56"
     }
   },
-  "generated_at": "2026-11-10T15:56:09Z",
-  "revision": "03b7a63c2ea1d2bd6d8d63e557f270a8c4b758d7e0790348ede3b07d64db63db",
+  "generated_at": "2026-11-10T16:36:03Z",
+  "revision": "f9566b900335543030483ff488333eb1ab20cf9eb71bf3a6e82ce7b78fb7a95f",
   "scenario_id": "demo",
   "schema_version": "1.0.0"
 }

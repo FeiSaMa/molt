@@ -1,3 +1,16 @@
 {
-  "snapshots": []
+  "snapshots": [
+    {
+      "created_at": "2026-11-10T16:36:03Z",
+      "file_count": 42,
+      "generation": 1,
+      "roots": [
+        "molt/core",
+        "schemas/v1",
+        "shells/code-repair"
+      ],
+      "snapshot_id": "snap-98576b1069d0ae90",
+      "tree_hash": "e279fa6106f14bb372093b6ee7ef01d866b742a6bb8201ce6c20d657514f577e"
+    }
+  ]
 }
