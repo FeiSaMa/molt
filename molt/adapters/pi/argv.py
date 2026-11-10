@@ -110,6 +110,8 @@ def build_pi_argv(
         "--mode",
         "json",
         "--approve",
+        "--no-mcp",
+        "--no-extensions",
         "--session-id",
         safe_id,
         "--session-dir",

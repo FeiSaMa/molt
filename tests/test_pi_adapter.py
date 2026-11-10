@@ -243,6 +243,8 @@ def test_argv_contains_required_flags() -> None:
     assert argv[:2] == ["pi", "-p"]
     assert argv[-1] == "fix it"
     assert "--approve" in argv
+    assert "--no-mcp" in argv
+    assert "--no-extensions" in argv
     assert ("--no-" + "tools") not in argv
 
 

@@ -16,6 +16,7 @@ pi -p --mode json --approve --session-id <safe> --session-dir <abs> \
 ```
 
 禁止 `--no-session`、`--continue`、`--resume`；禁止 no-tools 旗标。
+argv 固定带 `--no-mcp` 与 `--no-extensions`，避免 MCP/扩展绕过 `--tools bash` 注册额外工具。
 `--session-id` 按 Pi 规则规范化（首尾字母/数字）。
 
 B2b 后 `tools` 锁定为单值 `bash`；`harness.py::tools_argv_for("bash")` 产出
