@@ -33,7 +33,7 @@ from molt.core.types import (
     Scenario,
     ShellManifest,
 )
-from molt.demo import default_genome_path, run_scenario_audit
+from molt.demo import allowed_runtimes, default_genome_path, resolve_runtime, run_scenario_audit
 
 FIXED_TS = "2026-01-01T00:00:00Z"
 
@@ -307,6 +307,11 @@ def cmd_search(args: argparse.Namespace) -> int:
     except (FileNotFoundError, ValidationError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+    try:
+        runtime = resolve_runtime(scenario, args.runtime)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     store = StateStore(args.state)
     from molt.demo import build_engine
 
@@ -316,7 +321,7 @@ def cmd_search(args: argparse.Namespace) -> int:
         store,
         args.state / "work",
         args.seed_control,
-        runtime=args.runtime,
+        runtime=runtime,
     )
     task_ids = scenario.task_sets["search"]
     if args.task:
@@ -719,6 +724,10 @@ def _validate_scenario_ext(scenario: Scenario) -> list[str]:
                     f"policy.budget.{name}: 期望 > 0（ext.require_positive_budget=true），"
                     f"实际 {value}"
                 )
+    try:
+        allowed_runtimes(scenario)
+    except ValueError as exc:
+        failures.append(f"ext.allowed_runtimes 非法: {exc}")
     return failures
 
 
@@ -892,7 +901,14 @@ def cmd_calibrate(args: argparse.Namespace) -> int:
         state_root = Path(args.state) if args.state is not None else Path(tmp)
         state_root.mkdir(parents=True, exist_ok=True)
         store = StateStore(state_root)
-        engine = build_engine(root, scenario, store, state_root / "work", runtime="fixture")
+        engine = build_engine(
+            root,
+            scenario,
+            store,
+            state_root / "work",
+            runtime="fixture",
+            enforce_runtime=False,
+        )
         tasks = [engine.task_provider.load_task(task_id) for task_id in task_ids]
         runs = engine.run_suite(genome, tasks, scope="search")
         solved = metrics_from_runs(runs, task_ids).solved

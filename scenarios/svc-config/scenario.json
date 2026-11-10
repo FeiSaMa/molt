@@ -28,6 +28,9 @@
   },
   "ext": {
     "default_runtime": "deterministic",
+    "allowed_runtimes": [
+      "deterministic"
+    ],
     "note": "确定性第二 shell：零 LLM、零网络、零成本；证明端口可迁移，不声称智能增益"
   }
 }

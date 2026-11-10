@@ -88,6 +88,37 @@ def _default_runtime(scenario: Scenario) -> str:
     return str(value)
 
 
+def allowed_runtimes(scenario: Scenario) -> tuple[str, ...] | None:
+    """读 ``scenario.ext.allowed_runtimes``；未声明返回 ``None``（不限制）。"""
+    value = scenario.ext.get("allowed_runtimes")
+    if value is None:
+        return None
+    if not isinstance(value, list) or not value:
+        raise ValueError(f"scenario {scenario.scenario_id} 的 ext.allowed_runtimes 必须是非空数组")
+    if not all(isinstance(item, str) for item in value):
+        raise ValueError(f"scenario {scenario.scenario_id} 的 ext.allowed_runtimes 必须全是字符串")
+    unknown = sorted(set(value) - set(RUNTIMES))
+    if unknown:
+        raise ValueError(
+            f"scenario {scenario.scenario_id} 的 ext.allowed_runtimes 含未知值 {unknown}"
+        )
+    return tuple(value)
+
+
+def resolve_runtime(scenario: Scenario, runtime: str | None, *, enforce: bool = True) -> str:
+    """解析 runtime 并（默认）检查是否落在 ``scenario.ext.allowed_runtimes``。"""
+    name = runtime or _default_runtime(scenario)
+    if name not in RUNTIMES:
+        raise ValueError(f"未知 runtime: {name!r}（合法值 {list(RUNTIMES)}）")
+    allowed = allowed_runtimes(scenario)
+    if enforce and allowed is not None and name not in allowed:
+        raise ValueError(
+            f"scenario {scenario.scenario_id} 不允许 runtime={name!r}；"
+            f"allowed_runtimes={list(allowed)}"
+        )
+    return name
+
+
 def _build_runtime(
     repo_root: Path,
     scenario: Scenario,
@@ -153,8 +184,13 @@ def build_engine(
     llm_proposer: Callable[[SearchHistory, Genome], Proposal] | None = None,
     runtime: str | None = None,
     pi_options: Mapping[str, Any] | None = None,
+    enforce_runtime: bool = True,
 ) -> Engine:
-    """按 scenario.shell_id 装载 manifest.entrypoints，装配 provider/harness/verifier。"""
+    """按 scenario.shell_id 装载 manifest.entrypoints，装配 provider/harness/verifier。
+
+    ``enforce_runtime=False`` 只给 adapter conformance 与 ``calibrate`` 的强制 fixture
+    使用；产品命令（search/propose/audit）保持默认拒绝跨 runtime。
+    """
     repo_root = Path(repo_root).resolve()
     work_root = Path(work_root).resolve()
     store.ensure()
@@ -164,7 +200,7 @@ def build_engine(
         shell_version=scenario.shell_version,
     )
     provider = build_task_provider(bundle, repo_root)
-    runtime_name = runtime or _default_runtime(scenario)
+    runtime_name = resolve_runtime(scenario, runtime, enforce=enforce_runtime)
     runtime_obj = _build_runtime(repo_root, scenario, work_root, runtime_name, bundle, pi_options)
     verifier = build_verifier(bundle, repo_root)
     harness = build_harness(

@@ -48,6 +48,13 @@ Runtime 后仍能跑通 search → gate → audit。改造前有两处硬编码�
    `schema validate --all` 同时校验两个 manifest；`scenario validate` 补 switches.schema
    完整性（维度集合、值域 ⊆ v1 且 ⊆ manifest 候选域、`combinations` 等于笛卡尔积、`locked`）
    与 genome switches 值域校验。
+9. **runtime 白名单**：`scenario.ext.allowed_runtimes` 声明该场景允许的 runtime
+   （demo：`fixture`/`pi`；svc-config：`deterministic`）。`search` / `build_engine` 默认拒绝
+   不在列表的 runtime，避免跨 runtime 静默 0 分；`calibrate` 的强制 fixture 与 adapter
+   conformance 通过 `enforce_runtime=False` 显式绕过。
+10. **artifact root 支持单文件**：`shells/svc-config/manifest.json` 的 root
+    `molt/shell_bundle.py` 是文件；`build_snapshot` / `copy_generation` / `verify_generation`
+   统一支持目录与单文件（`copy2` 保留 mode，symlink 仍拒绝），adopt 闭环可跑。
 
 ## 后果
 

@@ -27,6 +27,11 @@
     "network": "provider_only"
   },
   "ext": {
+    "default_runtime": "fixture",
+    "allowed_runtimes": [
+      "fixture",
+      "pi"
+    ],
     "note": "fixture demo 不产生真实模型调用；Pi runtime 为可选 live 路径"
   }
 }

@@ -114,7 +114,16 @@ def test_shell_runtime_matrix_runs_one_task(
     scenario = _scenario(shell_id)
     genome = load_genome(ROOT, default_genome_path(ROOT, scenario))
     store = StateStore(tmp_path / "state")
-    engine = build_engine(ROOT, scenario, store, tmp_path / "work", runtime=runtime_name)
+    # adapter 级 conformance：刻意绕过 scenario.ext.allowed_runtimes，
+    # 验证两 runtime 的端口兼容性；产品命令的拒绝策略见 test_runtime_policy.py。
+    engine = build_engine(
+        ROOT,
+        scenario,
+        store,
+        tmp_path / "work",
+        runtime=runtime_name,
+        enforce_runtime=False,
+    )
     task = engine.task_provider.load_task(scenario.task_sets["search"][0])
     run = engine.run_task(genome, task, scope="search")
 

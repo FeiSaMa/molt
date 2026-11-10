@@ -128,7 +128,8 @@ state/
 pointer（最后）。`adopt` / `revert` 入口会先自动调用锁内的 `_recover_locked`，把上次未完成
 事务恢复到旧态或新态；`doctor --recover` 作为显式兜底，重复调用幂等。
 读者校验「指针 + generation + tree hash」，有界重试 3 次，超限 `stale_read`。
-快照覆盖 manifest 声明的全部 roots，`roots` 与 `files` 同键，缺一即拒绝。
+快照覆盖 manifest 声明的全部 roots（目录或单文件；单文件按 sha256 记录），
+`roots` 与 `files` 同键，缺一即拒绝。
 
 事件按 `scope` 分流；已知 type 的 payload 是 tagged union，未知 type 保留原文。
 `audit` 只重算 canonical evidence：从 run / ledger 重算 result，从配对表与 genome 上限重算
@@ -191,6 +192,8 @@ gate，并断言 search 流零 holdout id、report 流至少一条 `holdout.acce
   + 黄金 diff；`guard` / `verify(before=...)` 与 code-repair 同签名，指纹仍覆盖整个 `bench/**`。
 - **零成本**：scenario 两个 USD 预算均为 0；`SvcConfigHarness` 拒绝注入 `llm_proposer`；
   `molt search --scenario svc-config --runtime deterministic` 秒级完成且 run 成本恒 0。
+- **runtime 白名单**：`scenario.ext.allowed_runtimes` 在 `search` / `build_engine` 入口拒绝
+  跨 runtime（svc-config 只允许 `deterministic`；demo 允许 `fixture`/`pi`），避免静默 0 分。
 - **可迁移性**：`tests/test_adapter_conformance.py` 对「两 shell × 两 runtime」做协议与端到端检查；
   两 shell 的证据都由同一个 `molt audit` 重算通过。详见
   [ADR-0007](decisions/0007-svc-config.md)。
