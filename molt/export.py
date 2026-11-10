@@ -5,8 +5,10 @@
 - **只导出数据**，不生成页面（HTML/CSS 页面属于后续批次）。
 - 全部字段来自既有记录：run/result/decision/proposal/archive/snapshot/event；
   不做二次评分，也不补造明细。
-- holdout 只给聚合分：``report_results.json`` 的 ``holdout`` 块按白名单投影。
-- provenance 必须可区分 fixture / live / replay；fixture 不得伪装成 live。
+- holdout 只给聚合分：``report_results.json`` 的 ``holdout`` 块按白名单投影；
+  ``scope=report`` 的 run 与事件明细不导出，只保留聚合统计。
+- provenance 必须可区分 fixture / live / replay；fixture 不得伪装成 live，
+  live 必须有证据（model 或 pi runtime），冲突标记 fail closed。
 - 只依赖 stdlib；导出过程不写仓库（``--out`` 指向哪里就只写哪里）。
 """
 
@@ -76,24 +78,58 @@ STATE_PLACEHOLDER = "<state>"
 HOME_PLACEHOLDER = "<home>"
 
 
+class ExportError(ValueError):
+    """数据不满足导出契约（provenance 冲突 / live 证据缺失等）。"""
+
+
 # ---------------------------------------------------------------------------
 # 投影
 # ---------------------------------------------------------------------------
 
 
-def _provenance(run: Run, genomes: dict[str, Genome]) -> dict[str, Any]:
-    ext = run.ext if isinstance(run.ext, dict) else {}
-    explicit = ext.get("provenance")
-    if isinstance(explicit, dict) and explicit.get("kind") in PROVENANCE_KINDS:
-        result = dict(explicit)
-        result.setdefault("live", result["kind"] == "live")
-        return result
-    replay_of = ext.get("replay_of_run_id")
-    if replay_of:
-        return {"kind": "replay", "replay_of_run_id": replay_of, "live": False}
+def _genome_runtime_id(genomes: dict[str, Genome], run: Run) -> str:
     genome = genomes.get(run.genome_id)
     runtime = genome.runtime if genome is not None else {}
-    runtime_id = str(runtime.get("runtime_id", ""))
+    return str(runtime.get("runtime_id", ""))
+
+
+def _provenance(run: Run, genomes: dict[str, Genome]) -> dict[str, Any]:
+    """把 run 的 provenance 归成 fixture / live / replay；证据不足即报错（fail closed）。"""
+    ext = run.ext if isinstance(run.ext, dict) else {}
+    explicit = ext.get("provenance")
+    replay_of = ext.get("replay_of_run_id")
+
+    if isinstance(explicit, dict):
+        kind = explicit.get("kind")
+        if kind not in PROVENANCE_KINDS:
+            raise ExportError(f"run {run.run_id}: 未知 provenance.kind={kind!r}")
+        if kind == "live":
+            if replay_of:
+                raise ExportError(
+                    f"run {run.run_id}: provenance.kind=live 与 replay_of_run_id 冲突，"
+                    "不得静默标 live"
+                )
+            model = explicit.get("model")
+            runtime_id = str(explicit.get("runtime_id") or _genome_runtime_id(genomes, run))
+            if not model and not runtime_id.startswith("pi"):
+                raise ExportError(
+                    f"run {run.run_id}: provenance.kind=live 缺少 model 或 pi runtime 证据"
+                )
+        elif kind == "replay":
+            replay_of = replay_of or explicit.get("replay_of_run_id")
+            if not replay_of:
+                raise ExportError(f"run {run.run_id}: provenance.kind=replay 缺少 replay_of_run_id")
+        result = dict(explicit)
+        if kind == "replay":
+            result["replay_of_run_id"] = replay_of
+        result.setdefault("live", kind == "live")
+        if kind == "fixture":
+            result["note"] = "B1 fixture runtime：确定性回放，不是 live 模型调用"
+        return result
+
+    if replay_of:
+        return {"kind": "replay", "replay_of_run_id": replay_of, "live": False}
+    runtime_id = _genome_runtime_id(genomes, run)
     kind = "live" if runtime_id.startswith(("pi", "live")) else "fixture"
     result: dict[str, Any] = {
         "kind": kind,
@@ -118,12 +154,14 @@ def _scenario_payload(scenario: Scenario) -> dict[str, Any]:
             "shell_version": scenario.shell_version,
         },
         "bench_hash": scenario.bench_hash,
-        "task_sets": {"search": search, "report": report},
+        # holdout 只暴露题数，不导出具体 task id。
+        "task_sets": {"search": search},
         "task_counts": {
             "search": len(search),
             "report": len(report),
             "total": len(search) + len(report),
         },
+        "holdout": {"task_count": len(report), "detail": "not-exported"},
         "policy": scenario.policy.to_dict(),
         "budget": scenario.policy.budget.to_dict(),
         "isolation": scenario.isolation.to_dict(),
@@ -153,6 +191,10 @@ def _variants_payload(genomes: Iterable[Genome], adopted_ids: set[str]) -> dict[
 def _runs_payload(runs: Iterable[Run], genomes: dict[str, Genome]) -> dict[str, Any]:
     payload = []
     for run in sorted(runs, key=lambda item: item.run_id):
+        # holdout run 的 run_id 与 task_id 都是逐题细节，整行不导出；
+        # 聚合统计见 report_results.json 的 report_runs。
+        if run.scope == "report":
+            continue
         usage = run.usage.to_dict()
         verification = run.verification.to_dict()
         payload.append(
@@ -207,7 +249,33 @@ def _search_results_payload(results: Iterable[Any]) -> dict[str, Any]:
     return {"scope": "search", "results": payload}
 
 
-def _report_results_payload(results: Iterable[Any]) -> dict[str, Any]:
+def _report_run_stats(runs: Iterable[Run]) -> dict[str, Any]:
+    """holdout run 的聚合统计：只有数量/状态/成本，没有 run_id 或 task_id。"""
+    selected = [run for run in runs if run.scope == "report"]
+    by_status: dict[str, int] = {}
+    cost_total = 0.0
+    wall_ms = 0
+    tokens_in = 0
+    tokens_out = 0
+    for run in selected:
+        by_status[run.outcome] = by_status.get(run.outcome, 0) + 1
+        usage = run.usage.to_dict()
+        cost_total += usage["cost_usd"]
+        wall_ms += usage["wall_ms"]
+        tokens_in += usage["tokens_in"]
+        tokens_out += usage["tokens_out"]
+    return {
+        "count": len(selected),
+        "solved": sum(1 for run in selected if run.outcome == "passed"),
+        "by_status": dict(sorted(by_status.items())),
+        "cost_usd": round(cost_total, 6),
+        "wall_ms": wall_ms,
+        "tokens": {"in": tokens_in, "out": tokens_out},
+    }
+
+
+def _report_results_payload(results: Iterable[Any], runs: Iterable[Run]) -> dict[str, Any]:
+    report_runs = [run for run in runs if run.scope == "report"]
     payload = []
     for result in sorted(results, key=lambda item: item.result_id):
         if result.scope != "report":
@@ -224,10 +292,18 @@ def _report_results_payload(results: Iterable[Any]) -> dict[str, Any]:
                         result.scores["holdout"].to_dict(), aggregate_only=True
                     ),
                 },
+                # 该 genome 的 holdout run 聚合（count/status/cost），不含任何 id。
+                "report_runs": _report_run_stats(
+                    run for run in report_runs if run.genome_id == result.genome_id
+                ),
                 "generated_at": result.generated_at,
             }
         )
-    return {"scope": "report", "results": payload}
+    return {
+        "scope": "report",
+        "results": payload,
+        "report_runs_total": _report_run_stats(report_runs),
+    }
 
 
 def _delta(left: float | None, right: float | None) -> float | None:
@@ -370,6 +446,33 @@ def _read_scope_events(store: StateStore, scope: str) -> list[Event]:
     return sorted(events, key=lambda event: (event.ts, event.event_id))
 
 
+def _sanitize_report_events(events: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """report 流只导出聚合事件：per-run 明细与 holdout task id 一律剥离。"""
+    sanitized = []
+    for event in events:
+        if event.get("run_id"):
+            continue
+        payload = dict(event.get("payload") or {})
+        for key in ("task_id", "task_ids"):
+            if key in payload:
+                value = payload.pop(key)
+                if isinstance(value, list):
+                    payload.setdefault("count", len(value))
+                elif "count" not in payload:
+                    payload["count"] = 1
+        event = dict(event)
+        event["payload"] = payload
+        sanitized.append(event)
+    return sanitized
+
+
+def _event_dicts(store: StateStore, scope: str) -> list[dict[str, Any]]:
+    payload = [event.to_dict() for event in _read_scope_events(store, scope)]
+    if scope == "report":
+        payload = _sanitize_report_events(payload)
+    return payload
+
+
 # ---------------------------------------------------------------------------
 # 路径脱敏与落盘
 # ---------------------------------------------------------------------------
@@ -414,10 +517,10 @@ def _json_text(payload: Any, replacements: list[tuple[str, str]]) -> str:
     )
 
 
-def _jsonl_text(events: list[Event], replacements: list[tuple[str, str]]) -> str:
+def _jsonl_text(events: Iterable[dict[str, Any]], replacements: list[tuple[str, str]]) -> str:
     lines = []
     for event in events:
-        payload = _scrub(event.to_dict(), replacements)
+        payload = _scrub(event, replacements)
         lines.append(canonical_json_text(payload))
     return "".join(line + "\n" for line in lines)
 
@@ -454,8 +557,8 @@ def export_web_data(
     ]
     adopted_ids = {record.genome_id for record in ArchiveStore(store.root).list()}
     events = {
-        "search": _read_scope_events(store, "search"),
-        "report": _read_scope_events(store, "report"),
+        "search": _event_dicts(store, "search"),
+        "report": _event_dicts(store, "report"),
     }
 
     replacements = _replacements(root, store.root)
@@ -465,7 +568,7 @@ def export_web_data(
         "variants.json": _variants_payload(genomes_list, adopted_ids),
         "runs.json": _runs_payload(runs, genomes),
         "search_results.json": _search_results_payload(results),
-        "report_results.json": _report_results_payload(results),
+        "report_results.json": _report_results_payload(results, runs),
         "gate.json": _gate_payload(scenario, decisions),
         "proposals.json": _proposals_payload(proposals),
         "archive.json": _archive_payload(store, genomes_list),
@@ -494,10 +597,7 @@ def export_web_data(
             "snapshots": payloads["snapshots.json"],
             "audit": payloads["audit.json"],
             "redaction": payloads["redaction.json"],
-            "events": {
-                scope: [event.to_dict() for event in events[scope]]
-                for scope in ("search", "report")
-            },
+            "events": {scope: events[scope] for scope in ("search", "report")},
         },
         replacements,
     )
@@ -518,7 +618,8 @@ def export_web_data(
         "files": dict(sorted(files.items())),
         "counts": {
             "genomes": len(genomes_list),
-            "runs": len(runs),
+            "runs": len(payloads["runs.json"]["runs"]),
+            "report_runs": payloads["report_results.json"]["report_runs_total"]["count"],
             "results": len(results),
             "search_results": len(payloads["search_results.json"]["results"]),
             "report_results": len(payloads["report_results.json"]["results"]),

@@ -59,31 +59,27 @@ window.MOLT_VIEW = {
         "type": "report.scored"
       },
       {
-        "event_id": "ev-a9fbed7d6103452f",
+        "event_id": "ev-2797f70b6f2a483c",
         "ext": {},
         "payload": {
-          "task_ids": [
-            "holdout-even"
-          ]
+          "count": 1
         },
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T15:02:02Z",
+        "ts": "2026-11-10T15:09:58Z",
         "type": "holdout.accessed"
       },
       {
-        "event_id": "ev-e4b1fc1d3fb54ebd",
+        "event_id": "ev-292d062cca10412a",
         "ext": {},
         "payload": {
-          "task_ids": [
-            "holdout-even"
-          ]
+          "count": 1
         },
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T15:02:02Z",
+        "ts": "2026-11-10T15:09:58Z",
         "type": "holdout.accessed"
       }
     ],
@@ -115,108 +111,108 @@ window.MOLT_VIEW = {
         "type": "proposal.generated"
       },
       {
-        "event_id": "ev-09e8dbcbdc754a1c",
+        "event_id": "ev-093e5ec164aa4cb9",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "smoke-add"
+        },
+        "run_id": "6be90151-smoke-add-a1-097fa4",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:09:58Z",
+        "type": "run.finished"
+      },
+      {
+        "event_id": "ev-0df71dac6dcb4521",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-even"
         },
-        "run_id": "6be90151-smoke-even-a1-1a7812",
+        "run_id": "6be90151-smoke-even-a1-182653",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:02:02Z",
+        "ts": "2026-11-10T15:09:58Z",
         "type": "run.finished"
       },
       {
-        "event_id": "ev-109e06a3620848e7",
+        "event_id": "ev-4639f720aea84ac9",
         "ext": {},
         "payload": {
-          "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
-          "task_id": "smoke-even"
+          "outcome": "passed",
+          "task_id": "smoke-add"
         },
-        "run_id": "6be90151-smoke-even-a1-1a7812",
+        "run_id": "6520c609-smoke-add-a1-3cc404",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:02:02Z",
-        "type": "run.started"
+        "ts": "2026-11-10T15:09:58Z",
+        "type": "run.finished"
       },
       {
-        "event_id": "ev-4d433438937945d4",
+        "event_id": "ev-a0b295b9a1a44dff",
         "ext": {},
         "payload": {
           "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
           "task_id": "smoke-even"
         },
-        "run_id": "6520c609-smoke-even-a1-b4663d",
+        "run_id": "6520c609-smoke-even-a1-a0bd9d",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:02:02Z",
+        "ts": "2026-11-10T15:09:58Z",
         "type": "run.started"
       },
       {
-        "event_id": "ev-81b3fb8f560e4e80",
-        "ext": {},
-        "payload": {
-          "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
-          "task_id": "smoke-add"
-        },
-        "run_id": "6be90151-smoke-add-a1-750da5",
-        "schema_version": "1.0.0",
-        "scope": "search",
-        "ts": "2026-11-10T15:02:02Z",
-        "type": "run.started"
-      },
-      {
-        "event_id": "ev-9d92dbd056b54aed",
-        "ext": {},
-        "payload": {
-          "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
-          "task_id": "smoke-add"
-        },
-        "run_id": "6520c609-smoke-add-a1-32f7db",
-        "schema_version": "1.0.0",
-        "scope": "search",
-        "ts": "2026-11-10T15:02:02Z",
-        "type": "run.started"
-      },
-      {
-        "event_id": "ev-a43433bbe5a24b77",
-        "ext": {},
-        "payload": {
-          "outcome": "passed",
-          "task_id": "smoke-add"
-        },
-        "run_id": "6be90151-smoke-add-a1-750da5",
-        "schema_version": "1.0.0",
-        "scope": "search",
-        "ts": "2026-11-10T15:02:02Z",
-        "type": "run.finished"
-      },
-      {
-        "event_id": "ev-bf508f326f694b44",
+        "event_id": "ev-ad784917e0ca4894",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-even"
         },
-        "run_id": "6520c609-smoke-even-a1-b4663d",
+        "run_id": "6520c609-smoke-even-a1-a0bd9d",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:02:02Z",
+        "ts": "2026-11-10T15:09:58Z",
         "type": "run.finished"
       },
       {
-        "event_id": "ev-df8d3ffa33534412",
+        "event_id": "ev-b7de72fd80a140ae",
         "ext": {},
         "payload": {
-          "outcome": "passed",
+          "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
           "task_id": "smoke-add"
         },
-        "run_id": "6520c609-smoke-add-a1-32f7db",
+        "run_id": "6520c609-smoke-add-a1-3cc404",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:02:02Z",
-        "type": "run.finished"
+        "ts": "2026-11-10T15:09:58Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-c730febd4d5c4168",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+          "task_id": "smoke-even"
+        },
+        "run_id": "6be90151-smoke-even-a1-182653",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:09:58Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-ea36544187e74ea2",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+          "task_id": "smoke-add"
+        },
+        "run_id": "6be90151-smoke-add-a1-097fa4",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:09:58Z",
+        "type": "run.started"
       }
     ]
   },
@@ -344,7 +340,7 @@ window.MOLT_VIEW = {
     ]
   },
   "redaction": {
-    "canonical_hash": "2bb1d6dfe5b984f583fc02b15ac8906d5f9a6044ee656dcf7e6bb2e5c9a89343",
+    "canonical_hash": "d180e888fcc800e06c9ec21296a1faa7565fb3737f5385b2ef83077245388b67",
     "metrics_hash": "0130d9b889168c3175447693c8f28123f6bd1513b15fe4717123e18e9e8511f6",
     "post_metrics": {
       "keys": [
@@ -4159,13 +4155,39 @@ window.MOLT_VIEW = {
       "key_value_secret",
       "home_path"
     ],
-    "source_hash": "2bb1d6dfe5b984f583fc02b15ac8906d5f9a6044ee656dcf7e6bb2e5c9a89343"
+    "source_hash": "d180e888fcc800e06c9ec21296a1faa7565fb3737f5385b2ef83077245388b67"
   },
   "report_results": {
+    "report_runs_total": {
+      "by_status": {
+        "passed": 2
+      },
+      "cost_usd": 2.76,
+      "count": 2,
+      "solved": 2,
+      "tokens": {
+        "in": 2300,
+        "out": 1200
+      },
+      "wall_ms": 2760
+    },
     "results": [
       {
         "generated_at": "2026-01-01T00:00:00Z",
         "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+        "report_runs": {
+          "by_status": {
+            "passed": 1
+          },
+          "cost_usd": 1.84,
+          "count": 1,
+          "solved": 1,
+          "tokens": {
+            "in": 1150,
+            "out": 800
+          },
+          "wall_ms": 1840
+        },
         "result_id": "result-baseline-report",
         "scope": "report",
         "scores": {
@@ -4190,6 +4212,19 @@ window.MOLT_VIEW = {
       {
         "generated_at": "2026-01-01T00:00:00Z",
         "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+        "report_runs": {
+          "by_status": {
+            "passed": 1
+          },
+          "cost_usd": 0.92,
+          "count": 1,
+          "solved": 1,
+          "tokens": {
+            "in": 1150,
+            "out": 400
+          },
+          "wall_ms": 920
+        },
         "result_id": "result-candidate-report",
         "scope": "report",
         "scores": {
@@ -4219,7 +4254,7 @@ window.MOLT_VIEW = {
       {
         "attempt": 1,
         "cost_usd": 1.84,
-        "finished_at": "2026-11-10T15:02:02Z",
+        "finished_at": "2026-11-10T15:09:58Z",
         "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
         "provenance": {
           "kind": "fixture",
@@ -4227,40 +4262,10 @@ window.MOLT_VIEW = {
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "6520c609-holdout-even-a1-12589b",
-        "scope": "report",
-        "solved": true,
-        "started_at": "2026-11-10T15:02:02Z",
-        "status": "passed",
-        "task_id": "holdout-even",
-        "tokens": {
-          "in": 1150,
-          "out": 800
-        },
-        "turns": 4,
-        "verifier": {
-          "hash": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
-          "matches": true,
-          "tests_hash_after": "549afe9b3982ae3ae168c49d0430005e3cddb2223bc7c52d8b8c695ccd1b54a7",
-          "tests_hash_before": "549afe9b3982ae3ae168c49d0430005e3cddb2223bc7c52d8b8c695ccd1b54a7"
-        },
-        "wall_ms": 1840
-      },
-      {
-        "attempt": 1,
-        "cost_usd": 1.84,
-        "finished_at": "2026-11-10T15:02:02Z",
-        "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
-        "provenance": {
-          "kind": "fixture",
-          "live": false,
-          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
-          "runtime_id": "fixture"
-        },
-        "run_id": "6520c609-smoke-add-a1-32f7db",
+        "run_id": "6520c609-smoke-add-a1-3cc404",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:02:02Z",
+        "started_at": "2026-11-10T15:09:58Z",
         "status": "passed",
         "task_id": "smoke-add",
         "tokens": {
@@ -4279,7 +4284,7 @@ window.MOLT_VIEW = {
       {
         "attempt": 1,
         "cost_usd": 1.84,
-        "finished_at": "2026-11-10T15:02:02Z",
+        "finished_at": "2026-11-10T15:09:58Z",
         "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
         "provenance": {
           "kind": "fixture",
@@ -4287,10 +4292,10 @@ window.MOLT_VIEW = {
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "6520c609-smoke-even-a1-b4663d",
+        "run_id": "6520c609-smoke-even-a1-a0bd9d",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:02:02Z",
+        "started_at": "2026-11-10T15:09:58Z",
         "status": "passed",
         "task_id": "smoke-even",
         "tokens": {
@@ -4309,7 +4314,7 @@ window.MOLT_VIEW = {
       {
         "attempt": 1,
         "cost_usd": 0.92,
-        "finished_at": "2026-11-10T15:02:02Z",
+        "finished_at": "2026-11-10T15:09:58Z",
         "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
         "provenance": {
           "kind": "fixture",
@@ -4317,40 +4322,10 @@ window.MOLT_VIEW = {
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "6be90151-holdout-even-a1-759085",
-        "scope": "report",
-        "solved": true,
-        "started_at": "2026-11-10T15:02:02Z",
-        "status": "passed",
-        "task_id": "holdout-even",
-        "tokens": {
-          "in": 1150,
-          "out": 400
-        },
-        "turns": 2,
-        "verifier": {
-          "hash": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
-          "matches": true,
-          "tests_hash_after": "549afe9b3982ae3ae168c49d0430005e3cddb2223bc7c52d8b8c695ccd1b54a7",
-          "tests_hash_before": "549afe9b3982ae3ae168c49d0430005e3cddb2223bc7c52d8b8c695ccd1b54a7"
-        },
-        "wall_ms": 920
-      },
-      {
-        "attempt": 1,
-        "cost_usd": 0.92,
-        "finished_at": "2026-11-10T15:02:02Z",
-        "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
-        "provenance": {
-          "kind": "fixture",
-          "live": false,
-          "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
-          "runtime_id": "fixture"
-        },
-        "run_id": "6be90151-smoke-add-a1-750da5",
+        "run_id": "6be90151-smoke-add-a1-097fa4",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:02:02Z",
+        "started_at": "2026-11-10T15:09:58Z",
         "status": "passed",
         "task_id": "smoke-add",
         "tokens": {
@@ -4369,7 +4344,7 @@ window.MOLT_VIEW = {
       {
         "attempt": 1,
         "cost_usd": 0.92,
-        "finished_at": "2026-11-10T15:02:02Z",
+        "finished_at": "2026-11-10T15:09:58Z",
         "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
         "provenance": {
           "kind": "fixture",
@@ -4377,10 +4352,10 @@ window.MOLT_VIEW = {
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "6be90151-smoke-even-a1-1a7812",
+        "run_id": "6be90151-smoke-even-a1-182653",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:02:02Z",
+        "started_at": "2026-11-10T15:09:58Z",
         "status": "passed",
         "task_id": "smoke-even",
         "tokens": {
@@ -4414,6 +4389,10 @@ window.MOLT_VIEW = {
     "ext": {
       "note": "demo 只用 fixture runtime；不产生真实模型调用"
     },
+    "holdout": {
+      "detail": "not-exported",
+      "task_count": 1
+    },
     "isolation": {
       "network": "none"
     },
@@ -4444,9 +4423,6 @@ window.MOLT_VIEW = {
       "total": 3
     },
     "task_sets": {
-      "report": [
-        "holdout-even"
-      ],
       "search": [
         "smoke-add",
         "smoke-even"

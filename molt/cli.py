@@ -103,6 +103,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--state", type=Path, default=None, help="state 根；缺省用 ./state 或临时 demo state"
     )
     p_export.add_argument("--out", type=Path, default=Path("web/data"))
+    p_export.add_argument(
+        "--allow-empty", action="store_true", help="允许 0 run 的 state，生成空数据面"
+    )
 
     return parser
 
@@ -713,6 +716,12 @@ def cmd_export(args: argparse.Namespace) -> int:
         store = StateStore(state_path)
         if not (store.root / "runs").is_dir():
             print(f"state 不存在或没有 runs: {store.root}", file=sys.stderr)
+            return 2
+        if not store.list_runs() and not args.allow_empty:
+            print(
+                f"state 为空（0 runs）: {store.root}；如需空数据面请加 --allow-empty",
+                file=sys.stderr,
+            )
             return 2
         index = export_web_data(root, scenario, store, args.out)
         source = str(state_path)

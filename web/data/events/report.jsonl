@@ -1,4 +1,4 @@
 {"event_id":"ev-demo-result-baseline-report","ext":{},"payload":{"result_id":"result-baseline-report"},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-01-01T00:00:00Z","type":"report.scored"}
 {"event_id":"ev-demo-result-candidate-report","ext":{},"payload":{"result_id":"result-candidate-report"},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-01-01T00:00:00Z","type":"report.scored"}
-{"event_id":"ev-a9fbed7d6103452f","ext":{},"payload":{"task_ids":["holdout-even"]},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-11-10T15:02:02Z","type":"holdout.accessed"}
-{"event_id":"ev-e4b1fc1d3fb54ebd","ext":{},"payload":{"task_ids":["holdout-even"]},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-11-10T15:02:02Z","type":"holdout.accessed"}
+{"event_id":"ev-2797f70b6f2a483c","ext":{},"payload":{"count":1},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-11-10T15:09:58Z","type":"holdout.accessed"}
+{"event_id":"ev-292d062cca10412a","ext":{},"payload":{"count":1},"run_id":null,"schema_version":"1.0.0","scope":"report","ts":"2026-11-10T15:09:58Z","type":"holdout.accessed"}

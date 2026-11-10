@@ -8,11 +8,11 @@
 | 文件 | 内容 | 来源 |
 |---|---|---|
 | `index.json` | `schema_version` / `scenario_id` / `revision` / `generated_at` / `files`（每文件 sha256+字节数）/ `counts` | 导出时计算；`revision` 是全部数据文件 sha256 的 `content_hash` |
-| `scenario.json` | `claim` / `not_claimed` / `policy` / `budget` / `task_sets` / `task_counts` / shell 与 isolation 信息 | `scenario` 记录（`scenarios/<id>/scenario.json`），claim 文案是 `molt/export.py` 常量 |
+| `scenario.json` | `claim` / `not_claimed` / `policy` / `budget` / `task_counts` / `holdout{task_count,detail}` / shell 与 isolation 信息；只列 search 题 id | `scenario` 记录（`scenarios/<id>/scenario.json`），claim 文案是 `molt/export.py` 常量 |
 | `variants.json` | `id` / `parent` / `switches` / `runtime` / `adopted` / `budget` | `state/genomes/*.json` + `state/archive/*.json` |
-| `runs.json` | `run_id` / `genome_id` / `task_id` / `scope` / `attempt` / `solved` / `status` / `cost_usd` / `tokens{in,out}` / `wall_ms` / `verifier` / `provenance` | `state/runs/*.json`（逐 run 明细） |
+| `runs.json` | **仅 `scope=search`** 的逐 run：`run_id` / `genome_id` / `task_id` / `scope` / `attempt` / `solved` / `status` / `cost_usd` / `tokens{in,out}` / `wall_ms` / `verifier` / `provenance` | `state/runs/*.json`；report run 整行不导出（见 `report_runs`） |
 | `search_results.json` | 仅 `scope=search` 的聚合分 `{solved,total,pass_at_1_first_attempt,cost_total_usd,cost_per_solved_usd,invalid_ratio}` | `state/results/*.json` |
-| `report_results.json` | `scope=report`，`scores.search` + `scores.holdout` 两组**聚合分** | `state/results/*.json` |
+| `report_results.json` | `scope=report`：`scores.search` + `scores.holdout` 两组**聚合分**；每个 result 带 `report_runs`，顶层带 `report_runs_total`（`count` / `solved` / `by_status` / `cost_usd` / `wall_ms` / `tokens`） | `state/results/*.json` + `state/runs/*.json`（report 段只做聚合） |
 | `gate.json` | `policy_sha256`、每条 decision 的 `verdict` / `reason` / `reasons` / `budget_check` / `scores` / `pairs[]`（逐题配对 + `passed_delta` / `cost_delta_usd`）/ `deltas` | `state/decisions/*.json` |
 | `proposals.json` | proposal 顶层字段 + `ext`（`source` / `fallback` / `cost_source` / `usage` / `prompt_sha256` / `response_sha256`） | `state/proposals/*.json` |
 | `archive.json` | `lineage[]`（genome 谱系 + 是否被采纳）与 `archives[]` | `state/archive/*.json` |
@@ -20,17 +20,19 @@
 | `audit.json` | `{ok, checked:{runs,results,decisions,events,report_events}, mismatches[]}` | `molt.core.audit.audit_state` 现场重算 |
 | `redaction.json` | 脱敏 manifest（`redaction_version` / `rules` / `pre_metrics` / `post_metrics` / 哈希）；无 manifest 时该文件内容为 `null` | `state/redaction/<scenario_id>.json` |
 | `events/search.jsonl` | search 流事件，逐行一个 `event` 记录，按 `(ts, event_id)` 排序 | `state/events/search/*.jsonl`；无 per-run 目录时回退读 `state/events/search.jsonl` |
-| `events/report.jsonl` | report 流事件（含 `holdout.accessed` / `report.scored`） | 同上，`report` 流 |
+| `events/report.jsonl` | report 流**聚合事件**（`holdout.accessed` / `report.scored`）；`holdout.accessed` 只保留 `count`，不含 `task_ids`；per-run 事件不导出 | 同上，`report` 流；导出层剥离 run 明细与 task id |
 | `bundle.js` | `window.MOLT_VIEW = {scenario,variants,runs,search_results,report_results,gate,proposals,archive,snapshots,audit,redaction,events}` | 上述 payload 的合并，供 `file://` 直开 |
 
 ## 聚合 vs 明细（aggregate vs detail；页面务必注意）
 
-- **聚合**：`search_results.json`、`report_results.json` 的分数块；`gate.json` 的
-  `scores` / `deltas`。`holdout` **只导出聚合分**，不导出逐题明细，也不导出 `run_refs`。
-- **明细**：`runs.json`（逐 run）、`gate.json` 的 `pairs[]`（逐题配对，仅 search 题）、
-  `events/*.jsonl`（逐事件）、`proposals.json` 的 `ext`。
-- 不要用 `runs.json` 里的 report run 反推 holdout 逐题通过率并展示；页面口径以
-  `report_results.json` 的聚合块为准。
+- **聚合**：`search_results.json`、`report_results.json` 的分数块与 `report_runs`；
+  `gate.json` 的 `scores` / `deltas`。`holdout` **只导出聚合分**，不导出逐题明细，
+  不导出 `run_refs`、`task_id`、`run_id`。
+- **明细**：`runs.json`（仅 search 逐 run）、`gate.json` 的 `pairs[]`（逐题配对，仅 search 题）、
+  `events/search.jsonl`（逐事件）、`proposals.json` 的 `ext`。
+- **holdout 明细不导出**：`runs.json` 不含 `scope=report` 的 run，`events/report.jsonl`
+  不含 per-run 事件与 holdout task id，`scenario.json` 只给题数。页面展示 holdout
+  成本/通过情况时用 `report_results.json` 的 `report_runs` 聚合块。
 
 ## provenance：fixture / live / replay
 
@@ -39,8 +41,11 @@
 | kind | 含义 | 判定 |
 |---|---|---|
 | `fixture` | B1 确定性 fixture runtime，无 live 模型调用 | 默认；genome `runtime.runtime_id` 非 `pi*`/`live*` |
-| `live` | 真实模型（Pi adapter）运行 | run `ext.provenance.kind="live"`，或 genome runtime id 以 `pi`/`live` 开头 |
-| `replay` | 对某次 run 的回放 | run `ext.replay_of_run_id` 或 `ext.provenance.kind="replay"`，带 `replay_of_run_id` |
+| `live` | 真实模型（Pi adapter）运行 | run `ext.provenance.kind="live"` 且带 `model` 或 `pi*` runtime |
+| `replay` | 对某次 run 的回放 | run `ext.provenance.kind="replay"` 或 ext 带 `replay_of_run_id`，必须有 `replay_of_run_id` |
+
+fail closed：`kind="live"` 同时带 `replay_of_run_id`、`kind="live"` 无 `model`/`pi*` 证据、
+`kind="replay"` 无来源，`molt export` 都直接报错（非零退出），不会静默标 live。
 
 每个 provenance 都有布尔 `live`；`fixture` 额外带 `note` 说明「不是 live 模型调用」。
 页面应在 UI 上显式标注，禁止把 fixture 展示成 live。
@@ -56,6 +61,7 @@ molt export --scenario demo --state state --out web/data
 ```
 
 - 缺省 `--state` 时：若 `./state/runs` 存在则读它，否则用临时 demo state。
+- 显式 `--state` 且 0 run：退出码 2 并提示；确需空数据面时加 `--allow-empty`。
 - 输出口径：`json.dumps(ensure_ascii=False, sort_keys=True, indent=2)`；JSONL 用 canonical 单行 JSON。
 - 生成物里的本机绝对路径会被替换为 `<repo>` / `<state>` / `<home>`（复用现有脱敏思路）。
 - `revision` 标识**本次输入内容**；fixture demo 的 `run_id` 含随机后缀、`started_at` 取真实时钟，

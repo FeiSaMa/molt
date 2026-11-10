@@ -14,6 +14,10 @@
   "ext": {
     "note": "demo 只用 fixture runtime；不产生真实模型调用"
   },
+  "holdout": {
+    "detail": "not-exported",
+    "task_count": 1
+  },
   "isolation": {
     "network": "none"
   },
@@ -44,9 +48,6 @@
     "total": 3
   },
   "task_sets": {
-    "report": [
-      "holdout-even"
-    ],
     "search": [
       "smoke-add",
       "smoke-even"
