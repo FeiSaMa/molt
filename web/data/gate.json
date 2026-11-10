@@ -2,18 +2,18 @@
   "decision_count": 1,
   "decisions": [
     {
-      "baseline_genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "baseline_genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
       "budget_check": {
         "execution_exceeded": false,
         "overhead_exceeded": false,
         "reason": "ok"
       },
-      "candidate_genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
-      "created_at": "2026-11-10T16:52:33Z",
+      "candidate_genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
+      "created_at": "2026-11-10T17:00:33Z",
       "decision_id": "demo-decision-demo",
       "deltas": {
-        "cost_per_solved_usd": 0.000645,
-        "cost_total_usd": 0.006452,
+        "cost_per_solved_usd": -0.002611,
+        "cost_total_usd": -0.026105,
         "solved": 0
       },
       "ext": {
@@ -36,119 +36,119 @@
       "limits_identical": true,
       "pairs": [
         {
-          "baseline_cost_usd": 0.00150677,
+          "baseline_cost_usd": 0.0023281,
           "baseline_passed": true,
-          "candidate_cost_usd": 0.00491424,
+          "candidate_cost_usd": 0.00098375,
           "candidate_passed": true,
-          "cost_delta_usd": 0.003407,
+          "cost_delta_usd": -0.001344,
           "passed_delta": 0,
           "task_id": "smoke-add"
         },
         {
-          "baseline_cost_usd": 0.00080566,
+          "baseline_cost_usd": 0.00586628,
           "baseline_passed": true,
-          "candidate_cost_usd": 0.00081196,
+          "candidate_cost_usd": 0.00080566,
           "candidate_passed": true,
-          "cost_delta_usd": 6e-06,
+          "cost_delta_usd": -0.005061,
           "passed_delta": 0,
           "task_id": "smoke-even"
         },
         {
-          "baseline_cost_usd": 0.00102559,
+          "baseline_cost_usd": 0.00152552,
           "baseline_passed": true,
-          "candidate_cost_usd": 0.00104706,
+          "candidate_cost_usd": 0.00102559,
           "candidate_passed": true,
-          "cost_delta_usd": 2.1e-05,
+          "cost_delta_usd": -0.0005,
           "passed_delta": 0,
           "task_id": "search-off-by-one"
         },
         {
-          "baseline_cost_usd": 0.00077879,
+          "baseline_cost_usd": 0.00161809,
           "baseline_passed": true,
-          "candidate_cost_usd": 0.00172732,
+          "candidate_cost_usd": 0.00077879,
           "candidate_passed": true,
-          "cost_delta_usd": 0.000949,
+          "cost_delta_usd": -0.000839,
           "passed_delta": 0,
           "task_id": "search-max-two"
         },
         {
-          "baseline_cost_usd": 0.00083776,
+          "baseline_cost_usd": 0.00629018,
           "baseline_passed": true,
-          "candidate_cost_usd": 0.00202702,
+          "candidate_cost_usd": 0.00083776,
           "candidate_passed": true,
-          "cost_delta_usd": 0.001189,
+          "cost_delta_usd": -0.005452,
           "passed_delta": 0,
           "task_id": "search-missing-return"
         },
         {
-          "baseline_cost_usd": 0.00080866,
+          "baseline_cost_usd": 0.00107814,
           "baseline_passed": true,
-          "candidate_cost_usd": 0.00077206,
+          "candidate_cost_usd": 0.00080866,
           "candidate_passed": true,
-          "cost_delta_usd": -3.7e-05,
+          "cost_delta_usd": -0.000269,
           "passed_delta": 0,
           "task_id": "search-wrong-var"
         },
         {
-          "baseline_cost_usd": 0.00080309,
+          "baseline_cost_usd": 0.00566225,
           "baseline_passed": true,
-          "candidate_cost_usd": 0.00155581,
+          "candidate_cost_usd": 0.00080309,
           "candidate_passed": true,
-          "cost_delta_usd": 0.000753,
+          "cost_delta_usd": -0.004859,
           "passed_delta": 0,
           "task_id": "search-slice"
         },
         {
-          "baseline_cost_usd": 0.00079679,
+          "baseline_cost_usd": 0.00180953,
           "baseline_passed": true,
-          "candidate_cost_usd": 0.00094352,
+          "candidate_cost_usd": 0.00079679,
           "candidate_passed": true,
-          "cost_delta_usd": 0.000147,
+          "cost_delta_usd": -0.001013,
           "passed_delta": 0,
           "task_id": "search-mean"
         },
         {
-          "baseline_cost_usd": 0.00163511,
+          "baseline_cost_usd": 0.00829589,
           "baseline_passed": true,
-          "candidate_cost_usd": 0.00174839,
+          "candidate_cost_usd": 0.00163511,
           "candidate_passed": true,
-          "cost_delta_usd": 0.000113,
+          "cost_delta_usd": -0.006661,
           "passed_delta": 0,
           "task_id": "search-slug"
         },
         {
-          "baseline_cost_usd": 0.00097969,
+          "baseline_cost_usd": 0.00108624,
           "baseline_passed": true,
-          "candidate_cost_usd": 0.00088336,
+          "candidate_cost_usd": 0.00097969,
           "candidate_passed": true,
-          "cost_delta_usd": -9.6e-05,
+          "cost_delta_usd": -0.000107,
           "passed_delta": 0,
           "task_id": "search-clamp"
         }
       ],
-      "reason": "cost_not_lower",
+      "reason": "lower_cost_per_solved",
       "reasons": [
-        "cost_not_lower"
+        "lower_cost_per_solved"
       ],
       "scores": {
         "baseline": {
-          "cost_per_solved_usd": 0.000997791,
-          "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+          "cost_per_solved_usd": 0.0035560220000000003,
+          "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
           "solved": 10,
           "total": 10
         },
         "candidate": {
-          "cost_per_solved_usd": 0.001643074,
-          "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
+          "cost_per_solved_usd": 0.0009454890000000001,
+          "genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
           "solved": 10,
           "total": 10
         }
       },
-      "verdict": "reject"
+      "verdict": "adopt"
     }
   ],
   "policy_sha256": "b16a355566149f0a9fc7c72c751c93b10d71ebeef890ff13aa3aede5ae1e3d1b",
   "reasons": [
-    "cost_not_lower"
+    "lower_cost_per_solved"
   ]
 }

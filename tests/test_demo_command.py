@@ -199,3 +199,59 @@ def test_demo_live_has_exactly_one_live_and_measures_overhead(tmp_path: Path) ->
     assert isinstance(overhead["within_threshold"], bool)
     assert summary["elapsed_s"] <= 180
     assert _load(out / "audit.json")["ok"] is True
+
+
+def _fixture_search(state: Path, genome: str) -> None:
+    code = main(
+        [
+            "--root",
+            str(ROOT),
+            "search",
+            "--scenario",
+            "demo",
+            "--genome",
+            str(ROOT / "shells/code-repair/genomes" / genome),
+            "--state",
+            str(state),
+        ]
+    )
+    assert code == 0
+
+
+def test_demo_infers_baseline_genome_from_state(tmp_path: Path) -> None:
+    """baseline state 引用 v0-pi 时，demo 必须用它做起点，而不是默认 v0。"""
+    baseline = tmp_path / "high-full"
+    candidate = tmp_path / "low-full"
+    _fixture_search(baseline, "v0-pi.json")
+    _fixture_search(candidate, "v0.json")
+
+    state = tmp_path / "demo"
+    out = tmp_path / "web"
+    code = main(
+        [
+            "--root",
+            str(ROOT),
+            "demo",
+            "--mode",
+            "replay",
+            "--baseline-state",
+            str(baseline),
+            "--candidate-state",
+            str(candidate),
+            "--state",
+            str(state),
+            "--out",
+            str(out),
+        ]
+    )
+    assert code == 0
+    summary = _load(state / "demo-summary.json")
+    baseline_meta = summary["genomes"]["baseline"]
+    assert baseline_meta["source"] == "baseline-state"
+    assert baseline_meta["switches"] == {"thinking": "high", "context": "full", "tools": "bash"}
+    assert baseline_meta["genome_id"] == _load(
+        ROOT / "shells/code-repair/genomes/v0-pi.json"
+    )["genome_id"]
+    assert summary["genomes"]["proposal_matches_candidate"] is True
+    assert summary["genomes"]["candidate"]["switches"]["thinking"] == "low"
+    assert summary["genomes"]["candidate"]["switches"]["context"] == "full"

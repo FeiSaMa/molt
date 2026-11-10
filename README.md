@@ -84,17 +84,21 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
 
 | config | solved | cost | cost_per_solved |
 |---|---|---|---|
-| **low/full（baseline v0）** | **10/10** | **$0.009978** | **$0.000998** |
-| off/full（proposer 派生候选） | 10/10 | $0.012385 | $0.001239 |
-| off/minimal（最接近） | 10/10 | $0.011894 | $0.001189 |
+| **high/full（v0-pi，demo 起点）** | **10/10** | **$0.035560** | **$0.003556** |
+| **low/full（v0，demo 候选）** | **10/10** | **$0.009978** | **$0.000998** |
+| off/full | 10/10 | $0.012385 | $0.001239 |
+| off/minimal | 10/10 | $0.011894 | $0.001189 |
 | low/minimal | 10/10 | $0.021180 | $0.002118 |
-| high/full（v0-pi） | 10/10 | $0.035560 | $0.003556 |
 | high/minimal | 10/10 | $0.021113 | $0.002111 |
 
-- **没有「10/10 且 cost < baseline」的候选**；最接近的 off/minimal 仍贵 19.2%。
-  因此 `molt demo` 的 gate 如实给出 `reject / cost_not_lower` 并回滚到基线代，
-  没有为了展示 adopt 修改门禁或候选选择。
-- holdout 实测：baseline 5/5，候选 4/5（逐题明细不导出，只给聚合）。
+- 现场 demo 的叙事是**选定的高成本起点 → 低成本候选**：`high/full`（v0-pi）
+  → proposal 派生 `low/full`（v0）。成功率不变（10/10），执行成本 **−72%**
+  （`$0.035560 → $0.009978`，按 gate 的 9 题 replay + 1 条 live 实测为 **−73.4%**），
+  gate `adopt`。
+- **同时保留负结果**：6 组候选中**没有一组比 low/full 更便宜**。demo 不是搜索空间最优性
+  的声称，也不是「baseline v0 被改进」的声称——它只展示门禁能接受一个真实的
+  「成功率不变、成本更低」的候选。
+- holdout 实测：起点 high/full **5/5**，候选 low/full **5/5**（只导出聚合）。
 - fixture 基线是 `3/10`（`molt calibrate` 的校准口径）；真实 Pi 是 `10/10`。
   **fixture 只用于校准，不是能力声明。**
 
@@ -106,6 +110,6 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
   第二 shell `svc-config` + deterministic runtime（零成本、manifest 驱动装载）、
   `demo-6` 的 10 search + 5 holdout 题集、`calibrate` 基线校准、
   `export` 的 `web/data` 数据导出（无页面代码）、
-  `demo` 现场闭环（1 live + 1 replay + 10 题扫描回放，180s 硬上限；真实扫描结论为
-  `reject / cost_not_lower`，证据在 `web/data`）。
+  `demo` 现场闭环（1 live + 1 replay + 10 题扫描回放，180s 硬上限；选定高→低起点，
+  gate `adopt`，真实数字与负结果见 ADR-0008，证据在 `web/data`）。
 - 未实现：HTML 报告页面。

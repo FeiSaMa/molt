@@ -15,9 +15,12 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 - 在固定的 10 题搜索集上，**未观察到通过题数下降**（n=10，描述性结论，seed 不可控），
   且**单题执行成本不升**；搜索开销单列报告，不与执行成本互相抵消。
   原文见 [ADR-0003 §claim 措辞](docs/decisions/0003-scoring.md)。
-- 真实 Pi 负结果（demo-6，2026-11-11）：baseline `low/full` 为 **10/10、$0.009978**；
-  5 个候选配置均 10/10，但单位成本更高（最接近的 `off/minimal` 仍 +19.2%）。
-  因此 gate 给出 `reject / cost_not_lower` 并回滚——**没有采纳，也没有能力提升可宣称**。
+- 真实 Pi demo（demo-6，2026-11-11）：起点 `high/full`（v0-pi）**10/10、$0.035560**；
+  proposal 派生候选 `low/full`（v0）**10/10、$0.009978**，执行成本 **−72%**（gate 实测
+  9 题 replay + 1 条 live 为 −73.4%），gate `adopt`。这是**选定的高→低起点**，
+  不是搜索空间最优性声称。
+- 负结果（同批 6 组）：**没有候选比 low/full 更便宜**（最接近的 `off/minimal` 仍 +19.2%）；
+  不得把 demo 表述成「baseline v0 被改进」或「搜索找到了更优配置」。
 - fixture 基线是 `3/10`，只用于 `molt calibrate` 校准，不得当作真实能力或对外 claim。
 - 任何结论必须带逐题配对表；聚合数字不得单独出现。
 - 每次执行落成可复算的证据链（§三），`molt audit` 能从 run + ledger 重算指标。
@@ -36,7 +39,7 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 - `demo-6`：10 搜索 + 5 holdout，`bench_hash` / genome / task 全量对齐。
 - 第二 shell `svc-config` + deterministic runtime（零成本、manifest 驱动装载）。
 - `molt demo`：1 live + 1 replay 闭环、10 题扫描回放、180s 硬上限（ADR-0008）；
-  真实扫描结论为 `reject / cost_not_lower`（无候选优于 baseline）。
+  选定 `high/full → low/full` 的真实高→低起点，gate `adopt`（10/10，成本 −72%）。
 - `molt doctor --repo-policy`：只读检查协作文件、冻结面与契约域。
 
 ## 二、三层与七端口

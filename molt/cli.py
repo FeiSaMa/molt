@@ -1201,6 +1201,15 @@ def cmd_demo(args: argparse.Namespace) -> int:
         f"cost={_fmt_cost(summary['proposal']['cost_usd'])} "
         f"switches={summary['proposal']['switches']}"
     )
+    genomes = summary["genomes"]
+    print(
+        f"genomes baseline={genomes['baseline']['switches']} "
+        f"({genomes['baseline']['source']}, {genomes['baseline']['genome_id'][:15]}) "
+        f"candidate={genomes['candidate']['switches']} "
+        f"({genomes['candidate']['source']}, {genomes['candidate']['genome_id'][:15]}) "
+        f"proposal_matches={genomes['proposal_matches_candidate']} "
+        f"runtime_variant={genomes['candidate'].get('runtime_variant')}"
+    )
     _print_closure(summary)
     print(f"scan10 replay_runs={len(summary['scan10'])}（10 题扫描的回放，不是第二次 demo 运行）")
     print(

@@ -530,6 +530,48 @@ def _has_scope_runs(state: StateStore, scenario: Scenario, scope: str) -> bool:
     return found == wanted
 
 
+def _state_genome(
+    state: StateStore,
+    scenario: Scenario,
+    repo_root: Path,
+    *,
+    scope: str = "search",
+    exclude: Sequence[str] = (),
+) -> Genome | None:
+    """推断 state 内 run 引用的唯一 genome；分别从 state 与仓库 genomes 解析。"""
+    wanted = set(scenario.task_sets[scope]) - set(exclude)
+    ids = {
+        run.genome_id
+        for run in state.list_runs()
+        if run.scope == scope and run.attempt == 1 and run.task_id in wanted
+    }
+    if len(ids) != 1:
+        return None
+    genome_id = next(iter(ids))
+    candidates: list[Genome] = []
+    try:
+        candidates.append(state.read_genome(genome_id))
+    except ValidationError:
+        pass
+    for path in sorted((Path(repo_root) / "shells" / scenario.shell_id / "genomes").glob("*.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("genome_id") == genome_id:
+            candidates.append(Genome.from_dict(data))
+            break
+    for genome in candidates:
+        if genome.shell_id != scenario.shell_id:
+            continue
+        if genome.scenario_version != scenario.scenario_version:
+            continue
+        errors = verify_genome(genome, repo_root)
+        if errors:
+            raise ValueError(
+                f"state {state.root} 引用的 genome {genome_id} 校验失败: " + "; ".join(errors)
+            )
+        return genome
+    return None
+
+
 def record_baseline_scan(
     repo_root: Path,
     scenario: Scenario,
@@ -584,8 +626,6 @@ def run_demo(
 
     store = StateStore(state_root)
     store.ensure()
-    baseline_genome = load_genome(repo_root, default_genome_path(repo_root, scenario))
-    store.write_genome(baseline_genome)
     _deadline_check(deadline, "init", started)
 
     # 1) baseline：显式 --baseline-state 只读；否则录制/复用同级 baseline state。
@@ -607,9 +647,16 @@ def run_demo(
         else:
             source_runs = []
         if not source_runs:
-            record_baseline_scan(repo_root, scenario, baseline_root, baseline_genome)
+            default_genome = load_genome(repo_root, default_genome_path(repo_root, scenario))
+            record_baseline_scan(repo_root, scenario, baseline_root, default_genome)
             recorded = True
             source_runs = _baseline_runs(StateStore(baseline_root), scenario)
+    inferred = _state_genome(baseline_store, scenario, repo_root)
+    baseline_genome = inferred or load_genome(
+        repo_root, default_genome_path(repo_root, scenario)
+    )
+    baseline_genome_source = "baseline-state" if inferred is not None else "default-genome"
+    store.write_genome(baseline_genome)
     _deadline_check(deadline, "baseline", started)
 
     # 2) 10 题扫描回放 + closure 单题基线回放（都是新 run_id，源 run 不改写）。
@@ -638,18 +685,27 @@ def run_demo(
     history = engine.search_history(baseline_genome, scan_replays)
     proposal = engine.propose(baseline_genome, history)
     engine.record_proposal(proposal)
-    candidate = child_genome(baseline_genome, proposal.switches, repo_root=repo_root)
+    candidate_store: StateStore | None = None
+    state_candidate: Genome | None = None
+    if candidate_state is not None:
+        candidate_store = StateStore(Path(candidate_state))
+        if not (candidate_store.root / "runs").is_dir():
+            raise FileNotFoundError(f"candidate state 不存在或没有 runs: {candidate_state}")
+        state_candidate = _state_genome(
+            candidate_store, scenario, repo_root, exclude=[closure_task_id]
+        )
+    candidate = state_candidate or child_genome(
+        baseline_genome, proposal.switches, repo_root=repo_root
+    )
+    candidate_genome_source = "candidate-state" if state_candidate is not None else "proposal"
+    proposal_matches_candidate = proposal.switches.to_dict() == candidate.switches.to_dict()
     store.write_genome(candidate)
     _deadline_check(deadline, "propose", started)
 
     # 4) 候选：给了 --candidate-state 就复制已录 9 题（replay）；否则现场 fixture。
     other_ids = [task_id for task_id in search_ids if task_id != closure_task_id]
     candidate_fixture_runs: list[Run] = []
-    candidate_store: StateStore | None = None
-    if candidate_state is not None:
-        candidate_store = StateStore(Path(candidate_state))
-        if not (candidate_store.root / "runs").is_dir():
-            raise FileNotFoundError(f"candidate state 不存在或没有 runs: {candidate_state}")
+    if candidate_store is not None:
         other_runs = _scope_runs(candidate_store, scenario, "search", exclude=[closure_task_id])
         _copy_genomes(store, candidate_store, other_runs)
         for index, source in enumerate(other_runs):
@@ -952,6 +1008,23 @@ def run_demo(
             "task_id": closure_task_id,
             "baseline": _run_digest(closure_baseline),
             "candidate": _run_digest(closure_run),
+        },
+        "genomes": {
+            "baseline": {
+                "genome_id": baseline_genome.genome_id,
+                "switches": baseline_genome.switches.to_dict(),
+                "runtime": dict(baseline_genome.runtime),
+                "source": baseline_genome_source,
+            },
+            "candidate": {
+                "genome_id": active_genome.genome_id,
+                "scan_genome_id": candidate.genome_id,
+                "switches": active_genome.switches.to_dict(),
+                "runtime": dict(active_genome.runtime),
+                "source": candidate_genome_source,
+                "runtime_variant": active_genome.genome_id != candidate.genome_id,
+            },
+            "proposal_matches_candidate": proposal_matches_candidate,
         },
         "scan10": [_run_digest(run) for run in scan_replays],
         "candidate_scan": [_run_digest(run) for run in candidate_fixture_runs],

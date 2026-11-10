@@ -64,9 +64,10 @@ fail closed：`kind="live"` 同时带 `replay_of_run_id`、`kind="live"` 无 `mo
 - 「1 live + 1 replay」只指 `closure`；`scan10` 是**扫描回放**，不是 demo 的第二次运行。
 - live 模式下全文件恰好 1 条 `kind=live`；`--mode replay` 下恰 0 条，closure 候选标 `fixture`。
 - 页面讲法：closure 讲「基线回放 → 提案 → 真实候选 → 门禁」，scan10 讲「此前 10 题扫描的回放」。
-- 当前提交的样例来自真实 Pi 扫描：baseline 10/10、候选 10/10 但单位成本更高，
-  `gate.json` 结论为 `reject / cost_not_lower`，`archive.json` 记录回滚；这是负结果，
-  页面不得改写成「已采纳」。
+- 当前提交的样例来自真实 Pi 扫描：**起点 high/full（v0-pi）$0.035560 → 候选
+  low/full（v0）$0.009978**，10/10 不变、成本 −72%，`gate.json` 为 `adopt`。
+  页面必须标明 demo 的**起点是 high/full**，不得说成「baseline v0 被改进」；
+  6 组扫描中没有比 low/full 更便宜的候选（负结果见 ADR-0008）。
 
 ## 重新生成
 

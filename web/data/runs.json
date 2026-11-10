@@ -2,56 +2,25 @@
   "runs": [
     {
       "attempt": 1,
-      "cost_usd": 0.00491424,
+      "cost_usd": 0.00098375,
       "demo_group": "closure",
-      "finished_at": "2026-11-10T16:52:33Z",
-      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
+      "finished_at": "2026-11-10T17:00:33Z",
+      "genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
       "provenance": {
         "kind": "live",
         "live": true,
         "model": "deepseek/deepseek-flash",
         "runtime_id": "pi-1.5.0"
       },
-      "run_id": "0f659604-smoke-add-a1-5d1f3e",
+      "run_id": "0976fd25-smoke-add-a1-9edd2f",
       "scope": "search",
       "solved": true,
-      "started_at": "2026-11-10T16:52:23Z",
+      "started_at": "2026-11-10T17:00:27Z",
       "status": "passed",
       "task_id": "smoke-add",
       "tokens": {
-        "in": 13176,
-        "out": 510
-      },
-      "turns": 5,
-      "verifier": {
-        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
-        "matches": true,
-        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
-        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
-      },
-      "wall_ms": 9812
-    },
-    {
-      "attempt": 1,
-      "cost_usd": 0.00150677,
-      "demo_group": "scan10",
-      "finished_at": "2026-11-10T16:32:30Z",
-      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
-      "provenance": {
-        "group": "scan10",
-        "kind": "replay",
-        "live": false,
-        "replay_of_run_id": "6b492ef0-smoke-add-a1-3ac19b"
-      },
-      "run_id": "replay-00-6b492ef0-smoke-add-a1-3ac19b",
-      "scope": "search",
-      "solved": true,
-      "started_at": "2026-11-10T16:32:25Z",
-      "status": "passed",
-      "task_id": "smoke-add",
-      "tokens": {
-        "in": 3868,
-        "out": 240
+        "in": 1603,
+        "out": 284
       },
       "turns": 4,
       "verifier": {
@@ -60,21 +29,331 @@
         "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
         "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
       },
-      "wall_ms": 4951
+      "wall_ms": 5786
     },
     {
       "attempt": 1,
-      "cost_usd": 0.00080566,
+      "cost_usd": 0.0023281,
       "demo_group": "scan10",
-      "finished_at": "2026-11-10T16:32:34Z",
-      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "finished_at": "2026-11-10T16:48:32Z",
+      "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
       "provenance": {
         "group": "scan10",
         "kind": "replay",
         "live": false,
+        "replay_of_run_id": "9753c7bb-smoke-add-a1-e0db71"
+      },
+      "run_id": "replay-00-9753c7bb-smoke-add-a1-e0db71",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T16:48:25Z",
+      "status": "passed",
+      "task_id": "smoke-add",
+      "tokens": {
+        "in": 6144,
+        "out": 294
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
+        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
+      },
+      "wall_ms": 7126
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.00586628,
+      "demo_group": "scan10",
+      "finished_at": "2026-11-10T16:48:43Z",
+      "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
+      "provenance": {
+        "group": "scan10",
+        "kind": "replay",
+        "live": false,
+        "replay_of_run_id": "9753c7bb-smoke-even-a1-0d31c1"
+      },
+      "run_id": "replay-01-9753c7bb-smoke-even-a1-0d31c1",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T16:48:32Z",
+      "status": "passed",
+      "task_id": "smoke-even",
+      "tokens": {
+        "in": 14049,
+        "out": 1080
+      },
+      "turns": 5,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
+        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
+      },
+      "wall_ms": 10089
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.00152552,
+      "demo_group": "scan10",
+      "finished_at": "2026-11-10T16:48:50Z",
+      "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
+      "provenance": {
+        "group": "scan10",
+        "kind": "replay",
+        "live": false,
+        "replay_of_run_id": "9753c7bb-search-off-by-one-a1-52e938"
+      },
+      "run_id": "replay-02-9753c7bb-search-off-by-one-a1-52e938",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T16:48:43Z",
+      "status": "passed",
+      "task_id": "search-off-by-one",
+      "tokens": {
+        "in": 2207,
+        "out": 548
+      },
+      "turns": 5,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
+        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
+      },
+      "wall_ms": 6881
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.00161809,
+      "demo_group": "scan10",
+      "finished_at": "2026-11-10T16:48:58Z",
+      "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
+      "provenance": {
+        "group": "scan10",
+        "kind": "replay",
+        "live": false,
+        "replay_of_run_id": "9753c7bb-search-max-two-a1-45cd4e"
+      },
+      "run_id": "replay-03-9753c7bb-search-max-two-a1-45cd4e",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T16:48:50Z",
+      "status": "passed",
+      "task_id": "search-max-two",
+      "tokens": {
+        "in": 2093,
+        "out": 653
+      },
+      "turns": 5,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
+        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
+      },
+      "wall_ms": 7982
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.00629018,
+      "demo_group": "scan10",
+      "finished_at": "2026-11-10T16:49:11Z",
+      "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
+      "provenance": {
+        "group": "scan10",
+        "kind": "replay",
+        "live": false,
+        "replay_of_run_id": "9753c7bb-search-missing-return-a1-3a92e1"
+      },
+      "run_id": "replay-04-9753c7bb-search-missing-return-a1-3a92e1",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T16:48:58Z",
+      "status": "passed",
+      "task_id": "search-missing-return",
+      "tokens": {
+        "in": 15122,
+        "out": 1117
+      },
+      "turns": 6,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
+        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
+      },
+      "wall_ms": 13088
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.00107814,
+      "demo_group": "scan10",
+      "finished_at": "2026-11-10T16:49:17Z",
+      "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
+      "provenance": {
+        "group": "scan10",
+        "kind": "replay",
+        "live": false,
+        "replay_of_run_id": "9753c7bb-search-wrong-var-a1-6b6aab"
+      },
+      "run_id": "replay-05-9753c7bb-search-wrong-var-a1-6b6aab",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T16:49:11Z",
+      "status": "passed",
+      "task_id": "search-wrong-var",
+      "tokens": {
+        "in": 1597,
+        "out": 368
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
+        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
+      },
+      "wall_ms": 5779
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.00566225,
+      "demo_group": "scan10",
+      "finished_at": "2026-11-10T16:49:32Z",
+      "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
+      "provenance": {
+        "group": "scan10",
+        "kind": "replay",
+        "live": false,
+        "replay_of_run_id": "9753c7bb-search-slice-a1-8e0995"
+      },
+      "run_id": "replay-06-9753c7bb-search-slice-a1-8e0995",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T16:49:17Z",
+      "status": "passed",
+      "task_id": "search-slice",
+      "tokens": {
+        "in": 11858,
+        "out": 1443
+      },
+      "turns": 6,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
+        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
+      },
+      "wall_ms": 13890
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.00180953,
+      "demo_group": "scan10",
+      "finished_at": "2026-11-10T16:49:41Z",
+      "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
+      "provenance": {
+        "group": "scan10",
+        "kind": "replay",
+        "live": false,
+        "replay_of_run_id": "9753c7bb-search-mean-a1-7bd85f"
+      },
+      "run_id": "replay-07-9753c7bb-search-mean-a1-7bd85f",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T16:49:32Z",
+      "status": "passed",
+      "task_id": "search-mean",
+      "tokens": {
+        "in": 2146,
+        "out": 798
+      },
+      "turns": 5,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
+        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
+      },
+      "wall_ms": 9233
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.00829589,
+      "demo_group": "scan10",
+      "finished_at": "2026-11-10T16:50:09Z",
+      "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
+      "provenance": {
+        "group": "scan10",
+        "kind": "replay",
+        "live": false,
+        "replay_of_run_id": "9753c7bb-search-slug-a1-ed3bc4"
+      },
+      "run_id": "replay-08-9753c7bb-search-slug-a1-ed3bc4",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T16:49:41Z",
+      "status": "passed",
+      "task_id": "search-slug",
+      "tokens": {
+        "in": 11872,
+        "out": 3535
+      },
+      "turns": 7,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
+        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
+      },
+      "wall_ms": 27487
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.00108624,
+      "demo_group": "scan10",
+      "finished_at": "2026-11-10T16:50:14Z",
+      "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
+      "provenance": {
+        "group": "scan10",
+        "kind": "replay",
+        "live": false,
+        "replay_of_run_id": "9753c7bb-search-clamp-a1-1de8f9"
+      },
+      "run_id": "replay-09-9753c7bb-search-clamp-a1-1de8f9",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T16:50:09Z",
+      "status": "passed",
+      "task_id": "search-clamp",
+      "tokens": {
+        "in": 1556,
+        "out": 385
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+        "matches": true,
+        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
+        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
+      },
+      "wall_ms": 5328
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.00080566,
+      "demo_group": "candidate-scan",
+      "finished_at": "2026-11-10T16:32:34Z",
+      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "provenance": {
+        "group": "candidate-scan",
+        "kind": "replay",
+        "live": false,
         "replay_of_run_id": "6b492ef0-smoke-even-a1-2739c5"
       },
-      "run_id": "replay-01-6b492ef0-smoke-even-a1-2739c5",
+      "run_id": "replay-candidate-00-6b492ef0-smoke-even-a1-2739c5",
       "scope": "search",
       "solved": true,
       "started_at": "2026-11-10T16:32:30Z",
@@ -96,16 +375,16 @@
     {
       "attempt": 1,
       "cost_usd": 0.00102559,
-      "demo_group": "scan10",
+      "demo_group": "candidate-scan",
       "finished_at": "2026-11-10T16:32:38Z",
       "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "provenance": {
-        "group": "scan10",
+        "group": "candidate-scan",
         "kind": "replay",
         "live": false,
         "replay_of_run_id": "6b492ef0-search-off-by-one-a1-47cd00"
       },
-      "run_id": "replay-02-6b492ef0-search-off-by-one-a1-47cd00",
+      "run_id": "replay-candidate-01-6b492ef0-search-off-by-one-a1-47cd00",
       "scope": "search",
       "solved": true,
       "started_at": "2026-11-10T16:32:34Z",
@@ -127,16 +406,16 @@
     {
       "attempt": 1,
       "cost_usd": 0.00077879,
-      "demo_group": "scan10",
+      "demo_group": "candidate-scan",
       "finished_at": "2026-11-10T16:32:42Z",
       "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "provenance": {
-        "group": "scan10",
+        "group": "candidate-scan",
         "kind": "replay",
         "live": false,
         "replay_of_run_id": "6b492ef0-search-max-two-a1-37f524"
       },
-      "run_id": "replay-03-6b492ef0-search-max-two-a1-37f524",
+      "run_id": "replay-candidate-02-6b492ef0-search-max-two-a1-37f524",
       "scope": "search",
       "solved": true,
       "started_at": "2026-11-10T16:32:38Z",
@@ -158,16 +437,16 @@
     {
       "attempt": 1,
       "cost_usd": 0.00083776,
-      "demo_group": "scan10",
+      "demo_group": "candidate-scan",
       "finished_at": "2026-11-10T16:32:46Z",
       "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "provenance": {
-        "group": "scan10",
+        "group": "candidate-scan",
         "kind": "replay",
         "live": false,
         "replay_of_run_id": "6b492ef0-search-missing-return-a1-4b829d"
       },
-      "run_id": "replay-04-6b492ef0-search-missing-return-a1-4b829d",
+      "run_id": "replay-candidate-03-6b492ef0-search-missing-return-a1-4b829d",
       "scope": "search",
       "solved": true,
       "started_at": "2026-11-10T16:32:42Z",
@@ -189,16 +468,16 @@
     {
       "attempt": 1,
       "cost_usd": 0.00080866,
-      "demo_group": "scan10",
+      "demo_group": "candidate-scan",
       "finished_at": "2026-11-10T16:32:51Z",
       "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "provenance": {
-        "group": "scan10",
+        "group": "candidate-scan",
         "kind": "replay",
         "live": false,
         "replay_of_run_id": "6b492ef0-search-wrong-var-a1-e31632"
       },
-      "run_id": "replay-05-6b492ef0-search-wrong-var-a1-e31632",
+      "run_id": "replay-candidate-04-6b492ef0-search-wrong-var-a1-e31632",
       "scope": "search",
       "solved": true,
       "started_at": "2026-11-10T16:32:46Z",
@@ -220,16 +499,16 @@
     {
       "attempt": 1,
       "cost_usd": 0.00080309,
-      "demo_group": "scan10",
+      "demo_group": "candidate-scan",
       "finished_at": "2026-11-10T16:32:55Z",
       "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "provenance": {
-        "group": "scan10",
+        "group": "candidate-scan",
         "kind": "replay",
         "live": false,
         "replay_of_run_id": "6b492ef0-search-slice-a1-32d66d"
       },
-      "run_id": "replay-06-6b492ef0-search-slice-a1-32d66d",
+      "run_id": "replay-candidate-05-6b492ef0-search-slice-a1-32d66d",
       "scope": "search",
       "solved": true,
       "started_at": "2026-11-10T16:32:51Z",
@@ -251,16 +530,16 @@
     {
       "attempt": 1,
       "cost_usd": 0.00079679,
-      "demo_group": "scan10",
+      "demo_group": "candidate-scan",
       "finished_at": "2026-11-10T16:32:59Z",
       "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "provenance": {
-        "group": "scan10",
+        "group": "candidate-scan",
         "kind": "replay",
         "live": false,
         "replay_of_run_id": "6b492ef0-search-mean-a1-f2fb6b"
       },
-      "run_id": "replay-07-6b492ef0-search-mean-a1-f2fb6b",
+      "run_id": "replay-candidate-06-6b492ef0-search-mean-a1-f2fb6b",
       "scope": "search",
       "solved": true,
       "started_at": "2026-11-10T16:32:55Z",
@@ -282,16 +561,16 @@
     {
       "attempt": 1,
       "cost_usd": 0.00163511,
-      "demo_group": "scan10",
+      "demo_group": "candidate-scan",
       "finished_at": "2026-11-10T16:33:05Z",
       "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "provenance": {
-        "group": "scan10",
+        "group": "candidate-scan",
         "kind": "replay",
         "live": false,
         "replay_of_run_id": "6b492ef0-search-slug-a1-13233d"
       },
-      "run_id": "replay-08-6b492ef0-search-slug-a1-13233d",
+      "run_id": "replay-candidate-07-6b492ef0-search-slug-a1-13233d",
       "scope": "search",
       "solved": true,
       "started_at": "2026-11-10T16:32:59Z",
@@ -313,16 +592,16 @@
     {
       "attempt": 1,
       "cost_usd": 0.00097969,
-      "demo_group": "scan10",
+      "demo_group": "candidate-scan",
       "finished_at": "2026-11-10T16:33:09Z",
       "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "provenance": {
-        "group": "scan10",
+        "group": "candidate-scan",
         "kind": "replay",
         "live": false,
         "replay_of_run_id": "6b492ef0-search-clamp-a1-a0ff04"
       },
-      "run_id": "replay-09-6b492ef0-search-clamp-a1-a0ff04",
+      "run_id": "replay-candidate-08-6b492ef0-search-clamp-a1-a0ff04",
       "scope": "search",
       "solved": true,
       "started_at": "2026-11-10T16:33:05Z",
@@ -343,304 +622,25 @@
     },
     {
       "attempt": 1,
-      "cost_usd": 0.00081196,
-      "demo_group": "candidate-scan",
-      "finished_at": "2026-11-10T16:33:34Z",
-      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
-      "provenance": {
-        "group": "candidate-scan",
-        "kind": "replay",
-        "live": false,
-        "replay_of_run_id": "0f659604-smoke-even-a1-620a73"
-      },
-      "run_id": "replay-candidate-00-0f659604-smoke-even-a1-620a73",
-      "scope": "search",
-      "solved": true,
-      "started_at": "2026-11-10T16:33:31Z",
-      "status": "passed",
-      "task_id": "smoke-even",
-      "tokens": {
-        "in": 1415,
-        "out": 264
-      },
-      "turns": 4,
-      "verifier": {
-        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
-        "matches": true,
-        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
-        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
-      },
-      "wall_ms": 3674
-    },
-    {
-      "attempt": 1,
-      "cost_usd": 0.00104706,
-      "demo_group": "candidate-scan",
-      "finished_at": "2026-11-10T16:33:39Z",
-      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
-      "provenance": {
-        "group": "candidate-scan",
-        "kind": "replay",
-        "live": false,
-        "replay_of_run_id": "0f659604-search-off-by-one-a1-5d704d"
-      },
-      "run_id": "replay-candidate-01-0f659604-search-off-by-one-a1-5d704d",
-      "scope": "search",
-      "solved": true,
-      "started_at": "2026-11-10T16:33:34Z",
-      "status": "passed",
-      "task_id": "search-off-by-one",
-      "tokens": {
-        "in": 1955,
-        "out": 307
-      },
-      "turns": 5,
-      "verifier": {
-        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
-        "matches": true,
-        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
-        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
-      },
-      "wall_ms": 4024
-    },
-    {
-      "attempt": 1,
-      "cost_usd": 0.00172732,
-      "demo_group": "candidate-scan",
-      "finished_at": "2026-11-10T16:33:47Z",
-      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
-      "provenance": {
-        "group": "candidate-scan",
-        "kind": "replay",
-        "live": false,
-        "replay_of_run_id": "0f659604-search-max-two-a1-9ba190"
-      },
-      "run_id": "replay-candidate-02-0f659604-search-max-two-a1-9ba190",
-      "scope": "search",
-      "solved": true,
-      "started_at": "2026-11-10T16:33:39Z",
-      "status": "passed",
-      "task_id": "search-max-two",
-      "tokens": {
-        "in": 2215,
-        "out": 766
-      },
-      "turns": 7,
-      "verifier": {
-        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
-        "matches": true,
-        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
-        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
-      },
-      "wall_ms": 7934
-    },
-    {
-      "attempt": 1,
-      "cost_usd": 0.00202702,
-      "demo_group": "candidate-scan",
-      "finished_at": "2026-11-10T16:33:55Z",
-      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
-      "provenance": {
-        "group": "candidate-scan",
-        "kind": "replay",
-        "live": false,
-        "replay_of_run_id": "0f659604-search-missing-return-a1-346ef7"
-      },
-      "run_id": "replay-candidate-03-0f659604-search-missing-return-a1-346ef7",
-      "scope": "search",
-      "solved": true,
-      "started_at": "2026-11-10T16:33:47Z",
-      "status": "passed",
-      "task_id": "search-missing-return",
-      "tokens": {
-        "in": 2990,
-        "out": 806
-      },
-      "turns": 7,
-      "verifier": {
-        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
-        "matches": true,
-        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
-        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
-      },
-      "wall_ms": 7634
-    },
-    {
-      "attempt": 1,
-      "cost_usd": 0.00077206,
-      "demo_group": "candidate-scan",
-      "finished_at": "2026-11-10T16:33:59Z",
-      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
-      "provenance": {
-        "group": "candidate-scan",
-        "kind": "replay",
-        "live": false,
-        "replay_of_run_id": "0f659604-search-wrong-var-a1-c1214a"
-      },
-      "run_id": "replay-candidate-04-0f659604-search-wrong-var-a1-c1214a",
-      "scope": "search",
-      "solved": true,
-      "started_at": "2026-11-10T16:33:55Z",
-      "status": "passed",
-      "task_id": "search-wrong-var",
-      "tokens": {
-        "in": 1414,
-        "out": 231
-      },
-      "turns": 4,
-      "verifier": {
-        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
-        "matches": true,
-        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
-        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
-      },
-      "wall_ms": 3822
-    },
-    {
-      "attempt": 1,
-      "cost_usd": 0.00155581,
-      "demo_group": "candidate-scan",
-      "finished_at": "2026-11-10T16:34:05Z",
-      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
-      "provenance": {
-        "group": "candidate-scan",
-        "kind": "replay",
-        "live": false,
-        "replay_of_run_id": "0f659604-search-slice-a1-164934"
-      },
-      "run_id": "replay-candidate-05-0f659604-search-slice-a1-164934",
-      "scope": "search",
-      "solved": true,
-      "started_at": "2026-11-10T16:33:59Z",
-      "status": "passed",
-      "task_id": "search-slice",
-      "tokens": {
-        "in": 2831,
-        "out": 503
-      },
-      "turns": 5,
-      "verifier": {
-        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
-        "matches": true,
-        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
-        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
-      },
-      "wall_ms": 5627
-    },
-    {
-      "attempt": 1,
-      "cost_usd": 0.00094352,
-      "demo_group": "candidate-scan",
-      "finished_at": "2026-11-10T16:34:10Z",
-      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
-      "provenance": {
-        "group": "candidate-scan",
-        "kind": "replay",
-        "live": false,
-        "replay_of_run_id": "0f659604-search-mean-a1-8165b7"
-      },
-      "run_id": "replay-candidate-06-0f659604-search-mean-a1-8165b7",
-      "scope": "search",
-      "solved": true,
-      "started_at": "2026-11-10T16:34:05Z",
-      "status": "passed",
-      "task_id": "search-mean",
-      "tokens": {
-        "in": 1499,
-        "out": 352
-      },
-      "turns": 4,
-      "verifier": {
-        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
-        "matches": true,
-        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
-        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
-      },
-      "wall_ms": 4774
-    },
-    {
-      "attempt": 1,
-      "cost_usd": 0.00174839,
-      "demo_group": "candidate-scan",
-      "finished_at": "2026-11-10T16:34:17Z",
-      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
-      "provenance": {
-        "group": "candidate-scan",
-        "kind": "replay",
-        "live": false,
-        "replay_of_run_id": "0f659604-search-slug-a1-65e7c4"
-      },
-      "run_id": "replay-candidate-07-0f659604-search-slug-a1-65e7c4",
-      "scope": "search",
-      "solved": true,
-      "started_at": "2026-11-10T16:34:10Z",
-      "status": "passed",
-      "task_id": "search-slug",
-      "tokens": {
-        "in": 2735,
-        "out": 667
-      },
-      "turns": 6,
-      "verifier": {
-        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
-        "matches": true,
-        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
-        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
-      },
-      "wall_ms": 6579
-    },
-    {
-      "attempt": 1,
-      "cost_usd": 0.00088336,
-      "demo_group": "candidate-scan",
-      "finished_at": "2026-11-10T16:34:20Z",
-      "genome_id": "sha256:0f6596048f3bdac104dbc042520aada5388ee6beb4e50528cdd449f8f5aee154",
-      "provenance": {
-        "group": "candidate-scan",
-        "kind": "replay",
-        "live": false,
-        "replay_of_run_id": "0f659604-search-clamp-a1-1e9b68"
-      },
-      "run_id": "replay-candidate-08-0f659604-search-clamp-a1-1e9b68",
-      "scope": "search",
-      "solved": true,
-      "started_at": "2026-11-10T16:34:17Z",
-      "status": "passed",
-      "task_id": "search-clamp",
-      "tokens": {
-        "in": 1481,
-        "out": 307
-      },
-      "turns": 4,
-      "verifier": {
-        "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
-        "matches": true,
-        "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
-        "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
-      },
-      "wall_ms": 3471
-    },
-    {
-      "attempt": 1,
-      "cost_usd": 0.00150677,
+      "cost_usd": 0.0023281,
       "demo_group": "closure",
-      "finished_at": "2026-11-10T16:32:30Z",
-      "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "finished_at": "2026-11-10T16:48:32Z",
+      "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
       "provenance": {
         "group": "closure",
         "kind": "replay",
         "live": false,
-        "replay_of_run_id": "6b492ef0-smoke-add-a1-3ac19b"
+        "replay_of_run_id": "9753c7bb-smoke-add-a1-e0db71"
       },
-      "run_id": "replay-closure-6b492ef0-smoke-add-a1-3ac19b",
+      "run_id": "replay-closure-9753c7bb-smoke-add-a1-e0db71",
       "scope": "search",
       "solved": true,
-      "started_at": "2026-11-10T16:32:25Z",
+      "started_at": "2026-11-10T16:48:25Z",
       "status": "passed",
       "task_id": "smoke-add",
       "tokens": {
-        "in": 3868,
-        "out": 240
+        "in": 6144,
+        "out": 294
       },
       "turns": 4,
       "verifier": {
@@ -649,7 +649,7 @@
         "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
         "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
       },
-      "wall_ms": 4951
+      "wall_ms": 7126
     }
   ]
 }
