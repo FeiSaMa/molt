@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "demo-2",
-  "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+  "scenario_version": "demo-3",
+  "genome_id": "sha256:cda3f7e2d5c68367d79f69c23b15278bd2251e62f7e2e2254e212cfc05bde053",
   "parent_id": null,
   "shell_id": "code-repair",
   "shell_version": "1.0.0",
@@ -25,7 +25,7 @@
   },
   "artifacts": {
     "shells/code-repair/manifest.json": "c3e8205efe070b02dde5b06765093c888a85bb9c2a7b0d0c5f2573c2287a7216",
-    "shells/code-repair/harness.py": "26929b2b3db7b2f0a1d5d390a10e2373d945db33c3e20bc54e8010b8f95a48f8",
+    "shells/code-repair/harness.py": "d8626d6ac8afa180259ab4e7276ae345e7f71f211f1b5802eed27820b383bee5",
     "shells/code-repair/verifier.py": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
     "shells/code-repair/task_provider.py": "965f74cc0885363f03a6e5a14dbc7a5a128ca4749eae143247665d606e438cb2",
     "shells/code-repair/switches.schema.json": "62029eaef15e7f2ad3cd133efa1c0c367cb64f5d490fd5aed15251a5b42c9f87",

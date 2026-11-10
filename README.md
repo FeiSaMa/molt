@@ -4,8 +4,8 @@
 并把每次执行变成可复算的证据。
 
 B1 已完成 core v1 协议、门禁引擎、快照事务、事件 / 账本分片、隔离抽象与 fixture runtime。
-B2a 增加 LLM proposer（DeepSeek transport 可注入）与通用网格回退；Pi adapter、svc-config、
-HTML 报告与正式题集仍属于后续批次。
+B2a 增加 LLM proposer；B2b 增加 Pi 1.5.0 adapter、bwrap bash sandbox、trust preflight、
+session 账本与预算执行。svc-config、HTML 报告与正式题集仍属于后续批次。
 
 ## 分层
 
@@ -39,7 +39,8 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
 - 决策：[ADR-0002 协议](docs/decisions/0002-protocol-v1.md)、
   [ADR-0003 评分](docs/decisions/0003-scoring.md)、
   [ADR-0004 shell 与三维](docs/decisions/0004-shell-and-dims.md)、
-  [ADR-0005 proposer](docs/decisions/0005-proposer.md)。
+  [ADR-0005 proposer](docs/decisions/0005-proposer.md)、
+  [ADR-0006 isolation](docs/decisions/0006-isolation.md)。
 - 旧契约已归档：[`docs/archive/contracts-v0.md`](docs/archive/contracts-v0.md)。
 
 ## 关键口径
@@ -55,5 +56,5 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
 
 - 已实现：schema / 类型双校验、genome 哈希冻结、G1–G8 门禁、快照与 kill -9 恢复、
   并发 adoption 单胜、per-run 事件与账本、holdout 类型隔离、审计重算、零写入测试、
-  LLM/grid proposer（proposal.ext 契约、fallback、overhead 账本）。
-- 未实现：Pi adapter、`svc-config` shell、HTML 报告、正式 10+5 题集、`export` / `demo` 命令。
+  LLM/grid proposer、Pi 1.5.0 runtime（sandbox / trust / 账本 / 预算）。
+- 未实现：`svc-config` shell、HTML 报告、正式 10+5 题集、`export` / `demo` 命令。

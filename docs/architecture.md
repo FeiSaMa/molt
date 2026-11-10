@@ -1,7 +1,7 @@
 # 架构
 
 molt 把"搜索候选 → 执行题集 → 判分 → 门禁 → 采纳 / 回退"做成一条可复算的流水线。
-本文件描述 B1 + B2a 的实际分层；字段级契约以 [`protocol.md`](protocol.md) 与 `schemas/v1/` 为准。
+本文件描述 B1 + B2a + B2b 的实际分层；字段级契约以 [`protocol.md`](protocol.md) 与 `schemas/v1/` 为准。
 
 ## 一、三层与依赖方向
 
@@ -16,7 +16,7 @@ shell        adapter
 | --- | --- | --- | --- |
 | core | `molt/core/` | 11 类协议记录、门禁、指标、快照事务、事件 / 账本、审计、脱敏、提案核心（`proposer.py`） | 调模型、跑 pytest、读题面 |
 | shell | `shells/code-repair/` | 题集加载、prompt 渲染、调用 Runtime、运行外部 Verifier、注入 LLM/grid 提案策略 | 定义门禁阈值、写 `scenario.policy` |
-| adapter | `molt/adapters/` | `fixture/` 执行入口；`llm_proposer.py` 负责 DeepSeek transport | 判分、采纳、写证据链 |
+| adapter | `molt/adapters/` | `fixture/` 执行入口；`llm_proposer.py` DeepSeek transport；`pi/` 为真实 Pi 1.5.0 runtime / sandbox / trust / ledger | 判分、采纳、写证据链 |
 
 `molt/core/**` 只 import stdlib 与 `molt.core.*`（I11）。`python -m molt doctor --deps` 做 AST 检查；
 `tests/test_boundary.py` 还会屏蔽第三方 importer 后 import core。
@@ -150,3 +150,22 @@ gate，并断言 search 流零 holdout id、report 流至少一条 `holdout.acce
   `cost_per_solved` 与 `result.scores.*` 不含提案成本，audit 按 `prop-*` 全量对账。
 - **可追责**：每个被评估候选的 `proposal_id` 可回到 `ext.source=llm|grid` 与
   `proposal.generated` 事件。
+
+## 九、Pi adapter（B2b）
+
+- **argv**：`pi -p --mode json --approve --session-id <safe> --session-dir <abs>`，
+  禁止 `--no-session` / `--continue` / `--resume`；no-tools 旗标永不生成。
+- **tools_mode**：`default` 无旗标；`lean` 为 `--exclude-tools write`（由 `harness.py` 产出）。
+  adapter 再合并内建读工具排除 `read,grep,find,ls`，因为读工具不经过 `shellPath`。
+- **bash 隔离**：`.pi/settings.json` 的 `shellPath` 指向 `sandbox_bash.sh`；wrapper 用 bwrap
+  去掉网络、proxy、仓库挂载。trust preflight 必须证明 wrapper 被调用（`preflight.txt` +
+  `.molt/shell-path.log`）；失败 `trust_missing`，run 不可采纳。
+- **网络**：Pi 主进程保留 `provider_only`；bash 子进程无网络。bwrap 不可用时降级
+  `permissions-only` 并记录 `sandbox unavailable`。
+- **账本**：session JSONL v3 全部 usage-bearing entry（含 `compaction` / 未知 type）按 entry id
+  去重；成本链 `totalFromProvider → cost.total → 目录估算`；与 JSON 流 message_end 交叉校验，
+  偏差超阈 `ledger_mismatch`。
+- **预算**：wall 超时 kill 进程组；turns 按 assistant message；tokens 按账本总量；超限 invalid。
+- **落盘**：B1 `run` 顶层冻结，runtime 元数据写 `run.ext.runtime`（`provenance`、
+  `project_trust`、`isolation`、`session_path`、`log_ref`、`ledger`、`budget`）。
+- **版本**：harness 改动把 demo 从 `demo-2` 升到 `demo-3`，`bench_hash` / genome artifact 同步。

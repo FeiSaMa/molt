@@ -206,4 +206,4 @@ def test_new_candidate_file_does_not_require_version_bump(tmp_path: Path) -> Non
     new_path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     ok = _run_cli(root, "scenario", "validate", "--scenario", "scenarios/demo/scenario.json")
     assert ok.returncode == 0, ok.stderr
-    assert "genomes=2" in ok.stdout
+    assert "genomes=3" in ok.stdout

@@ -28,6 +28,16 @@ from molt.core.types import (
     Task,
 )
 
+
+def tools_argv_for(mode: str) -> list[str]:
+    """``tools_mode`` 的唯一映射；adapter 只透传，不重新解释。"""
+    if mode == "default":
+        return []
+    if mode == "lean":
+        return ["--exclude-tools", "write"]
+    raise ValueError(f"未知 tools_mode: {mode!r}")
+
+
 CHEAPER: dict[str, str] = {"high": "low", "low": "off", "full": "minimal", "default": "lean"}
 RICHER: dict[str, str] = {"off": "low", "low": "high", "minimal": "full", "lean": "default"}
 
@@ -73,8 +83,11 @@ class CodeRepairHarness:
         )
 
     def run(self, genome: Genome, task: Task, workdir: Path) -> HarnessOutcome:
-        # 渲染一次 prompt，确保 prompt 文件缺失/损坏会在执行前暴露。
-        self.render_prompt(genome)
+        # 渲染一次 prompt；写入 .molt/prompt.txt 供 Pi runtime 作为 positional prompt。
+        prompt = self.render_prompt(genome)
+        prompt_path = Path(workdir) / ".molt" / "prompt.txt"
+        prompt_path.parent.mkdir(parents=True, exist_ok=True)
+        prompt_path.write_text(prompt, encoding="utf-8")
         runtime_outcome: RuntimeOutcome = self.runtime.run(genome, task, workdir)
         verification = self.verifier.verify(task, workdir)
         return HarnessOutcome(runtime=runtime_outcome, verification=verification)

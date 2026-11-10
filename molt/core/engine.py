@@ -146,7 +146,7 @@ class Engine:
                     "matches": outcome.verification.matches,
                 },
                 "artifacts": dict(outcome.runtime.artifacts),
-                "ext": {},
+                "ext": dict(outcome.runtime.diagnostic),
             }
         )
         self._persist(record)
