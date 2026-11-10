@@ -1,9 +1,0 @@
-{
-  "config_version": "v0",
-  "reducer_enabled": false,
-  "compaction_ratio": 0.0,
-  "action_fusion": false,
-  "tool_granularity": "file",
-  "escalation_threshold": 2,
-  "max_concurrency": 4
-}

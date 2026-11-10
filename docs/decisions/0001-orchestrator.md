@@ -1,5 +1,10 @@
 # ADR 0001：选外层编排，不写 Pi 扩展
 
+> 2026-11-10 标注：**B 方案（外层编排）保留**。评分口径已由
+> [ADR-0003](0003-scoring.md) 取代（`cost_per_solved` 取代字典序三元组）；
+> 协议与 shell 分层见 [ADR-0002](0002-protocol-v1.md) 与 [ADR-0004](0004-shell-and-dims.md)。
+> 以下原文保留，作为进程边界的历史依据。
+
 - 状态：已决定
 - 日期：2026-10-25
 - 关联：`docs/architecture.md`

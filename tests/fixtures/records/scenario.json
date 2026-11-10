@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_version": "demo-1",
+  "scenario_id": "demo",
+  "title": "B1 demo：两题搜索集 + 一题留出集",
+  "shell_id": "code-repair",
+  "shell_version": "1.0.0",
+  "task_sets": {
+    "search": [
+      "smoke-add",
+      "smoke-even"
+    ],
+    "report": [
+      "holdout-even"
+    ]
+  },
+  "policy": {
+    "k": 0,
+    "invalid_ratio_max": 0.25,
+    "budget": {
+      "execution_budget_usd": 5.0,
+      "search_overhead_budget_usd": 2.0
+    }
+  },
+  "isolation": {
+    "network": "none"
+  },
+  "ext": {
+    "note": "demo 只用 fixture runtime；不产生真实模型调用"
+  }
+}

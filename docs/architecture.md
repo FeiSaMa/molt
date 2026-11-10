@@ -1,90 +1,125 @@
 # 架构
 
-molt 分三层。底座能力全部来自上游，molt 只做编排与评测，不改 Pi 源码、不写 Pi 扩展。
+molt 把"搜索候选 → 执行题集 → 判分 → 门禁 → 采纳 / 回退"做成一条可复算的流水线。
+本文件描述 B1 的实际分层；字段级契约以 [`protocol.md`](protocol.md) 与 `schemas/v1/` 为准。
 
-## 一、三层职责
+## 一、三层与依赖方向
+
+```
+molt/core/**        ← stdlib only
+   ↑          ↑
+shell        adapter
+(Task/Harness/Verifier)  (Runtime)
+```
 
 | 层 | 组件 | 职责 | 不负责 |
 | --- | --- | --- | --- |
-| harness | Pi（earendil-works/pi） | 会话、工具调用、模型接入、SDK 与 RPC | 效率取舍、评测、回退 |
-| 效率机制 | SoL-Pi（NVlabs/SoL-Pi，MIT） | 动作融合、观测句柄、证据保留式 reducer、在线上下文压缩；配置走 `sol-pi.json` | 全局调度、题集、打分 |
-| 编排与评测 | molt（本仓） | 开关搜索、跑题集、字典序打分、回归门禁、回退、留证据 | 实现 agent 能力、改 Pi 行为 |
+| core | `molt/core/` | 11 类协议记录、门禁、指标、快照事务、事件 / 账本、审计、脱敏 | 调模型、跑 pytest、读题面 |
+| shell | `shells/code-repair/` | 题集加载、prompt 渲染、调用 Runtime、运行外部 Verifier | 定义门禁阈值、写 `scenario.policy` |
+| adapter | `molt/adapters/fixture/` | 唯一执行入口；B1 为确定性 fixture，不联网 | 判分、采纳、写证据链 |
 
-调用关系：`molt run` 为每道题准备隔离 workdir，把当前开关渲染成 `.pi/sol-pi.json`，再 spawn Pi 子进程执行；结果只从子进程产物与外部测试读取。
+`molt/core/**` 只 import stdlib 与 `molt.core.*`（I11）。`python -m molt doctor --deps` 做 AST 检查；
+`tests/test_boundary.py` 还会屏蔽第三方 importer 后 import core。
 
-SoL-Pi 的四个机制彼此独立、默认全关。reducer 的 provider/model 可在 `sol-pi.json` 里单独指定，与主模型解耦——这正是把 reducer 开关放进搜索空间的理由。
+## 二、七端口
 
-## 二、双模型分工
+| 端口 | owner | B1 实现 |
+| --- | --- | --- |
+| TaskProvider | shell | `shells/code-repair/task_provider.py` |
+| Harness | shell | `shells/code-repair/harness.py` |
+| Verifier | shell | `shells/code-repair/verifier.py` |
+| Runtime | adapter | `molt/adapters/fixture/runtime.py` |
+| Gate | core 默认 | `molt/core/policy.py` |
+| Archive | core 默认 | `molt/core/archive.py` |
+| Ledger | core 默认 | `molt/core/ledger.py` |
 
-| 角色 | 模型 | 输入 | 输出 | 硬约束 |
-| --- | --- | --- | --- | --- |
-| 提案 signal | 本地小模型 | 失败日志、上一版 config、指标 | 一个开关的改动建议 + 理由 | 不许自评，不许碰题集与判分 |
-| 执行 action | 前沿模型（DeepSeek 等） | 提案 + 当前 config | 新 config、必要的补丁 | 只改开关与外壳，不改测试 |
-| 裁判 verify | 固定题集 + 外部测试脚本 | 执行产出的 diff 与运行轨迹 | success / tokens / wall_ms | 判分脚本与题集对提案方只读 |
+门禁阈值唯一 owner 是 `scenario.policy`。shell manifest 只能声明能力与上限
+（switch 域、单 run 预算、artifact roots、shell 版本），不得声明容差、成本门槛、
+invalid 比例或重复策略。
 
-裁判与提案方隔离：本地小模型看不到 holdout 题，也读不到判分脚本的期望值；否则分数不可信。
-
-## 三、6 个受控开关
-
-只搜索下面 6 个，不允许提案方自由新增维度（新增维度须走 ADR）。
-
-| 键 | 类型 | v0 基线 | 候选空间 | 作用 |
-| --- | --- | --- | --- | --- |
-| `reducer_enabled` | bool | `false` | false / true | 开启证据保留式 reducer，长诊断日志压成可校验收据 |
-| `compaction_ratio` | float | `0.0` | 0.0 / 0.2 / 0.35 | 在线上下文压缩比例，0 表示不压缩 |
-| `action_fusion` | bool | `false` | false / true | edit/write 同一次工具调用顺带跑验证命令 |
-| `tool_granularity` | str | `"file"` | file / hunk / command | 工具粒度：整文件、按 hunk、直接给命令 |
-| `escalation_threshold` | int | `2` | 1 / 2 / 3 / 4 | 连续失败几次后升级到前沿模型 |
-| `max_concurrency` | int | `4` | 1 / 2 / 4 / 8 | 单题集内并发跑题数 |
-
-默认值定义在 `molt/config.py` 的 `Switches`，基线落在 `configs/v0-baseline.json`，两边字段必须一一对应。
-
-## 四、打分规则
-
-字典序，先成功率，再 token，最后耗时：
+## 三、一次搜索的数据流
 
 ```
-score = (-success_rate, tokens_total, wall_ms_total)
+scenario.json ──policy──┐
+genome v0 ──switches────┤
+                        ├─ Engine.run_task ─→ Harness ─→ Runtime
+task.json ──workspace───┘                         │
+                                                  ├─ Verifier（沙箱外只读 pytest）
+                                                  ↓
+                              run.json + ledger/<run_id>.jsonl + events/search/<run_id>.jsonl
+                                                  ↓
+                              evaluate_search → result.json（首轮 pass@1、cost_per_solved）
+                                                  ↓
+                              policy.decide → gate_decision.json（逐题配对表）
+                                                  ↓
+                              adopt：快照 → generation → snapshot/archive → pointer
 ```
 
-比较时按元组升序，越靠左的项权重越高；成功率不同时，token 与耗时完全不影响名次。
+报告阶段单独走 `scope=report`：先写 `holdout.accessed` 事件，再跑留出题，
+`result.scope=report` 必须同时含 `scores.search` 与 `scores.holdout`。
+`SearchHistory` 与 `ReportArchive` 是两个类型，`Harness.propose` 只接受前者。
 
-**回归门禁**：固定集成功率不得低于上一版。上一版为 `v(n-1)` 时，只有 `success_rate(vn) >= success_rate(v(n-1))` 才允许把 `vn` 作为新基线；成功率持平时才用 token、耗时决定是否采纳。门禁不过 → 丢弃该候选，不出现在轮次报告里。
+## 四、门禁口径
 
-## 五、回退机制
+判定顺序固定：
 
-两层保障：
+1. `incomparable`：四项执行上限不全等，或任一侧 `cost_per_solved` 分母为 0；
+2. `unstable`：任一侧 invalid 比例超过 `scenario.policy.invalid_ratio_max`；
+3. `budget_exceeded`：`execution_budget_usd` 或 `search_overhead_budget_usd` 任一超限；
+4. `reject/solved_dropped`：通过题数低于 `baseline - k`；
+5. `reject/cost_not_lower`：`cost_per_solved_candidate > cost_per_solved_baseline`；
+6. 否则 `adopt`（`lower_cost_per_solved` 或 `non_inferior`）。
 
-1. **config 版本化**：每次采纳的 config 是 `configs/vN-*.json` 里的一个文件，`config_version` 字段与文件名一致。
-2. **git tag**：采纳时给该提交打 `vN` tag，tag 指向 config 文件 + 当轮 result。
+`cost_per_solved` 的分母是有效通过题数，分子是全部执行 run（含 invalid / 超时 / 超预算 /
+判废）的成本；提案成本只进 overhead cap。结论必须携带逐题配对表。
 
-`molt revert --to vN` 把当前 `configs/current.json`（或等价指针）切回 vN 对应的文件，**必须用同一题集、同一模型版本复跑**，指标回落到 vN 的水平才算回退成功；只改文件不跑，等于没有证据。回退不删除旧 runs/，历史证据保留。
+## 五、裁判隔离
 
-## 六、现状
+- 测试目录在候选工作区之外，Verifier 运行前后取树哈希，不一致判废；
+- `isolation.network` 三档写死映射：`none → sandboxed`、`provider_only → provider-sandboxed`、
+  `open → permissions-only`；
+- 无法建立沙箱时降级为 `permissions-only`，`degraded=true`，claim 必须写
+  `sandbox unavailable`，不得静默降级；
+- agent / bash 侧禁止读取 `bench/**`、`web/**`、`evidence/**`；bash 在 `sandboxed` /
+  `provider-sandboxed` 下一律无网络；
+- archive 只存 `result_refs[]`，不内联分数；`web/` 的 holdout 只导聚合分。
 
-本仓是骨架：`runner`、`score`、`store` 三个模块只有签名与契约，调用即 `NotImplementedError`；`cli` 只解析参数并打印"未实现"。填实现前先读 `docs/contracts.md` 确认落盘格式。
+## 六、事务与证据
 
-## 七、相关工作与边界
+`state/` 布局：
 
-| 工作 | 优化什么 |
-| --- | --- |
-| SoL-Pi | Pi 内的效率机制：动作融合、观测句柄、证据保留式 reducer、在线上下文压缩；配置面是 `sol-pi.json` |
-| Harness² | harness 结构本身；在开放世界任务上以改前/改后的同任务对比代替 ground-truth verifier |
-| Agno | agent 平台层，Apache-2.0，自称 self-improving agent platform：SDK（Agno / Claude Agent / Codex）+ AgentOS（持久服务：REST API、MCP server、鉴权、人工审批、断点续跑、调度）+ Control Plane（托管 UI）。它改进的是提示与工具，不是 harness 配置，因此不作为本项目的对标基线 |
-| DGM | agent 的自身实现代码；靠 benchmark 分数驱动变异与归档 |
+```
+state/
+  lock                     # flock 独占；拿不到立即 tx_locked
+  current.json             # 指针：generation + snapshot_id + tree_hash + archive_id
+  journal/<generation>.json
+  generations/<8位代际>/<root>/...
+  snapshots/<snapshot_id>.json
+  archive/<archive_id>.json
+  runs/<run_id>.json
+  results/<result_id>.json
+  decisions/<decision_id>.json
+  proposals/<proposal_id>.json
+  genomes/<genome_id>.json
+  events/search/<run_id>.jsonl
+  events/report/<run_id>.jsonl
+  events/search.jsonl      # 单写者物化
+  events/report.jsonl
+  ledger/<owner_id>.jsonl
+```
 
-我们的边界：**我们不发明 harness 优化算法**；我们证明这套东西能在"测试当裁判、改动可退回、端侧离线"的条件下成立。算法层面的新东西留给上游，本项目的产出是可复现的编排、契约与证据链。
+采纳顺序固定：journal（`O_EXCL`）→ generation（临时目录 rename）→ snapshot → archive →
+pointer（最后）。中途失败或 `kill -9` 后 `doctor --recover` 只会恢复到旧态或新态，且幂等。
+读者校验「指针 + generation + tree hash」，有界重试 3 次，超限 `stale_read`。
+快照覆盖 manifest 声明的全部 roots，`roots` 与 `files` 同键，缺一即拒绝。
 
-## 八、裁判独立性的三条实现要求
+事件按 `scope` 分流；已知 type 的 payload 是 tagged union，未知 type 保留原文。
+`audit` 只重算 canonical evidence：从 run / ledger 重算 result，从配对表与 genome 上限重算
+gate，并断言 search 流零 holdout id、report 流至少一条 `holdout.accessed`。
 
-1. **评测器外挂**：测试目录不放进候选工作区，只读挂载；每次运行前后计算目录哈希，不一致则该次运行判废。
-2. **候选不得触碰评审器与测试用例**：对应 config 的 action 范围，越界即违规。
-3. **报告双分数**：搜索用固定集的分数，与留出集的分数，两者都写进 `result.json`。
+## 七、版本触发
 
-第 3 条的理由是防止"只在搜索集上变好"。留出集不进搜索回路，只作汇报，任何对留出集的过拟合都会立刻暴露。第 1、2 条的具体落盘见 `docs/contracts.md` 的 `eval_guard` 与 `guard_violations`。
-
-## 九、回退是一个事务
-
-一次快照同时包含三样：harness 配置、工具目录、提示文件。`revert` 三样原子回滚，不允许只回其中一样。
-
-理由一句话：分开回滚会产生"配置是新的、工具是旧的"这种无法归因的中间态。
+必须升 `scenario_version` 并重跑基线：`harness.py`、`verifier.py`、`task_provider.py`、
+`switches.schema.json`、`bench/**` 任一变更。
+新增候选文件（`genomes/`、`prompts/`、`tools/` 中的新文件）只产生新 `genome_id`；
+原地修改已被既有 genome 引用的文件视为破坏性变更。禁止跨 `scenario_version` 比较。

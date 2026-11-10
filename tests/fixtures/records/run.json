@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "run-1",
+  "scenario_version": "demo-1",
+  "genome_id": "sha256:e61508295c0bbb4c3832f0b56e0496f4fa0df631dfe0b8bdaa803f1547833db4",
+  "task_id": "smoke-add",
+  "scope": "search",
+  "attempt": 1,
+  "shell_version": "1.0.0",
+  "verifier_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "seed_control": "none",
+  "started_at": "2026-01-01T00:00:00Z",
+  "finished_at": "2026-01-01T00:00:01Z",
+  "outcome": "passed",
+  "usage": {
+    "tokens_in": 1000,
+    "tokens_out": 500,
+    "cost_usd": 1.84,
+    "wall_ms": 1840,
+    "turns": 4
+  },
+  "verification": {
+    "tests_hash_before": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "tests_hash_after": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "matches": true
+  },
+  "artifacts": {
+    "solution.py": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "ext": {}
+}
