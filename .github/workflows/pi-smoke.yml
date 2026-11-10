@@ -83,8 +83,6 @@ jobs:
           uv run pytest -q -m pi --basetemp=/tmp/molt-pi-smoke
 
       - name: 运行后费用校验（run cost <= cap）
-        env:
-          CAP: ${{ env.PI_SMOKE_CAP }}
         run: |
           uv run python - <<'PY'
           import json
@@ -92,7 +90,10 @@ jobs:
           import pathlib
           import sys
 
-          cap = float(os.environ["CAP"])
+          raw = os.environ.get("PI_SMOKE_CAP", "").strip()
+          if not raw:
+              sys.exit("缺少 PI_SMOKE_CAP（上一步解析 cap 失败？）")
+          cap = float(raw)
           runs = sorted(pathlib.Path("/tmp/molt-pi-smoke").rglob("runs/*.json"))
           if len(runs) != 1:
               sys.exit(f"期望恰好 1 条 run，实际 {len(runs)}：{[str(p) for p in runs]}")
