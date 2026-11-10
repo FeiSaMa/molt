@@ -117,7 +117,7 @@ def assert_ext_contract(proposal) -> None:
 
 
 def test_llm_success_ext_contract_and_estimated_cost() -> None:
-    switches = {"thinking": "low", "context": "full", "tools": "lean"}
+    switches = {"thinking": "low", "context": "full", "tools": "bash"}
     payload = response({"diagnosis": "cheaper", "switches": switches, "reason": "cost"})
     proposer, transport = make_proposer(payload)
     proposal = proposer.propose(history(), genome())
@@ -151,7 +151,7 @@ def test_provider_reported_cost_marks_provider() -> None:
     payload = response(
         {
             "diagnosis": "d",
-            "switches": {"thinking": "low", "context": "minimal", "tools": "lean"},
+            "switches": {"thinking": "low", "context": "minimal", "tools": "bash"},
             "reason": "r",
         },
         cost_usd=0.25,
@@ -174,7 +174,7 @@ def test_provider_reported_cost_marks_provider() -> None:
         (
             {
                 "diagnosis": "d",
-                "switches": {"thinking": "max", "context": "full", "tools": "lean"},
+                "switches": {"thinking": "max", "context": "full", "tools": "bash"},
                 "reason": "r",
             },
             "switch_out_of_domain",
@@ -211,7 +211,7 @@ def test_fallback_still_persists_proposal_record(tmp_path: Path) -> None:
 
 
 def test_over_budget_falls_back_but_keeps_cost() -> None:
-    switches = {"thinking": "low", "context": "full", "tools": "lean"}
+    switches = {"thinking": "low", "context": "full", "tools": "bash"}
     proposer, _ = make_proposer(
         response({"diagnosis": "d", "switches": switches, "reason": "r"}),
         max_cost_usd=0.0001,
@@ -241,7 +241,7 @@ def test_old_version_history_is_filtered() -> None:
         response(
             {
                 "diagnosis": "d",
-                "switches": {"thinking": "low", "context": "full", "tools": "lean"},
+                "switches": {"thinking": "low", "context": "full", "tools": "bash"},
                 "reason": "r",
             }
         )
@@ -296,7 +296,7 @@ def test_harness_defaults_to_grid() -> None:
     assert proposal.switches.to_dict() == {
         "thinking": "low",
         "context": "full",
-        "tools": "default",
+        "tools": "bash",
     }
 
 
@@ -304,7 +304,7 @@ def test_prompt_contains_only_search_history() -> None:
     payload = response(
         {
             "diagnosis": "d",
-            "switches": {"thinking": "low", "context": "full", "tools": "lean"},
+            "switches": {"thinking": "low", "context": "full", "tools": "bash"},
             "reason": "r",
         }
     )
@@ -320,7 +320,7 @@ def test_prompt_and_response_hashes_are_stable() -> None:
     payload = response(
         {
             "diagnosis": "d",
-            "switches": {"thinking": "low", "context": "full", "tools": "lean"},
+            "switches": {"thinking": "low", "context": "full", "tools": "bash"},
             "reason": "r",
         }
     )
@@ -337,7 +337,7 @@ def test_adapter_ledger_records_overhead_once(tmp_path: Path) -> None:
     payload = response(
         {
             "diagnosis": "d",
-            "switches": {"thinking": "low", "context": "full", "tools": "lean"},
+            "switches": {"thinking": "low", "context": "full", "tools": "bash"},
             "reason": "r",
         }
     )
@@ -357,7 +357,7 @@ def test_proposal_cost_never_enters_cost_per_solved(tmp_path: Path) -> None:
     payload = response(
         {
             "diagnosis": "d",
-            "switches": {"thinking": "low", "context": "full", "tools": "lean"},
+            "switches": {"thinking": "low", "context": "full", "tools": "bash"},
             "reason": "r",
         }
     )
@@ -404,7 +404,7 @@ def test_poisoned_holdout_does_not_change_proposal(demo_copy) -> None:
     payload = response(
         {
             "diagnosis": "d",
-            "switches": {"thinking": "low", "context": "full", "tools": "lean"},
+            "switches": {"thinking": "low", "context": "full", "tools": "bash"},
             "reason": "r",
         }
     )
@@ -444,7 +444,7 @@ def test_invalid_draft_is_defensively_downgraded() -> None:
     from molt.core.types import Switches
 
     bad = ProposalDraft(
-        switches=Switches.from_dict({"thinking": "low", "context": "full", "tools": "lean"}),
+        switches=Switches.from_dict({"thinking": "low", "context": "full", "tools": "bash"}),
         diagnosis="d",
         reason="r",
         model="deepseek-flash",
@@ -455,13 +455,13 @@ def test_invalid_draft_is_defensively_downgraded() -> None:
         cost_source="provider",
         source="llm",
     )
-    narrowed = {"thinking": ("high",), "context": ("full",), "tools": ("default",)}
+    narrowed = {"thinking": ("high",), "context": ("full",), "tools": ("bash",)}
     proposal = build_proposal(history(), parent, narrowed, draft=bad, created_at=FIXED)
     assert proposal.ext["fallback"] == {"used": True, "reason": "switch_out_of_domain"}
     assert proposal.switches.to_dict() == {
         "thinking": "high",
         "context": "full",
-        "tools": "default",
+        "tools": "bash",
     }
 
 

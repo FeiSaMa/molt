@@ -17,7 +17,7 @@
     "switch_domains": {
       "thinking": ["off", "low", "high"],
       "context": ["full", "minimal"],
-      "tools": ["default", "lean"]
+      "tools": ["bash"]
     },
     "max_execution_budget_usd": 5.0,
     "max_wall_ms": 600000,

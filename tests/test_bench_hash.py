@@ -10,7 +10,7 @@ import json
 import shutil
 from pathlib import Path
 
-from molt.bench import compute_bench_hash
+from molt.bench import bench_tree_hash, compute_bench_hash
 from molt.cli import main
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,6 +47,22 @@ def test_hash_ignores_unreferenced_candidate_files(tmp_path: Path) -> None:
     (candidate / "task.json").write_text(
         json.dumps({"task_id": "unused-candidate"}), encoding="utf-8"
     )
+    assert compute_bench_hash(root, REFERENCED) == before
+
+
+def test_bench_tree_hash_covers_unreferenced_candidate(tmp_path: Path) -> None:
+    """guard 用全 bench 哈希：未挂到 task_sets 的候选文件也会被保护。"""
+    root = _copy_repo(tmp_path)
+    before = bench_tree_hash(root)
+    candidate = root / "bench/search/unused-candidate"
+    shutil.copytree(root / "bench/search/smoke-add", candidate)
+    task_path = candidate / "task.json"
+    data = json.loads(task_path.read_text(encoding="utf-8"))
+    data["task_id"] = "unused-candidate"
+    data["workspace_ref"] = "bench/search/unused-candidate/workspace"
+    data["tests_ref"] = "bench/search/unused-candidate/tests"
+    task_path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    assert bench_tree_hash(root) != before
     assert compute_bench_hash(root, REFERENCED) == before
 
 

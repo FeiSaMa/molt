@@ -28,8 +28,16 @@ from molt.core.types import (
     Task,
 )
 
-CHEAPER: dict[str, str] = {"high": "low", "low": "off", "full": "minimal", "default": "lean"}
-RICHER: dict[str, str] = {"off": "low", "low": "high", "minimal": "full", "lean": "default"}
+
+def tools_argv_for(mode: str) -> list[str]:
+    """bash-only 的唯一映射；adapter 只透传，不重新解释。"""
+    if mode == "bash":
+        return ["--tools", "bash"]
+    raise ValueError(f"B2b 只允许 tools=bash，实际 {mode!r}")
+
+
+CHEAPER: dict[str, str] = {"high": "low", "low": "off", "full": "minimal"}
+RICHER: dict[str, str] = {"off": "low", "low": "high", "minimal": "full"}
 
 
 class CodeRepairHarness:
@@ -66,17 +74,19 @@ class CodeRepairHarness:
     def render_prompt(self, genome: Genome) -> str:
         path = self.repo_root / genome.prompt_ref
         template = path.read_text(encoding="utf-8")
-        return (
-            template.replace("{{thinking}}", genome.switches.thinking)
-            .replace("{{context}}", genome.switches.context)
-            .replace("{{tools}}", genome.switches.tools)
+        return template.replace("{{thinking}}", genome.switches.thinking).replace(
+            "{{context}}", genome.switches.context
         )
 
     def run(self, genome: Genome, task: Task, workdir: Path) -> HarnessOutcome:
-        # 渲染一次 prompt，确保 prompt 文件缺失/损坏会在执行前暴露。
-        self.render_prompt(genome)
+        # 渲染一次 prompt；写入 .molt/prompt.txt 供 Pi runtime 作为 positional prompt。
+        prompt = self.render_prompt(genome)
+        prompt_path = Path(workdir) / ".molt" / "prompt.txt"
+        prompt_path.parent.mkdir(parents=True, exist_ok=True)
+        prompt_path.write_text(prompt, encoding="utf-8")
+        digest_before = self.verifier.guard(task, workdir)
         runtime_outcome: RuntimeOutcome = self.runtime.run(genome, task, workdir)
-        verification = self.verifier.verify(task, workdir)
+        verification = self.verifier.verify(task, workdir, before=digest_before)
         return HarnessOutcome(runtime=runtime_outcome, verification=verification)
 
     # -- 提案 -------------------------------------------------------------

@@ -14,11 +14,11 @@
         "history": {
           "entries": 2,
           "excluded": 0,
-          "scenario_version": "demo-2"
+          "scenario_version": "demo-5"
         },
         "model": "grid",
-        "prompt_sha256": "ea70273804712345edb9458daf57e6b42426c79f94cbe957a7751543f4cf3d8b",
-        "response_sha256": "70738f64503e7ca424588ebd94ba0b9e80a0808bd4a9f7445ebde2507189b580",
+        "prompt_sha256": "cfbbf0bf5c86d6748ab4099bb175e908ac24823fab6532fc304d3cee20bae2ad",
+        "response_sha256": "4882586f82eabe8bec05db050b740f6cf08007a9fb679f63672d93d7bc4b2cec",
         "source": "grid",
         "usage": {
           "cache_read": 0,
@@ -29,16 +29,16 @@
           "total": 0
         }
       },
-      "parent_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
-      "proposal_id": "prop-b53bf8aeb34074bc",
+      "parent_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+      "proposal_id": "prop-bd64141f69a0b44a",
       "proposer_id": "grid",
       "rationale": "grid step: 三维枚举",
-      "scenario_version": "demo-2",
+      "scenario_version": "demo-5",
       "schema_version": "1.0.0",
       "switches": {
         "context": "full",
         "thinking": "low",
-        "tools": "default"
+        "tools": "bash"
       }
     }
   ]

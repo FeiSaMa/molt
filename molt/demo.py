@@ -57,9 +57,12 @@ def build_engine(
     *,
     domains: Mapping[str, Sequence[str]] | None = None,
     llm_proposer: Callable[[SearchHistory, Genome], Proposal] | None = None,
+    runtime: str = "fixture",
+    pi_options: Mapping[str, Any] | None = None,
 ) -> Engine:
     """组装 B1 的 fixture 引擎（shell loader + fixture runtime + 真 pytest verifier）。"""
-    repo_root = Path(repo_root)
+    repo_root = Path(repo_root).resolve()
+    work_root = Path(work_root).resolve()
     store.ensure()
     provider_mod = load_shell_module(
         repo_root, "shells/code-repair/task_provider.py", "molt_shell_task_provider"
@@ -71,10 +74,45 @@ def build_engine(
         repo_root, "shells/code-repair/verifier.py", "molt_shell_verifier"
     )
     provider = provider_mod.BenchTaskProvider(repo_root)
-    runtime = FixtureRuntime()
+    if runtime == "pi":
+        from molt.adapters.pi.runtime import PiRuntime
+        from molt.adapters.pi.trust import TrustProbe
+
+        options = dict(pi_options or {})
+        model = str(options.get("model", "deepseek/deepseek-flash"))
+        network = scenario.isolation.network
+        if network == "none":
+            # Pi 主进程必须保留 provider 网络，声明 none 与事实不符；
+            # 拒绝静默改写，要求 scenario 明确写 provider_only / open。
+            raise ValueError(
+                "Pi runtime 需要 scenario.isolation.network=provider_only 或 open；"
+                "none 无法切断 Pi 主进程的 provider 网络"
+            )
+        runtime_obj: Any = PiRuntime(
+            repo_root=repo_root,
+            tools_argv_fn=harness_mod.tools_argv_for,
+            sandbox_wrapper=options.get(
+                "sandbox_wrapper",
+                repo_root / "molt/adapters/pi/sandbox_bash.sh",
+            ),
+            trust_probe=TrustProbe(
+                pi_executable=str(options.get("pi_executable", "pi")),
+                model=model,
+                cache_dir=Path(work_root).parent / "trust-cache",
+            ),
+            pi_executable=str(options.get("pi_executable", "pi")),
+            model=model,
+            network=network,
+            probe_runner=options.get("probe_runner"),
+            spawn=options.get("spawn"),
+        )
+    elif runtime == "fixture":
+        runtime_obj = FixtureRuntime()
+    else:
+        raise ValueError(f"未知 runtime: {runtime!r}")
     verifier = verifier_mod.PytestVerifier(repo_root)
     harness = harness_mod.CodeRepairHarness(
-        runtime,
+        runtime_obj,
         verifier,
         repo_root,
         shell_id=scenario.shell_id,

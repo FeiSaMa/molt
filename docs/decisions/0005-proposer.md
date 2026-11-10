@@ -38,7 +38,7 @@ history 已被过滤，旧条目从未进入 prompt。
   `ValueError`。
 - `molt.core.proposer.filter_history` 在构造 prompt 前按 `parent.scenario_version` 过滤；
   旧版本 history 整体丢弃，`ext.history.excluded` 记录条数。
-- prompt 只含 `SearchHistory.to_dict()`、当前 `switches`、允许的三维枚举；
+- prompt 只含 `SearchHistory.to_dict()`、当前 `switches`、允许的枚举（thinking/context；tools 锁定 bash）；
   不含 holdout、report 分数、gate 阈值、bench 路径。
 
 ### 3. 提案成本单列
@@ -70,7 +70,7 @@ history 已被过滤，旧条目从未进入 prompt。
 
 ### 5. 网格回退是通用的
 
-`molt.core.proposer` 只做三维笛卡尔枚举，不硬编码 `code-repair` 业务名。
+`molt.core.proposer` 只做当前域的笛卡尔枚举，不硬编码 `code-repair` 业务名。
 shell 通过构造参数传入候选域与排序函数（`rank`），默认排序按“改动维度数 → 值距离 →
 固定枚举序”。默认 grid 是主动选择，`fallback.used=false`；只有 LLM 失败才标记 fallback。
 
@@ -84,5 +84,6 @@ base_url `https://api.deepseek.com`，key 从环境读取。测试注入纯函�
 
 - 每个被评估候选都可追到 Proposal：`ext.source=llm|grid`，`proposal_id` 进 ledger 与事件。
 - proposal 顶层 schema 与七端口白名单不变；`policy.decide` 判定顺序不变。
-- `harness.py` 改动触发 `scenario_version` 升级；本批次 demo 从 `demo-1` 升到 `demo-2`，
+- `harness.py` 改动触发 `scenario_version` 升级；B2a 时 demo 从 `demo-1` 升到 `demo-2`，
+  B2b（bash-only）继续升到 `demo-4`，B2b 复核（guard 覆盖全 bench）再升到 `demo-5`，
   `bench_hash` 与 v0 genome artifact 哈希同步重算。

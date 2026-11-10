@@ -8,7 +8,7 @@ window.MOLT_VIEW = {
         "adopted_at": null,
         "archive_id": null,
         "generation": null,
-        "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "parent_id": null
       },
       {
@@ -16,8 +16,8 @@ window.MOLT_VIEW = {
         "adopted_at": null,
         "archive_id": null,
         "generation": null,
-        "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
-        "parent_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa"
+        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+        "parent_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504"
       }
     ]
   },
@@ -59,7 +59,7 @@ window.MOLT_VIEW = {
         "type": "report.scored"
       },
       {
-        "event_id": "ev-2797f70b6f2a483c",
+        "event_id": "ev-3e2848cbe4404557",
         "ext": {},
         "payload": {
           "count": 1
@@ -67,11 +67,11 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T15:09:58Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "holdout.accessed"
       },
       {
-        "event_id": "ev-292d062cca10412a",
+        "event_id": "ev-d2394254f42a47b3",
         "ext": {},
         "payload": {
           "count": 1
@@ -79,7 +79,7 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T15:09:58Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "holdout.accessed"
       }
     ],
@@ -101,8 +101,8 @@ window.MOLT_VIEW = {
         "event_id": "ev-demo-proposal",
         "ext": {},
         "payload": {
-          "parent_genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
-          "proposal_id": "prop-b53bf8aeb34074bc"
+          "parent_genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+          "proposal_id": "prop-bd64141f69a0b44a"
         },
         "run_id": null,
         "schema_version": "1.0.0",
@@ -111,108 +111,108 @@ window.MOLT_VIEW = {
         "type": "proposal.generated"
       },
       {
-        "event_id": "ev-093e5ec164aa4cb9",
+        "event_id": "ev-0ad2f47771334556",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+          "task_id": "smoke-add"
+        },
+        "run_id": "ec10a3a2-smoke-add-a1-f004c4",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:41:53Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-4016c66ae0f34741",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-add"
         },
-        "run_id": "6be90151-smoke-add-a1-097fa4",
+        "run_id": "6574e7ca-smoke-add-a1-1ff5e8",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:09:58Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "run.finished"
       },
       {
-        "event_id": "ev-0df71dac6dcb4521",
+        "event_id": "ev-79698822919043ed",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+          "task_id": "smoke-add"
+        },
+        "run_id": "6574e7ca-smoke-add-a1-1ff5e8",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:41:53Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-79886f5640584539",
+        "ext": {},
+        "payload": {
+          "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+          "task_id": "smoke-even"
+        },
+        "run_id": "ec10a3a2-smoke-even-a1-e5e11c",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T15:41:53Z",
+        "type": "run.started"
+      },
+      {
+        "event_id": "ev-89b07130d90840cb",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-even"
         },
-        "run_id": "6be90151-smoke-even-a1-182653",
+        "run_id": "ec10a3a2-smoke-even-a1-e5e11c",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:09:58Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "run.finished"
       },
       {
-        "event_id": "ev-4639f720aea84ac9",
+        "event_id": "ev-d35672b819ce45b4",
         "ext": {},
         "payload": {
-          "outcome": "passed",
-          "task_id": "smoke-add"
-        },
-        "run_id": "6520c609-smoke-add-a1-3cc404",
-        "schema_version": "1.0.0",
-        "scope": "search",
-        "ts": "2026-11-10T15:09:58Z",
-        "type": "run.finished"
-      },
-      {
-        "event_id": "ev-a0b295b9a1a44dff",
-        "ext": {},
-        "payload": {
-          "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+          "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
           "task_id": "smoke-even"
         },
-        "run_id": "6520c609-smoke-even-a1-a0bd9d",
+        "run_id": "6574e7ca-smoke-even-a1-4a3919",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:09:58Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "run.started"
       },
       {
-        "event_id": "ev-ad784917e0ca4894",
+        "event_id": "ev-d56cc39926b24e14",
         "ext": {},
         "payload": {
           "outcome": "passed",
           "task_id": "smoke-even"
         },
-        "run_id": "6520c609-smoke-even-a1-a0bd9d",
+        "run_id": "6574e7ca-smoke-even-a1-4a3919",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:09:58Z",
+        "ts": "2026-11-10T15:41:53Z",
         "type": "run.finished"
       },
       {
-        "event_id": "ev-b7de72fd80a140ae",
+        "event_id": "ev-e74a6fd916364a66",
         "ext": {},
         "payload": {
-          "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+          "outcome": "passed",
           "task_id": "smoke-add"
         },
-        "run_id": "6520c609-smoke-add-a1-3cc404",
+        "run_id": "ec10a3a2-smoke-add-a1-f004c4",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T15:09:58Z",
-        "type": "run.started"
-      },
-      {
-        "event_id": "ev-c730febd4d5c4168",
-        "ext": {},
-        "payload": {
-          "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
-          "task_id": "smoke-even"
-        },
-        "run_id": "6be90151-smoke-even-a1-182653",
-        "schema_version": "1.0.0",
-        "scope": "search",
-        "ts": "2026-11-10T15:09:58Z",
-        "type": "run.started"
-      },
-      {
-        "event_id": "ev-ea36544187e74ea2",
-        "ext": {},
-        "payload": {
-          "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
-          "task_id": "smoke-add"
-        },
-        "run_id": "6be90151-smoke-add-a1-097fa4",
-        "schema_version": "1.0.0",
-        "scope": "search",
-        "ts": "2026-11-10T15:09:58Z",
-        "type": "run.started"
+        "ts": "2026-11-10T15:41:53Z",
+        "type": "run.finished"
       }
     ]
   },
@@ -220,13 +220,13 @@ window.MOLT_VIEW = {
     "decision_count": 1,
     "decisions": [
       {
-        "baseline_genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+        "baseline_genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "budget_check": {
           "execution_exceeded": false,
           "overhead_exceeded": false,
           "reason": "ok"
         },
-        "candidate_genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+        "candidate_genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
         "created_at": "2026-01-01T00:00:00Z",
         "decision_id": "demo-decision-1",
         "deltas": {
@@ -275,13 +275,13 @@ window.MOLT_VIEW = {
         "scores": {
           "baseline": {
             "cost_per_solved_usd": 1.84,
-            "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+            "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
             "solved": 2,
             "total": 2
           },
           "candidate": {
             "cost_per_solved_usd": 0.92,
-            "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+            "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
             "solved": 2,
             "total": 2
           }
@@ -310,11 +310,11 @@ window.MOLT_VIEW = {
           "history": {
             "entries": 2,
             "excluded": 0,
-            "scenario_version": "demo-2"
+            "scenario_version": "demo-5"
           },
           "model": "grid",
-          "prompt_sha256": "ea70273804712345edb9458daf57e6b42426c79f94cbe957a7751543f4cf3d8b",
-          "response_sha256": "70738f64503e7ca424588ebd94ba0b9e80a0808bd4a9f7445ebde2507189b580",
+          "prompt_sha256": "cfbbf0bf5c86d6748ab4099bb175e908ac24823fab6532fc304d3cee20bae2ad",
+          "response_sha256": "4882586f82eabe8bec05db050b740f6cf08007a9fb679f63672d93d7bc4b2cec",
           "source": "grid",
           "usage": {
             "cache_read": 0,
@@ -325,23 +325,23 @@ window.MOLT_VIEW = {
             "total": 0
           }
         },
-        "parent_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
-        "proposal_id": "prop-b53bf8aeb34074bc",
+        "parent_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+        "proposal_id": "prop-bd64141f69a0b44a",
         "proposer_id": "grid",
         "rationale": "grid step: 三维枚举",
-        "scenario_version": "demo-2",
+        "scenario_version": "demo-5",
         "schema_version": "1.0.0",
         "switches": {
           "context": "full",
           "thinking": "low",
-          "tools": "default"
+          "tools": "bash"
         }
       }
     ]
   },
   "redaction": {
-    "canonical_hash": "d180e888fcc800e06c9ec21296a1faa7565fb3737f5385b2ef83077245388b67",
-    "metrics_hash": "0130d9b889168c3175447693c8f28123f6bd1513b15fe4717123e18e9e8511f6",
+    "canonical_hash": "1809eab3acf6f879b99e5d83fdb1ed5be91a2d199eae52ce4cbc0506d1792cd1",
+    "metrics_hash": "2536285d795b9c8f9dde4863f3cdcc81b1501b2f161a7138eefb4e6bcf20c8eb",
     "post_metrics": {
       "keys": [
         "$.decisions",
@@ -480,6 +480,8 @@ window.MOLT_VIEW = {
         "$.runs[0].artifacts.solution.py",
         "$.runs[0].attempt",
         "$.runs[0].ext",
+        "$.runs[0].ext.abnormal",
+        "$.runs[0].ext.thinking",
         "$.runs[0].finished_at",
         "$.runs[0].genome_id",
         "$.runs[0].outcome",
@@ -506,6 +508,8 @@ window.MOLT_VIEW = {
         "$.runs[1].artifacts.solution.py",
         "$.runs[1].attempt",
         "$.runs[1].ext",
+        "$.runs[1].ext.abnormal",
+        "$.runs[1].ext.thinking",
         "$.runs[1].finished_at",
         "$.runs[1].genome_id",
         "$.runs[1].outcome",
@@ -532,6 +536,8 @@ window.MOLT_VIEW = {
         "$.runs[2].artifacts.solution.py",
         "$.runs[2].attempt",
         "$.runs[2].ext",
+        "$.runs[2].ext.abnormal",
+        "$.runs[2].ext.thinking",
         "$.runs[2].finished_at",
         "$.runs[2].genome_id",
         "$.runs[2].outcome",
@@ -558,6 +564,8 @@ window.MOLT_VIEW = {
         "$.runs[3].artifacts.solution.py",
         "$.runs[3].attempt",
         "$.runs[3].ext",
+        "$.runs[3].ext.abnormal",
+        "$.runs[3].ext.thinking",
         "$.runs[3].finished_at",
         "$.runs[3].genome_id",
         "$.runs[3].outcome",
@@ -584,6 +592,8 @@ window.MOLT_VIEW = {
         "$.runs[4].artifacts.solution.py",
         "$.runs[4].attempt",
         "$.runs[4].ext",
+        "$.runs[4].ext.abnormal",
+        "$.runs[4].ext.thinking",
         "$.runs[4].finished_at",
         "$.runs[4].genome_id",
         "$.runs[4].outcome",
@@ -610,6 +620,8 @@ window.MOLT_VIEW = {
         "$.runs[5].artifacts.solution.py",
         "$.runs[5].attempt",
         "$.runs[5].ext",
+        "$.runs[5].ext.abnormal",
+        "$.runs[5].ext.thinking",
         "$.runs[5].finished_at",
         "$.runs[5].genome_id",
         "$.runs[5].outcome",
@@ -1607,6 +1619,14 @@ window.MOLT_VIEW = {
           "object"
         ],
         [
+          "$.runs[0].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[0].ext.thinking",
+          "string"
+        ],
+        [
           "$.runs[0].finished_at",
           "string"
         ],
@@ -1713,6 +1733,14 @@ window.MOLT_VIEW = {
         [
           "$.runs[1].ext",
           "object"
+        ],
+        [
+          "$.runs[1].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[1].ext.thinking",
+          "string"
         ],
         [
           "$.runs[1].finished_at",
@@ -1823,6 +1851,14 @@ window.MOLT_VIEW = {
           "object"
         ],
         [
+          "$.runs[2].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[2].ext.thinking",
+          "string"
+        ],
+        [
           "$.runs[2].finished_at",
           "string"
         ],
@@ -1929,6 +1965,14 @@ window.MOLT_VIEW = {
         [
           "$.runs[3].ext",
           "object"
+        ],
+        [
+          "$.runs[3].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[3].ext.thinking",
+          "string"
         ],
         [
           "$.runs[3].finished_at",
@@ -2039,6 +2083,14 @@ window.MOLT_VIEW = {
           "object"
         ],
         [
+          "$.runs[4].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[4].ext.thinking",
+          "string"
+        ],
+        [
           "$.runs[4].finished_at",
           "string"
         ],
@@ -2145,6 +2197,14 @@ window.MOLT_VIEW = {
         [
           "$.runs[5].ext",
           "object"
+        ],
+        [
+          "$.runs[5].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[5].ext.thinking",
+          "string"
         ],
         [
           "$.runs[5].finished_at",
@@ -2382,6 +2442,8 @@ window.MOLT_VIEW = {
         "$.runs[0].artifacts.solution.py",
         "$.runs[0].attempt",
         "$.runs[0].ext",
+        "$.runs[0].ext.abnormal",
+        "$.runs[0].ext.thinking",
         "$.runs[0].finished_at",
         "$.runs[0].genome_id",
         "$.runs[0].outcome",
@@ -2408,6 +2470,8 @@ window.MOLT_VIEW = {
         "$.runs[1].artifacts.solution.py",
         "$.runs[1].attempt",
         "$.runs[1].ext",
+        "$.runs[1].ext.abnormal",
+        "$.runs[1].ext.thinking",
         "$.runs[1].finished_at",
         "$.runs[1].genome_id",
         "$.runs[1].outcome",
@@ -2434,6 +2498,8 @@ window.MOLT_VIEW = {
         "$.runs[2].artifacts.solution.py",
         "$.runs[2].attempt",
         "$.runs[2].ext",
+        "$.runs[2].ext.abnormal",
+        "$.runs[2].ext.thinking",
         "$.runs[2].finished_at",
         "$.runs[2].genome_id",
         "$.runs[2].outcome",
@@ -2460,6 +2526,8 @@ window.MOLT_VIEW = {
         "$.runs[3].artifacts.solution.py",
         "$.runs[3].attempt",
         "$.runs[3].ext",
+        "$.runs[3].ext.abnormal",
+        "$.runs[3].ext.thinking",
         "$.runs[3].finished_at",
         "$.runs[3].genome_id",
         "$.runs[3].outcome",
@@ -2486,6 +2554,8 @@ window.MOLT_VIEW = {
         "$.runs[4].artifacts.solution.py",
         "$.runs[4].attempt",
         "$.runs[4].ext",
+        "$.runs[4].ext.abnormal",
+        "$.runs[4].ext.thinking",
         "$.runs[4].finished_at",
         "$.runs[4].genome_id",
         "$.runs[4].outcome",
@@ -2512,6 +2582,8 @@ window.MOLT_VIEW = {
         "$.runs[5].artifacts.solution.py",
         "$.runs[5].attempt",
         "$.runs[5].ext",
+        "$.runs[5].ext.abnormal",
+        "$.runs[5].ext.thinking",
         "$.runs[5].finished_at",
         "$.runs[5].genome_id",
         "$.runs[5].outcome",
@@ -3509,6 +3581,14 @@ window.MOLT_VIEW = {
           "object"
         ],
         [
+          "$.runs[0].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[0].ext.thinking",
+          "string"
+        ],
+        [
           "$.runs[0].finished_at",
           "string"
         ],
@@ -3615,6 +3695,14 @@ window.MOLT_VIEW = {
         [
           "$.runs[1].ext",
           "object"
+        ],
+        [
+          "$.runs[1].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[1].ext.thinking",
+          "string"
         ],
         [
           "$.runs[1].finished_at",
@@ -3725,6 +3813,14 @@ window.MOLT_VIEW = {
           "object"
         ],
         [
+          "$.runs[2].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[2].ext.thinking",
+          "string"
+        ],
+        [
           "$.runs[2].finished_at",
           "string"
         ],
@@ -3831,6 +3927,14 @@ window.MOLT_VIEW = {
         [
           "$.runs[3].ext",
           "object"
+        ],
+        [
+          "$.runs[3].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[3].ext.thinking",
+          "string"
         ],
         [
           "$.runs[3].finished_at",
@@ -3941,6 +4045,14 @@ window.MOLT_VIEW = {
           "object"
         ],
         [
+          "$.runs[4].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[4].ext.thinking",
+          "string"
+        ],
+        [
           "$.runs[4].finished_at",
           "string"
         ],
@@ -4049,6 +4161,14 @@ window.MOLT_VIEW = {
           "object"
         ],
         [
+          "$.runs[5].ext.abnormal",
+          "null"
+        ],
+        [
+          "$.runs[5].ext.thinking",
+          "string"
+        ],
+        [
           "$.runs[5].finished_at",
           "string"
         ],
@@ -4155,7 +4275,7 @@ window.MOLT_VIEW = {
       "key_value_secret",
       "home_path"
     ],
-    "source_hash": "d180e888fcc800e06c9ec21296a1faa7565fb3737f5385b2ef83077245388b67"
+    "source_hash": "1809eab3acf6f879b99e5d83fdb1ed5be91a2d199eae52ce4cbc0506d1792cd1"
   },
   "report_results": {
     "report_runs_total": {
@@ -4174,7 +4294,7 @@ window.MOLT_VIEW = {
     "results": [
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "report_runs": {
           "by_status": {
             "passed": 1
@@ -4211,7 +4331,7 @@ window.MOLT_VIEW = {
       },
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
         "report_runs": {
           "by_status": {
             "passed": 1
@@ -4254,18 +4374,18 @@ window.MOLT_VIEW = {
       {
         "attempt": 1,
         "cost_usd": 1.84,
-        "finished_at": "2026-11-10T15:09:58Z",
-        "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+        "finished_at": "2026-11-10T15:41:53Z",
+        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "provenance": {
           "kind": "fixture",
           "live": false,
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "6520c609-smoke-add-a1-3cc404",
+        "run_id": "6574e7ca-smoke-add-a1-1ff5e8",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:09:58Z",
+        "started_at": "2026-11-10T15:41:53Z",
         "status": "passed",
         "task_id": "smoke-add",
         "tokens": {
@@ -4274,28 +4394,28 @@ window.MOLT_VIEW = {
         },
         "turns": 4,
         "verifier": {
-          "hash": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
           "matches": true,
-          "tests_hash_after": "b87e9114b4199d9455ade662d10ce1863f7308c514bfbab10b27ac5a53eaba35",
-          "tests_hash_before": "b87e9114b4199d9455ade662d10ce1863f7308c514bfbab10b27ac5a53eaba35"
+          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
+          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
         },
         "wall_ms": 1840
       },
       {
         "attempt": 1,
         "cost_usd": 1.84,
-        "finished_at": "2026-11-10T15:09:58Z",
-        "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+        "finished_at": "2026-11-10T15:41:53Z",
+        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "provenance": {
           "kind": "fixture",
           "live": false,
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "6520c609-smoke-even-a1-a0bd9d",
+        "run_id": "6574e7ca-smoke-even-a1-4a3919",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:09:58Z",
+        "started_at": "2026-11-10T15:41:53Z",
         "status": "passed",
         "task_id": "smoke-even",
         "tokens": {
@@ -4304,28 +4424,28 @@ window.MOLT_VIEW = {
         },
         "turns": 4,
         "verifier": {
-          "hash": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
           "matches": true,
-          "tests_hash_after": "912f7f66209aa3873aeb29a4f42c14033068095f0093fcaee3fe3689566cc493",
-          "tests_hash_before": "912f7f66209aa3873aeb29a4f42c14033068095f0093fcaee3fe3689566cc493"
+          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
+          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
         },
         "wall_ms": 1840
       },
       {
         "attempt": 1,
         "cost_usd": 0.92,
-        "finished_at": "2026-11-10T15:09:58Z",
-        "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+        "finished_at": "2026-11-10T15:41:53Z",
+        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
         "provenance": {
           "kind": "fixture",
           "live": false,
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "6be90151-smoke-add-a1-097fa4",
+        "run_id": "ec10a3a2-smoke-add-a1-f004c4",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:09:58Z",
+        "started_at": "2026-11-10T15:41:53Z",
         "status": "passed",
         "task_id": "smoke-add",
         "tokens": {
@@ -4334,28 +4454,28 @@ window.MOLT_VIEW = {
         },
         "turns": 2,
         "verifier": {
-          "hash": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
           "matches": true,
-          "tests_hash_after": "b87e9114b4199d9455ade662d10ce1863f7308c514bfbab10b27ac5a53eaba35",
-          "tests_hash_before": "b87e9114b4199d9455ade662d10ce1863f7308c514bfbab10b27ac5a53eaba35"
+          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
+          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
         },
         "wall_ms": 920
       },
       {
         "attempt": 1,
         "cost_usd": 0.92,
-        "finished_at": "2026-11-10T15:09:58Z",
-        "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+        "finished_at": "2026-11-10T15:41:53Z",
+        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
         "provenance": {
           "kind": "fixture",
           "live": false,
           "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
           "runtime_id": "fixture"
         },
-        "run_id": "6be90151-smoke-even-a1-182653",
+        "run_id": "ec10a3a2-smoke-even-a1-e5e11c",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T15:09:58Z",
+        "started_at": "2026-11-10T15:41:53Z",
         "status": "passed",
         "task_id": "smoke-even",
         "tokens": {
@@ -4364,17 +4484,17 @@ window.MOLT_VIEW = {
         },
         "turns": 2,
         "verifier": {
-          "hash": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
+          "hash": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
           "matches": true,
-          "tests_hash_after": "912f7f66209aa3873aeb29a4f42c14033068095f0093fcaee3fe3689566cc493",
-          "tests_hash_before": "912f7f66209aa3873aeb29a4f42c14033068095f0093fcaee3fe3689566cc493"
+          "tests_hash_after": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
+          "tests_hash_before": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7"
         },
         "wall_ms": 920
       }
     ]
   },
   "scenario": {
-    "bench_hash": "0cfbf279bea72e1283b7dafe8c144a78b6934ff5e0f85b74d6f581315fb81dc8",
+    "bench_hash": "315096495cff19933c5b7a92615822b3627fcacb67f1cc4bd4cc1fcc373ce6f7",
     "budget": {
       "execution_budget_usd": 5.0,
       "search_overhead_budget_usd": 2.0
@@ -4387,14 +4507,14 @@ window.MOLT_VIEW = {
       "runtime": "fixture"
     },
     "ext": {
-      "note": "demo 只用 fixture runtime；不产生真实模型调用"
+      "note": "fixture demo 不产生真实模型调用；Pi runtime 为可选 live 路径"
     },
     "holdout": {
       "detail": "not-exported",
       "task_count": 1
     },
     "isolation": {
-      "network": "none"
+      "network": "provider_only"
     },
     "not_claimed": [
       "live 模型的质量或成本",
@@ -4411,7 +4531,7 @@ window.MOLT_VIEW = {
       "k": 0
     },
     "scenario_id": "demo",
-    "scenario_version": "demo-2",
+    "scenario_version": "demo-5",
     "schema_version": "1.0.0",
     "shell": {
       "shell_id": "code-repair",
@@ -4434,7 +4554,7 @@ window.MOLT_VIEW = {
     "results": [
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+        "genome_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "result_id": "result-baseline-search",
         "scope": "search",
         "scores": {
@@ -4450,7 +4570,7 @@ window.MOLT_VIEW = {
       },
       {
         "generated_at": "2026-01-01T00:00:00Z",
-        "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+        "genome_id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
         "result_id": "result-candidate-search",
         "scope": "search",
         "scores": {
@@ -4480,17 +4600,17 @@ window.MOLT_VIEW = {
           "turns": 64,
           "wall_ms": 120000
         },
-        "id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+        "id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "parent": null,
         "runtime": {
           "runtime_id": "fixture",
           "version": "fixture-1"
         },
-        "scenario_version": "demo-2",
+        "scenario_version": "demo-5",
         "switches": {
           "context": "full",
           "thinking": "high",
-          "tools": "default"
+          "tools": "bash"
         }
       },
       {
@@ -4501,17 +4621,17 @@ window.MOLT_VIEW = {
           "turns": 64,
           "wall_ms": 120000
         },
-        "id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
-        "parent": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+        "id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
+        "parent": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
         "runtime": {
           "runtime_id": "fixture",
           "version": "fixture-1"
         },
-        "scenario_version": "demo-2",
+        "scenario_version": "demo-5",
         "switches": {
           "context": "full",
           "thinking": "low",
-          "tools": "default"
+          "tools": "bash"
         }
       }
     ]

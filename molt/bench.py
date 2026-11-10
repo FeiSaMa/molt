@@ -1,8 +1,10 @@
 """bench 题面哈希：只覆盖 scenario 实际引用的题，不扫未引用候选。
 
 树哈希口径与 ``molt.core.hash`` 一致：按相对 POSIX 路径排序，逐行
-``path\\0content_hash\\n``，不含 mtime。范围是每题的 ``task.json`` +
-``workspace_ref`` 目录 + ``tests_ref`` 目录；未挂到 ``task_sets`` 的文件不影响哈希。
+``path\\0content_hash\\n``，不含 mtime。``compute_bench_hash`` 的范围是每题的
+``task.json`` + ``workspace_ref`` 目录 + ``tests_ref`` 目录；未挂到 ``task_sets``
+的文件不影响该哈希。``bench_tree_hash`` 则覆盖 ``bench/**`` 全部已索引题，
+供 verifier 的 agent 侧 guard 使用（改任何题都判废）。
 
 注意：``task_paths`` 为了建索引会解析 ``bench/**`` 下**全部** ``task.json``，所以未引用的
 残缺 task.json 会让 ``scenario validate`` 失败（严格性，不是 bug）；新增候选请写完整 schema。
@@ -34,10 +36,8 @@ def task_paths(root: Path) -> dict[str, Path]:
     return index
 
 
-def compute_bench_hash(root: Path, task_ids: Iterable[str]) -> str:
-    """计算引用题集的题面树哈希；缺题即报错，不做静默跳过。"""
-    root = Path(root)
-    paths = task_paths(root)
+def _bench_files(root: Path, paths: dict[str, Path], task_ids: Iterable[str]) -> dict[str, str]:
+    """把题集涉及的 ``task.json`` / ``workspace`` / ``tests`` 展开成文件哈希表。"""
     files: dict[str, str] = {}
     for task_id in sorted(set(task_ids)):
         task_path = paths.get(task_id)
@@ -51,4 +51,22 @@ def compute_bench_hash(root: Path, task_ids: Iterable[str]) -> str:
                 raise ValidationError(f"task {task_id} 的 {ref} 不是目录")
             for rel, digest in tree_files(base).items():
                 files[f"{ref.rstrip('/')}/{rel}"] = digest
-    return tree_hash_from_files(files)
+    return files
+
+
+def compute_bench_hash(root: Path, task_ids: Iterable[str]) -> str:
+    """计算引用题集的题面树哈希；缺题即报错，不做静默跳过。"""
+    root = Path(root)
+    paths = task_paths(root)
+    return tree_hash_from_files(_bench_files(root, paths, task_ids))
+
+
+def bench_tree_hash(root: Path) -> str:
+    """``bench/**`` 全部题面的联合树哈希（agent 侧 guard 用）。
+
+    覆盖所有已索引 ``task.json`` 及其 ``workspace_ref`` / ``tests_ref``；
+    holdout 题也进哈希，但这里只读文件内容做摘要，不把题面交给 agent。
+    """
+    root = Path(root)
+    paths = task_paths(root)
+    return tree_hash_from_files(_bench_files(root, paths, paths.keys()))

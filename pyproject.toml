@@ -35,5 +35,6 @@ ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["pi: real Pi 1.5.0 calls; skipped by default"]
 norecursedirs = ["bench", "shells", ".venv", "runs", "state"]
 addopts = "-p no:cacheprovider"

@@ -70,8 +70,8 @@ class Engine:
         run_id: str | None = None,
     ) -> Run:
         run_id = run_id or _new_run_id(genome.genome_id, task.task_id, attempt)
-        workdir = self.config.work_root / run_id / "workspace"
-        source = self.config.repo_root / task.workspace_ref
+        workdir = (self.config.work_root / run_id / "workspace").resolve()
+        source = (self.config.repo_root / task.workspace_ref).resolve()
         if not source.exists():
             raise ValidationError(f"task workspace 不存在: {task.workspace_ref}")
         if workdir.parent.exists():
@@ -146,7 +146,7 @@ class Engine:
                     "matches": outcome.verification.matches,
                 },
                 "artifacts": dict(outcome.runtime.artifacts),
-                "ext": {},
+                "ext": dict(outcome.runtime.diagnostic),
             }
         )
         self._persist(record)

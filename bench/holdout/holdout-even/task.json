@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "task_id": "holdout-even",
-  "scenario_version": "demo-2",
+  "scenario_version": "demo-5",
   "shell_id": "code-repair",
   "scope": "report",
   "title": "留出题：is_even 泛化",

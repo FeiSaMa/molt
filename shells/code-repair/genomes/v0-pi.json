@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_version": "demo-5",
+  "genome_id": "sha256:de4f90578cf8fac2281ce672a94156399320353e37d6631e8d4ff66574527fa4",
+  "parent_id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+  "shell_id": "code-repair",
+  "shell_version": "1.0.0",
+  "switches": {
+    "thinking": "high",
+    "context": "full",
+    "tools": "bash"
+  },
+  "prompt_ref": "shells/code-repair/prompts/code-repair.md",
+  "tools_ref": "shells/code-repair/tools",
+  "skills_ref": [],
+  "runtime": {
+    "runtime_id": "pi",
+    "version": "1.5.0"
+  },
+  "budget": {
+    "tokens": 200000,
+    "wall_ms": 120000,
+    "turns": 64,
+    "attempts": 1
+  },
+  "artifacts": {
+    "shells/code-repair/manifest.json": "aff86e875cf1dcc4d2f49120e3fbf178d23bf7e6b224f3732cb28b94afb41b76",
+    "shells/code-repair/harness.py": "cdf3606f71915fa9343c2a2e50c852bb517d6b15651eec84543d9999e10e3b03",
+    "shells/code-repair/verifier.py": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+    "shells/code-repair/task_provider.py": "965f74cc0885363f03a6e5a14dbc7a5a128ca4749eae143247665d606e438cb2",
+    "shells/code-repair/switches.schema.json": "467e12e7eb8f185e9a1ac59c4150cbeff7216478cf8a4103864f6333d871aec7",
+    "shells/code-repair/prompts/code-repair.md": "f047dcbb54e381daab8bb401e2a4ded1d74f1e6b1951e6f84f30d39b45c8da60",
+    "shells/code-repair/tools/read_file.json": "18c0c41f97d9b32d6114c8f72e8b9e59d419ad0f23771f9b495b86a00a184f73",
+    "shells/code-repair/tools/apply_patch.json": "5757b97e20c32f1faa9493af835647ca2e79c3026f45ae427a9872aad0459865"
+  },
+  "ext": {
+    "pi": {
+      "model": "deepseek/deepseek-flash"
+    }
+  }
+}

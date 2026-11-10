@@ -1,6 +1,6 @@
 {
-  "canonical_hash": "d180e888fcc800e06c9ec21296a1faa7565fb3737f5385b2ef83077245388b67",
-  "metrics_hash": "0130d9b889168c3175447693c8f28123f6bd1513b15fe4717123e18e9e8511f6",
+  "canonical_hash": "1809eab3acf6f879b99e5d83fdb1ed5be91a2d199eae52ce4cbc0506d1792cd1",
+  "metrics_hash": "2536285d795b9c8f9dde4863f3cdcc81b1501b2f161a7138eefb4e6bcf20c8eb",
   "post_metrics": {
     "keys": [
       "$.decisions",
@@ -139,6 +139,8 @@
       "$.runs[0].artifacts.solution.py",
       "$.runs[0].attempt",
       "$.runs[0].ext",
+      "$.runs[0].ext.abnormal",
+      "$.runs[0].ext.thinking",
       "$.runs[0].finished_at",
       "$.runs[0].genome_id",
       "$.runs[0].outcome",
@@ -165,6 +167,8 @@
       "$.runs[1].artifacts.solution.py",
       "$.runs[1].attempt",
       "$.runs[1].ext",
+      "$.runs[1].ext.abnormal",
+      "$.runs[1].ext.thinking",
       "$.runs[1].finished_at",
       "$.runs[1].genome_id",
       "$.runs[1].outcome",
@@ -191,6 +195,8 @@
       "$.runs[2].artifacts.solution.py",
       "$.runs[2].attempt",
       "$.runs[2].ext",
+      "$.runs[2].ext.abnormal",
+      "$.runs[2].ext.thinking",
       "$.runs[2].finished_at",
       "$.runs[2].genome_id",
       "$.runs[2].outcome",
@@ -217,6 +223,8 @@
       "$.runs[3].artifacts.solution.py",
       "$.runs[3].attempt",
       "$.runs[3].ext",
+      "$.runs[3].ext.abnormal",
+      "$.runs[3].ext.thinking",
       "$.runs[3].finished_at",
       "$.runs[3].genome_id",
       "$.runs[3].outcome",
@@ -243,6 +251,8 @@
       "$.runs[4].artifacts.solution.py",
       "$.runs[4].attempt",
       "$.runs[4].ext",
+      "$.runs[4].ext.abnormal",
+      "$.runs[4].ext.thinking",
       "$.runs[4].finished_at",
       "$.runs[4].genome_id",
       "$.runs[4].outcome",
@@ -269,6 +279,8 @@
       "$.runs[5].artifacts.solution.py",
       "$.runs[5].attempt",
       "$.runs[5].ext",
+      "$.runs[5].ext.abnormal",
+      "$.runs[5].ext.thinking",
       "$.runs[5].finished_at",
       "$.runs[5].genome_id",
       "$.runs[5].outcome",
@@ -1266,6 +1278,14 @@
         "object"
       ],
       [
+        "$.runs[0].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[0].ext.thinking",
+        "string"
+      ],
+      [
         "$.runs[0].finished_at",
         "string"
       ],
@@ -1372,6 +1392,14 @@
       [
         "$.runs[1].ext",
         "object"
+      ],
+      [
+        "$.runs[1].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[1].ext.thinking",
+        "string"
       ],
       [
         "$.runs[1].finished_at",
@@ -1482,6 +1510,14 @@
         "object"
       ],
       [
+        "$.runs[2].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[2].ext.thinking",
+        "string"
+      ],
+      [
         "$.runs[2].finished_at",
         "string"
       ],
@@ -1588,6 +1624,14 @@
       [
         "$.runs[3].ext",
         "object"
+      ],
+      [
+        "$.runs[3].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[3].ext.thinking",
+        "string"
       ],
       [
         "$.runs[3].finished_at",
@@ -1698,6 +1742,14 @@
         "object"
       ],
       [
+        "$.runs[4].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[4].ext.thinking",
+        "string"
+      ],
+      [
         "$.runs[4].finished_at",
         "string"
       ],
@@ -1804,6 +1856,14 @@
       [
         "$.runs[5].ext",
         "object"
+      ],
+      [
+        "$.runs[5].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[5].ext.thinking",
+        "string"
       ],
       [
         "$.runs[5].finished_at",
@@ -2041,6 +2101,8 @@
       "$.runs[0].artifacts.solution.py",
       "$.runs[0].attempt",
       "$.runs[0].ext",
+      "$.runs[0].ext.abnormal",
+      "$.runs[0].ext.thinking",
       "$.runs[0].finished_at",
       "$.runs[0].genome_id",
       "$.runs[0].outcome",
@@ -2067,6 +2129,8 @@
       "$.runs[1].artifacts.solution.py",
       "$.runs[1].attempt",
       "$.runs[1].ext",
+      "$.runs[1].ext.abnormal",
+      "$.runs[1].ext.thinking",
       "$.runs[1].finished_at",
       "$.runs[1].genome_id",
       "$.runs[1].outcome",
@@ -2093,6 +2157,8 @@
       "$.runs[2].artifacts.solution.py",
       "$.runs[2].attempt",
       "$.runs[2].ext",
+      "$.runs[2].ext.abnormal",
+      "$.runs[2].ext.thinking",
       "$.runs[2].finished_at",
       "$.runs[2].genome_id",
       "$.runs[2].outcome",
@@ -2119,6 +2185,8 @@
       "$.runs[3].artifacts.solution.py",
       "$.runs[3].attempt",
       "$.runs[3].ext",
+      "$.runs[3].ext.abnormal",
+      "$.runs[3].ext.thinking",
       "$.runs[3].finished_at",
       "$.runs[3].genome_id",
       "$.runs[3].outcome",
@@ -2145,6 +2213,8 @@
       "$.runs[4].artifacts.solution.py",
       "$.runs[4].attempt",
       "$.runs[4].ext",
+      "$.runs[4].ext.abnormal",
+      "$.runs[4].ext.thinking",
       "$.runs[4].finished_at",
       "$.runs[4].genome_id",
       "$.runs[4].outcome",
@@ -2171,6 +2241,8 @@
       "$.runs[5].artifacts.solution.py",
       "$.runs[5].attempt",
       "$.runs[5].ext",
+      "$.runs[5].ext.abnormal",
+      "$.runs[5].ext.thinking",
       "$.runs[5].finished_at",
       "$.runs[5].genome_id",
       "$.runs[5].outcome",
@@ -3168,6 +3240,14 @@
         "object"
       ],
       [
+        "$.runs[0].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[0].ext.thinking",
+        "string"
+      ],
+      [
         "$.runs[0].finished_at",
         "string"
       ],
@@ -3274,6 +3354,14 @@
       [
         "$.runs[1].ext",
         "object"
+      ],
+      [
+        "$.runs[1].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[1].ext.thinking",
+        "string"
       ],
       [
         "$.runs[1].finished_at",
@@ -3384,6 +3472,14 @@
         "object"
       ],
       [
+        "$.runs[2].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[2].ext.thinking",
+        "string"
+      ],
+      [
         "$.runs[2].finished_at",
         "string"
       ],
@@ -3490,6 +3586,14 @@
       [
         "$.runs[3].ext",
         "object"
+      ],
+      [
+        "$.runs[3].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[3].ext.thinking",
+        "string"
       ],
       [
         "$.runs[3].finished_at",
@@ -3600,6 +3704,14 @@
         "object"
       ],
       [
+        "$.runs[4].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[4].ext.thinking",
+        "string"
+      ],
+      [
         "$.runs[4].finished_at",
         "string"
       ],
@@ -3708,6 +3820,14 @@
         "object"
       ],
       [
+        "$.runs[5].ext.abnormal",
+        "null"
+      ],
+      [
+        "$.runs[5].ext.thinking",
+        "string"
+      ],
+      [
         "$.runs[5].finished_at",
         "string"
       ],
@@ -3814,5 +3934,5 @@
     "key_value_secret",
     "home_path"
   ],
-  "source_hash": "d180e888fcc800e06c9ec21296a1faa7565fb3737f5385b2ef83077245388b67"
+  "source_hash": "1809eab3acf6f879b99e5d83fdb1ed5be91a2d199eae52ce4cbc0506d1792cd1"
 }

@@ -74,3 +74,5 @@ molt export --scenario demo --state state --out web/data
 - 本目录只读；页面代码不要写进 `web/data/`。
 - `web/**` 在 `molt.core.isolation.DEFAULT_DENY_PATHS` 中，agent 侧不读 `web/`；
   需要数据时走导出命令重新生成。
+- B2b 的 agent 只启用 sandboxed bash（read/write/edit 不启用）；bash 无网络且看不到
+  `bench/`、`web/`、`evidence/`。搜索空间为 6 组（thinking × context，tools 锁定 bash）。

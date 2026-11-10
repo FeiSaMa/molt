@@ -71,3 +71,9 @@ v0 只有 `docs/contracts.md` 的 4 份落盘文件，字段缺 `model` / `think
 - `molt/store.py`、`molt/score.py`、`molt/runner.py` 退役，职责拆进 `molt/core/`；
 - 事件流可被 HTML / 审计独立解析，跨 scope 泄漏（如 `holdout.accessed` 进 search 流）在
   schema 与数据类两层都被拒绝。
+
+## Pi runtime 的 ext 落点
+
+B1 `run` 顶层字段冻结，没有 `runtime`。B2b 的 Pi runtime 元数据（`provenance`、
+`project_trust`、`isolation`、`session_path`、`log_ref`、`ledger`、`budget`）全部写入
+`run.ext.runtime`；`run.usage` 仍是唯一的执行成本来源。见 ADR-0006。

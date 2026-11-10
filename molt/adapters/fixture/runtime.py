@@ -16,7 +16,7 @@ from molt.core.types import Genome, Task, Usage
 FACTORS: dict[str, dict[str, float]] = {
     "thinking": {"off": 0.55, "low": 0.8, "high": 1.6},
     "context": {"full": 1.15, "minimal": 0.9},
-    "tools": {"default": 1.0, "lean": 0.9},
+    "tools": {"bash": 1.0},
 }
 
 

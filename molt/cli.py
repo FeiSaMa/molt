@@ -1,8 +1,9 @@
 """molt 命令行入口。
 
-B1/B2a 命令：``schema`` / ``genome`` / ``scenario`` / ``search`` / ``propose`` /
-``gate`` / ``adopt`` / ``revert`` / ``audit`` / ``doctor``；B2d-0 新增 ``export``
-（只导出 ``web/data`` 数据，不含页面）。``demo`` / Pi adapter / svc-config 留给后续批次。
+B1/B2a/B2b/B2d-0 命令：``schema`` / ``genome`` / ``scenario`` / ``search`` /
+``propose`` / ``gate`` / ``adopt`` / ``revert`` / ``audit`` / ``doctor`` / ``export``。
+``export`` 只导出 ``web/data`` 数据，不含页面；``search`` / ``propose`` 支持
+``--runtime pi``。``demo`` / svc-config 留给后续批次。
 """
 
 from __future__ import annotations
@@ -55,6 +56,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_search.add_argument("--genome", type=Path, default=Path("shells/code-repair/genomes/v0.json"))
     p_search.add_argument("--state", type=Path, default=Path("state/search"))
     p_search.add_argument("--seed-control", choices=("none", "fixed"), default="none")
+    p_search.add_argument("--runtime", choices=("fixture", "pi"), default="fixture")
+    p_search.add_argument("--task", action="append", default=[], help="只跑指定 task_id")
 
     p_propose = sub.add_parser("propose", help="从 SearchHistory 生成 Proposal（grid/llm）")
     p_propose.add_argument("--scenario", default="demo")
@@ -64,6 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_propose.add_argument("--state", type=Path, default=Path("state/propose"))
     p_propose.add_argument("--proposer", choices=("grid", "llm"), default="grid")
     p_propose.add_argument("--offline", action="store_true", help="强制 grid，不构造网络 transport")
+    p_propose.add_argument("--runtime", choices=("fixture", "pi"), default="fixture")
 
     p_gate = sub.add_parser("gate", help="跑门禁夹具 G1–G8")
     p_gate.add_argument("--fixture", type=Path, required=True)
@@ -211,13 +215,27 @@ def cmd_search(args: argparse.Namespace) -> int:
     store = StateStore(args.state)
     from molt.demo import build_engine
 
-    engine = build_engine(root, scenario, store, args.state / "work", args.seed_control)
-    tasks = [engine.task_provider.load_task(task_id) for task_id in scenario.task_sets["search"]]
+    engine = build_engine(
+        root,
+        scenario,
+        store,
+        args.state / "work",
+        args.seed_control,
+        runtime=args.runtime,
+    )
+    task_ids = scenario.task_sets["search"]
+    if args.task:
+        unknown = sorted(set(args.task) - set(task_ids))
+        if unknown:
+            print(f"未知 task: {unknown}", file=sys.stderr)
+            return 2
+        task_ids = [task_id for task_id in task_ids if task_id in set(args.task)]
+    tasks = [engine.task_provider.load_task(task_id) for task_id in task_ids]
     runs = engine.run_suite(genome, tasks, scope="search")
     result = engine.evaluate_search(
         genome,
         runs,
-        scenario.task_sets["search"],
+        task_ids,
         result_id=f"result-search-{genome.genome_id.split(':')[-1][:8]}",
     )
     print(
@@ -286,6 +304,7 @@ def cmd_propose(args: argparse.Namespace) -> int:
         args.state / "work",
         domains=domains,
         llm_proposer=llm_proposer,
+        runtime=args.runtime,
     )
     try:
         store.read_genome(genome.genome_id)

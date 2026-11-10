@@ -13,11 +13,11 @@
       "default": "full"
     },
     "tools": {
-      "values": ["default", "lean"],
-      "default": "default",
-      "note": "只控制工具集，不含工具输出截断"
+      "values": ["bash"],
+      "default": "bash",
+      "note": "B2b 锁定为 bash-only：read/write/edit 不启用，bash 由 sandbox wrapper 隔离"
     }
   },
-  "combinations": 12,
+  "combinations": 6,
   "ext": {}
 }
