@@ -1,8 +1,8 @@
 """molt 命令行入口。
 
 B1/B2a 命令：``schema`` / ``genome`` / ``scenario`` / ``search`` / ``propose`` /
-``gate`` / ``adopt`` / ``revert`` / ``audit`` / ``doctor``。``export`` / ``demo`` /
-Pi adapter / svc-config 留给后续批次。
+``gate`` / ``adopt`` / ``revert`` / ``audit`` / ``doctor``；B2d-0 新增 ``export``
+（只导出 ``web/data`` 数据，不含页面）。``demo`` / Pi adapter / svc-config 留给后续批次。
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--root", type=Path, default=None, help="仓库根，默认自动向上查找")
     sub = parser.add_subparsers(
         dest="command",
-        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,doctor}",
+        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,doctor,export}",
     )
 
     p_schema = sub.add_parser("schema", help="schema 校验与文档生成")
@@ -96,6 +96,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_doctor.add_argument("--deps", action="store_true", help="检查 core 依赖边界")
     p_doctor.add_argument("--recover", action="store_true", help="恢复未完成事务")
     p_doctor.add_argument("--state", type=Path, default=Path("state"))
+
+    p_export = sub.add_parser("export", help="导出 web/data（静态 JSON + bundle.js，无页面）")
+    p_export.add_argument("--scenario", default="demo")
+    p_export.add_argument(
+        "--state", type=Path, default=None, help="state 根；缺省用 ./state 或临时 demo state"
+    )
+    p_export.add_argument("--out", type=Path, default=Path("web/data"))
 
     return parser
 
@@ -684,6 +691,48 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# export（B2d-0：只导出数据）
+# ---------------------------------------------------------------------------
+
+
+def cmd_export(args: argparse.Namespace) -> int:
+    from molt.demo import build_demo_state
+    from molt.export import export_web_data
+
+    root = _repo_root(args)
+    scenario_path = root / "scenarios" / args.scenario / "scenario.json"
+    if not scenario_path.is_file():
+        print(f"scenario 不存在: {scenario_path}", file=sys.stderr)
+        return 2
+    scenario = Scenario.from_dict(_load_json(scenario_path))
+
+    state_path: Path | None = args.state
+    if state_path is None and (Path.cwd() / "state" / "runs").is_dir():
+        state_path = Path.cwd() / "state"
+    if state_path is not None:
+        store = StateStore(state_path)
+        if not (store.root / "runs").is_dir():
+            print(f"state 不存在或没有 runs: {store.root}", file=sys.stderr)
+            return 2
+        index = export_web_data(root, scenario, store, args.out)
+        source = str(state_path)
+    else:
+        # 无 state 时跑一遍 demo 证据链到临时目录，仓库内不落任何文件。
+        with tempfile.TemporaryDirectory(prefix="molt-export-demo-") as tmp:
+            store, _, _ = build_demo_state(root, Path(tmp))
+            index = export_web_data(root, scenario, store, args.out)
+        source = "临时 demo state（不写仓库）"
+
+    print(f"export ok out={args.out} files={len(index['files'])} revision={index['revision']}")
+    print(
+        f"  scenario={index['scenario_id']} runs={index['counts']['runs']} "
+        f"proposals={index['counts']['proposals']} events="
+        f"{index['counts']['events_search']}/{index['counts']['events_report']} source={source}"
+    )
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -698,6 +747,7 @@ HANDLERS = {
     "revert": cmd_revert,
     "audit": cmd_audit,
     "doctor": cmd_doctor,
+    "export": cmd_export,
 }
 
 

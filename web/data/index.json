@@ -1,0 +1,77 @@
+{
+  "counts": {
+    "archives": 0,
+    "decisions": 1,
+    "events_report": 4,
+    "events_search": 10,
+    "genomes": 2,
+    "proposals": 1,
+    "report_results": 2,
+    "results": 4,
+    "runs": 6,
+    "search_results": 2,
+    "snapshots": 0
+  },
+  "files": {
+    "archive.json": {
+      "bytes": 575,
+      "sha256": "1c9f3827617d0f47b572169e606f4600e537c366bbafc47a23f97a72fc89d1fb"
+    },
+    "audit.json": {
+      "bytes": 151,
+      "sha256": "df5424be1796628309f1fe4c9fbf0655ddac40a948e304038bf865e4e33d489b"
+    },
+    "bundle.js": {
+      "bytes": 109571,
+      "sha256": "03bbc1b6dbf446395df940ddb615e4edba8e6a6e1d8bce16b47e76c3bdaf1eaa"
+    },
+    "events/report.jsonl": {
+      "bytes": 812,
+      "sha256": "72b17da2b3472e2e1445f1110a1b99e791537a8091fd7e9d6cff04ee5e74b6e0"
+    },
+    "events/search.jsonl": {
+      "bytes": 2605,
+      "sha256": "9713d086c3f47f9631319ad040e3fc642c8d90bd89f2af8a6373c527a19dd798"
+    },
+    "gate.json": {
+      "bytes": 2231,
+      "sha256": "410d4ca40f3b87d6a979bb186afed97bd8635a84ee62fb341e080ba3672b3067"
+    },
+    "proposals.json": {
+      "bytes": 1259,
+      "sha256": "d974b568e1457131e32a20576a0ffbdace04cb80085f1aa95649d7ee60017a85"
+    },
+    "redaction.json": {
+      "bytes": 80090,
+      "sha256": "309696b7687733a850577379511323a4dd3debb79dd57c3b1acdc505990afc84"
+    },
+    "report_results.json": {
+      "bytes": 1430,
+      "sha256": "ef925548d9a0f555e1736f75104872a06be6e2d8d94fa5f37b8e4d3ae256c9ca"
+    },
+    "runs.json": {
+      "bytes": 6170,
+      "sha256": "f834d9b73677a86fbba25bdd8205b5451e16272a9e89c5af1481ecbb08ca1088"
+    },
+    "scenario.json": {
+      "bytes": 1346,
+      "sha256": "6c4ec74ef6de04dfa06007f4df3e0c3708400f573a4189d804c1ef0b3b7cd01e"
+    },
+    "search_results.json": {
+      "bytes": 984,
+      "sha256": "409a56aec8779429785b87315fcd56588983b8ff156fe539872f6d374b1b6580"
+    },
+    "snapshots.json": {
+      "bytes": 22,
+      "sha256": "b97c957dec6a2fc1ee3b9c7dda13f445917b0ac4185c46442b5c70db13ff405c"
+    },
+    "variants.json": {
+      "bytes": 1105,
+      "sha256": "241a7f56b4843e7dd05eeb82b694810502cc741c5d159a149e32909b1c30f09d"
+    }
+  },
+  "generated_at": "2026-11-10T15:02:02Z",
+  "revision": "76cecfa8dd11643b97b6c267c38cd28f66e7a8f7678d88e9e09b804eb47880a5",
+  "scenario_id": "demo",
+  "schema_version": "1.0.0"
+}

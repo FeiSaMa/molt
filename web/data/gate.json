@@ -1,0 +1,78 @@
+{
+  "decision_count": 1,
+  "decisions": [
+    {
+      "baseline_genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+      "budget_check": {
+        "execution_exceeded": false,
+        "overhead_exceeded": false,
+        "reason": "ok"
+      },
+      "candidate_genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+      "created_at": "2026-01-01T00:00:00Z",
+      "decision_id": "demo-decision-1",
+      "deltas": {
+        "cost_per_solved_usd": -0.92,
+        "cost_total_usd": -1.84,
+        "solved": 0
+      },
+      "ext": {
+        "inputs": {
+          "baseline_result_id": "result-baseline-search",
+          "candidate_result_id": "result-candidate-search"
+        },
+        "overhead_spend_usd": 0.0
+      },
+      "invalid_ratio": {
+        "baseline": 0.0,
+        "candidate": 0.0,
+        "threshold": 0.25
+      },
+      "k": 0,
+      "limits_identical": true,
+      "pairs": [
+        {
+          "baseline_cost_usd": 1.84,
+          "baseline_passed": true,
+          "candidate_cost_usd": 0.92,
+          "candidate_passed": true,
+          "cost_delta_usd": -0.92,
+          "passed_delta": 0,
+          "task_id": "smoke-add"
+        },
+        {
+          "baseline_cost_usd": 1.84,
+          "baseline_passed": true,
+          "candidate_cost_usd": 0.92,
+          "candidate_passed": true,
+          "cost_delta_usd": -0.92,
+          "passed_delta": 0,
+          "task_id": "smoke-even"
+        }
+      ],
+      "reason": "lower_cost_per_solved",
+      "reasons": [
+        "lower_cost_per_solved"
+      ],
+      "scores": {
+        "baseline": {
+          "cost_per_solved_usd": 1.84,
+          "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+          "solved": 2,
+          "total": 2
+        },
+        "candidate": {
+          "cost_per_solved_usd": 0.92,
+          "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+          "solved": 2,
+          "total": 2
+        }
+      },
+      "verdict": "adopt"
+    }
+  ],
+  "policy_sha256": "b16a355566149f0a9fc7c72c751c93b10d71ebeef890ff13aa3aede5ae1e3d1b",
+  "reasons": [
+    "lower_cost_per_solved"
+  ]
+}

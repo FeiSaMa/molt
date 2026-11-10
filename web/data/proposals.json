@@ -1,0 +1,45 @@
+{
+  "proposals": [
+    {
+      "cost_usd": 0.0,
+      "created_at": "2026-01-01T00:00:00Z",
+      "ext": {
+        "cost_source": "none",
+        "counted_as": "search_overhead",
+        "diagnosis": "grid step: 三维枚举",
+        "fallback": {
+          "reason": null,
+          "used": false
+        },
+        "history": {
+          "entries": 2,
+          "excluded": 0,
+          "scenario_version": "demo-2"
+        },
+        "model": "grid",
+        "prompt_sha256": "ea70273804712345edb9458daf57e6b42426c79f94cbe957a7751543f4cf3d8b",
+        "response_sha256": "70738f64503e7ca424588ebd94ba0b9e80a0808bd4a9f7445ebde2507189b580",
+        "source": "grid",
+        "usage": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "total": 0
+        }
+      },
+      "parent_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+      "proposal_id": "prop-b53bf8aeb34074bc",
+      "proposer_id": "grid",
+      "rationale": "grid step: 三维枚举",
+      "scenario_version": "demo-2",
+      "schema_version": "1.0.0",
+      "switches": {
+        "context": "full",
+        "thinking": "low",
+        "tools": "default"
+      }
+    }
+  ]
+}

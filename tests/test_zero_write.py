@@ -54,6 +54,7 @@ def test_commands_do_not_write_repository() -> None:
         commands = [
             *COMMANDS,
             ["propose", "--scenario", "demo", "--state", propose_state, "--offline"],
+            ["export", "--scenario", "demo", "--out", str(Path(propose_state) / "web-data")],
         ]
         for command in commands:
             completed = subprocess.run(
