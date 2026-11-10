@@ -56,4 +56,4 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
 - 已实现：schema / 类型双校验、genome 哈希冻结、G1–G8 门禁、快照与 kill -9 恢复、
   并发 adoption 单胜、per-run 事件与账本、holdout 类型隔离、审计重算、零写入测试、
   LLM/grid proposer（proposal.ext 契约、fallback、overhead 账本）。
-- 未实现：Pi adapter、`svc-config` shell、HTML 报告、正式 10+5 题集、`export` / `demo` 命令。
+- 未实现：Pi adapter、`svc-config` shell、HTML 报告、正式 10+5 题集、`demo` 命令；`export` 已提供 `web/data` 数据导出（无页面代码）。

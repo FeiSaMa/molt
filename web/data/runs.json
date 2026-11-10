@@ -1,0 +1,124 @@
+{
+  "runs": [
+    {
+      "attempt": 1,
+      "cost_usd": 1.84,
+      "finished_at": "2026-11-10T15:09:58Z",
+      "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6520c609-smoke-add-a1-3cc404",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:09:58Z",
+      "status": "passed",
+      "task_id": "smoke-add",
+      "tokens": {
+        "in": 1150,
+        "out": 800
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
+        "matches": true,
+        "tests_hash_after": "b87e9114b4199d9455ade662d10ce1863f7308c514bfbab10b27ac5a53eaba35",
+        "tests_hash_before": "b87e9114b4199d9455ade662d10ce1863f7308c514bfbab10b27ac5a53eaba35"
+      },
+      "wall_ms": 1840
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 1.84,
+      "finished_at": "2026-11-10T15:09:58Z",
+      "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6520c609-smoke-even-a1-a0bd9d",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:09:58Z",
+      "status": "passed",
+      "task_id": "smoke-even",
+      "tokens": {
+        "in": 1150,
+        "out": 800
+      },
+      "turns": 4,
+      "verifier": {
+        "hash": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
+        "matches": true,
+        "tests_hash_after": "912f7f66209aa3873aeb29a4f42c14033068095f0093fcaee3fe3689566cc493",
+        "tests_hash_before": "912f7f66209aa3873aeb29a4f42c14033068095f0093fcaee3fe3689566cc493"
+      },
+      "wall_ms": 1840
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.92,
+      "finished_at": "2026-11-10T15:09:58Z",
+      "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6be90151-smoke-add-a1-097fa4",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:09:58Z",
+      "status": "passed",
+      "task_id": "smoke-add",
+      "tokens": {
+        "in": 1150,
+        "out": 400
+      },
+      "turns": 2,
+      "verifier": {
+        "hash": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
+        "matches": true,
+        "tests_hash_after": "b87e9114b4199d9455ade662d10ce1863f7308c514bfbab10b27ac5a53eaba35",
+        "tests_hash_before": "b87e9114b4199d9455ade662d10ce1863f7308c514bfbab10b27ac5a53eaba35"
+      },
+      "wall_ms": 920
+    },
+    {
+      "attempt": 1,
+      "cost_usd": 0.92,
+      "finished_at": "2026-11-10T15:09:58Z",
+      "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+      "provenance": {
+        "kind": "fixture",
+        "live": false,
+        "note": "B1 fixture runtime：确定性回放，不是 live 模型调用",
+        "runtime_id": "fixture"
+      },
+      "run_id": "6be90151-smoke-even-a1-182653",
+      "scope": "search",
+      "solved": true,
+      "started_at": "2026-11-10T15:09:58Z",
+      "status": "passed",
+      "task_id": "smoke-even",
+      "tokens": {
+        "in": 1150,
+        "out": 400
+      },
+      "turns": 2,
+      "verifier": {
+        "hash": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
+        "matches": true,
+        "tests_hash_after": "912f7f66209aa3873aeb29a4f42c14033068095f0093fcaee3fe3689566cc493",
+        "tests_hash_before": "912f7f66209aa3873aeb29a4f42c14033068095f0093fcaee3fe3689566cc493"
+      },
+      "wall_ms": 920
+    }
+  ]
+}

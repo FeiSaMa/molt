@@ -1,0 +1,46 @@
+{
+  "variants": [
+    {
+      "adopted": false,
+      "budget": {
+        "attempts": 1,
+        "tokens": 200000,
+        "turns": 64,
+        "wall_ms": 120000
+      },
+      "id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+      "parent": null,
+      "runtime": {
+        "runtime_id": "fixture",
+        "version": "fixture-1"
+      },
+      "scenario_version": "demo-2",
+      "switches": {
+        "context": "full",
+        "thinking": "high",
+        "tools": "default"
+      }
+    },
+    {
+      "adopted": false,
+      "budget": {
+        "attempts": 1,
+        "tokens": 200000,
+        "turns": 64,
+        "wall_ms": 120000
+      },
+      "id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+      "parent": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+      "runtime": {
+        "runtime_id": "fixture",
+        "version": "fixture-1"
+      },
+      "scenario_version": "demo-2",
+      "switches": {
+        "context": "full",
+        "thinking": "low",
+        "tools": "default"
+      }
+    }
+  ]
+}

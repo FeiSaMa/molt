@@ -1,0 +1,92 @@
+{
+  "report_runs_total": {
+    "by_status": {
+      "passed": 2
+    },
+    "cost_usd": 2.76,
+    "count": 2,
+    "solved": 2,
+    "tokens": {
+      "in": 2300,
+      "out": 1200
+    },
+    "wall_ms": 2760
+  },
+  "results": [
+    {
+      "generated_at": "2026-01-01T00:00:00Z",
+      "genome_id": "sha256:6520c6095297d8f26cd23c59f3cd8d322fea13869e5dd1151f53a9bddc438cfa",
+      "report_runs": {
+        "by_status": {
+          "passed": 1
+        },
+        "cost_usd": 1.84,
+        "count": 1,
+        "solved": 1,
+        "tokens": {
+          "in": 1150,
+          "out": 800
+        },
+        "wall_ms": 1840
+      },
+      "result_id": "result-baseline-report",
+      "scope": "report",
+      "scores": {
+        "holdout": {
+          "cost_per_solved_usd": 1.84,
+          "cost_total_usd": 1.84,
+          "invalid_ratio": 0.0,
+          "pass_at_1_first_attempt": 1.0,
+          "solved": 1,
+          "total": 1
+        },
+        "search": {
+          "cost_per_solved_usd": 1.84,
+          "cost_total_usd": 3.68,
+          "invalid_ratio": 0.0,
+          "pass_at_1_first_attempt": 1.0,
+          "solved": 2,
+          "total": 2
+        }
+      }
+    },
+    {
+      "generated_at": "2026-01-01T00:00:00Z",
+      "genome_id": "sha256:6be9015147fea1f3038553e287d519aa58ff9c80b847d2269d12a06b21defb38",
+      "report_runs": {
+        "by_status": {
+          "passed": 1
+        },
+        "cost_usd": 0.92,
+        "count": 1,
+        "solved": 1,
+        "tokens": {
+          "in": 1150,
+          "out": 400
+        },
+        "wall_ms": 920
+      },
+      "result_id": "result-candidate-report",
+      "scope": "report",
+      "scores": {
+        "holdout": {
+          "cost_per_solved_usd": 0.92,
+          "cost_total_usd": 0.92,
+          "invalid_ratio": 0.0,
+          "pass_at_1_first_attempt": 1.0,
+          "solved": 1,
+          "total": 1
+        },
+        "search": {
+          "cost_per_solved_usd": 0.92,
+          "cost_total_usd": 1.84,
+          "invalid_ratio": 0.0,
+          "pass_at_1_first_attempt": 1.0,
+          "solved": 2,
+          "total": 2
+        }
+      }
+    }
+  ],
+  "scope": "report"
+}
