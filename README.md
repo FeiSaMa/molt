@@ -38,7 +38,7 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
 - 协议字段表：[`docs/protocol.md`](docs/protocol.md)（由 `molt schema docs` 从 schema 生成，禁止手改）。
 - 决策：[ADR-0002 协议](docs/decisions/0002-protocol-v1.md)、
   [ADR-0003 评分](docs/decisions/0003-scoring.md)、
-  [ADR-0004 shell 与三维](docs/decisions/0004-shell-and-dims.md)、
+  [ADR-0004 shell 与搜索空间](docs/decisions/0004-shell-and-dims.md)、
   [ADR-0005 proposer](docs/decisions/0005-proposer.md)、
   [ADR-0006 isolation](docs/decisions/0006-isolation.md)。
 - 旧契约已归档：[`docs/archive/contracts-v0.md`](docs/archive/contracts-v0.md)。

@@ -38,7 +38,7 @@ history 已被过滤，旧条目从未进入 prompt。
   `ValueError`。
 - `molt.core.proposer.filter_history` 在构造 prompt 前按 `parent.scenario_version` 过滤；
   旧版本 history 整体丢弃，`ext.history.excluded` 记录条数。
-- prompt 只含 `SearchHistory.to_dict()`、当前 `switches`、允许的三维枚举；
+- prompt 只含 `SearchHistory.to_dict()`、当前 `switches`、允许的枚举（thinking/context；tools 锁定 bash）；
   不含 holdout、report 分数、gate 阈值、bench 路径。
 
 ### 3. 提案成本单列
@@ -70,7 +70,7 @@ history 已被过滤，旧条目从未进入 prompt。
 
 ### 5. 网格回退是通用的
 
-`molt.core.proposer` 只做三维笛卡尔枚举，不硬编码 `code-repair` 业务名。
+`molt.core.proposer` 只做当前域的笛卡尔枚举，不硬编码 `code-repair` 业务名。
 shell 通过构造参数传入候选域与排序函数（`rank`），默认排序按“改动维度数 → 值距离 →
 固定枚举序”。默认 grid 是主动选择，`fallback.used=false`；只有 LLM 失败才标记 fallback。
 
