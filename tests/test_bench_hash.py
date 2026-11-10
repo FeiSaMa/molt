@@ -1,4 +1,8 @@
-"""P3：bench_hash 覆盖题面内容，未引用候选文件不影响。"""
+"""P3：bench_hash 覆盖题面内容，未引用候选文件不影响。
+
+严格性说明：``scenario validate`` 建索引时会解析 ``bench/**`` 下全部 ``task.json``，
+未引用的残缺 task.json 也会让它失败；这是有意的严格性（见 ADR-0002）。
+"""
 
 from __future__ import annotations
 

@@ -41,6 +41,22 @@ v0 只有 `docs/contracts.md` 的 4 份落盘文件，字段缺 `model` / `think
 | 已知 event payload 新增字段 | major | 或放进 `payload.ext` / 顶层 `ext` |
 | 新增 / 改名 / 删除顶层字段 | major | 新 `schemas/vN/` + ADR + 迁移 |
 
+## 补充：事务恢复与 bench 校验严格性（2026-11-10 复核后追加）
+
+- **崩溃恢复入口**：恢复发生在「下一次写事务入口」——`StateStore.adopt()` / `revert()` 拿到
+  同一把 `state/lock` 后先执行内部 `_recover_locked()`，再继续原操作；恢复幂等，结果只落旧态
+  或新态。只读路径（`read_current` / `list_*`）不取写锁、不触发恢复，因此读者仍只看到两态之一。
+  `molt doctor --recover` 保留为显式兜底（锁内异常后人工介入）。
+  **与 D6 原文「下次启动自动恢复」的差异**：构造 `StateStore` 本身不做恢复，避免纯读场景强拿
+  写锁；这里的「启动」解释为「下一次写事务启动」。若后续要做进程级启动恢复，必须显式加锁并
+  说明对只读并发的影响。
+- **`scenario validate` 的 bench 解析范围**：它会解析 `bench/**` 下的**全部** `task.json`
+  以建立 `task_id → 路径` 索引，因此未被 `scenario.task_sets` 引用的残缺 task.json 也会让
+  validate 失败。这是**严格性而非 bug**（索引不静默跳过）；新增候选题目请写完整 schema
+  （`task_id` / `scenario_version` / `workspace_ref` / `tests_ref` 等齐全）。题面哈希
+  `bench_hash` 仍只覆盖被引用题集，未引用文件的**内容**不影响哈希值。
+
+
 ## 后果
 
 - 旧 `configs/v0-baseline.json` 不再有契约地位，迁成 `shells/code-repair/genomes/v0.json`；

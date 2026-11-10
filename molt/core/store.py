@@ -202,7 +202,8 @@ class StateStore:
             fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
         except FileExistsError as exc:
             raise TxLocked(
-                f"journal 已存在（generation={entry['generation']}），先运行 doctor --recover"
+                f"journal 已存在（generation={entry['generation']}）；"
+                "adopt/revert 会在同一把锁内自动恢复，锁内异常请运行 doctor --recover"
             ) from exc
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as handle:

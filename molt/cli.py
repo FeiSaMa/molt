@@ -210,9 +210,25 @@ def cmd_search(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 
-def _side(case: dict[str, Any], root: Path, scenario_version: str):
+SIDE_KEYS: tuple[str, ...] = (
+    "genome_id",
+    "limits",
+    "invalid_ratio",
+    "overhead_spend_usd",
+    "tasks",
+)
+
+
+def _side(case: dict[str, Any], side: str, root: Path, scenario_version: str):
+    payload = case[side]
+    unknown = sorted(set(payload) - set(SIDE_KEYS))
+    if unknown:
+        raise ValueError(f"gate 夹具 {side} 含未知键: {unknown}")
+    # 允许夹具逐侧覆盖版本（baseline_scenario_version / candidate_scenario_version），
+    # 用于验证跨版本比较被拒绝；缺省回落到 case 级版本。
+    version = str(case.get(f"{side}_scenario_version", scenario_version))
     tasks = []
-    for item in case["tasks"]:
+    for item in payload["tasks"]:
         tasks.append(
             {
                 "task_id": item["task_id"],
@@ -221,12 +237,12 @@ def _side(case: dict[str, Any], root: Path, scenario_version: str):
             }
         )
     return task_side(
-        case["genome_id"],
+        payload["genome_id"],
         tasks,
-        Budget.from_dict(case["limits"], f"{case.get('genome_id', 'side')}.limits"),
-        float(case["invalid_ratio"]),
-        scenario_version=scenario_version,
-        overhead_spend_usd=float(case.get("overhead_spend_usd", 0.0)),
+        Budget.from_dict(payload["limits"], f"{payload.get('genome_id', 'side')}.limits"),
+        float(payload["invalid_ratio"]),
+        scenario_version=version,
+        overhead_spend_usd=float(payload.get("overhead_spend_usd", 0.0)),
     )
 
 
@@ -303,8 +319,8 @@ def cmd_gate(args: argparse.Namespace) -> int:
     failures = 0
     for case in _gate_cases(args.fixture):
         policy = Policy.from_dict(case["policy"])
-        baseline = _side(case["baseline"], root, case["scenario_version"])
-        candidate = _side(case["candidate"], root, case["scenario_version"])
+        baseline = _side(case, "baseline", root, case["scenario_version"])
+        candidate = _side(case, "candidate", root, case["scenario_version"])
         decision = decide(
             policy,
             baseline,

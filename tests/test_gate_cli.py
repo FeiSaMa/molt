@@ -4,10 +4,35 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from molt.cli import _compare, _paired_errors, main
+import pytest
+
+from molt.cli import _compare, _paired_errors, _side, main
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "tests" / "fixtures" / "gate"
+VERSION_FIXTURES = ROOT / "tests" / "fixtures" / "gate-versions"
+
+LIMITS = {"tokens": 1000, "wall_ms": 1000, "turns": 8, "attempts": 1}
+
+
+def _case(**extra):
+    case = {
+        "scenario_version": "v1",
+        "baseline": {
+            "genome_id": "g-base",
+            "limits": LIMITS,
+            "invalid_ratio": 0.0,
+            "tasks": [{"task_id": "t01", "passed": True, "cost_usd": 1.0}],
+        },
+        "candidate": {
+            "genome_id": "g-cand",
+            "limits": LIMITS,
+            "invalid_ratio": 0.0,
+            "tasks": [{"task_id": "t01", "passed": True, "cost_usd": 0.8}],
+        },
+    }
+    case.update(extra)
+    return case
 
 
 def test_compare_flags_missing_key() -> None:
@@ -59,3 +84,25 @@ def test_paired_errors_assert_rows_and_totals() -> None:
 
 def test_gate_cli_fixtures_are_green() -> None:
     assert main(["--root", str(ROOT), "gate", "--fixture", str(FIXTURES)]) == 0
+
+
+def test_side_level_version_overrides_case_level() -> None:
+    case = _case(baseline_scenario_version="v2")
+    baseline = _side(case, "baseline", ROOT, case["scenario_version"])
+    candidate = _side(case, "candidate", ROOT, case["scenario_version"])
+    assert baseline.scenario_version == "v2"
+    assert candidate.scenario_version == "v1"
+
+
+def test_side_unknown_key_is_rejected() -> None:
+    case = _case()
+    case["baseline"]["surprise"] = 1
+    with pytest.raises(ValueError) as excinfo:
+        _side(case, "baseline", ROOT, "v1")
+    assert "未知键" in str(excinfo.value)
+    assert "surprise" in str(excinfo.value)
+
+
+def test_gate_cli_rejects_cross_version_fixture(capsys) -> None:
+    assert main(["--root", str(ROOT), "gate", "--fixture", str(VERSION_FIXTURES)]) == 1
+    assert "incomparable" in capsys.readouterr().err

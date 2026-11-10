@@ -38,3 +38,13 @@ v0 有三套互不兼容的口径：字典序 `(-success_rate, tokens_total, wal
 - 任何门禁阈值只出现在 `scenario.policy`；shell manifest 出现 `tolerance` / `cost_threshold` /
   `invalid_ratio` / `repeat_policy` 即校验失败。
 - 审计可从 run + ledger 重算全部指标，并与已存 result / decision 比对。
+
+## 补充：demo 证据的可复现边界（2026-11-10）
+
+fixture demo 的 `run_id` 含随机后缀，`started_at` / `finished_at` 取真实时钟，因此重建证据
+**只保证指标一致，不保证字节一致**。`state/redaction/<scenario>.json` 的 `source_hash`
+覆盖 run / result / decision 全量字段（含上述时间戳与 run_id），所以跨重建不等于同一 hash；
+审计断言的是「pre/post 指标一致 + manifest 与当前状态自洽」，不是跨次构建的字节相等。
+若要字节级复现（跨机器比对同一份证据），B2 需引入确定性 `run_id`（genome/task/attempt +
+固定序号）与固定时钟；B1 不承诺这一点。
+

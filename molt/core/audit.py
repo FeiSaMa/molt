@@ -114,19 +114,16 @@ def _runs_for_result(result: Result, runs: dict[str, Run]) -> tuple[list[Run], l
     return found, missing
 
 
-def _overhead_from_ledger(ledger, inputs: dict[str, Any]) -> float:
-    """``kind=="overhead"`` 条目求和；默认只看 ``prop-*.jsonl``。
+def _overhead_from_ledger(ledger) -> float:
+    """``prop-*.jsonl`` 里 ``kind="overhead"`` 条目合计。
 
-    ``inputs.proposal_ids`` 存在时只对账这些提案（多决策场景）。
+    B1 是单决策场景，对账范围固定为 ledger 全量；不接受 ``decision.ext.inputs.proposal_ids``
+    这类"自述范围"（空列表曾把候选侧 overhead 短路成 0）。未来若真的要一 ledger 多决策，
+    必须新增显式 scope 字段并走 ADR，而不是靠可选过滤。
     """
-    selected = inputs.get("proposal_ids")
-    selected_owners = {str(item) for item in selected} if isinstance(selected, list) else None
     total = 0.0
     for owner in ledger.owners():
-        if selected_owners is not None:
-            if owner not in selected_owners:
-                continue
-        elif not owner.startswith(OVERHEAD_OWNER_PREFIX):
+        if not owner.startswith(OVERHEAD_OWNER_PREFIX):
             continue
         for entry in ledger.read(owner):
             if entry.get("kind") == "overhead":
@@ -225,7 +222,7 @@ def audit_state(
             scenario.task_sets["search"],
         ).invalid_ratio
         # overhead 只能与 prop-*.jsonl 的 overhead 条目对账。
-        ledger_overhead = _overhead_from_ledger(ledger, inputs)
+        ledger_overhead = _overhead_from_ledger(ledger)
         declared_overhead = decision.ext.get("overhead_spend_usd")
         if isinstance(declared_overhead, bool) or not isinstance(declared_overhead, int | float):
             errors.append(

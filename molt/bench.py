@@ -3,6 +3,9 @@
 树哈希口径与 ``molt.core.hash`` 一致：按相对 POSIX 路径排序，逐行
 ``path\\0content_hash\\n``，不含 mtime。范围是每题的 ``task.json`` +
 ``workspace_ref`` 目录 + ``tests_ref`` 目录；未挂到 ``task_sets`` 的文件不影响哈希。
+
+注意：``task_paths`` 为了建索引会解析 ``bench/**`` 下**全部** ``task.json``，所以未引用的
+残缺 task.json 会让 ``scenario validate`` 失败（严格性，不是 bug）；新增候选请写完整 schema。
 """
 
 from __future__ import annotations

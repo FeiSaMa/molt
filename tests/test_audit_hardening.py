@@ -6,9 +6,10 @@ import json
 
 import pytest
 
-from molt.core.audit import audit_state
+from molt.core.audit import _overhead_from_ledger, audit_state
 from molt.core.errors import AuditError
 from molt.core.hash import canonical_json_text
+from molt.core.ledger import Ledger
 from molt.core.types import GateDecision
 
 
@@ -71,6 +72,45 @@ def test_tampered_ledger_overhead_fails(demo_copy) -> None:
     with pytest.raises(AuditError) as excinfo:
         audit_state(store, scenario)
     assert "ledger overhead" in str(excinfo.value)
+
+
+def _write_ledger_overhead(store, cost: float) -> None:
+    path = next((store.root / "ledger").glob("prop-*.jsonl"))
+    entry = json.loads(path.read_text(encoding="utf-8").splitlines()[0])
+    entry["kind"] = "overhead"
+    entry["cost_usd"] = cost
+    path.write_text(canonical_json_text(entry) + "\n", encoding="utf-8")
+
+
+def test_empty_proposal_ids_cannot_hide_ledger_overhead(demo_copy) -> None:
+    store, scenario, _ = demo_copy
+    _write_ledger_overhead(store, 5.0)
+    data = _decision_data(store)
+    data["ext"]["inputs"]["proposal_ids"] = []
+    data["ext"]["overhead_spend_usd"] = 0.0
+    _rewrite(store, data)
+    with pytest.raises(AuditError) as excinfo:
+        audit_state(store, scenario)
+    assert "ledger overhead" in str(excinfo.value)
+
+
+def test_proposal_ids_subset_cannot_hide_ledger_overhead(demo_copy) -> None:
+    store, scenario, _ = demo_copy
+    _write_ledger_overhead(store, 5.0)
+    data = _decision_data(store)
+    data["ext"]["inputs"]["proposal_ids"] = ["prop-some-other-proposal"]
+    data["ext"]["overhead_spend_usd"] = 0.0
+    _rewrite(store, data)
+    with pytest.raises(AuditError) as excinfo:
+        audit_state(store, scenario)
+    assert "ledger overhead" in str(excinfo.value)
+
+
+def test_single_decision_overhead_reconciles(demo_artifacts) -> None:
+    store, scenario, _ = demo_artifacts
+    decision = store.list_decisions()[0]
+    assert _overhead_from_ledger(Ledger(store.root)) == float(decision.ext["overhead_spend_usd"])
+    assert audit_state(store, scenario)["decisions"] == 1
 
 
 def test_decision_scenario_version_mismatch_fails(demo_copy) -> None:
