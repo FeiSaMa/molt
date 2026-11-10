@@ -17,7 +17,7 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
   原文见 [ADR-0003 §claim 措辞](docs/decisions/0003-scoring.md)。
 - 真实 Pi demo（demo-6，2026-11-11）：起点 `high/full`（v0-pi）**10/10、$0.035560**；
   proposal 派生候选 `low/full`（v0）**10/10、$0.009978**，执行成本 **−72%**（gate 实测
-  9 题 replay + 1 条 live 为 −73.4%），gate `adopt`。这是**选定的高→低起点**，
+  9 题 replay + 1 条 live 为 −70.0%），gate `adopt`。这是**选定的高→低起点**，
   不是搜索空间最优性声称。
 - 负结果（同批 6 组）：**没有候选比 low/full 更便宜**（最接近的 `off/minimal` 仍 +19.2%）；
   不得把 demo 表述成「baseline v0 被改进」或「搜索找到了更优配置」。

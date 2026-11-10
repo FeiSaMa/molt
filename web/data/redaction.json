@@ -1,6 +1,6 @@
 {
-  "canonical_hash": "5d3dc03b2dc4694897d095211aa1f65ec338db2389305007a75b6ef0b6f23b30",
-  "metrics_hash": "f1be1145da3a1d24caab91d3ecd08e9d107071aaf135cafc7c9425f4b0c60fad",
+  "canonical_hash": "6a9312fea1f65320b1831a286cd5f20e7926c86bab549ec9c87dc9a75b7d6458",
+  "metrics_hash": "a0b881d07dd390390a2a12f85b6de2288d7b2b658163c47c718720427c3f9f13",
   "post_metrics": {
     "keys": [
       "$.decisions",
@@ -6827,7 +6827,7 @@
       ],
       [
         "$.decisions[0].paired[0].candidate_cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.decisions[0].paired[1].baseline_cost_usd",
@@ -6915,7 +6915,7 @@
       ],
       [
         "$.decisions[0].scores.candidate.cost_per_solved_usd",
-        0.0009454890000000001
+        0.001068401
       ],
       [
         "$.decisions[0].scores.candidate.solved",
@@ -7023,11 +7023,11 @@
       ],
       [
         "$.results[2].scores.search.cost_per_solved_usd",
-        0.0009454890000000001
+        0.001068401
       ],
       [
         "$.results[2].scores.search.cost_total_usd",
-        0.00945489
+        0.01068401
       ],
       [
         "$.results[2].scores.search.invalid_ratio",
@@ -7047,11 +7047,11 @@
       ],
       [
         "$.results[3].scores.search.cost_per_solved_usd",
-        0.0009454890000000001
+        0.001068401
       ],
       [
         "$.results[3].scores.search.cost_total_usd",
-        0.00945489
+        0.01068401
       ],
       [
         "$.results[3].scores.search.invalid_ratio",
@@ -7087,15 +7087,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.assistant_cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.runs[0].ext.runtime.ledger.assistant_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.cache_read",
-        27008.0
+        22912.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.cache_write",
@@ -7103,11 +7103,11 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].cache_read",
-        5888.0
+        1664.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].cache_write",
@@ -7115,15 +7115,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].cost_usd",
-        0.000362628
+        0.0016182839999999998
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].input",
-        779.0
+        5101.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].output",
-        78.0
+        65.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].reasoning",
@@ -7131,11 +7131,11 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].total",
-        6745.0
+        6830.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].cache_read",
-        6656.0
+        6784.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].cache_write",
@@ -7143,15 +7143,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].cost_usd",
-        0.000264636
+        0.000232404
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].input",
-        449.0
+        407.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].output",
-        75.0
+        58.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].reasoning",
@@ -7159,7 +7159,7 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].total",
-        7180.0
+        7249.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].cache_read",
@@ -7171,15 +7171,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].cost_usd",
-        0.000231108
+        0.000224208
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].input",
-        183.0
+        252.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].output",
-        111.0
+        88.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].reasoning",
@@ -7187,7 +7187,7 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].total",
-        7462.0
+        7508.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].cache_read",
@@ -7199,15 +7199,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].cost_usd",
-        0.00012537600000000001
+        0.000137976
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].input",
-        192.0
+        238.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].output",
-        20.0
+        19.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].reasoning",
@@ -7215,7 +7215,7 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].total",
-        7508.0
+        7553.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.entries",
@@ -7223,15 +7223,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.input",
-        1603.0
+        5998.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.output",
-        284.0
+        230.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.raw_total_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.reasoning",
@@ -7239,7 +7239,7 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.total_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.turns",
@@ -7251,23 +7251,23 @@
       ],
       [
         "$.runs[0].ext.runtime.trust.preflight_cost_usd",
-        0.00041693
+        0.00167995
       ],
       [
         "$.runs[0].ext.runtime.trust.preflight_tokens",
-        13240.0
+        13436.0
       ],
       [
         "$.runs[0].ext.runtime.usage.assistant_cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.runs[0].ext.runtime.usage.assistant_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.usage.cache_read",
-        27008.0
+        22912.0
       ],
       [
         "$.runs[0].ext.runtime.usage.cache_write",
@@ -7275,11 +7275,11 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].cache_read",
-        5888.0
+        1664.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].cache_write",
@@ -7287,15 +7287,15 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].cost_usd",
-        0.000362628
+        0.0016182839999999998
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].input",
-        779.0
+        5101.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].output",
-        78.0
+        65.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].reasoning",
@@ -7303,11 +7303,11 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].total",
-        6745.0
+        6830.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].cache_read",
-        6656.0
+        6784.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].cache_write",
@@ -7315,15 +7315,15 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].cost_usd",
-        0.000264636
+        0.000232404
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].input",
-        449.0
+        407.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].output",
-        75.0
+        58.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].reasoning",
@@ -7331,7 +7331,7 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].total",
-        7180.0
+        7249.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].cache_read",
@@ -7343,15 +7343,15 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].cost_usd",
-        0.000231108
+        0.000224208
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].input",
-        183.0
+        252.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].output",
-        111.0
+        88.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].reasoning",
@@ -7359,7 +7359,7 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].total",
-        7462.0
+        7508.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].cache_read",
@@ -7371,15 +7371,15 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].cost_usd",
-        0.00012537600000000001
+        0.000137976
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].input",
-        192.0
+        238.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].output",
-        20.0
+        19.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].reasoning",
@@ -7387,7 +7387,7 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].total",
-        7508.0
+        7553.0
       ],
       [
         "$.runs[0].ext.runtime.usage.entries",
@@ -7395,15 +7395,15 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.input",
-        1603.0
+        5998.0
       ],
       [
         "$.runs[0].ext.runtime.usage.output",
-        284.0
+        230.0
       ],
       [
         "$.runs[0].ext.runtime.usage.raw_total_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.usage.reasoning",
@@ -7411,7 +7411,7 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.total_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.usage.turns",
@@ -7419,15 +7419,15 @@
       ],
       [
         "$.runs[0].usage.cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.runs[0].usage.tokens_in",
-        1603.0
+        5998.0
       ],
       [
         "$.runs[0].usage.tokens_out",
-        284.0
+        230.0
       ],
       [
         "$.runs[0].usage.turns",
@@ -7435,7 +7435,7 @@
       ],
       [
         "$.runs[0].usage.wall_ms",
-        5786.0
+        5886.0
       ],
       [
         "$.runs[1].attempt",
@@ -57571,7 +57571,7 @@
       ],
       [
         "$.decisions[0].paired[0].candidate_cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.decisions[0].paired[1].baseline_cost_usd",
@@ -57659,7 +57659,7 @@
       ],
       [
         "$.decisions[0].scores.candidate.cost_per_solved_usd",
-        0.0009454890000000001
+        0.001068401
       ],
       [
         "$.decisions[0].scores.candidate.solved",
@@ -57767,11 +57767,11 @@
       ],
       [
         "$.results[2].scores.search.cost_per_solved_usd",
-        0.0009454890000000001
+        0.001068401
       ],
       [
         "$.results[2].scores.search.cost_total_usd",
-        0.00945489
+        0.01068401
       ],
       [
         "$.results[2].scores.search.invalid_ratio",
@@ -57791,11 +57791,11 @@
       ],
       [
         "$.results[3].scores.search.cost_per_solved_usd",
-        0.0009454890000000001
+        0.001068401
       ],
       [
         "$.results[3].scores.search.cost_total_usd",
-        0.00945489
+        0.01068401
       ],
       [
         "$.results[3].scores.search.invalid_ratio",
@@ -57831,15 +57831,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.assistant_cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.runs[0].ext.runtime.ledger.assistant_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.cache_read",
-        27008.0
+        22912.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.cache_write",
@@ -57847,11 +57847,11 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].cache_read",
-        5888.0
+        1664.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].cache_write",
@@ -57859,15 +57859,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].cost_usd",
-        0.000362628
+        0.0016182839999999998
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].input",
-        779.0
+        5101.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].output",
-        78.0
+        65.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].reasoning",
@@ -57875,11 +57875,11 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[0].total",
-        6745.0
+        6830.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].cache_read",
-        6656.0
+        6784.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].cache_write",
@@ -57887,15 +57887,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].cost_usd",
-        0.000264636
+        0.000232404
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].input",
-        449.0
+        407.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].output",
-        75.0
+        58.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].reasoning",
@@ -57903,7 +57903,7 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[1].total",
-        7180.0
+        7249.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].cache_read",
@@ -57915,15 +57915,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].cost_usd",
-        0.000231108
+        0.000224208
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].input",
-        183.0
+        252.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].output",
-        111.0
+        88.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].reasoning",
@@ -57931,7 +57931,7 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[2].total",
-        7462.0
+        7508.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].cache_read",
@@ -57943,15 +57943,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].cost_usd",
-        0.00012537600000000001
+        0.000137976
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].input",
-        192.0
+        238.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].output",
-        20.0
+        19.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].reasoning",
@@ -57959,7 +57959,7 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.details[3].total",
-        7508.0
+        7553.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.entries",
@@ -57967,15 +57967,15 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.input",
-        1603.0
+        5998.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.output",
-        284.0
+        230.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.raw_total_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.reasoning",
@@ -57983,7 +57983,7 @@
       ],
       [
         "$.runs[0].ext.runtime.ledger.total_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.ledger.turns",
@@ -57995,23 +57995,23 @@
       ],
       [
         "$.runs[0].ext.runtime.trust.preflight_cost_usd",
-        0.00041693
+        0.00167995
       ],
       [
         "$.runs[0].ext.runtime.trust.preflight_tokens",
-        13240.0
+        13436.0
       ],
       [
         "$.runs[0].ext.runtime.usage.assistant_cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.runs[0].ext.runtime.usage.assistant_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.usage.cache_read",
-        27008.0
+        22912.0
       ],
       [
         "$.runs[0].ext.runtime.usage.cache_write",
@@ -58019,11 +58019,11 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].cache_read",
-        5888.0
+        1664.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].cache_write",
@@ -58031,15 +58031,15 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].cost_usd",
-        0.000362628
+        0.0016182839999999998
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].input",
-        779.0
+        5101.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].output",
-        78.0
+        65.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].reasoning",
@@ -58047,11 +58047,11 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[0].total",
-        6745.0
+        6830.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].cache_read",
-        6656.0
+        6784.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].cache_write",
@@ -58059,15 +58059,15 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].cost_usd",
-        0.000264636
+        0.000232404
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].input",
-        449.0
+        407.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].output",
-        75.0
+        58.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].reasoning",
@@ -58075,7 +58075,7 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[1].total",
-        7180.0
+        7249.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].cache_read",
@@ -58087,15 +58087,15 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].cost_usd",
-        0.000231108
+        0.000224208
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].input",
-        183.0
+        252.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].output",
-        111.0
+        88.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].reasoning",
@@ -58103,7 +58103,7 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[2].total",
-        7462.0
+        7508.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].cache_read",
@@ -58115,15 +58115,15 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].cost_usd",
-        0.00012537600000000001
+        0.000137976
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].input",
-        192.0
+        238.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].output",
-        20.0
+        19.0
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].reasoning",
@@ -58131,7 +58131,7 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.details[3].total",
-        7508.0
+        7553.0
       ],
       [
         "$.runs[0].ext.runtime.usage.entries",
@@ -58139,15 +58139,15 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.input",
-        1603.0
+        5998.0
       ],
       [
         "$.runs[0].ext.runtime.usage.output",
-        284.0
+        230.0
       ],
       [
         "$.runs[0].ext.runtime.usage.raw_total_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.usage.reasoning",
@@ -58155,7 +58155,7 @@
       ],
       [
         "$.runs[0].ext.runtime.usage.total_tokens",
-        28895.0
+        29140.0
       ],
       [
         "$.runs[0].ext.runtime.usage.turns",
@@ -58163,15 +58163,15 @@
       ],
       [
         "$.runs[0].usage.cost_usd",
-        0.00098375
+        0.00221287
       ],
       [
         "$.runs[0].usage.tokens_in",
-        1603.0
+        5998.0
       ],
       [
         "$.runs[0].usage.tokens_out",
-        284.0
+        230.0
       ],
       [
         "$.runs[0].usage.turns",
@@ -58179,7 +58179,7 @@
       ],
       [
         "$.runs[0].usage.wall_ms",
-        5786.0
+        5886.0
       ],
       [
         "$.runs[1].attempt",
@@ -101498,5 +101498,5 @@
     "key_value_secret",
     "home_path"
   ],
-  "source_hash": "5d3dc03b2dc4694897d095211aa1f65ec338db2389305007a75b6ef0b6f23b30"
+  "source_hash": "6a9312fea1f65320b1831a286cd5f20e7926c86bab549ec9c87dc9a75b7d6458"
 }

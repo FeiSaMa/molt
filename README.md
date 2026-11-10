@@ -93,7 +93,7 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
 
 - 现场 demo 的叙事是**选定的高成本起点 → 低成本候选**：`high/full`（v0-pi）
   → proposal 派生 `low/full`（v0）。成功率不变（10/10），执行成本 **−72%**
-  （`$0.035560 → $0.009978`，按 gate 的 9 题 replay + 1 条 live 实测为 **−73.4%**），
+  （`$0.035560 → $0.009978`，按 gate 的 9 题 replay + 1 条 live 实测为 **−70.0%**），
   gate `adopt`。
 - **同时保留负结果**：6 组候选中**没有一组比 low/full 更便宜**。demo 不是搜索空间最优性
   的声称，也不是「baseline v0 被改进」的声称——它只展示门禁能接受一个真实的

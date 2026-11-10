@@ -9,11 +9,11 @@
         "reason": "ok"
       },
       "candidate_genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
-      "created_at": "2026-11-10T17:00:33Z",
+      "created_at": "2026-11-10T17:05:02Z",
       "decision_id": "demo-decision-demo",
       "deltas": {
-        "cost_per_solved_usd": -0.002611,
-        "cost_total_usd": -0.026105,
+        "cost_per_solved_usd": -0.002488,
+        "cost_total_usd": -0.024876,
         "solved": 0
       },
       "ext": {
@@ -38,9 +38,9 @@
         {
           "baseline_cost_usd": 0.0023281,
           "baseline_passed": true,
-          "candidate_cost_usd": 0.00098375,
+          "candidate_cost_usd": 0.00221287,
           "candidate_passed": true,
-          "cost_delta_usd": -0.001344,
+          "cost_delta_usd": -0.000115,
           "passed_delta": 0,
           "task_id": "smoke-add"
         },
@@ -138,7 +138,7 @@
           "total": 10
         },
         "candidate": {
-          "cost_per_solved_usd": 0.0009454890000000001,
+          "cost_per_solved_usd": 0.001068401,
           "genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
           "solved": 10,
           "total": 10

@@ -3,7 +3,7 @@ window.MOLT_VIEW = {
   "archive": {
     "archives": [
       {
-        "adopted_at": "2026-11-10T17:00:33Z",
+        "adopted_at": "2026-11-10T17:05:02Z",
         "archive_id": "arc-0001-9753c7bb",
         "ext": {},
         "generation": 1,
@@ -18,7 +18,7 @@ window.MOLT_VIEW = {
         "snapshot_id": "snap-98576b1069d0ae90"
       },
       {
-        "adopted_at": "2026-11-10T17:00:33Z",
+        "adopted_at": "2026-11-10T17:05:02Z",
         "archive_id": "arc-0002-0976fd25",
         "ext": {},
         "generation": 2,
@@ -36,7 +36,7 @@ window.MOLT_VIEW = {
     "lineage": [
       {
         "adopted": true,
-        "adopted_at": "2026-11-10T17:00:33Z",
+        "adopted_at": "2026-11-10T17:05:02Z",
         "archive_id": "arc-0002-0976fd25",
         "generation": 2,
         "genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
@@ -52,7 +52,7 @@ window.MOLT_VIEW = {
       },
       {
         "adopted": true,
-        "adopted_at": "2026-11-10T17:00:33Z",
+        "adopted_at": "2026-11-10T17:05:02Z",
         "archive_id": "arc-0001-9753c7bb",
         "generation": 1,
         "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
@@ -74,7 +74,7 @@ window.MOLT_VIEW = {
   "events": {
     "report": [
       {
-        "event_id": "ev-1e17da7fc586420f",
+        "event_id": "ev-6871e4ada43d4fe0",
         "ext": {},
         "payload": {
           "count": 5
@@ -82,7 +82,7 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T17:00:33Z",
+        "ts": "2026-11-10T17:05:02Z",
         "type": "holdout.accessed"
       },
       {
@@ -94,7 +94,7 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T17:00:33Z",
+        "ts": "2026-11-10T17:05:02Z",
         "type": "report.scored"
       },
       {
@@ -106,26 +106,26 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "report",
-        "ts": "2026-11-10T17:00:33Z",
+        "ts": "2026-11-10T17:05:02Z",
         "type": "report.scored"
       }
     ],
     "search": [
       {
-        "event_id": "ev-6002820e2dd34b0b",
+        "event_id": "ev-b2878beb35014285",
         "ext": {},
         "payload": {
           "genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
           "task_id": "smoke-add"
         },
-        "run_id": "0976fd25-smoke-add-a1-9edd2f",
+        "run_id": "0976fd25-smoke-add-a1-6d96b0",
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T17:00:27Z",
+        "ts": "2026-11-10T17:04:55Z",
         "type": "run.started"
       },
       {
-        "event_id": "ev-b5af42f7451741ac",
+        "event_id": "ev-b77d85ec79324fef",
         "ext": {},
         "payload": {
           "parent_genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
@@ -134,8 +134,21 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T17:00:27Z",
+        "ts": "2026-11-10T17:04:55Z",
         "type": "proposal.generated"
+      },
+      {
+        "event_id": "ev-9b1de38c4d2443a6",
+        "ext": {},
+        "payload": {
+          "outcome": "passed",
+          "task_id": "smoke-add"
+        },
+        "run_id": "0976fd25-smoke-add-a1-6d96b0",
+        "schema_version": "1.0.0",
+        "scope": "search",
+        "ts": "2026-11-10T17:05:02Z",
+        "type": "run.finished"
       },
       {
         "event_id": "ev-demo-demo-gate",
@@ -147,21 +160,8 @@ window.MOLT_VIEW = {
         "run_id": null,
         "schema_version": "1.0.0",
         "scope": "search",
-        "ts": "2026-11-10T17:00:33Z",
+        "ts": "2026-11-10T17:05:02Z",
         "type": "gate.decided"
-      },
-      {
-        "event_id": "ev-e1a6cc362fef4acf",
-        "ext": {},
-        "payload": {
-          "outcome": "passed",
-          "task_id": "smoke-add"
-        },
-        "run_id": "0976fd25-smoke-add-a1-9edd2f",
-        "schema_version": "1.0.0",
-        "scope": "search",
-        "ts": "2026-11-10T17:00:33Z",
-        "type": "run.finished"
       }
     ]
   },
@@ -176,11 +176,11 @@ window.MOLT_VIEW = {
           "reason": "ok"
         },
         "candidate_genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
-        "created_at": "2026-11-10T17:00:33Z",
+        "created_at": "2026-11-10T17:05:02Z",
         "decision_id": "demo-decision-demo",
         "deltas": {
-          "cost_per_solved_usd": -0.002611,
-          "cost_total_usd": -0.026105,
+          "cost_per_solved_usd": -0.002488,
+          "cost_total_usd": -0.024876,
           "solved": 0
         },
         "ext": {
@@ -205,9 +205,9 @@ window.MOLT_VIEW = {
           {
             "baseline_cost_usd": 0.0023281,
             "baseline_passed": true,
-            "candidate_cost_usd": 0.00098375,
+            "candidate_cost_usd": 0.00221287,
             "candidate_passed": true,
-            "cost_delta_usd": -0.001344,
+            "cost_delta_usd": -0.000115,
             "passed_delta": 0,
             "task_id": "smoke-add"
           },
@@ -305,7 +305,7 @@ window.MOLT_VIEW = {
             "total": 10
           },
           "candidate": {
-            "cost_per_solved_usd": 0.0009454890000000001,
+            "cost_per_solved_usd": 0.001068401,
             "genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
             "solved": 10,
             "total": 10
@@ -365,8 +365,8 @@ window.MOLT_VIEW = {
     ]
   },
   "redaction": {
-    "canonical_hash": "5d3dc03b2dc4694897d095211aa1f65ec338db2389305007a75b6ef0b6f23b30",
-    "metrics_hash": "f1be1145da3a1d24caab91d3ecd08e9d107071aaf135cafc7c9425f4b0c60fad",
+    "canonical_hash": "6a9312fea1f65320b1831a286cd5f20e7926c86bab549ec9c87dc9a75b7d6458",
+    "metrics_hash": "a0b881d07dd390390a2a12f85b6de2288d7b2b658163c47c718720427c3f9f13",
     "post_metrics": {
       "keys": [
         "$.decisions",
@@ -7193,7 +7193,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].paired[0].candidate_cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.decisions[0].paired[1].baseline_cost_usd",
@@ -7281,7 +7281,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].scores.candidate.cost_per_solved_usd",
-          0.0009454890000000001
+          0.001068401
         ],
         [
           "$.decisions[0].scores.candidate.solved",
@@ -7389,11 +7389,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].scores.search.cost_per_solved_usd",
-          0.0009454890000000001
+          0.001068401
         ],
         [
           "$.results[2].scores.search.cost_total_usd",
-          0.00945489
+          0.01068401
         ],
         [
           "$.results[2].scores.search.invalid_ratio",
@@ -7413,11 +7413,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[3].scores.search.cost_per_solved_usd",
-          0.0009454890000000001
+          0.001068401
         ],
         [
           "$.results[3].scores.search.cost_total_usd",
-          0.00945489
+          0.01068401
         ],
         [
           "$.results[3].scores.search.invalid_ratio",
@@ -7453,15 +7453,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.assistant_cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.runs[0].ext.runtime.ledger.assistant_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.cache_read",
-          27008.0
+          22912.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.cache_write",
@@ -7469,11 +7469,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cache_read",
-          5888.0
+          1664.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cache_write",
@@ -7481,15 +7481,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cost_usd",
-          0.000362628
+          0.0016182839999999998
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].input",
-          779.0
+          5101.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].output",
-          78.0
+          65.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].reasoning",
@@ -7497,11 +7497,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].total",
-          6745.0
+          6830.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cache_read",
-          6656.0
+          6784.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cache_write",
@@ -7509,15 +7509,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cost_usd",
-          0.000264636
+          0.000232404
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].input",
-          449.0
+          407.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].output",
-          75.0
+          58.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].reasoning",
@@ -7525,7 +7525,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].total",
-          7180.0
+          7249.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].cache_read",
@@ -7537,15 +7537,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].cost_usd",
-          0.000231108
+          0.000224208
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].input",
-          183.0
+          252.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].output",
-          111.0
+          88.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].reasoning",
@@ -7553,7 +7553,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].total",
-          7462.0
+          7508.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].cache_read",
@@ -7565,15 +7565,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].cost_usd",
-          0.00012537600000000001
+          0.000137976
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].input",
-          192.0
+          238.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].output",
-          20.0
+          19.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].reasoning",
@@ -7581,7 +7581,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].total",
-          7508.0
+          7553.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.entries",
@@ -7589,15 +7589,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.input",
-          1603.0
+          5998.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.output",
-          284.0
+          230.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.raw_total_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.reasoning",
@@ -7605,7 +7605,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.total_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.turns",
@@ -7617,23 +7617,23 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.trust.preflight_cost_usd",
-          0.00041693
+          0.00167995
         ],
         [
           "$.runs[0].ext.runtime.trust.preflight_tokens",
-          13240.0
+          13436.0
         ],
         [
           "$.runs[0].ext.runtime.usage.assistant_cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.runs[0].ext.runtime.usage.assistant_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.usage.cache_read",
-          27008.0
+          22912.0
         ],
         [
           "$.runs[0].ext.runtime.usage.cache_write",
@@ -7641,11 +7641,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cache_read",
-          5888.0
+          1664.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cache_write",
@@ -7653,15 +7653,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cost_usd",
-          0.000362628
+          0.0016182839999999998
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].input",
-          779.0
+          5101.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].output",
-          78.0
+          65.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].reasoning",
@@ -7669,11 +7669,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].total",
-          6745.0
+          6830.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cache_read",
-          6656.0
+          6784.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cache_write",
@@ -7681,15 +7681,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cost_usd",
-          0.000264636
+          0.000232404
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].input",
-          449.0
+          407.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].output",
-          75.0
+          58.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].reasoning",
@@ -7697,7 +7697,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].total",
-          7180.0
+          7249.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].cache_read",
@@ -7709,15 +7709,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].cost_usd",
-          0.000231108
+          0.000224208
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].input",
-          183.0
+          252.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].output",
-          111.0
+          88.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].reasoning",
@@ -7725,7 +7725,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].total",
-          7462.0
+          7508.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].cache_read",
@@ -7737,15 +7737,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].cost_usd",
-          0.00012537600000000001
+          0.000137976
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].input",
-          192.0
+          238.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].output",
-          20.0
+          19.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].reasoning",
@@ -7753,7 +7753,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].total",
-          7508.0
+          7553.0
         ],
         [
           "$.runs[0].ext.runtime.usage.entries",
@@ -7761,15 +7761,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.input",
-          1603.0
+          5998.0
         ],
         [
           "$.runs[0].ext.runtime.usage.output",
-          284.0
+          230.0
         ],
         [
           "$.runs[0].ext.runtime.usage.raw_total_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.usage.reasoning",
@@ -7777,7 +7777,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.total_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.usage.turns",
@@ -7785,15 +7785,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.runs[0].usage.tokens_in",
-          1603.0
+          5998.0
         ],
         [
           "$.runs[0].usage.tokens_out",
-          284.0
+          230.0
         ],
         [
           "$.runs[0].usage.turns",
@@ -7801,7 +7801,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.wall_ms",
-          5786.0
+          5886.0
         ],
         [
           "$.runs[1].attempt",
@@ -57937,7 +57937,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].paired[0].candidate_cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.decisions[0].paired[1].baseline_cost_usd",
@@ -58025,7 +58025,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.decisions[0].scores.candidate.cost_per_solved_usd",
-          0.0009454890000000001
+          0.001068401
         ],
         [
           "$.decisions[0].scores.candidate.solved",
@@ -58133,11 +58133,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[2].scores.search.cost_per_solved_usd",
-          0.0009454890000000001
+          0.001068401
         ],
         [
           "$.results[2].scores.search.cost_total_usd",
-          0.00945489
+          0.01068401
         ],
         [
           "$.results[2].scores.search.invalid_ratio",
@@ -58157,11 +58157,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.results[3].scores.search.cost_per_solved_usd",
-          0.0009454890000000001
+          0.001068401
         ],
         [
           "$.results[3].scores.search.cost_total_usd",
-          0.00945489
+          0.01068401
         ],
         [
           "$.results[3].scores.search.invalid_ratio",
@@ -58197,15 +58197,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.assistant_cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.runs[0].ext.runtime.ledger.assistant_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.cache_read",
-          27008.0
+          22912.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.cache_write",
@@ -58213,11 +58213,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cache_read",
-          5888.0
+          1664.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cache_write",
@@ -58225,15 +58225,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].cost_usd",
-          0.000362628
+          0.0016182839999999998
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].input",
-          779.0
+          5101.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].output",
-          78.0
+          65.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].reasoning",
@@ -58241,11 +58241,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[0].total",
-          6745.0
+          6830.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cache_read",
-          6656.0
+          6784.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cache_write",
@@ -58253,15 +58253,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].cost_usd",
-          0.000264636
+          0.000232404
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].input",
-          449.0
+          407.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].output",
-          75.0
+          58.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].reasoning",
@@ -58269,7 +58269,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[1].total",
-          7180.0
+          7249.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].cache_read",
@@ -58281,15 +58281,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].cost_usd",
-          0.000231108
+          0.000224208
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].input",
-          183.0
+          252.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].output",
-          111.0
+          88.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].reasoning",
@@ -58297,7 +58297,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[2].total",
-          7462.0
+          7508.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].cache_read",
@@ -58309,15 +58309,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].cost_usd",
-          0.00012537600000000001
+          0.000137976
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].input",
-          192.0
+          238.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].output",
-          20.0
+          19.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].reasoning",
@@ -58325,7 +58325,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.details[3].total",
-          7508.0
+          7553.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.entries",
@@ -58333,15 +58333,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.input",
-          1603.0
+          5998.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.output",
-          284.0
+          230.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.raw_total_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.reasoning",
@@ -58349,7 +58349,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.ledger.total_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.ledger.turns",
@@ -58361,23 +58361,23 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.trust.preflight_cost_usd",
-          0.00041693
+          0.00167995
         ],
         [
           "$.runs[0].ext.runtime.trust.preflight_tokens",
-          13240.0
+          13436.0
         ],
         [
           "$.runs[0].ext.runtime.usage.assistant_cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.runs[0].ext.runtime.usage.assistant_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.usage.cache_read",
-          27008.0
+          22912.0
         ],
         [
           "$.runs[0].ext.runtime.usage.cache_write",
@@ -58385,11 +58385,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cache_read",
-          5888.0
+          1664.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cache_write",
@@ -58397,15 +58397,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].cost_usd",
-          0.000362628
+          0.0016182839999999998
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].input",
-          779.0
+          5101.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].output",
-          78.0
+          65.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].reasoning",
@@ -58413,11 +58413,11 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[0].total",
-          6745.0
+          6830.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cache_read",
-          6656.0
+          6784.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cache_write",
@@ -58425,15 +58425,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].cost_usd",
-          0.000264636
+          0.000232404
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].input",
-          449.0
+          407.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].output",
-          75.0
+          58.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].reasoning",
@@ -58441,7 +58441,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[1].total",
-          7180.0
+          7249.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].cache_read",
@@ -58453,15 +58453,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].cost_usd",
-          0.000231108
+          0.000224208
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].input",
-          183.0
+          252.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].output",
-          111.0
+          88.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].reasoning",
@@ -58469,7 +58469,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[2].total",
-          7462.0
+          7508.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].cache_read",
@@ -58481,15 +58481,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].cost_usd",
-          0.00012537600000000001
+          0.000137976
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].input",
-          192.0
+          238.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].output",
-          20.0
+          19.0
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].reasoning",
@@ -58497,7 +58497,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.details[3].total",
-          7508.0
+          7553.0
         ],
         [
           "$.runs[0].ext.runtime.usage.entries",
@@ -58505,15 +58505,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.input",
-          1603.0
+          5998.0
         ],
         [
           "$.runs[0].ext.runtime.usage.output",
-          284.0
+          230.0
         ],
         [
           "$.runs[0].ext.runtime.usage.raw_total_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.usage.reasoning",
@@ -58521,7 +58521,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].ext.runtime.usage.total_tokens",
-          28895.0
+          29140.0
         ],
         [
           "$.runs[0].ext.runtime.usage.turns",
@@ -58529,15 +58529,15 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.cost_usd",
-          0.00098375
+          0.00221287
         ],
         [
           "$.runs[0].usage.tokens_in",
-          1603.0
+          5998.0
         ],
         [
           "$.runs[0].usage.tokens_out",
-          284.0
+          230.0
         ],
         [
           "$.runs[0].usage.turns",
@@ -58545,7 +58545,7 @@ window.MOLT_VIEW = {
         ],
         [
           "$.runs[0].usage.wall_ms",
-          5786.0
+          5886.0
         ],
         [
           "$.runs[1].attempt",
@@ -101864,7 +101864,7 @@ window.MOLT_VIEW = {
       "key_value_secret",
       "home_path"
     ],
-    "source_hash": "5d3dc03b2dc4694897d095211aa1f65ec338db2389305007a75b6ef0b6f23b30"
+    "source_hash": "6a9312fea1f65320b1831a286cd5f20e7926c86bab549ec9c87dc9a75b7d6458"
   },
   "report_results": {
     "report_runs_total": {
@@ -101882,7 +101882,7 @@ window.MOLT_VIEW = {
     },
     "results": [
       {
-        "generated_at": "2026-11-10T17:00:33Z",
+        "generated_at": "2026-11-10T17:05:02Z",
         "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
         "report_runs": {
           "by_status": {
@@ -101919,7 +101919,7 @@ window.MOLT_VIEW = {
         }
       },
       {
-        "generated_at": "2026-11-10T17:00:33Z",
+        "generated_at": "2026-11-10T17:05:02Z",
         "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
         "report_runs": {
           "by_status": {
@@ -101946,8 +101946,8 @@ window.MOLT_VIEW = {
             "total": 5
           },
           "search": {
-            "cost_per_solved_usd": 0.0009454890000000001,
-            "cost_total_usd": 0.00945489,
+            "cost_per_solved_usd": 0.001068401,
+            "cost_total_usd": 0.01068401,
             "invalid_ratio": 0.0,
             "pass_at_1_first_attempt": 1.0,
             "solved": 10,
@@ -101962,9 +101962,9 @@ window.MOLT_VIEW = {
     "runs": [
       {
         "attempt": 1,
-        "cost_usd": 0.00098375,
+        "cost_usd": 0.00221287,
         "demo_group": "closure",
-        "finished_at": "2026-11-10T17:00:33Z",
+        "finished_at": "2026-11-10T17:05:02Z",
         "genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
         "provenance": {
           "kind": "live",
@@ -101972,15 +101972,15 @@ window.MOLT_VIEW = {
           "model": "deepseek/deepseek-flash",
           "runtime_id": "pi-1.5.0"
         },
-        "run_id": "0976fd25-smoke-add-a1-9edd2f",
+        "run_id": "0976fd25-smoke-add-a1-6d96b0",
         "scope": "search",
         "solved": true,
-        "started_at": "2026-11-10T17:00:27Z",
+        "started_at": "2026-11-10T17:04:55Z",
         "status": "passed",
         "task_id": "smoke-add",
         "tokens": {
-          "in": 1603,
-          "out": 284
+          "in": 5998,
+          "out": 230
         },
         "turns": 4,
         "verifier": {
@@ -101989,7 +101989,7 @@ window.MOLT_VIEW = {
           "tests_hash_after": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168",
           "tests_hash_before": "d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168"
         },
-        "wall_ms": 5786
+        "wall_ms": 5886
       },
       {
         "attempt": 1,
@@ -102696,7 +102696,7 @@ window.MOLT_VIEW = {
   "search_results": {
     "results": [
       {
-        "generated_at": "2026-11-10T17:00:33Z",
+        "generated_at": "2026-11-10T17:05:02Z",
         "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
         "result_id": "result-demo-baseline-search",
         "scope": "search",
@@ -102712,14 +102712,14 @@ window.MOLT_VIEW = {
         }
       },
       {
-        "generated_at": "2026-11-10T17:00:33Z",
+        "generated_at": "2026-11-10T17:05:02Z",
         "genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
         "result_id": "result-demo-candidate-search",
         "scope": "search",
         "scores": {
           "search": {
-            "cost_per_solved_usd": 0.0009454890000000001,
-            "cost_total_usd": 0.00945489,
+            "cost_per_solved_usd": 0.001068401,
+            "cost_total_usd": 0.01068401,
             "invalid_ratio": 0.0,
             "pass_at_1_first_attempt": 1.0,
             "solved": 10,
@@ -102733,7 +102733,7 @@ window.MOLT_VIEW = {
   "snapshots": {
     "snapshots": [
       {
-        "created_at": "2026-11-10T17:00:33Z",
+        "created_at": "2026-11-10T17:05:02Z",
         "file_count": 42,
         "generation": 2,
         "roots": [
@@ -102745,7 +102745,7 @@ window.MOLT_VIEW = {
         "tree_hash": "e279fa6106f14bb372093b6ee7ef01d866b742a6bb8201ce6c20d657514f577e"
       },
       {
-        "created_at": "2026-11-10T17:00:33Z",
+        "created_at": "2026-11-10T17:05:02Z",
         "file_count": 42,
         "generation": 1,
         "roots": [

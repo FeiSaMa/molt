@@ -1,7 +1,7 @@
 {
   "results": [
     {
-      "generated_at": "2026-11-10T17:00:33Z",
+      "generated_at": "2026-11-10T17:05:02Z",
       "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
       "result_id": "result-demo-baseline-search",
       "scope": "search",
@@ -17,14 +17,14 @@
       }
     },
     {
-      "generated_at": "2026-11-10T17:00:33Z",
+      "generated_at": "2026-11-10T17:05:02Z",
       "genome_id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
       "result_id": "result-demo-candidate-search",
       "scope": "search",
       "scores": {
         "search": {
-          "cost_per_solved_usd": 0.0009454890000000001,
-          "cost_total_usd": 0.00945489,
+          "cost_per_solved_usd": 0.001068401,
+          "cost_total_usd": 0.01068401,
           "invalid_ratio": 0.0,
           "pass_at_1_first_attempt": 1.0,
           "solved": 10,

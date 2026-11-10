@@ -14,7 +14,7 @@
   },
   "results": [
     {
-      "generated_at": "2026-11-10T17:00:33Z",
+      "generated_at": "2026-11-10T17:05:02Z",
       "genome_id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
       "report_runs": {
         "by_status": {
@@ -51,7 +51,7 @@
       }
     },
     {
-      "generated_at": "2026-11-10T17:00:33Z",
+      "generated_at": "2026-11-10T17:05:02Z",
       "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
       "report_runs": {
         "by_status": {
@@ -78,8 +78,8 @@
           "total": 5
         },
         "search": {
-          "cost_per_solved_usd": 0.0009454890000000001,
-          "cost_total_usd": 0.00945489,
+          "cost_per_solved_usd": 0.001068401,
+          "cost_total_usd": 0.01068401,
           "invalid_ratio": 0.0,
           "pass_at_1_first_attempt": 1.0,
           "solved": 10,
