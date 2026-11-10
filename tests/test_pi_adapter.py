@@ -246,43 +246,27 @@ def test_argv_contains_required_flags() -> None:
     assert ("--no-" + "tools") not in argv
 
 
-def test_tools_mode_mapping_is_owned_by_harness() -> None:
+def test_tools_mode_mapping_is_bash_only() -> None:
     module = harness_module()
-    assert module.tools_argv_for("default") == []
-    assert module.tools_argv_for("lean") == ["--exclude-tools", "write"]
-    with pytest.raises(ValueError):
-        module.tools_argv_for("max")
+    assert module.tools_argv_for("bash") == ["--tools", "bash"]
+    for rejected in ("default", "lean", "max"):
+        with pytest.raises(ValueError):
+            module.tools_argv_for(rejected)
 
 
-def test_default_argv_has_no_tools_mode_but_excludes_builtin_reads() -> None:
-    module = harness_module()
-    argv = build_pi_argv(
-        model="deepseek/deepseek-flash",
-        thinking="off",
-        session_id="molt-run-1",
-        session_dir="/tmp/sessions",
-        tools_args=module.tools_argv_for("default"),
-        builtin_excludes=BUILTIN_READ_TOOLS,
-    )
-    assert "--tools" not in argv
-    value = argv[argv.index("--exclude-tools") + 1]
-    assert set(value.split(",")) == set(BUILTIN_READ_TOOLS)
-    assert ("--no-" + "tools") not in argv
-
-
-def test_lean_argv_contains_exclude_tools_write() -> None:
+def test_argv_allows_only_bash_tool() -> None:
     module = harness_module()
     argv = build_pi_argv(
         model="deepseek/deepseek-flash",
         thinking="high",
         session_id="molt-run-1",
         session_dir="/tmp/sessions",
-        tools_args=module.tools_argv_for("lean"),
-        builtin_excludes=BUILTIN_READ_TOOLS,
+        tools_args=module.tools_argv_for("bash"),
     )
-    value = argv[argv.index("--exclude-tools") + 1]
-    assert value.split(",")[0] == "write"
-    assert set(BUILTIN_READ_TOOLS) <= set(value.split(","))
+    assert argv[argv.index("--tools") + 1] == "bash"
+    for excluded in BUILTIN_READ_TOOLS + ("write", "edit"):
+        assert excluded not in argv
+    assert ("--no-" + "tools") not in argv
 
 
 @pytest.mark.parametrize("flag", ["--no-session", "--continue", "-c", "--resume", "-r"])
@@ -435,8 +419,11 @@ def test_harness_writes_prompt_for_runtime(tmp_path: Path) -> None:
             )
 
     class DummyVerifier:
-        def verify(self, task, workdir):
-            return VerifyOutcome(True, "a" * 64, "a" * 64, True)
+        def guard(self, task, workdir):
+            return "a" * 64
+
+        def verify(self, task, workdir, *, before=None):
+            return VerifyOutcome(True, before or "a" * 64, "a" * 64, True)
 
     harness = module.CodeRepairHarness(
         DummyRuntime(),
@@ -484,8 +471,11 @@ def test_engine_persists_pi_runtime_ext(tmp_path: Path) -> None:
             raise AssertionError("not used")
 
     class Verifier:
-        def verify(self, task, workdir):
-            return VerifyOutcome(True, "a" * 64, "a" * 64, True)
+        def guard(self, task, workdir):
+            return "a" * 64
+
+        def verify(self, task, workdir, *, before=None):
+            return VerifyOutcome(True, before or "a" * 64, "a" * 64, True)
 
     store = StateStore(tmp_path / "state")
     engine = Engine(
@@ -503,3 +493,17 @@ def test_engine_persists_pi_runtime_ext(tmp_path: Path) -> None:
     run = engine.run_task(genome(), task(), scope="search")
     assert run.ext["runtime"]["project_trust"] == "cli_approve"
     assert store.read_run(run.run_id).ext["runtime"]["provenance"] == "live"
+
+
+def test_runtime_resolves_relative_workdir(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    spawn, state = spawn_factory([assistant("m1", usage())])
+    runtime = make_runtime(tmp_path)
+    runtime.spawn = spawn
+    result = runtime.run(genome(), task(), Path("rel-work"))
+    assert result.outcome == "passed"
+    session_path = Path(result.diagnostic["runtime"]["session_path"])
+    assert session_path.is_absolute()
+    assert Path(result.diagnostic["runtime"]["log_ref"]).is_absolute()
+    assert Path(state["cwd"]).is_absolute()
+    assert result.artifacts["solution.py"]

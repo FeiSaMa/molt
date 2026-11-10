@@ -1,0 +1,21 @@
+{
+  "archives": [],
+  "lineage": [
+    {
+      "adopted": false,
+      "adopted_at": null,
+      "archive_id": null,
+      "generation": null,
+      "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
+      "parent_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828"
+    },
+    {
+      "adopted": false,
+      "adopted_at": null,
+      "archive_id": null,
+      "generation": null,
+      "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+      "parent_id": null
+    }
+  ]
+}

@@ -12,13 +12,13 @@ SoL-Pi，`compaction_ratio` 的语义在上游不存在，`tool_granularity` 与
 
 ## 决定
 
-1. **三维锁定**：`thinking ∈ {off, low, high}` × `context ∈ {full, minimal}` ×
-   `tools ∈ {default, lean}`，共 12 组。不得有第四维；`compaction` 不进 v1；
-   `tools_mode` 只控制工具集，不含工具输出截断。code / skills / memory / 模型维度只留
-   `ext` 与后续 major 扩展点。
+1. **搜索空间锁定**：`thinking ∈ {off, low, high}` × `context ∈ {full, minimal}`，
+   共 6 组；`tools` 在 B2b 锁定为单值 `bash`（搜索空间不再含工具维度）。不得有第四维；
+   `compaction` 不进 v1；bash 读写由 sandbox wrapper 隔离，read/write/edit 不启用。
+   code / skills / memory / 模型维度只留 `ext` 与后续 major 扩展点。
 2. **genome 是声明式清单**：必含字段与嵌套结构以
    [`docs/protocol.md`](../protocol.md) 的 `genome` 表为准；本 ADR 只记录不可变的语义
-   （三维、parent 谱系、artifact 哈希、v1 空 skills）。
+   （6 组搜索空间、parent 谱系、artifact 哈希、v1 空 skills）。
 3. **可复现哈希**：`genome_id = "sha256:" + sha256(canonical(manifest 去掉 genome_id))`；
    `artifacts` 内嵌全部被引用文件的内容哈希（`harness.py`、`verifier.py`、`task_provider.py`、
    `switches.schema.json`、prompts、tools、manifest）。任一字节变化 ⇒ verify 失败；
@@ -31,8 +31,8 @@ SoL-Pi，`compaction_ratio` 的语义在上游不存在，`tool_granularity` 与
 6. **scenario_version 触发面**：`harness.py` / `verifier.py` / `task_provider.py` /
    `switches.schema.json` / `bench/**` 任一变更 ⇒ 必须升版本并重跑基线。
    每次 run 与 gate decision 带 `shell_version` 与 `verifier_hash`；禁止跨版本比较。
-7. **提案越域**：proposal 的 switches 必须落在三维域内；第四维、`compaction`、未知键都是
-   非法候选，schema 与数据类双重拒绝。
+7. **提案越域**：proposal 的 switches 必须落在当前域内（thinking/context 枚举 + tools=bash）；
+   第四维、`compaction`、未知键都是非法候选，schema 与数据类双重拒绝。
 
 ## 后果
 

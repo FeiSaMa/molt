@@ -78,7 +78,7 @@ def test_bash_has_no_proxy_env(tmp_path: Path) -> None:
     assert (completed.stdout or "").strip() == ""
 
 
-def test_read_tools_are_excluded_from_pi_argv() -> None:
+def test_pi_argv_allows_only_bash() -> None:
     from molt.adapters.pi.argv import build_pi_argv
 
     argv = build_pi_argv(
@@ -86,9 +86,11 @@ def test_read_tools_are_excluded_from_pi_argv() -> None:
         thinking="off",
         session_id="molt-read-check",
         session_dir="/tmp/sessions",
+        tools_args=("--tools", "bash"),
     )
-    value = argv[argv.index("--exclude-tools") + 1]
-    assert set(BUILTIN_READ_TOOLS) <= set(value.split(","))
+    assert argv[argv.index("--tools") + 1] == "bash"
+    for excluded in BUILTIN_READ_TOOLS + ("write", "edit"):
+        assert excluded not in argv
 
 
 def test_repository_never_generates_no_tools_flag() -> None:

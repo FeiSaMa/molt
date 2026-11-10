@@ -61,7 +61,8 @@ def build_engine(
     pi_options: Mapping[str, Any] | None = None,
 ) -> Engine:
     """组装 B1 的 fixture 引擎（shell loader + fixture runtime + 真 pytest verifier）。"""
-    repo_root = Path(repo_root)
+    repo_root = Path(repo_root).resolve()
+    work_root = Path(work_root).resolve()
     store.ensure()
     provider_mod = load_shell_module(
         repo_root, "shells/code-repair/task_provider.py", "molt_shell_task_provider"

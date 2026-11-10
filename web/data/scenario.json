@@ -1,0 +1,57 @@
+{
+  "bench_hash": "5575d12ae0b52913b6ee1888a1d7e7c980cfb6ccd81b615f7ac62d1f5f42ccdf",
+  "budget": {
+    "execution_budget_usd": 5.0,
+    "search_overhead_budget_usd": 2.0
+  },
+  "claim": {
+    "holdout_export": "aggregate-only",
+    "live_model_calls": false,
+    "provenance": "runs[].provenance.kind ∈ {fixture, live, replay}；fixture 不是 live",
+    "reproducibility": "指标一致；不承诺字节级复现（run_id 含随机后缀）",
+    "runtime": "fixture"
+  },
+  "ext": {
+    "note": "demo 只用 fixture runtime；不产生真实模型调用"
+  },
+  "holdout": {
+    "detail": "not-exported",
+    "task_count": 1
+  },
+  "isolation": {
+    "network": "none"
+  },
+  "not_claimed": [
+    "live 模型的质量或成本",
+    "跨 scenario_version 的比较",
+    "holdout 逐题明细",
+    "字节级证据复现"
+  ],
+  "policy": {
+    "budget": {
+      "execution_budget_usd": 5.0,
+      "search_overhead_budget_usd": 2.0
+    },
+    "invalid_ratio_max": 0.25,
+    "k": 0
+  },
+  "scenario_id": "demo",
+  "scenario_version": "demo-4",
+  "schema_version": "1.0.0",
+  "shell": {
+    "shell_id": "code-repair",
+    "shell_version": "1.0.0"
+  },
+  "task_counts": {
+    "report": 1,
+    "search": 2,
+    "total": 3
+  },
+  "task_sets": {
+    "search": [
+      "smoke-add",
+      "smoke-even"
+    ]
+  },
+  "title": "B1 demo：两题搜索集 + 一题留出集"
+}

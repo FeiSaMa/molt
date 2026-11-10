@@ -86,7 +86,7 @@ def build_pi_argv(
     session_id: str,
     session_dir: str,
     tools_args: Sequence[str] = (),
-    builtin_excludes: Iterable[str] = BUILTIN_READ_TOOLS,
+    builtin_excludes: Iterable[str] = (),
     prompt: str | None = None,
     extra: Sequence[str] = (),
 ) -> list[str]:

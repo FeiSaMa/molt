@@ -138,13 +138,13 @@ gate，并断言 search 流零 holdout id、report 流至少一条 `holdout.acce
 ## 八、提案层（B2a）
 
 - **LLM proposer 是一等公民**：输入只能是当前 `scenario_version` 的 `SearchHistory`；
-  `parent` 的 `genome_id`、`switches`、允许的三维枚举进入 prompt，holdout / report /
+  `parent` 的 `genome_id`、`switches`、允许的枚举（thinking/context；tools 锁定 bash）进入 prompt，holdout / report /
   gate 阈值不进入。
 - **proposal.ext 契约**：`diagnosis`、`model`、`prompt_sha256`、`response_sha256`、
   `usage{input,output,cache_read,cache_write,reasoning,total}`、`cost_source`、
   `counted_as="search_overhead"`、`fallback{used,reason}`、`source`、`history`。
   顶层字段保持 B1 冻结的 10 项（见 ADR-0005）。
-- **失败回落**：越域 / 空候选 / 坏 JSON / 超预算 / 缺 key / 网络错误都回落到通用三维网格，
+- **失败回落**：越域 / 空候选 / 坏 JSON / 超预算 / 缺 key / 网络错误都回落到当前域网格，
   `source=grid`、`fallback.used=true`，仍写 Proposal 与 overhead ledger。
 - **成本归属**：`cost_usd` 只在 `ledger/<prop-id>.jsonl` 的 `kind=overhead` 中出现；
   `cost_per_solved` 与 `result.scores.*` 不含提案成本，audit 按 `prop-*` 全量对账。
@@ -155,12 +155,12 @@ gate，并断言 search 流零 holdout id、report 流至少一条 `holdout.acce
 
 - **argv**：`pi -p --mode json --approve --session-id <safe> --session-dir <abs>`，
   禁止 `--no-session` / `--continue` / `--resume`；no-tools 旗标永不生成。
-- **tools_mode**：`default` 无旗标；`lean` 为 `--exclude-tools write`（由 `harness.py` 产出）。
-  adapter 再合并内建读工具排除 `read,grep,find,ls`，因为读工具不经过 `shellPath`。
+- **bash-only**：`tools` 锁定单值 `bash`；`harness.py` 产出 `--tools bash`（adapter 只透传）。
+  read/grep/find/ls/write/edit 全部不启用，读写都走已 sandbox 的 bash。
 - **bash 隔离**：`.pi/settings.json` 的 `shellPath` 指向 `sandbox_bash.sh`；wrapper 用 bwrap
   去掉网络、proxy、仓库挂载。trust preflight 必须证明 wrapper 被调用（`preflight.txt` +
   `.molt/shell-path.log`）；失败 `trust_missing`，run 不可采纳。
-- **网络**：Pi 主进程保留 `provider_only`；bash 子进程无网络。bwrap 不可用时降级
+- **网络**：Pi 主进程保留 `provider_only` 语义但**没有进程级 egress allowlist**；bash 子进程无网络。bwrap 不可用时降级
   `permissions-only` 并记录 `sandbox unavailable`。
 - **账本**：session JSONL v3 全部 usage-bearing entry（含 `compaction` / 未知 type）按 entry id
   去重；成本链 `totalFromProvider → cost.total → 目录估算`；与 JSON 流 message_end 交叉校验，
@@ -168,4 +168,6 @@ gate，并断言 search 流零 holdout id、report 流至少一条 `holdout.acce
 - **预算**：wall 超时 kill 进程组；turns 按 assistant message；tokens 按账本总量；超限 invalid。
 - **落盘**：B1 `run` 顶层冻结，runtime 元数据写 `run.ext.runtime`（`provenance`、
   `project_trust`、`isolation`、`session_path`、`log_ref`、`ledger`、`budget`）。
-- **版本**：harness 改动把 demo 从 `demo-2` 升到 `demo-3`，`bench_hash` / genome artifact 同步。
+- **verifier**：`Harness.run` 在 runtime 启动前调用 `Verifier.guard` 保存 before 指纹，agent 结束后
+  只取 after；测试目录或题面被改写即 `matches=false`，run 判废。
+- **版本**：harness/verifier 改动把 demo 从 `demo-3` 升到 `demo-4`，`bench_hash` / genome artifact 同步。

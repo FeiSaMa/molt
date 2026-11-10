@@ -185,8 +185,11 @@ class DummyProvider:
 
 
 class DummyVerifier:
-    def verify(self, task: Task, workdir: Path) -> VerifyOutcome:
-        return VerifyOutcome(True, "a" * 64, "a" * 64, True)
+    def guard(self, task: Task, workdir: Path) -> str:
+        return "a" * 64
+
+    def verify(self, task: Task, workdir: Path, *, before: str | None = None) -> VerifyOutcome:
+        return VerifyOutcome(True, before or "a" * 64, "a" * 64, True)
 
 
 class DummyHarness:

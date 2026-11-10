@@ -19,7 +19,7 @@ SCHEMA_VERSION_RE = re.compile(r"^1\.\d+\.\d+$")
 SCOPES: tuple[str, ...] = ("search", "report")
 THINKING_LEVELS: tuple[str, ...] = ("off", "low", "high")
 CONTEXT_MODES: tuple[str, ...] = ("full", "minimal")
-TOOLS_MODES: tuple[str, ...] = ("default", "lean")
+TOOLS_MODES: tuple[str, ...] = ("bash",)
 DIMENSIONS: dict[str, tuple[str, ...]] = {
     "thinking": THINKING_LEVELS,
     "context": CONTEXT_MODES,

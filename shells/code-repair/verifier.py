@@ -37,9 +37,13 @@ class PytestVerifier:
             files["task.json"] = sha256_file(task_file)
         return tree_hash_from_files(files)
 
-    def verify(self, task: Task, workdir: Path) -> VerifyOutcome:
+    def guard(self, task: Task, workdir: Path) -> str:
+        """agent 启动前的指纹；Harness 必须显式保存并传给 verify。"""
+        return self._fingerprint(self._tests_dir(task))
+
+    def verify(self, task: Task, workdir: Path, *, before: str | None = None) -> VerifyOutcome:
         tests_dir = self._tests_dir(task)
-        before = self._fingerprint(tests_dir)
+        digest_before = before if before is not None else self._fingerprint(tests_dir)
         env = {
             "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
             "HOME": os.environ.get("HOME", "/tmp"),
@@ -73,11 +77,11 @@ class PytestVerifier:
             returncode = -1
             output = f"timeout after {task.timeout_s}s: {exc}"
         after = self._fingerprint(tests_dir)
-        matches = before == after
+        matches = digest_before == after
         passed = returncode == 0 and matches and not timed_out
         return VerifyOutcome(
             passed=passed,
-            tests_hash_before=before,
+            tests_hash_before=digest_before,
             tests_hash_after=after,
             matches=matches,
             timed_out=timed_out,

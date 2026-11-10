@@ -96,9 +96,15 @@ class Runtime(Protocol):
 
 @runtime_checkable
 class Verifier(Protocol):
-    """shell 侧：在沙箱之外独立只读运行。"""
+    """shell 侧：在沙箱之外独立只读运行。
 
-    def verify(self, task: Task, workdir: Path) -> VerifyOutcome: ...
+    ``guard`` 必须在 agent 启动前取指纹；``verify`` 接收该 before 值，
+    防止 agent 修改测试/题面后重新取 before 造成自证。
+    """
+
+    def guard(self, task: Task, workdir: Path) -> str: ...
+
+    def verify(self, task: Task, workdir: Path, *, before: str | None = None) -> VerifyOutcome: ...
 
 
 @runtime_checkable

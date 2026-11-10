@@ -12,7 +12,7 @@ session 账本与预算执行。svc-config、HTML 报告与正式题集仍属于
 | 层 | 位置 | 职责 |
 | --- | --- | --- |
 | core | `molt/core/` | 协议类型、门禁、存储事务、哈希、审计；**运行时零第三方依赖** |
-| shell | `shells/code-repair/` | Task / Harness / Verifier；三维开关与 prompt |
+| shell | `shells/code-repair/` | Task / Harness / Verifier；6 组搜索空间与 bash-only prompt |
 | adapter | `molt/adapters/` | `fixture/` Runtime（不联网）；`llm_proposer.py` DeepSeek transport |
 | schema | `schemas/v1/` | 11 类记录的 JSON Schema，协议唯一事实源 |
 
@@ -51,10 +51,13 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -q
 - 采纳要求：题数不劣（`k`）、单题执行成本不升、四项执行上限完全相同、两侧 invalid 比例不超阈。
 - 结论必须带逐题配对表；`scope=report` 的 result 必须同时含搜索集与 holdout 双分数。
 - 采纳 / 回退是单写者单事务；读者校验指针 + generation + tree hash。
+- 搜索空间是 6 组：thinking × context；tools 锁定 bash，agent 只能用 sandboxed bash 读写，
+  read/write/edit 不启用。Pi 主进程没有进程级 egress allowlist，只有 bash 被 bwrap 隔离。
 
 ## 状态
 
 - 已实现：schema / 类型双校验、genome 哈希冻结、G1–G8 门禁、快照与 kill -9 恢复、
   并发 adoption 单胜、per-run 事件与账本、holdout 类型隔离、审计重算、零写入测试、
-  LLM/grid proposer、Pi 1.5.0 runtime（sandbox / trust / 账本 / 预算）。
-- 未实现：`svc-config` shell、HTML 报告、正式 10+5 题集、`export` / `demo` 命令。
+  LLM/grid proposer、Pi 1.5.0 runtime（bash-only sandbox / trust / 账本 / 预算）、
+  `export` 的 `web/data` 数据导出（无页面代码）。
+- 未实现：`svc-config` shell、HTML 报告、正式 10+5 题集、`demo` 命令。

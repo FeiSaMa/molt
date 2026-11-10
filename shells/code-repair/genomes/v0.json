@@ -1,14 +1,14 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "demo-3",
-  "genome_id": "sha256:cda3f7e2d5c68367d79f69c23b15278bd2251e62f7e2e2254e212cfc05bde053",
+  "scenario_version": "demo-4",
+  "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
   "parent_id": null,
   "shell_id": "code-repair",
   "shell_version": "1.0.0",
   "switches": {
     "thinking": "high",
     "context": "full",
-    "tools": "default"
+    "tools": "bash"
   },
   "prompt_ref": "shells/code-repair/prompts/code-repair.md",
   "tools_ref": "shells/code-repair/tools",
@@ -24,12 +24,12 @@
     "attempts": 1
   },
   "artifacts": {
-    "shells/code-repair/manifest.json": "c3e8205efe070b02dde5b06765093c888a85bb9c2a7b0d0c5f2573c2287a7216",
-    "shells/code-repair/harness.py": "d8626d6ac8afa180259ab4e7276ae345e7f71f211f1b5802eed27820b383bee5",
-    "shells/code-repair/verifier.py": "8e72c3eddc06391abae742de18ddd85d8a1b75576f57fa56ebca60acf0ee497b",
+    "shells/code-repair/manifest.json": "aff86e875cf1dcc4d2f49120e3fbf178d23bf7e6b224f3732cb28b94afb41b76",
+    "shells/code-repair/harness.py": "cdf3606f71915fa9343c2a2e50c852bb517d6b15651eec84543d9999e10e3b03",
+    "shells/code-repair/verifier.py": "be8de01616fac73d5f2c8674cf82ec481aeb670fc44213d6a45ee898f83a5709",
     "shells/code-repair/task_provider.py": "965f74cc0885363f03a6e5a14dbc7a5a128ca4749eae143247665d606e438cb2",
-    "shells/code-repair/switches.schema.json": "62029eaef15e7f2ad3cd133efa1c0c367cb64f5d490fd5aed15251a5b42c9f87",
-    "shells/code-repair/prompts/code-repair.md": "c5c061db01c3b3a3efa32ce795221672b158e8a89ba7a899e8144b6a1fab1341",
+    "shells/code-repair/switches.schema.json": "467e12e7eb8f185e9a1ac59c4150cbeff7216478cf8a4103864f6333d871aec7",
+    "shells/code-repair/prompts/code-repair.md": "f047dcbb54e381daab8bb401e2a4ded1d74f1e6b1951e6f84f30d39b45c8da60",
     "shells/code-repair/tools/read_file.json": "18c0c41f97d9b32d6114c8f72e8b9e59d419ad0f23771f9b495b86a00a184f73",
     "shells/code-repair/tools/apply_patch.json": "5757b97e20c32f1faa9493af835647ca2e79c3026f45ae427a9872aad0459865"
   },

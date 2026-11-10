@@ -114,7 +114,7 @@ def test_fourth_dimension_in_ext_is_allowed_but_not_core() -> None:
     assert record.switches.to_dict() == {
         "thinking": "high",
         "context": "full",
-        "tools": "default",
+        "tools": "bash",
     }
 
 
@@ -125,19 +125,21 @@ def test_skills_must_be_empty_in_v1() -> None:
         schema.validate_record("genome", data, ROOT)
 
 
-def test_all_12_combinations_are_valid() -> None:
+def test_all_6_combinations_are_valid() -> None:
     data = json.loads(GENOME.read_text(encoding="utf-8"))
+    combinations = 0
     for thinking in ("off", "low", "high"):
         for context in ("full", "minimal"):
-            for tools in ("default", "lean"):
-                candidate = copy.deepcopy(data)
-                candidate["switches"] = {
-                    "thinking": thinking,
-                    "context": context,
-                    "tools": tools,
-                }
-                candidate["genome_id"] = compute_genome_id(candidate)
-                schema.validate_record("genome", candidate, ROOT)
+            candidate = copy.deepcopy(data)
+            candidate["switches"] = {
+                "thinking": thinking,
+                "context": context,
+                "tools": "bash",
+            }
+            candidate["genome_id"] = compute_genome_id(candidate)
+            schema.validate_record("genome", candidate, ROOT)
+            combinations += 1
+    assert combinations == 6
 
 
 def test_genome_verify_cli_fails_on_mutation(tmp_path: Path) -> None:
@@ -200,7 +202,7 @@ def test_new_candidate_file_does_not_require_version_bump(tmp_path: Path) -> Non
     root = _copy_shell(tmp_path)
     data = json.loads((root / "shells/code-repair/genomes/v0.json").read_text(encoding="utf-8"))
     data["parent_id"] = data["genome_id"]
-    data["switches"] = {"thinking": "low", "context": "full", "tools": "default"}
+    data["switches"] = {"thinking": "low", "context": "full", "tools": "bash"}
     data["genome_id"] = compute_genome_id(data)
     new_path = root / "shells/code-repair/genomes/v1-candidate.json"
     new_path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")

@@ -8,7 +8,7 @@
   "switches": {
     "thinking": "high",
     "context": "full",
-    "tools": "default"
+    "tools": "bash"
   },
   "prompt_ref": "shells/code-repair/prompts/code-repair.md",
   "tools_ref": "shells/code-repair/tools",

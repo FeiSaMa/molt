@@ -1,0 +1,37 @@
+{
+  "results": [
+    {
+      "generated_at": "2026-01-01T00:00:00Z",
+      "genome_id": "sha256:f8656cb2bbb7dfe8d51e47df5f5a933fe2cfa6e975bb9b191d46209d57d8e828",
+      "result_id": "result-baseline-search",
+      "scope": "search",
+      "scores": {
+        "search": {
+          "cost_per_solved_usd": 1.84,
+          "cost_total_usd": 3.68,
+          "invalid_ratio": 0.0,
+          "pass_at_1_first_attempt": 1.0,
+          "solved": 2,
+          "total": 2
+        }
+      }
+    },
+    {
+      "generated_at": "2026-01-01T00:00:00Z",
+      "genome_id": "sha256:b6bff164e61c8eaf3cdeb23da2d1755cdbd391381d17163a0431e526c77412b3",
+      "result_id": "result-candidate-search",
+      "scope": "search",
+      "scores": {
+        "search": {
+          "cost_per_solved_usd": 0.92,
+          "cost_total_usd": 1.84,
+          "invalid_ratio": 0.0,
+          "pass_at_1_first_attempt": 1.0,
+          "solved": 2,
+          "total": 2
+        }
+      }
+    }
+  ],
+  "scope": "search"
+}

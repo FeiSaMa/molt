@@ -86,7 +86,7 @@ class PiRuntime:
     pi_executable: str = "pi"
     model: str = DEFAULT_MODEL
     network: str = "provider_only"
-    builtin_excludes: tuple[str, ...] = BUILTIN_READ_TOOLS
+    builtin_excludes: tuple[str, ...] = ()
     timeout_grace_s: float = 5.0
     _sandbox: SandboxProbe | None = field(default=None, init=False)
 
@@ -104,7 +104,7 @@ class PiRuntime:
         if self.sandbox_wrapper is None:
             self._sandbox = SandboxProbe(False, {}, "", ("wrapper_not_configured",))
             return self._sandbox
-        probe_dir = Path(workdir).parent / ".molt-sandbox-probe"
+        probe_dir = (Path(workdir).parent / ".molt-sandbox-probe").resolve()
         self._sandbox = run_sandbox_probe(
             self.sandbox_wrapper,
             workdir=probe_dir,
@@ -129,7 +129,7 @@ class PiRuntime:
         )
 
     def run(self, genome: Genome, task: Task, workdir: Path) -> RuntimeOutcome:
-        workdir = Path(workdir)
+        workdir = Path(workdir).resolve()
         workdir.mkdir(parents=True, exist_ok=True)
         before = _workspace_files(workdir)
         started_at = _now_iso()
@@ -161,7 +161,7 @@ class PiRuntime:
                 settings.unlink()
 
         policy = resolve_isolation(self.network, sandbox.available)
-        session_dir = workdir / ".pi-sessions"
+        session_dir = (workdir / ".pi-sessions").resolve()
         session_dir.mkdir(parents=True, exist_ok=True)
         session_id = safe_session_id(f"molt-{uuid.uuid4().hex}")
         model = self._model_for(genome)
@@ -176,8 +176,8 @@ class PiRuntime:
         )
         assert_required_flags(argv)
 
-        log_path = workdir / ".molt" / "pi.stdout.jsonl"
-        err_path = workdir / ".molt" / "pi.stderr.log"
+        log_path = (workdir / ".molt" / "pi.stdout.jsonl").resolve()
+        err_path = (workdir / ".molt" / "pi.stderr.log").resolve()
         log_path.parent.mkdir(parents=True, exist_ok=True)
         env = dict(os.environ)
         env.update(
@@ -309,7 +309,8 @@ class PiRuntime:
                 "stderr_ref": str(err_path),
                 "isolation": isolation_payload(policy),
                 "sandbox": sandbox.to_dict(),
-                "read_tools_excluded": list(self.builtin_excludes),
+                "tools_allowlist": ["bash"],
+                "read_tools_excluded": list(BUILTIN_READ_TOOLS),
                 "cost_source": cost_source,
                 "usage": usage_source.to_dict(),
                 "budget": {
@@ -368,7 +369,8 @@ class PiRuntime:
                         resolve_isolation(self.network, sandbox.available)
                     ),
                     "sandbox": sandbox.to_dict(),
-                    "read_tools_excluded": list(self.builtin_excludes),
+                    "tools_allowlist": ["bash"],
+                    "read_tools_excluded": list(BUILTIN_READ_TOOLS),
                 }
             },
         )

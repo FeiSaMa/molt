@@ -57,9 +57,9 @@ def run_sandbox_probe(
     runner: ProbeRunner | None = None,
     timeout_s: float = 10.0,
 ) -> SandboxProbe:
-    wrapper = Path(wrapper)
-    workdir = Path(workdir)
-    repo_root = Path(repo_root)
+    wrapper = Path(wrapper).resolve()
+    workdir = Path(workdir).resolve()
+    repo_root = Path(repo_root).resolve()
     if not wrapper.is_file():
         return SandboxProbe(False, {}, str(wrapper), (f"wrapper_missing:{wrapper}",))
     if not os.access(wrapper, os.X_OK):

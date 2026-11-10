@@ -98,7 +98,7 @@ class TrustProbe:
     ) -> None:
         self.pi_executable = pi_executable
         self.model = model
-        self.cache_dir = Path(cache_dir) if cache_dir else None
+        self.cache_dir = Path(cache_dir).resolve() if cache_dir else None
         self.runner = runner or _default_runner
         self.timeout_s = timeout_s
         self.clock = clock
@@ -134,7 +134,7 @@ class TrustProbe:
         shell_version: str,
         shell_path: Path,
     ) -> TrustResult:
-        workdir = Path(workdir)
+        workdir = Path(workdir).resolve()
         settings_path, _, settings_hash = write_project_settings(workdir, shell_path)
         cache_path = self._cache_path(shell_version, settings_hash)
         if cache_path is not None:

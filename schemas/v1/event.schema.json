@@ -95,10 +95,7 @@
           "description": "上下文模式"
         },
         "tools": {
-          "enum": [
-            "default",
-            "lean"
-          ],
+          "enum": ["bash"],
           "description": "工具集；不控制输出截断"
         }
       }
@@ -464,10 +461,7 @@
             "tools": {
               "type": "array",
               "items": {
-                "enum": [
-                  "default",
-                  "lean"
-                ]
+                "enum": ["bash"]
               },
               "minItems": 1
             }

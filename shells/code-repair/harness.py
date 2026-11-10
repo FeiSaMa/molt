@@ -30,16 +30,14 @@ from molt.core.types import (
 
 
 def tools_argv_for(mode: str) -> list[str]:
-    """``tools_mode`` 的唯一映射；adapter 只透传，不重新解释。"""
-    if mode == "default":
-        return []
-    if mode == "lean":
-        return ["--exclude-tools", "write"]
-    raise ValueError(f"未知 tools_mode: {mode!r}")
+    """bash-only 的唯一映射；adapter 只透传，不重新解释。"""
+    if mode == "bash":
+        return ["--tools", "bash"]
+    raise ValueError(f"B2b 只允许 tools=bash，实际 {mode!r}")
 
 
-CHEAPER: dict[str, str] = {"high": "low", "low": "off", "full": "minimal", "default": "lean"}
-RICHER: dict[str, str] = {"off": "low", "low": "high", "minimal": "full", "lean": "default"}
+CHEAPER: dict[str, str] = {"high": "low", "low": "off", "full": "minimal"}
+RICHER: dict[str, str] = {"off": "low", "low": "high", "minimal": "full"}
 
 
 class CodeRepairHarness:
@@ -76,10 +74,8 @@ class CodeRepairHarness:
     def render_prompt(self, genome: Genome) -> str:
         path = self.repo_root / genome.prompt_ref
         template = path.read_text(encoding="utf-8")
-        return (
-            template.replace("{{thinking}}", genome.switches.thinking)
-            .replace("{{context}}", genome.switches.context)
-            .replace("{{tools}}", genome.switches.tools)
+        return template.replace("{{thinking}}", genome.switches.thinking).replace(
+            "{{context}}", genome.switches.context
         )
 
     def run(self, genome: Genome, task: Task, workdir: Path) -> HarnessOutcome:
@@ -88,8 +84,9 @@ class CodeRepairHarness:
         prompt_path = Path(workdir) / ".molt" / "prompt.txt"
         prompt_path.parent.mkdir(parents=True, exist_ok=True)
         prompt_path.write_text(prompt, encoding="utf-8")
+        digest_before = self.verifier.guard(task, workdir)
         runtime_outcome: RuntimeOutcome = self.runtime.run(genome, task, workdir)
-        verification = self.verifier.verify(task, workdir)
+        verification = self.verifier.verify(task, workdir, before=digest_before)
         return HarnessOutcome(runtime=runtime_outcome, verification=verification)
 
     # -- 提案 -------------------------------------------------------------
