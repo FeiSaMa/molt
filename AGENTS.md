@@ -12,16 +12,21 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 
 **claim（只允许这样说）**
 
+> 模型能力已经碾压这 10 道题；molt 证明的是：在成功率不降的约束下，进化可以发生在成本与墙钟上——high/full → low/full，cost −72%、wall −61%，gate adopt，1 live + 1 replay，证据可复算。
+
+- **题目饱和**：真实 Pi 基线 **10/10**，成功率维度没有 headroom。fixture `3/10`
+  只是 `molt calibrate` 的校准口径，**不代表真实难度**，不得写成真实基线。
 - 在固定的 10 题搜索集上，**未观察到通过题数下降**（n=10，描述性结论，seed 不可控），
   且**单题执行成本不升**；搜索开销单列报告，不与执行成本互相抵消。
   原文见 [ADR-0003 §claim 措辞](docs/decisions/0003-scoring.md)。
-- 真实 Pi demo（demo-6，2026-11-11）：起点 `high/full`（v0-pi）**10/10、$0.035560**；
-  proposal 派生候选 `low/full`（v0）**10/10、$0.009978**。口径分开：
-  **扫描级**成本 **−72%**（10 题扫描 vs 10 题扫描）；
-  **gate 级**成本 **−70.0%**（cps $0.003556 → $0.001068，9 条 replay + 1 条 live）。
-  gate `adopt`。这是**选定的高→低起点**，不是搜索空间最优性声称。
+- 真实 Pi demo（demo-6，2026-11-11）：起点 `high/full`（v0-pi）**10/10、$0.035560、
+  106.9s**；proposal 派生候选 `low/full`（v0）**10/10、$0.009978、41.7s**。口径分开：
+  **扫描级** cost **−72%**、wall **−61%**（10 题扫描 vs 10 题扫描）；
+  **gate 级** cps **−70.0%**（`$0.003556 → $0.001068`，9 条 replay + 1 条 live）。
+  holdout `5/5 → 5/5`，gate `adopt / lower_cost_per_solved`。
+  这是**选定的高→低起点**，不是搜索空间最优性声称。
 - 负结果（同批 6 组）：**没有候选比 low/full 更便宜**（最接近的 `off/minimal` 仍 +19.2%）；
-  不得把 demo 表述成「baseline v0 被改进」或「搜索找到了更优配置」。
+  不得把 demo 表述成「baseline v0 被改进」或「搜索找到了更优配置」，也不得声称成功率提升。
 - fixture 基线是 `3/10`，只用于 `molt calibrate` 校准，不得当作真实能力或对外 claim。
 - 任何结论必须带逐题配对表；聚合数字不得单独出现。
 - 每次执行落成可复算的证据链（§三），`molt audit` 能从 run + ledger 重算指标。
@@ -31,9 +36,14 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 - 不声称「通用自提升」「已实现自进化」「统计显著优于基线」——样本量与 seed 都不支持。
 - 不声称 bash 之外的工具能力：搜索空间是 6 组（`thinking` × `context`），`tools` 锁定单值 `bash`。
 - 不跨 `scenario_version` 比较（当前 `demo-6`）。跨版本数字不可比，也不得放进同一张表。
+- 不声称成功率提升或搜索空间最优：10 题已饱和（真实基线 10/10），demo 只是选定的
+  high→low 高成本起点；也没有候选比 low/full 更便宜。
+- 不声称仓库包含 HTML 页面：本仓库只交付 `web/data` 数据面，页面由队友 C 消费，
+  必须按 `demo_group` + `provenance` 展示 1 live + 1 replay + 10 replay。
 - 不把 `demo` 的证据表述成「两次 live 运行」：现场闭环只有 1 条 live 候选 + 1 条 replay 基线，
   10 题扫描是回放（`demo_group=scan10`），页面必须按 `runs[].provenance` 与
   `runs[].demo_group` 分开标注。
+- 不把 fixture 的 `3/10` 写成真实基线或真实难度。
 
 **已落地（2026-11-11）**
 
@@ -41,7 +51,8 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 - 第二 shell `svc-config` + deterministic runtime（零成本、manifest 驱动装载）。
 - `molt demo`：1 live + 1 replay 闭环、10 题扫描回放、180s 硬上限（ADR-0008）；
   选定 `high/full → low/full` 的真实高→低起点，gate `adopt`（10/10；
-  扫描级成本 −72%，gate 级成本 −70.0%）。
+  扫描级 cost −72% / wall −61%，gate 级 cps −70.0%，holdout 5/5 → 5/5）。
+  仓库只交付 `web/data`，不含 HTML 页面。
 - `molt doctor --repo-policy`：只读检查协作文件、冻结面与契约域。
 
 ## 二、三层与七端口

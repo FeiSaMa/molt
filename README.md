@@ -8,7 +8,23 @@ B2a 增加 LLM proposer；B2b 增加 Pi 1.5.0 adapter、bwrap bash sandbox、tru
 session 账本与预算执行；B2c 增加第二个 shell `svc-config` 与确定性 runtime
 （零 LLM / 零网络 / 零成本），并把 demo 题集扩到 **10 search + 5 holdout**（`demo-6`）；
 B2d 增加 `molt demo`（1 live 候选 + 1 replay 基线 + 10 题扫描回放）与协作六件套。
-HTML 报告页面仍属于后续批次。
+仓库只交付数据面 `web/data` 与编排证据，**不包含 HTML 页面**（页面由队友 C 消费数据面）。
+
+## claim
+
+> 模型能力已经碾压这 10 道题；molt 证明的是：在成功率不降的约束下，进化可以发生在成本与墙钟上——high/full → low/full，cost −72%、wall −61%，gate adopt，1 live + 1 replay，证据可复算。
+
+- **题目饱和**：真实 Pi 基线 **10/10**，成功率维度没有 headroom。fixture `3/10`
+  只是 `molt calibrate` 的校准口径，**不代表真实难度**，不得写成真实基线。
+- **效率（同一 10 题扫描）**：cost `$0.035560 → $0.009978`（**−72%**），
+  wall `106.9s → 41.7s`（**−61%**）；gate 级 cps `$0.003556 → $0.001068`（**−70.0%**）；
+  holdout `5/5 → 5/5`；结论 `adopt / lower_cost_per_solved`。
+- **边界**：6 组真实扫描全部 **10/10**；`low/full` 是最便宜配置，**没有候选比它更便宜**。
+  demo 的 `high/full → low/full` 是**选定的起点**，不是搜索发现新最优；
+  不声称成功率提升，也不声称搜索空间最优。
+- **现场口径**：1 条 live 候选 + 1 条 replay 基线；`scan10` 是 10 条 replay，
+  `candidate-scan` 是 9 条 replay。页面必须按 `demo_group` + `provenance` 分开标注，
+  不得暗示两条都 live。
 
 ## 分层
 
@@ -82,19 +98,19 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
 
 10 道 search 的实测（并发 1，费用为 run 记录实际值；详见 [ADR-0008](docs/decisions/0008-demo.md)）：
 
-| config | solved | cost | cost_per_solved |
-|---|---|---|---|
-| **high/full（v0-pi，demo 起点）** | **10/10** | **$0.035560** | **$0.003556** |
-| **low/full（v0，demo 候选）** | **10/10** | **$0.009978** | **$0.000998** |
-| off/full | 10/10 | $0.012385 | $0.001239 |
-| off/minimal | 10/10 | $0.011894 | $0.001189 |
-| low/minimal | 10/10 | $0.021180 | $0.002118 |
-| high/minimal | 10/10 | $0.021113 | $0.002111 |
+| config | solved | cost | cost_per_solved | wall（同批 10 题） |
+|---|---|---|---|---|
+| **high/full（v0-pi，demo 起点）** | **10/10** | **$0.035560** | **$0.003556** | **106.9s** |
+| **low/full（v0，demo 候选）** | **10/10** | **$0.009978** | **$0.000998** | **41.7s** |
+| off/full | 10/10 | $0.012385 | $0.001239 | 53.2s |
+| off/minimal | 10/10 | $0.011894 | $0.001189 | 64.5s |
+| low/minimal | 10/10 | $0.021180 | $0.002118 | 71.7s |
+| high/minimal | 10/10 | $0.021113 | $0.002111 | 91.8s |
 
 - 现场 demo 的叙事是**选定的高成本起点 → 低成本候选**：`high/full`（v0-pi）
   → proposal 派生 `low/full`（v0）。两个数字口径分开写：
   - **扫描级**：起点 10 题扫描 `$0.035560` → 候选 10 题扫描 `$0.009978`，
-    成功率不变（10/10），执行成本 **−72%**；
+    成功率不变（10/10），执行成本 **−72%**，墙钟 `106.9s → 41.7s`（**−61%**）；
   - **gate 级**：门禁配对用 9 条候选 replay + 1 条 live closure，
     cps `$0.003556 → $0.001068`，执行成本 **−70.0%**。
   gate 据此 `adopt`；两者口径不同，不得混用。

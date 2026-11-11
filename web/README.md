@@ -52,6 +52,8 @@ fail closed：`kind="live"` 同时带 `replay_of_run_id`、`kind="live"` 无 `mo
 
 ## demo 证据分组（`runs[].demo_group`）
 
+> 模型能力已经碾压这 10 道题；molt 证明的是：在成功率不降的约束下，进化可以发生在成本与墙钟上——high/full → low/full，cost −72%、wall −61%，gate adopt，1 live + 1 replay，证据可复算。
+
 `molt demo` 的现场闭环与 10 题扫描**必须分开标注**（ADR-0008）：
 
 | `demo_group` | 内容 | provenance |
@@ -66,11 +68,15 @@ fail closed：`kind="live"` 同时带 `replay_of_run_id`、`kind="live"` 无 `mo
 - 页面讲法：closure 讲「基线回放 → 提案 → 真实候选 → 门禁」，scan10 讲「此前 10 题扫描的回放」。
 - 当前提交的样例来自真实 Pi 扫描（两个口径不要混用）：
   - **扫描级**：起点 high/full（v0-pi）10 题扫描 `$0.035560` → 候选 low/full（v0）
-    10 题扫描 `$0.009978`，10/10 不变，成本 **−72%**；
+    10 题扫描 `$0.009978`，10/10 不变，成本 **−72%**，墙钟 `106.9s → 41.7s`（**−61%**）；
   - **gate 级**：门禁配对（9 条候选 replay + 1 条 live closure）cps
-    `$0.003556 → $0.001068`，成本 **−70.0%**，`gate.json` 为 `adopt`。
+    `$0.003556 → $0.001068`，成本 **−70.0%**，`gate.json` 为 `adopt`；
+  - holdout `5/5 → 5/5`；**不得写成成功率提升**——真实 Pi 基线已是 10/10，
+    题目已饱和，效率提升只发生在成本与墙钟上。
   - 页面必须标明 demo 的**起点是 high/full**，不得说成「baseline v0 被改进」；
     6 组扫描中没有比 low/full 更便宜的候选（负结果见 ADR-0008）。
+  - fixture `3/10` 只是 `molt calibrate` 的校准口径，**真实基线是 10/10**；
+    不得把 fixture 写成真实基线或真实难度。
 
 ### 数据使用警告
 
