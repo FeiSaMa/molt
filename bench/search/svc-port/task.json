@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "svc-port",
+  "scenario_version": "svc-1",
+  "shell_id": "svc-config",
+  "scope": "search",
+  "title": "修好服务端口与超时",
+  "workspace_ref": "bench/search/svc-port/workspace",
+  "tests_ref": "bench/search/svc-port/tests",
+  "timeout_s": 30,
+  "ext": {
+    "deterministic": {
+      "edits": [
+        {
+          "kind": "json_set",
+          "path": "config/service.json",
+          "pointer": "/server/port",
+          "value": 8080
+        },
+        {
+          "kind": "json_set",
+          "path": "config/service.json",
+          "pointer": "/server/timeout_ms",
+          "value": 3000
+        }
+      ]
+    }
+  }
+}

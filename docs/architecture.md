@@ -1,7 +1,7 @@
 # 架构
 
 molt 把"搜索候选 → 执行题集 → 判分 → 门禁 → 采纳 / 回退"做成一条可复算的流水线。
-本文件描述 B1 + B2a + B2b 的实际分层；字段级契约以 [`protocol.md`](protocol.md) 与 `schemas/v1/` 为准。
+本文件描述 B1 + B2a + B2b + B2c 的实际分层；字段级契约以 [`protocol.md`](protocol.md) 与 `schemas/v1/` 为准。
 
 ## 一、三层与依赖方向
 
@@ -15,20 +15,20 @@ shell        adapter
 | 层 | 组件 | 职责 | 不负责 |
 | --- | --- | --- | --- |
 | core | `molt/core/` | 11 类协议记录、门禁、指标、快照事务、事件 / 账本、审计、脱敏、提案核心（`proposer.py`） | 调模型、跑 pytest、读题面 |
-| shell | `shells/code-repair/` | 题集加载、prompt 渲染、调用 Runtime、运行外部 Verifier、注入 LLM/grid 提案策略 | 定义门禁阈值、写 `scenario.policy` |
-| adapter | `molt/adapters/` | `fixture/` 执行入口；`llm_proposer.py` DeepSeek transport；`pi/` 为真实 Pi 1.5.0 runtime / sandbox / trust / ledger | 判分、采纳、写证据链 |
+| shell | `shells/code-repair/`、`shells/svc-config/` | 题集加载、prompt 渲染、调用 Runtime、运行外部 Verifier、注入 LLM/grid 提案策略；两个 shell 走同一 ABI，由 `manifest.entrypoints` 装载 | 定义门禁阈值、写 `scenario.policy` |
+| adapter | `molt/adapters/` | `fixture/` 确定性成本与可解性；`deterministic/` 零成本配置变换执行器；`llm_proposer.py` DeepSeek transport；`pi/` 为真实 Pi 1.5.0 runtime / sandbox / trust / ledger | 判分、采纳、写证据链 |
 
 `molt/core/**` 只 import stdlib 与 `molt.core.*`（I11）。`python -m molt doctor --deps` 做 AST 检查；
 `tests/test_boundary.py` 还会屏蔽第三方 importer 后 import core。
 
 ## 二、七端口
 
-| 端口 | owner | B1 实现 |
+| 端口 | owner | 实现 |
 | --- | --- | --- |
-| TaskProvider | shell | `shells/code-repair/task_provider.py` |
-| Harness | shell | `shells/code-repair/harness.py` |
-| Verifier | shell | `shells/code-repair/verifier.py` |
-| Runtime | adapter | `molt/adapters/fixture/runtime.py` |
+| TaskProvider | shell | `shells/code-repair/task_provider.py`、`shells/svc-config/task_provider.py` |
+| Harness | shell | `shells/code-repair/harness.py`、`shells/svc-config/harness.py` |
+| Verifier | shell | `shells/code-repair/verifier.py`（pytest）、`shells/svc-config/verifier.py`（外部校验 + 黄金 diff） |
+| Runtime | adapter | `molt/adapters/fixture/runtime.py`、`molt/adapters/deterministic/runtime.py` |
 | Gate | core 默认 | `molt/core/policy.py` |
 | Archive | core 默认 | `molt/core/archive.py` |
 | Ledger | core 默认 | `molt/core/ledger.py` |
@@ -44,7 +44,7 @@ scenario.json ──policy──┐
 genome v0 ──switches────┤
                         ├─ Engine.run_task ─→ Harness ─→ Runtime
 task.json ──workspace───┘                         │
-                                                  ├─ Verifier（沙箱外只读 pytest）
+                                                  ├─ Verifier（沙箱外只读，pytest 或外部校验脚本）
                                                   ↓
                               run.json + ledger/<run_id>.jsonl + events/search/<run_id>.jsonl
                                                   ↓
@@ -54,6 +54,11 @@ task.json ──workspace───┘                         │
                                                   ↓
                               adopt：快照 → generation → snapshot/archive → pointer
 ```
+
+shell 装配（B2c）：`build_engine` 读 `scenario.shell_id`，加载
+`shells/<id>/manifest.json` 的 `entrypoints.{task_provider,harness,verifier}`；
+provider / verifier / harness 按 `build_<role>()` 工厂或 `*TaskProvider` / `*Verifier` /
+`*Harness` 类实例化。core 与 CLI 不出现具体 shell 路径。
 
 报告阶段单独走 `scope=report`：先写 `holdout.accessed` 事件，再跑留出题，
 `result.scope=report` 必须同时含 `scores.search` 与 `scores.holdout`。
@@ -123,7 +128,8 @@ state/
 pointer（最后）。`adopt` / `revert` 入口会先自动调用锁内的 `_recover_locked`，把上次未完成
 事务恢复到旧态或新态；`doctor --recover` 作为显式兜底，重复调用幂等。
 读者校验「指针 + generation + tree hash」，有界重试 3 次，超限 `stale_read`。
-快照覆盖 manifest 声明的全部 roots，`roots` 与 `files` 同键，缺一即拒绝。
+快照覆盖 manifest 声明的全部 roots（目录或单文件；单文件按 sha256 记录），
+`roots` 与 `files` 同键，缺一即拒绝。
 
 事件按 `scope` 分流；已知 type 的 payload 是 tagged union，未知 type 保留原文。
 `audit` 只重算 canonical evidence：从 run / ledger 重算 result，从配对表与 genome 上限重算
@@ -174,3 +180,20 @@ gate，并断言 search 流零 holdout id、report 流至少一条 `holdout.acce
   只取 after；指纹覆盖整个 `bench/**`（全部 task.json + workspace + tests），任一文件被改写即
   `matches=false`，run 判废。
 - **版本**：harness/verifier 改动把 demo 从 `demo-4` 升到 `demo-5`，`bench_hash` / genome artifact 同步。
+
+## 十、第二 shell 与 deterministic runtime（B2c）
+
+- **场景**：`scenarios/svc-config/scenario.json`，`scenario_version=svc-1`，shell `svc-config`，
+  2 道 search（`svc-port` / `svc-logging`）+ 1 道 holdout（`svc-holdout-proxy`）。
+- **Runtime**：`molt/adapters/deterministic/runtime.py` 只执行 `task.ext.deterministic.edits`
+  （`json_set` / `text_replace`，可带 `when` 偏映射匹配 switches）。`usage` 全 0、
+  `diagnostic.cost_source="none"`；无网络、无 LLM、不启动 shell。
+- **Verifier**：`shells/svc-config/verifier.py` 运行 `tests_ref` 下的 `validate*.py` 外部校验脚本
+  + 黄金 diff；`guard` / `verify(before=...)` 与 code-repair 同签名，指纹仍覆盖整个 `bench/**`。
+- **零成本**：scenario 两个 USD 预算均为 0；`SvcConfigHarness` 拒绝注入 `llm_proposer`；
+  `molt search --scenario svc-config --runtime deterministic` 秒级完成且 run 成本恒 0。
+- **runtime 白名单**：`scenario.ext.allowed_runtimes` 在 `search` / `build_engine` 入口拒绝
+  跨 runtime（svc-config 只允许 `deterministic`；demo 允许 `fixture`/`pi`），避免静默 0 分。
+- **可迁移性**：`tests/test_adapter_conformance.py` 对「两 shell × 两 runtime」做协议与端到端检查；
+  两 shell 的证据都由同一个 `molt audit` 重算通过。详见
+  [ADR-0007](decisions/0007-svc-config.md)。

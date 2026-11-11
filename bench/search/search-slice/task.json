@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "search-slice",
+  "scenario_version": "demo-6",
+  "shell_id": "code-repair",
+  "scope": "search",
+  "title": "切片方向写反",
+  "workspace_ref": "bench/search/search-slice/workspace",
+  "tests_ref": "bench/search/search-slice/tests",
+  "timeout_s": 30,
+  "ext": {
+    "fixture": {
+      "target": "solution.py",
+      "solution": "def first_n(values, n):\n    return values[:n]\n",
+      "solvable_at": [
+        "high"
+      ],
+      "base_cost_usd": 0.2
+    }
+  }
+}

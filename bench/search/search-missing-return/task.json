@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "search-missing-return",
+  "scenario_version": "demo-6",
+  "shell_id": "code-repair",
+  "scope": "search",
+  "title": "函数缺少返回",
+  "workspace_ref": "bench/search/search-missing-return/workspace",
+  "tests_ref": "bench/search/search-missing-return/tests",
+  "timeout_s": 30,
+  "ext": {
+    "fixture": {
+      "target": "solution.py",
+      "solution": "def double(value):\n    return value * 2\n",
+      "solvable_at": [
+        "high"
+      ],
+      "base_cost_usd": 0.2
+    }
+  }
+}

@@ -29,6 +29,19 @@ def test_v0_genome_verifies() -> None:
     assert verify_genome(load_genome(), ROOT) == []
 
 
+def test_committed_genomes_share_scenario_version() -> None:
+    scenario = json.loads((ROOT / "scenarios/demo/scenario.json").read_text(encoding="utf-8"))
+    genomes = sorted((ROOT / "shells/code-repair/genomes").glob("*.json"))
+    assert len(genomes) == 2
+    for path in genomes:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        assert data["scenario_version"] == scenario["scenario_version"]
+    pi = json.loads((ROOT / "shells/code-repair/genomes/v0-pi.json").read_text(encoding="utf-8"))
+    v0 = json.loads((ROOT / "shells/code-repair/genomes/v0.json").read_text(encoding="utf-8"))
+    assert pi["parent_id"] == v0["genome_id"]
+    assert v0["parent_id"] is None
+
+
 def test_hash_is_stable_across_calls_and_processes() -> None:
     data = json.loads(GENOME.read_text(encoding="utf-8"))
     first = compute_genome_id(data)
@@ -80,7 +93,7 @@ def test_artifact_byte_change_breaks_verify(tmp_path: Path, rel: str) -> None:
 
 def test_stored_id_must_match_recomputed_id(tmp_path: Path) -> None:
     data = json.loads(GENOME.read_text(encoding="utf-8"))
-    data["switches"]["thinking"] = "low"
+    data["switches"]["thinking"] = "off"
     genome = Genome.from_dict(data)
     errors = verify_genome(genome, ROOT)
     assert any("genome_id 不一致" in error for error in errors)
@@ -112,7 +125,7 @@ def test_fourth_dimension_in_ext_is_allowed_but_not_core() -> None:
     data["ext"] = {"future_dimension": {"compaction": "auto"}}
     record = schema.validate_record("genome", data, ROOT)
     assert record.switches.to_dict() == {
-        "thinking": "high",
+        "thinking": "low",
         "context": "full",
         "tools": "bash",
     }

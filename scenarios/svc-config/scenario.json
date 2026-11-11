@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_version": "svc-1",
+  "scenario_id": "svc-config",
+  "title": "B2c 第二 shell：确定性配置修复（2 search + 1 holdout）",
+  "shell_id": "svc-config",
+  "shell_version": "1.0.0",
+  "bench_hash": "31904a2c88f03a24ef3867263ed58d7a5d5fb2964664484cea32b1db68bfceff",
+  "task_sets": {
+    "search": [
+      "svc-port",
+      "svc-logging"
+    ],
+    "report": [
+      "svc-holdout-proxy"
+    ]
+  },
+  "policy": {
+    "k": 0,
+    "invalid_ratio_max": 0.25,
+    "budget": {
+      "execution_budget_usd": 0.0,
+      "search_overhead_budget_usd": 0.0
+    }
+  },
+  "isolation": {
+    "network": "none"
+  },
+  "ext": {
+    "default_runtime": "deterministic",
+    "allowed_runtimes": [
+      "deterministic"
+    ],
+    "note": "确定性第二 shell：零 LLM、零网络、零成本；证明端口可迁移，不声称智能增益"
+  }
+}

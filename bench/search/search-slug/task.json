@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "search-slug",
+  "scenario_version": "demo-6",
+  "shell_id": "code-repair",
+  "scope": "search",
+  "title": "忘了转小写",
+  "workspace_ref": "bench/search/search-slug/workspace",
+  "tests_ref": "bench/search/search-slug/tests",
+  "timeout_s": 30,
+  "ext": {
+    "fixture": {
+      "target": "solution.py",
+      "solution": "def slugify(text):\n    return text.strip().lower().replace(\" \", \"-\")\n",
+      "solvable_at": [
+        "high"
+      ],
+      "base_cost_usd": 0.2
+    }
+  }
+}

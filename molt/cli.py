@@ -1,9 +1,11 @@
 """molt 命令行入口。
 
-B1/B2a/B2b/B2d-0 命令：``schema`` / ``genome`` / ``scenario`` / ``search`` /
-``propose`` / ``gate`` / ``adopt`` / ``revert`` / ``audit`` / ``doctor`` / ``export``。
-``export`` 只导出 ``web/data`` 数据，不含页面；``search`` / ``propose`` 支持
-``--runtime pi``。``demo`` / svc-config 留给后续批次。
+命令：``schema`` / ``genome`` / ``scenario`` / ``search`` / ``propose`` / ``gate`` /
+``adopt`` / ``revert`` / ``audit`` / ``calibrate`` / ``doctor`` / ``export`` / ``demo``。
+``search`` / ``propose`` / ``audit`` / ``export`` / ``demo`` 的 ``--scenario`` 接受任意
+``scenarios/<id>/scenario.json``（``--shell`` 为同一参数的别名，可按 shell_id 反查）；
+``--runtime`` 支持 ``fixture`` / ``pi`` / ``deterministic``。
+``export`` 只导出 ``web/data`` 数据，不含页面；``demo`` 是 B2-D7 的现场闭环。
 """
 
 from __future__ import annotations
@@ -21,8 +23,17 @@ from molt.core.errors import MoltError, ValidationError
 from molt.core.genome import compute_genome_id, verify_genome
 from molt.core.policy import decide, task_side
 from molt.core.store import StateStore
-from molt.core.types import Budget, Genome, Policy, Scenario, ShellManifest
-from molt.demo import run_demo_audit
+from molt.core.types import (
+    DIMENSIONS,
+    SCOPES,
+    SWITCH_KEYS,
+    Budget,
+    Genome,
+    Policy,
+    Scenario,
+    ShellManifest,
+)
+from molt.demo import allowed_runtimes, default_genome_path, resolve_runtime, run_scenario_audit
 
 FIXED_TS = "2026-01-01T00:00:00Z"
 
@@ -35,7 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--root", type=Path, default=None, help="仓库根，默认自动向上查找")
     sub = parser.add_subparsers(
         dest="command",
-        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,doctor,export}",
+        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,calibrate,doctor,export,demo}",
     )
 
     p_schema = sub.add_parser("schema", help="schema 校验与文档生成")
@@ -51,23 +62,37 @@ def build_parser() -> argparse.ArgumentParser:
         cmd = genome_sub.add_parser(name)
         cmd.add_argument("path", type=Path)
 
-    p_search = sub.add_parser("search", help="跑一轮搜索集（B1 仅 fixture）")
-    p_search.add_argument("--scenario", default="demo")
-    p_search.add_argument("--genome", type=Path, default=Path("shells/code-repair/genomes/v0.json"))
+    p_search = sub.add_parser("search", help="跑一轮搜索集")
+    p_search.add_argument(
+        "--scenario",
+        "--shell",
+        dest="scenario",
+        default="demo",
+        help="scenario id；也接受 shell_id（按 scenarios/*/scenario.json 的 shell_id 解析）",
+    )
+    p_search.add_argument(
+        "--genome", type=Path, default=None, help="缺省取该 scenario 的 v0 genome"
+    )
     p_search.add_argument("--state", type=Path, default=Path("state/search"))
     p_search.add_argument("--seed-control", choices=("none", "fixed"), default="none")
-    p_search.add_argument("--runtime", choices=("fixture", "pi"), default="fixture")
+    p_search.add_argument("--runtime", choices=("fixture", "pi", "deterministic"), default=None)
     p_search.add_argument("--task", action="append", default=[], help="只跑指定 task_id")
 
     p_propose = sub.add_parser("propose", help="从 SearchHistory 生成 Proposal（grid/llm）")
-    p_propose.add_argument("--scenario", default="demo")
     p_propose.add_argument(
-        "--genome", type=Path, default=Path("shells/code-repair/genomes/v0.json")
+        "--scenario",
+        "--shell",
+        dest="scenario",
+        default="demo",
+        help="scenario id；也接受 shell_id",
+    )
+    p_propose.add_argument(
+        "--genome", type=Path, default=None, help="缺省取该 scenario 的 v0 genome"
     )
     p_propose.add_argument("--state", type=Path, default=Path("state/propose"))
     p_propose.add_argument("--proposer", choices=("grid", "llm"), default="grid")
     p_propose.add_argument("--offline", action="store_true", help="强制 grid，不构造网络 transport")
-    p_propose.add_argument("--runtime", choices=("fixture", "pi"), default="fixture")
+    p_propose.add_argument("--runtime", choices=("fixture", "pi", "deterministic"), default=None)
 
     p_gate = sub.add_parser("gate", help="跑门禁夹具 G1–G8")
     p_gate.add_argument("--fixture", type=Path, required=True)
@@ -93,16 +118,46 @@ def build_parser() -> argparse.ArgumentParser:
     p_revert.add_argument("--at", default=None)
 
     p_audit = sub.add_parser("audit", help="从 run/result/ledger 重算")
-    p_audit.add_argument("--scenario", default="demo")
+    p_audit.add_argument(
+        "--scenario",
+        "--shell",
+        dest="scenario",
+        default="demo",
+        help="scenario id；也接受 shell_id",
+    )
     p_audit.add_argument("--state", type=Path, default=None)
+    p_audit.add_argument("--runtime", choices=("fixture", "deterministic"), default=None)
 
-    p_doctor = sub.add_parser("doctor", help="依赖边界 / 事务恢复")
+    p_calibrate = sub.add_parser(
+        "calibrate", help="fixture baseline 校准：search 首轮通过数 >= min-pass"
+    )
+    p_calibrate.add_argument("--scenario", default="demo", help="scenario id（默认 demo）")
+    p_calibrate.add_argument("--min-pass", type=int, default=3, help="最少通过题数（默认 3）")
+    p_calibrate.add_argument(
+        "--state", type=Path, default=None, help="state 根；缺省用临时目录，不写仓库"
+    )
+    p_calibrate.add_argument(
+        "--genome", type=Path, default=None, help="缺省取该 scenario 的 v0 genome"
+    )
+
+    p_doctor = sub.add_parser("doctor", help="依赖边界 / 事务恢复 / 仓库协作契约")
     p_doctor.add_argument("--deps", action="store_true", help="检查 core 依赖边界")
     p_doctor.add_argument("--recover", action="store_true", help="恢复未完成事务")
+    p_doctor.add_argument(
+        "--repo-policy",
+        action="store_true",
+        help="只读检查协作文件、冻结面与契约域；缺失退出 1",
+    )
     p_doctor.add_argument("--state", type=Path, default=Path("state"))
 
     p_export = sub.add_parser("export", help="导出 web/data（静态 JSON + bundle.js，无页面）")
-    p_export.add_argument("--scenario", default="demo")
+    p_export.add_argument(
+        "--scenario",
+        "--shell",
+        dest="scenario",
+        default="demo",
+        help="scenario id；也接受 shell_id",
+    )
     p_export.add_argument(
         "--state", type=Path, default=None, help="state 根；缺省用 ./state 或临时 demo state"
     )
@@ -110,6 +165,41 @@ def build_parser() -> argparse.ArgumentParser:
     p_export.add_argument(
         "--allow-empty", action="store_true", help="允许 0 run 的 state，生成空数据面"
     )
+
+    p_demo = sub.add_parser(
+        "demo",
+        help="B2-D7 现场演示：1 live 候选 + 1 replay 基线 + 10 题扫描回放（180s 硬上限）",
+    )
+    p_demo.add_argument(
+        "--scenario",
+        "--shell",
+        dest="scenario",
+        default="demo",
+        help="scenario id；也接受 shell_id",
+    )
+    p_demo.add_argument(
+        "--mode",
+        choices=("live", "replay"),
+        default="live",
+        help="live=真实 Pi 候选 + fixture 兜底；replay=全 fixture/replay（CI 用）",
+    )
+    p_demo.add_argument("--max-wall", type=float, default=180.0, help="端到端硬上限（秒）")
+    p_demo.add_argument(
+        "--baseline-state",
+        type=Path,
+        default=None,
+        help="已录 baseline state；缺省录制/复用 <state>-baseline",
+    )
+    p_demo.add_argument(
+        "--candidate-state",
+        type=Path,
+        default=None,
+        help="已录候选 state（10 题扫描）；给出时其余 9 题复制为 replay，不再跑 fixture",
+    )
+    p_demo.add_argument("--state", type=Path, default=Path("state/demo"))
+    p_demo.add_argument("--out", type=Path, default=Path("web/data"))
+    p_demo.add_argument("--model", default="deepseek/deepseek-flash", help="live 候选的 Pi 模型")
+    p_demo.add_argument("--pi-executable", default="pi")
 
     return parser
 
@@ -129,6 +219,45 @@ def _load_json(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"期望 object: {path}")
     return data
+
+
+def _scenario_path(root: Path, name: str) -> Path | None:
+    """先按 scenario 目录名找，再按 ``shell_id`` 反查（``--shell`` 别名）。"""
+    direct = root / "scenarios" / name / "scenario.json"
+    if direct.is_file():
+        return direct
+    matches: list[Path] = []
+    for path in sorted(root.glob("scenarios/*/scenario.json")):
+        if _load_json(path).get("shell_id") == name:
+            matches.append(path)
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        raise ValueError(f"shell_id={name!r} 对应多个 scenario: {[str(p) for p in matches]}")
+    return None
+
+
+def _load_scenario(root: Path, name: str) -> Scenario:
+    path = _scenario_path(root, name)
+    if path is None:
+        raise FileNotFoundError(f"scenario 不存在: {name}")
+    return Scenario.from_dict(_load_json(path))
+
+
+def _genome_for_scenario(args: argparse.Namespace, root: Path, scenario: Scenario) -> Genome:
+    """解析 genome 并检查 shell_id / scenario_version 与 scenario 一致。"""
+    path = args.genome or default_genome_path(root, scenario)
+    genome = _validated_genome(path, root)
+    if genome.shell_id != scenario.shell_id:
+        raise ValueError(
+            f"genome.shell_id={genome.shell_id!r} 与 scenario.shell_id={scenario.shell_id!r} 不一致"
+        )
+    if genome.scenario_version != scenario.scenario_version:
+        raise ValueError(
+            f"genome.scenario_version={genome.scenario_version!r} 与 "
+            f"scenario.scenario_version={scenario.scenario_version!r} 不一致"
+        )
+    return genome
 
 
 # ---------------------------------------------------------------------------
@@ -206,12 +335,18 @@ def cmd_genome(args: argparse.Namespace) -> int:
 
 
 def cmd_search(args: argparse.Namespace) -> int:
-    if args.scenario != "demo":
-        print(f"B1 只支持 --scenario demo；{args.scenario!r} 属于 B2", file=sys.stderr)
-        return 2
     root = _repo_root(args)
-    genome = _validated_genome(args.genome, root)
-    scenario = Scenario.from_dict(_load_json(root / "scenarios/demo/scenario.json"))
+    try:
+        scenario = _load_scenario(root, args.scenario)
+        genome = _genome_for_scenario(args, root, scenario)
+    except (FileNotFoundError, ValidationError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    try:
+        runtime = resolve_runtime(scenario, args.runtime)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     store = StateStore(args.state)
     from molt.demo import build_engine
 
@@ -221,7 +356,7 @@ def cmd_search(args: argparse.Namespace) -> int:
         store,
         args.state / "work",
         args.seed_control,
-        runtime=args.runtime,
+        runtime=runtime,
     )
     task_ids = scenario.task_sets["search"]
     if args.task:
@@ -266,18 +401,11 @@ def _shell_domains(root: Path, scenario: Scenario) -> dict[str, list[str]] | Non
 
 def cmd_propose(args: argparse.Namespace) -> int:
     root = _repo_root(args)
-    scenario_path = root / "scenarios" / args.scenario / "scenario.json"
-    if not scenario_path.is_file():
-        print(f"scenario 不存在: {scenario_path}", file=sys.stderr)
-        return 2
-    scenario = Scenario.from_dict(_load_json(scenario_path))
-    genome = _validated_genome(args.genome, root)
-    if genome.scenario_version != scenario.scenario_version:
-        print(
-            "genome 与 scenario 的 scenario_version 不一致："
-            f"{genome.scenario_version} != {scenario.scenario_version}",
-            file=sys.stderr,
-        )
+    try:
+        scenario = _load_scenario(root, args.scenario)
+        genome = _genome_for_scenario(args, root, scenario)
+    except (FileNotFoundError, ValidationError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 2
 
     store = StateStore(args.state)
@@ -517,6 +645,127 @@ def _task_index(root: Path) -> dict[str, Any]:
     return index
 
 
+def _validate_shell_contract(
+    root: Path, scenario: Scenario, manifest: ShellManifest, genomes: Sequence[Genome]
+) -> list[str]:
+    """shell 侧契约：entrypoints / switches.schema / genome 值域。"""
+    failures: list[str] = []
+    for role, rel in manifest.entrypoints.items():
+        if not (root / rel).is_file():
+            failures.append(f"entrypoint {role} 不存在: {rel}")
+
+    schema_rel = f"shells/{scenario.shell_id}/switches.schema.json"
+    schema_path = root / schema_rel
+    domains: dict[str, list[str]] = {}
+    if not schema_path.is_file():
+        failures.append(f"switches.schema.json 不存在: {schema_rel}")
+    else:
+        data = _load_json(schema_path)
+        if data.get("shell_id") != scenario.shell_id:
+            failures.append(f"{schema_rel}: shell_id 与 scenario 不一致")
+        if data.get("locked") is not True:
+            failures.append(f"{schema_rel}: locked 必须为 true")
+        dimensions = data.get("dimensions")
+        if not isinstance(dimensions, dict) or set(dimensions) != set(SWITCH_KEYS):
+            failures.append(f"{schema_rel}: dimensions 必须且只能是 {list(SWITCH_KEYS)}")
+        else:
+            combinations = 1
+            for dim in SWITCH_KEYS:
+                spec = dimensions[dim]
+                values = spec.get("values") if isinstance(spec, dict) else None
+                if not isinstance(values, list) or not values:
+                    failures.append(f"{schema_rel}: dimensions.{dim}.values 必须是非空数组")
+                    continue
+                if not all(isinstance(value, str) for value in values):
+                    failures.append(f"{schema_rel}: dimensions.{dim}.values 必须是字符串")
+                    continue
+                outside = sorted(set(values) - set(DIMENSIONS[dim]))
+                if outside:
+                    failures.append(f"{schema_rel}: dimensions.{dim} 含 v1 未定义值 {outside}")
+                declared = manifest.capabilities["switch_domains"][dim]
+                if not set(values) <= set(declared):
+                    failures.append(f"{schema_rel}: dimensions.{dim} 超出 manifest 声明的候选域")
+                domains[dim] = list(values)
+                combinations *= len(values)
+            if data.get("combinations") != combinations:
+                failures.append(
+                    f"{schema_rel}: combinations={data.get('combinations')!r} "
+                    f"与维度笛卡尔积 {combinations} 不一致"
+                )
+
+    for genome in genomes:
+        for dim, values in domains.items():
+            value = getattr(genome.switches, dim)
+            if value not in values:
+                failures.append(
+                    f"genome {genome.genome_id} 的 switches.{dim}={value!r} 越出 shell 候选域"
+                )
+    return failures
+
+
+def _matching_genomes(root: Path, scenario: Scenario, failures: list[str]) -> list[Genome]:
+    from molt import schema
+
+    shell_dir = root / "shells" / scenario.shell_id
+    matching: list[Genome] = []
+    for genome_path in sorted((shell_dir / "genomes").glob("*.json")):
+        genome = schema.validate_record("genome", _load_json(genome_path), root)
+        if genome.scenario_version != scenario.scenario_version:
+            continue
+        matching.append(genome)
+        for error in verify_genome(genome, root):
+            failures.append(f"{genome_path.relative_to(root)}: {error}")
+    if not matching:
+        failures.append(f"scenario_version={scenario.scenario_version} 没有任何 genome")
+    return matching
+
+
+def _validate_scenario_ext(scenario: Scenario) -> list[str]:
+    """scenario.ext 里的显式契约（demo 用；未声明则不强制，避免误伤 svc-config）。
+
+    - ``expected_task_counts = {"search": 10, "report": 5}``：题集规模硬约束；
+    - ``require_positive_budget = true``：两个 USD cap 都必须 > 0。
+    """
+    failures: list[str] = []
+    expected = scenario.ext.get("expected_task_counts")
+    if expected is not None:
+        if not isinstance(expected, dict):
+            failures.append("ext.expected_task_counts 必须是 object")
+        else:
+            unknown = sorted(set(expected) - set(SCOPES))
+            if unknown:
+                failures.append(f"ext.expected_task_counts 含未知 scope: {unknown}")
+            for scope in SCOPES:
+                if scope not in expected:
+                    failures.append(f"ext.expected_task_counts 缺少 {scope}")
+                    continue
+                want = expected[scope]
+                if isinstance(want, bool) or not isinstance(want, int) or want < 0:
+                    failures.append(f"ext.expected_task_counts.{scope} 必须是非负整数")
+                    continue
+                actual = len(scenario.task_sets[scope])
+                if actual != want:
+                    failures.append(
+                        f"ext.expected_task_counts.{scope}: 期望 {want} 题，实际 {actual} 题"
+                    )
+    flag = scenario.ext.get("require_positive_budget")
+    if flag is not None and not isinstance(flag, bool):
+        failures.append("ext.require_positive_budget 必须是布尔值")
+    elif flag:
+        for name in ("execution_budget_usd", "search_overhead_budget_usd"):
+            value = getattr(scenario.policy.budget, name)
+            if not value > 0:
+                failures.append(
+                    f"policy.budget.{name}: 期望 > 0（ext.require_positive_budget=true），"
+                    f"实际 {value}"
+                )
+    try:
+        allowed_runtimes(scenario)
+    except ValueError as exc:
+        failures.append(f"ext.allowed_runtimes 非法: {exc}")
+    return failures
+
+
 def cmd_scenario(args: argparse.Namespace) -> int:
     from molt import schema
 
@@ -544,16 +793,9 @@ def cmd_scenario(args: argparse.Namespace) -> int:
         return 1
 
     failures: list[str] = []
-    matching = []
-    for genome_path in sorted((shell_dir / "genomes").glob("*.json")):
-        genome = schema.validate_record("genome", _load_json(genome_path), root)
-        if genome.scenario_version != scenario.scenario_version:
-            continue
-        matching.append(genome)
-        for error in verify_genome(genome, root):
-            failures.append(f"{genome_path.relative_to(root)}: {error}")
-    if not matching:
-        failures.append(f"scenario_version={scenario.scenario_version} 没有任何 genome")
+    matching = _matching_genomes(root, scenario, failures)
+    failures.extend(_validate_shell_contract(root, scenario, manifest, matching))
+    failures.extend(_validate_scenario_ext(scenario))
 
     tasks = _task_index(root)
     for scope in ("search", "report"):
@@ -640,18 +882,17 @@ def cmd_revert(args: argparse.Namespace) -> int:
 
 def cmd_audit(args: argparse.Namespace) -> int:
     root = _repo_root(args)
-    if args.scenario != "demo":
-        print(f"B1 只支持 --scenario demo；{args.scenario!r} 属于 B2", file=sys.stderr)
+    try:
+        scenario = _load_scenario(root, args.scenario)
+    except (FileNotFoundError, ValidationError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 2
-    with tempfile.TemporaryDirectory(prefix="molt-audit-demo-") as tmp:
-        if args.state is not None:
-            work = Path(args.state)
-            work.mkdir(parents=True, exist_ok=True)
-            summary, report = run_demo_audit(root, work)
-        else:
-            summary, report = run_demo_audit(root, Path(tmp))
+    with tempfile.TemporaryDirectory(prefix=f"molt-audit-{scenario.scenario_id}-") as tmp:
+        work = Path(tmp) if args.state is None else Path(args.state)
+        work.mkdir(parents=True, exist_ok=True)
+        summary, report = run_scenario_audit(root, work, scenario, runtime=args.runtime)
     print(
-        f"demo decision={summary['decision']} reason={summary['reason']} "
+        f"{scenario.scenario_id} decision={summary['decision']} reason={summary['reason']} "
         f"candidate={summary['candidate_genome']}"
     )
     print(
@@ -660,6 +901,54 @@ def cmd_audit(args: argparse.Namespace) -> int:
         f"report_events={report['report_events']}"
     )
     return 0
+
+
+# ---------------------------------------------------------------------------
+# calibrate（D4：fixture baseline 校准）
+# ---------------------------------------------------------------------------
+
+
+def cmd_calibrate(args: argparse.Namespace) -> int:
+    """用 fixture runtime 跑 search 题集，按首轮通过数判断 baseline 是否达标。
+
+    强制 ``runtime="fixture"``：不调用 Pi、不产生真实模型费用；``--state`` 缺省
+    用临时目录，因此默认不写仓库。
+    """
+    root = _repo_root(args)
+    if args.min_pass < 0:
+        print("--min-pass 必须 >= 0", file=sys.stderr)
+        return 2
+    try:
+        scenario = _load_scenario(root, args.scenario)
+        genome = _genome_for_scenario(args, root, scenario)
+    except (FileNotFoundError, ValidationError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    task_ids = list(scenario.task_sets["search"])
+    if not task_ids:
+        print("search 题集为空，无法校准", file=sys.stderr)
+        return 2
+
+    from molt.core.metrics import metrics_from_runs
+    from molt.demo import build_engine
+
+    with tempfile.TemporaryDirectory(prefix=f"molt-calibrate-{scenario.scenario_id}-") as tmp:
+        state_root = Path(args.state) if args.state is not None else Path(tmp)
+        state_root.mkdir(parents=True, exist_ok=True)
+        store = StateStore(state_root)
+        engine = build_engine(
+            root,
+            scenario,
+            store,
+            state_root / "work",
+            runtime="fixture",
+            enforce_runtime=False,
+        )
+        tasks = [engine.task_provider.load_task(task_id) for task_id in task_ids]
+        runs = engine.run_suite(genome, tasks, scope="search")
+        solved = metrics_from_runs(runs, task_ids).solved
+    print(f"calibrate solved={solved} min={args.min_pass}")
+    return 0 if solved >= args.min_pass else 1
 
 
 # ---------------------------------------------------------------------------
@@ -696,12 +985,61 @@ def core_import_violations(root: Path) -> list[str]:
     return violations
 
 
+REPO_POLICY_FILES: tuple[str, ...] = (
+    "AGENTS.md",
+    "CONTRIBUTING.md",
+    "docs/style.md",
+    ".github/CODEOWNERS",
+    ".github/pull_request_template.md",
+    ".github/workflows/ci.yml",
+)
+REPO_POLICY_FROZEN: tuple[str, ...] = (
+    "shells/*/harness.py",
+    "shells/*/verifier.py",
+    "shells/*/task_provider.py",
+    "shells/*/switches.schema.json",
+    "bench",
+)
+REPO_POLICY_CONTRACT: tuple[str, ...] = (
+    "schemas",
+    "molt/core/ports.py",
+    "docs/protocol.md",
+    "docs/decisions",
+)
+
+
+def repo_policy_missing(root: Path) -> list[str]:
+    """只读检查仓库协作文件、冻结面与契约域；返回缺失项（空即通过）。"""
+    missing: list[str] = []
+    for rel in REPO_POLICY_FILES:
+        if not (root / rel).is_file():
+            missing.append(rel)
+    for pattern in REPO_POLICY_FROZEN:
+        if not any(root.glob(pattern)):
+            missing.append(pattern)
+    for rel in REPO_POLICY_CONTRACT:
+        if not (root / rel).exists():
+            missing.append(rel)
+    return missing
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     root = _repo_root(args)
     if args.recover:
         store = StateStore(args.state)
         actions = store.recover()
         print("recover: " + ("; ".join(actions) if actions else "nothing to do"))
+        return 0
+    if args.repo_policy:
+        # 纯只读：不访问网络 / GitHub API，不写文件。
+        print("repo-policy frozen: " + ", ".join(REPO_POLICY_FROZEN))
+        print("repo-policy contract: " + ", ".join(REPO_POLICY_CONTRACT))
+        missing = repo_policy_missing(root)
+        if missing:
+            for item in missing:
+                print(f"repo-policy missing: {item}", file=sys.stderr)
+            return 1
+        print("repo-policy ok")
         return 0
     violations = core_import_violations(root)
     if violations:
@@ -718,15 +1056,15 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 
 def cmd_export(args: argparse.Namespace) -> int:
-    from molt.demo import build_demo_state
-    from molt.export import export_web_data
+    from molt.demo import build_scenario_state
+    from molt.export import DATA_FILES, export_web_data
 
     root = _repo_root(args)
-    scenario_path = root / "scenarios" / args.scenario / "scenario.json"
-    if not scenario_path.is_file():
-        print(f"scenario 不存在: {scenario_path}", file=sys.stderr)
+    try:
+        scenario = _load_scenario(root, args.scenario)
+    except (FileNotFoundError, ValidationError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 2
-    scenario = Scenario.from_dict(_load_json(scenario_path))
 
     state_path: Path | None = args.state
     if state_path is None and (Path.cwd() / "state" / "runs").is_dir():
@@ -745,18 +1083,154 @@ def cmd_export(args: argparse.Namespace) -> int:
         index = export_web_data(root, scenario, store, args.out)
         source = str(state_path)
     else:
-        # 无 state 时跑一遍 demo 证据链到临时目录，仓库内不落任何文件。
-        with tempfile.TemporaryDirectory(prefix="molt-export-demo-") as tmp:
-            store, _, _ = build_demo_state(root, Path(tmp))
+        # 无 state 时按 scenario 重建证据链到临时目录，仓库内不落任何文件。
+        with tempfile.TemporaryDirectory(prefix=f"molt-export-{scenario.scenario_id}-") as tmp:
+            store, _, _ = build_scenario_state(root, Path(tmp), scenario=scenario)
             index = export_web_data(root, scenario, store, args.out)
-        source = "临时 demo state（不写仓库）"
+        source = f"临时 {scenario.scenario_id} state（不写仓库）"
 
-    print(f"export ok out={args.out} files={len(index['files'])} revision={index['revision']}")
+    print(
+        f"export ok out={args.out} files={len(DATA_FILES)}（含 index.json） "
+        f"revision={index['revision']}"
+    )
     print(
         f"  scenario={index['scenario_id']} runs={index['counts']['runs']} "
         f"proposals={index['counts']['proposals']} events="
         f"{index['counts']['events_search']}/{index['counts']['events_report']} source={source}"
     )
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# demo（B2-D7：1 live 候选 + 1 replay 基线 + 10 题扫描回放）
+# ---------------------------------------------------------------------------
+
+
+def _fmt_cost(value: float) -> str:
+    return f"${value:.4f}"
+
+
+def _print_closure(summary: dict[str, Any]) -> None:
+    closure = summary["closure"]
+    baseline = closure["baseline"]
+    candidate = closure["candidate"]
+    print(
+        f"closure task={closure['task_id']} "
+        f"baseline={baseline['provenance']['kind']} run={baseline['run_id']} "
+        f"replay_of={baseline['replay_of_run_id']} "
+        f"outcome={baseline['outcome']} cost={_fmt_cost(baseline['cost_usd'])}"
+    )
+    print(
+        f"closure task={closure['task_id']} "
+        f"candidate={candidate['provenance']['kind']} run={candidate['run_id']} "
+        f"outcome={candidate['outcome']} cost={_fmt_cost(candidate['cost_usd'])} "
+        f"wall_ms={candidate['wall_ms']}"
+    )
+
+
+def _print_gate(summary: dict[str, Any]) -> None:
+    gate = summary["gate"]
+    print(
+        f"gate decision={gate['decision_id']} verdict={gate['verdict']} "
+        f"reason={gate['reason']} solved={gate['baseline_solved']}->{gate['candidate_solved']}"
+    )
+
+
+def _print_overhead(summary: dict[str, Any]) -> None:
+    overhead = summary["overhead"]
+    if not overhead.get("measured"):
+        print(f"overhead n/a: {overhead.get('reason')}")
+        return
+    print(
+        f"overhead total={overhead['total_wall_ms']}ms "
+        f"pi_sub={overhead['pi_subprocess_wall_ms']}ms "
+        f"extra={overhead['orchestration_overhead_ms']}ms "
+        f"ratio={overhead['overhead_ratio'] * 100:.1f}% "
+        f"threshold={overhead['threshold'] * 100:.0f}% "
+        f"within={overhead['within_threshold']}"
+    )
+    if not overhead["within_threshold"]:
+        print(
+            "WARN 开销比超过 20%：按 ADR 0001 重开条件 2 记录，需触发 ADR 复查",
+            file=sys.stderr,
+        )
+
+
+def cmd_demo(args: argparse.Namespace) -> int:
+    from molt.demo import DemoTimeout, run_demo
+
+    root = _repo_root(args)
+    if args.max_wall <= 0:
+        print("--max-wall 必须 > 0", file=sys.stderr)
+        return 2
+    try:
+        scenario = _load_scenario(root, args.scenario)
+    except (FileNotFoundError, ValidationError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    try:
+        summary = run_demo(
+            root,
+            scenario,
+            state_root=args.state,
+            out_dir=args.out,
+            mode=args.mode,
+            max_wall_s=args.max_wall,
+            baseline_state=args.baseline_state,
+            candidate_state=args.candidate_state,
+            model=args.model,
+            pi_executable=args.pi_executable,
+        )
+    except DemoTimeout as exc:
+        print(f"demo 失败：{exc}", file=sys.stderr)
+        return 1
+    except (FileNotFoundError, ValidationError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    print(
+        f"demo mode={summary['mode']} scenario={summary['scenario_id']} "
+        f"elapsed={summary['elapsed_s']}s/{summary['max_wall_s']:.0f}s "
+        f"state={summary['state']}"
+    )
+    print(
+        f"propose proposal={summary['proposal']['proposal_id']} "
+        f"source={summary['proposal']['source']} "
+        f"cost={_fmt_cost(summary['proposal']['cost_usd'])} "
+        f"switches={summary['proposal']['switches']}"
+    )
+    genomes = summary["genomes"]
+    print(
+        f"genomes baseline={genomes['baseline']['switches']} "
+        f"({genomes['baseline']['source']}, {genomes['baseline']['genome_id'][:15]}) "
+        f"candidate={genomes['candidate']['switches']} "
+        f"({genomes['candidate']['source']}, {genomes['candidate']['genome_id'][:15]}) "
+        f"proposal_matches={genomes['proposal_matches_candidate']} "
+        f"runtime_variant={genomes['candidate'].get('runtime_variant')}"
+    )
+    _print_closure(summary)
+    print(f"scan10 replay_runs={len(summary['scan10'])}（10 题扫描的回放，不是第二次 demo 运行）")
+    print(
+        f"candidate_scan runs={len(summary['candidate_scan'])}"
+        "（closure 以外的候选题；--candidate-state 下为 replay，不是 live）"
+    )
+    _print_gate(summary)
+    action = summary["action"]
+    print(
+        f"action={action['kind']} archive={action['archive_id']} "
+        f"generation={action['generation']} baseline_archive={action['baseline_archive_id']}"
+    )
+    _print_overhead(summary)
+    audit = summary["audit"]
+    print(
+        f"audit ok runs={audit['runs']} results={audit['results']} "
+        f"decisions={audit['decisions']} events={audit['events']}"
+    )
+    export = summary["export"]
+    print(f"export out={export['out']} files={export['files']} revision={export['revision']}")
+    counts = summary["provenance_counts"]
+    print(f"provenance live={counts['live']} replay={counts['replay']} fixture={counts['fixture']}")
+    print(f"summary {Path(summary['state']) / 'demo-summary.json'}")
     return 0
 
 
@@ -774,8 +1248,10 @@ HANDLERS = {
     "adopt": cmd_adopt,
     "revert": cmd_revert,
     "audit": cmd_audit,
+    "calibrate": cmd_calibrate,
     "doctor": cmd_doctor,
     "export": cmd_export,
+    "demo": cmd_demo,
 }
 
 

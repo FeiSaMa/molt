@@ -137,13 +137,30 @@ def _provenance(run: Run, genomes: dict[str, Genome]) -> dict[str, Any]:
         "runtime_id": runtime_id or None,
     }
     if kind == "fixture":
-        result["note"] = "B1 fixture runtime：确定性回放，不是 live 模型调用"
+        if runtime_id.startswith("deterministic"):
+            result["note"] = "deterministic runtime：零成本确定性执行，不是 live 模型调用"
+        else:
+            result["note"] = "B1 fixture runtime：确定性回放，不是 live 模型调用"
     return result
 
 
-def _scenario_payload(scenario: Scenario) -> dict[str, Any]:
+def _scenario_payload(
+    scenario: Scenario, runs: Iterable[Run], genomes: dict[str, Genome]
+) -> dict[str, Any]:
     search = list(scenario.task_sets["search"])
     report = list(scenario.task_sets["report"])
+    search_runs = [run for run in runs if run.scope == "search"]
+    kinds = [_provenance(run, genomes)["kind"] for run in search_runs]
+    provenance_counts = {kind: kinds.count(kind) for kind in ("fixture", "live", "replay")}
+    default_runtime = str(scenario.ext.get("default_runtime", "fixture"))
+    runtime_note = default_runtime
+    if provenance_counts["live"]:
+        runtime_note = f"{default_runtime} + pi live（仅 closure 证据）"
+    claim = {
+        **CLAIM,
+        "runtime": runtime_note,
+        "live_model_calls": provenance_counts["live"] > 0,
+    }
     return {
         "schema_version": scenario.schema_version,
         "scenario_id": scenario.scenario_id,
@@ -165,7 +182,8 @@ def _scenario_payload(scenario: Scenario) -> dict[str, Any]:
         "policy": scenario.policy.to_dict(),
         "budget": scenario.policy.budget.to_dict(),
         "isolation": scenario.isolation.to_dict(),
-        "claim": dict(CLAIM),
+        "provenance_counts": provenance_counts,
+        "claim": claim,
         "not_claimed": list(NOT_CLAIMED),
         "ext": dict(scenario.ext),
     }
@@ -217,6 +235,7 @@ def _runs_payload(runs: Iterable[Run], genomes: dict[str, Genome]) -> dict[str, 
                     "tests_hash_after": verification["tests_hash_after"],
                 },
                 "provenance": _provenance(run, genomes),
+                "demo_group": run.ext.get("demo_group") if isinstance(run.ext, dict) else None,
                 "started_at": run.started_at,
                 "finished_at": run.finished_at,
             }
@@ -564,7 +583,7 @@ def export_web_data(
     replacements = _replacements(root, store.root)
 
     payloads: dict[str, Any] = {
-        "scenario.json": _scenario_payload(scenario),
+        "scenario.json": _scenario_payload(scenario, runs, genomes),
         "variants.json": _variants_payload(genomes_list, adopted_ids),
         "runs.json": _runs_payload(runs, genomes),
         "search_results.json": _search_results_payload(results),

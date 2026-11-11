@@ -1,23 +1,23 @@
 {
   "variants": [
     {
-      "adopted": false,
+      "adopted": true,
       "budget": {
         "attempts": 1,
         "tokens": 200000,
         "turns": 64,
         "wall_ms": 120000
       },
-      "id": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+      "id": "sha256:0976fd25c58706f1533d85f0b98b050e88717a4b4f3a860c5b33ce6bbe5ff31e",
       "parent": null,
       "runtime": {
-        "runtime_id": "fixture",
-        "version": "fixture-1"
+        "runtime_id": "pi",
+        "version": "1.5.0"
       },
-      "scenario_version": "demo-5",
+      "scenario_version": "demo-6",
       "switches": {
         "context": "full",
-        "thinking": "high",
+        "thinking": "low",
         "tools": "bash"
       }
     },
@@ -29,16 +29,37 @@
         "turns": 64,
         "wall_ms": 120000
       },
-      "id": "sha256:ec10a3a2acbda14890d262c83cd2b06e4a2bab1c247c5fa8909d87910ada3a13",
-      "parent": "sha256:6574e7ca6731d0d147c0867128f7f155da07ed54d186c16ef0fbfb36cbd82504",
+      "id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "parent": null,
       "runtime": {
         "runtime_id": "fixture",
         "version": "fixture-1"
       },
-      "scenario_version": "demo-5",
+      "scenario_version": "demo-6",
       "switches": {
         "context": "full",
         "thinking": "low",
+        "tools": "bash"
+      }
+    },
+    {
+      "adopted": true,
+      "budget": {
+        "attempts": 1,
+        "tokens": 200000,
+        "turns": 64,
+        "wall_ms": 120000
+      },
+      "id": "sha256:9753c7bb8d3fe33c9ff3ade1f48c67d7f683101ac9e6b3a4dd90105520498bc9",
+      "parent": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+      "runtime": {
+        "runtime_id": "pi",
+        "version": "1.5.0"
+      },
+      "scenario_version": "demo-6",
+      "switches": {
+        "context": "full",
+        "thinking": "high",
         "tools": "bash"
       }
     }

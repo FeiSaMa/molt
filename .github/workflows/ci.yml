@@ -1,0 +1,215 @@
+name: ci
+
+# 六个必需作业：lint / schema / boundary / unit / audit / secret-scan。
+# 真实 Pi 调用不在本工作流内（见 pi-smoke.yml：手动触发，只跑 1 条 live task，
+# 费用 cap 为本次单 run 的运行后验收上限）。
+#
+# 提示：unit 只跑 3.12，检查项名字为 `unit (3.12)`；
+# 分支保护的 required status checks 按这六个名字配置。
+# 3.11 暂不进 CI（浮点夹具差异，见 CONTRIBUTING §九「已知缺口」）。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: 安装 dev 依赖（lock 必须新鲜）
+        run: uv sync --extra dev --locked
+      - name: ruff
+        run: uv run ruff check .
+
+  schema:
+    name: schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --extra dev --locked
+      - name: 记录 schema 校验（11 类 / 仓库内全部记录）
+        run: uv run python -m molt schema validate --all
+      - name: scenario / genome / bench_hash 一致性
+        run: uv run python -m molt scenario validate
+      - name: docs/protocol.md 无手改漂移
+        run: |
+          uv run python -m molt schema docs --output /tmp/protocol.md
+          if ! diff -u docs/protocol.md /tmp/protocol.md; then
+            echo "::error::docs/protocol.md 与 schema 生成结果不一致；请运行 molt schema docs 重新生成"
+            exit 1
+          fi
+
+  boundary:
+    name: boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --extra dev --locked
+      - name: core 依赖边界（stdio only）
+        run: uv run python -m molt doctor --deps
+      - name: 核心不得出现第三方 import（AST 兜底）
+        run: |
+          uv run python - <<'PY'
+          import ast
+          import pathlib
+          import sys
+
+          stdlib = sys.stdlib_module_names
+          bad = []
+          for path in sorted(pathlib.Path("molt/core").rglob("*.py")):
+              tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Import):
+                      names = [alias.name for alias in node.names]
+                  elif isinstance(node, ast.ImportFrom):
+                      if node.level:
+                          continue
+                      names = [node.module or ""]
+                  else:
+                      continue
+                  for name in names:
+                      if name == "molt.core" or name.startswith("molt.core."):
+                          continue
+                      root = name.split(".")[0]
+                      if root and root not in stdlib:
+                          bad.append(f"{path}:{getattr(node, 'lineno', '?')}: {name}")
+          if bad:
+              print("\n".join(bad))
+              sys.exit("molt/core 只允许 stdlib 与 molt.core.*")
+          print("boundary ok")
+          PY
+
+  unit:
+    name: unit
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 只跑 3.12。3.11 暂不进 CI：CPython 3.12 起内置 sum() 改用 Neumaier 补偿求和，
+        # gate 夹具里 cost_per_solved 的期望值按 3.12 的浮点结果固化
+        # （3.11: 1.222222222222222 vs 3.12: 1.2222222222222223），3.11 下 4 条断言必红。
+        # 这是仓库既有差异，与本次改动无关；修复（统一取整或重生成夹具）需单独开 PR
+        # 走冻结面流程（会碰 bench/** 或 tests/fixtures）。修复后再把 "3.11" 加回矩阵。
+        python-version: ["3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --extra dev --locked
+      - name: pytest（pi live 默认 skip）
+        run: uv run pytest -q
+
+  audit:
+    name: audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --extra dev --locked
+      - name: 门禁夹具 G1–G8
+        run: uv run python -m molt gate --fixture tests/fixtures/gate/
+      - name: 只读重算
+        run: uv run python -m molt audit --scenario demo
+      - name: 导出数据面（产物落 /tmp）
+        run: uv run python -m molt export --scenario demo --out /tmp/molt-ci-web
+      - name: demo 闭环（replay 模式：0 live，10 题扫描回放单独成组）
+        run: |
+          uv run python -m molt demo --mode replay \
+            --state /tmp/molt-ci-demo --out /tmp/molt-ci-demo-web --max-wall 180
+      - name: 导出文件集与 sha256 自洽
+        run: |
+          uv run python - <<'PY'
+          import hashlib
+          import json
+          import pathlib
+          import sys
+
+          from molt.export import DATA_FILES
+
+          out = pathlib.Path("/tmp/molt-ci-web")
+          index = json.loads((out / "index.json").read_text(encoding="utf-8"))
+          expected = set(DATA_FILES) - {"index.json"}
+          got = set(index["files"])
+          if got != expected:
+              sys.exit(f"导出文件集不符: 缺 {sorted(expected - got)} 多 {sorted(got - expected)}")
+          for name, meta in sorted(index["files"].items()):
+              digest = hashlib.sha256((out / name).read_bytes()).hexdigest()
+              if digest != meta["sha256"]:
+                  sys.exit(f"sha256 不一致: {name}")
+          print(f"export ok: {len(got)} files, sha256 全部一致")
+          PY
+      - name: 零写入（仓库树不得被命令改动）
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --porcelain
+            echo "::error::命令改动了仓库；零写入约定见 AGENTS.md §九"
+            exit 1
+          fi
+
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 准备 ripgrep
+        run: command -v rg >/dev/null || (sudo apt-get update && sudo apt-get install -y ripgrep)
+      - name: 常见凭据形态
+        run: |
+          set -eu
+          patterns=(
+            'sk-[A-Za-z0-9]{32,}'
+            'gh[pousr]_[A-Za-z0-9]{36}'
+            'AKIA[0-9A-Z]{16}'
+            'AIza[0-9A-Za-z_-]{35}'
+            'xox[baprs]-[A-Za-z0-9-]{10,}'
+            '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+            '(DEEPSEEK|OPENAI|ANTHROPIC)_API_KEY[[:space:]]*=[[:space:]]*[^[:space:]$]'
+          )
+          status=0
+          for pattern in "${patterns[@]}"; do
+            if rg -n --hidden -g '!.git' -g '!.venv' -e "$pattern" .; then
+              echo "::error::secret-scan 命中 /$pattern/"
+              status=1
+            fi
+          done
+          exit $status
+      - name: 凭据文件不得入库
+        run: |
+          if rg --files --hidden -g '!.git' -g '.env' -g '.env.*' -g '!.env.example' | grep -q .; then
+            echo "::error::发现被提交的 .env 文件"
+            exit 1
+          fi
+          echo "no credential files"

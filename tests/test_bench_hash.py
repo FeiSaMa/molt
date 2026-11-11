@@ -14,7 +14,26 @@ from molt.bench import bench_tree_hash, compute_bench_hash
 from molt.cli import main
 
 ROOT = Path(__file__).resolve().parents[1]
-REFERENCED = ["smoke-add", "smoke-even", "holdout-even"]
+SEARCH = [
+    "smoke-add",
+    "smoke-even",
+    "search-off-by-one",
+    "search-max-two",
+    "search-missing-return",
+    "search-wrong-var",
+    "search-slice",
+    "search-mean",
+    "search-slug",
+    "search-clamp",
+]
+REPORT = [
+    "holdout-even",
+    "holdout-palindrome",
+    "holdout-gcd",
+    "holdout-factorial",
+    "holdout-dedupe",
+]
+REFERENCED = SEARCH + REPORT
 
 
 def _copy_repo(tmp_path: Path) -> Path:
@@ -53,7 +72,8 @@ def test_hash_ignores_unreferenced_candidate_files(tmp_path: Path) -> None:
 def test_bench_tree_hash_covers_unreferenced_candidate(tmp_path: Path) -> None:
     """guard 用全 bench 哈希：未挂到 task_sets 的候选文件也会被保护。"""
     root = _copy_repo(tmp_path)
-    before = bench_tree_hash(root)
+    before_tree = bench_tree_hash(root)
+    before_referenced = compute_bench_hash(root, REFERENCED)
     candidate = root / "bench/search/unused-candidate"
     shutil.copytree(root / "bench/search/smoke-add", candidate)
     task_path = candidate / "task.json"
@@ -62,8 +82,8 @@ def test_bench_tree_hash_covers_unreferenced_candidate(tmp_path: Path) -> None:
     data["workspace_ref"] = "bench/search/unused-candidate/workspace"
     data["tests_ref"] = "bench/search/unused-candidate/tests"
     task_path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-    assert bench_tree_hash(root) != before
-    assert compute_bench_hash(root, REFERENCED) == before
+    assert bench_tree_hash(root) != before_tree
+    assert compute_bench_hash(root, REFERENCED) == before_referenced
 
 
 def test_scenario_validate_accepts_repository_fixture(tmp_path: Path) -> None:
