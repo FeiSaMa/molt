@@ -1,0 +1,826 @@
+/* ==========================================================================
+   molt · 参赛展示页 · 设计系统与骨架样式（W-01）
+   纯静态：零外链资源、零 webfont；不使用 :has 选择器、CSS 嵌套、
+   容器查询、新式颜色混合函数——保证 file:// 直开与保守浏览器可用。
+   依赖：index.html 的固定结构（class 名 + data-bind 钩子）。
+   ========================================================================== */
+
+/* ---------- 1. 设计令牌 ---------- */
+:root {
+  color-scheme: dark;
+
+  /* 底色层：越靠前越"远"，面板靠"近" */
+  --bg: #07090c;
+  --panel: #11171e;
+  --panel-2: #161d25;
+  --line: #222b35;
+  --line-2: #35404d;
+
+  /* 文字（对比度：ink 16:1 / ink-2 10:1 / ink-3 6:1，均 ≥ 4.5:1） */
+  --ink: #f3f6f9;
+  --ink-2: #c2ccd8;
+  --ink-3: #8d99a8;
+
+  /* 语义色 */
+  --accent: #e6b86a;
+  --accent-2: #f3d49b;
+  --accent-soft: rgba(230, 184, 106, 0.13);
+  --ok: #5fd0a0;
+  --ok-soft: rgba(95, 208, 160, 0.12);
+  --warn: #f0937a;
+  --warn-soft: rgba(240, 147, 122, 0.14);
+  --focus: #a9d1ff;
+
+  /* 字号阶梯：1280×720 取小端，1920×1080 落在 18–20px 正文 */
+  --fs-body: clamp(16px, 0.5vw + 9px, 19.5px);
+  --fs-small: clamp(14.5px, 0.35vw + 10px, 16.5px);
+  --fs-label: clamp(13px, 0.25vw + 9.5px, 14.5px);
+  --fs-h1: clamp(1.9rem, min(3.6vw, 5.6vh), 3.5rem);
+  --fs-h2: clamp(1.4rem, min(2.6vw, 4.2vh), 2.25rem);
+  --fs-kpi: clamp(1.45rem, min(2.2vw, 3.4vh), 2.3rem);
+
+  /* 间距阶梯 */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+
+  /* 几何 */
+  --r-sm: 6px;
+  --r: 12px;
+  --r-lg: 16px;
+  --wrap: min(92vw, 1680px);
+
+  /* 排版 */
+  --sans: -apple-system, "Segoe UI", "PingFang SC", "HarmonyOS Sans SC",
+    "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+    "Liberation Mono", monospace;
+
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 20px 44px -28px rgba(0, 0, 0, 0.95);
+}
+
+/* ---------- 2. 基础 ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1150px 620px at 10% -12%, rgba(230, 184, 106, 0.055), transparent 68%),
+    radial-gradient(950px 520px at 102% -6%, rgba(120, 170, 255, 0.045), transparent 62%),
+    var(--bg);
+  background-repeat: no-repeat;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+p {
+  margin: 0 0 var(--sp-4);
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+code,
+kbd,
+samp {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  padding: 0.1em 0.4em;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--accent-2);
+  white-space: nowrap;
+}
+
+b,
+strong {
+  font-weight: 650;
+}
+
+::selection {
+  background: rgba(230, 184, 106, 0.28);
+  color: var(--ink);
+}
+
+/* 页面级不出现横向滚动条：宽内容只在自身容器内滚 */
+main,
+header,
+footer {
+  min-width: 0;
+}
+
+/* ---------- 3. 可访问性工具类 ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip {
+  position: absolute;
+  top: -4rem;
+  left: var(--sp-4);
+  z-index: 20;
+  padding: 0.6rem 1rem;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: #180f04;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.skip:focus {
+  top: var(--sp-4);
+}
+
+/* 焦点环：不用 :where() 包裹（旧 Chrome 不认），先写标准选择器，再补 :focus 兜底 */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 兜底：不支持 :focus-visible 的旧浏览器不丢焦点环 */
+a:focus,
+summary:focus,
+[tabindex]:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* [hidden] 一律不占位（footer 的 revision 子句靠它整段隐藏） */
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- 4. 顶栏 ---------- */
+.topbar {
+  width: var(--wrap);
+  margin: 0 auto;
+  padding: clamp(14px, 2.4vh, 26px) 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.7rem;
+  min-width: 0;
+}
+
+.brand strong {
+  font-size: 1.32em;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.brand-sub {
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  letter-spacing: 0.01em;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.badge {
+  padding: 0.34rem 0.62rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: var(--fs-label);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.badge b {
+  color: var(--ink);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 徽章组 + 一行小字：live 不再单独强调，避免被读成「21 次真实运行」 */
+.badge-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.42rem;
+  min-width: 0;
+}
+
+.badge-note {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: var(--fs-label);
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 5. 数据未加载提示 ---------- */
+.data-warning {
+  width: var(--wrap);
+  margin: var(--sp-4) auto 0;
+  padding: 0.7rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid rgba(240, 147, 122, 0.45);
+  border-left: 4px solid var(--warn);
+  border-radius: var(--r-sm);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(240, 147, 122, 0.07) 0 10px,
+      transparent 10px 20px
+    ),
+    var(--warn-soft);
+  color: #ffd9cc;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.data-warning[hidden] {
+  display: none;
+}
+
+/* ---------- 6. 屏（section）与标题 ---------- */
+.screen {
+  width: var(--wrap);
+  margin: 0 auto;
+  padding: clamp(26px, 5vh, 62px) 0;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: var(--sp-4);
+}
+
+.screen:first-of-type {
+  border-top: 0;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  margin: 0 0 var(--sp-3);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+}
+
+.eyebrow::before {
+  content: "";
+  width: 1.8em;
+  height: 2px;
+  flex: none;
+  background: var(--accent);
+  opacity: 0.8;
+}
+
+h1,
+h2 {
+  margin: 0 0 var(--sp-4);
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--fs-h1);
+  line-height: 1.12;
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  line-height: 1.18;
+}
+
+.lede {
+  max-width: 66ch;
+  margin: 0 0 var(--sp-5);
+  color: var(--ink-2);
+  line-height: 1.62;
+  text-wrap: pretty;
+}
+
+.footnote {
+  max-width: 76ch;
+  margin: var(--sp-5) 0 0;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--line-2);
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+.footnote b {
+  color: var(--ink-2);
+}
+
+/* ---------- 7. S1 KPI 四联卡 ---------- */
+.kpis {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: clamp(10px, 1vw, 18px);
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: clamp(14px, 1.5vw, 22px);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 42%),
+    var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.kpi-label {
+  color: var(--ink-3);
+  font-size: var(--fs-label);
+  letter-spacing: 0.03em;
+}
+
+.kpi-value {
+  color: var(--ink);
+  font-size: var(--fs-kpi);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-value b {
+  font-weight: inherit;
+  color: inherit;
+}
+
+.kpi-note {
+  margin-top: auto;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+.kpi-note b {
+  color: var(--ok);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-accent {
+  border-color: rgba(230, 184, 106, 0.34);
+  background:
+    linear-gradient(180deg, var(--accent-soft), transparent 62%),
+    var(--panel);
+}
+
+.kpi-accent .kpi-label {
+  color: var(--accent-2);
+}
+
+[data-bind="s1.verdict"] {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 0.92em;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- 8. S2 配对表 ---------- */
+.table-wrap {
+  margin-top: var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pairs {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 1em;
+}
+
+.pairs caption {
+  text-align: left;
+}
+
+.pairs thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 0.72rem 0.85rem;
+  border-bottom: 1px solid var(--line-2);
+  background: var(--panel-2);
+  color: var(--ink-3);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.pairs th.num,
+.pairs td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.pairs tbody td {
+  padding: 0.66rem 0.85rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+  vertical-align: middle;
+}
+
+.pairs tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.017);
+}
+
+.pairs tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.pairs tbody tr:hover {
+  background: rgba(230, 184, 106, 0.055);
+}
+
+/* ---------- 9. S3 门禁链 ---------- */
+.gate-chain {
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: gate;
+  display: grid;
+  gap: clamp(8px, 0.9vw, 13px);
+}
+
+.gate-chain li {
+  counter-increment: gate;
+  position: relative;
+  padding: clamp(12px, 1.1vw, 17px) clamp(14px, 1.3vw, 20px);
+  padding-left: clamp(52px, 4.6vw, 70px);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel);
+  color: var(--ink-2);
+}
+
+.gate-chain li::before {
+  content: counter(gate, decimal-leading-zero);
+  position: absolute;
+  left: clamp(14px, 1.3vw, 20px);
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: var(--fs-label);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+}
+
+/* 门禁链左缘一条"轨道"，强调顺序性 */
+.gate-chain li::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12%;
+  bottom: 12%;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--line-2);
+}
+
+.gate-facts {
+  margin: var(--sp-5) 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.gate-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  background: var(--panel);
+}
+
+.gate-facts dt {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: var(--fs-label);
+  letter-spacing: 0.02em;
+}
+
+.gate-facts dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 10. B5 双栏 ---------- */
+.two-col {
+  margin-top: var(--sp-5);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 1.5vw, 22px);
+}
+
+.panel {
+  min-width: 0;
+  padding: clamp(14px, 1.4vw, 22px);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel);
+}
+
+.panel h3 {
+  margin: 0 0 var(--sp-3);
+  color: var(--ink-2);
+  font-size: 1.02em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* 这三个容器由 W-03 填内容：只做"行"的公共外观，不假设内部结构 */
+.lineage,
+.archives,
+.snapshots {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lineage li,
+.archives li,
+.snapshots li {
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
+.lineage li:last-child,
+.archives li:last-child,
+.snapshots li:last-child {
+  border-bottom: 0;
+}
+
+.snapshots {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px dashed var(--line-2);
+}
+
+/* 空容器占位：结构在、数据未到（W-03 会填）；只画一个虚线空框，不显示任何猜测数字 */
+#gate-chain:empty::before,
+#lineage:empty::before,
+#archives:empty::before,
+#snapshots:empty::before {
+  content: "—";
+  display: block;
+  padding: 0.9rem 1rem;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--ink-3);
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--fs-small);
+}
+
+#archives:empty::before {
+  margin-bottom: var(--sp-3);
+}
+
+/* 两个空槽之间不再叠一条分隔线 */
+#snapshots:empty {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* ---------- 11. 页脚 ---------- */
+.colophon {
+  width: var(--wrap);
+  margin: 0 auto;
+  padding: var(--sp-6) 0 var(--sp-8);
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+.colophon .muted {
+  color: var(--ink-3);
+  opacity: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+.colophon b {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+/* ---------- 12. 自适应 ---------- */
+@media (max-width: 1080px) {
+  .kpis {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .two-col,
+  .gate-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lede,
+  .footnote {
+    max-width: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .kpis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .badge-group {
+    align-items: flex-start;
+  }
+}
+
+/* ---------- 13. 动效：本页不使用任何主动画（投屏场景零风险） ----------
+   skip 链接靠 :focus 直接跳位，不做过渡；下表保留 reduce 兜底，
+   以防 W-02/W-03 后续加入过渡时在「减少动态效果」下仍然生效。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* === W-03 render === */
+/* 门禁链：通过 / 停在此步 / 未执行 / 终态（颜色只复用已有令牌） */
+.step.is-stop { border-color: rgba(240, 147, 122, 0.42); background: linear-gradient(180deg, var(--warn-soft), transparent 72%), var(--panel); }
+.step.is-stop::after { width: 3px; background: var(--warn); }
+.step.is-final { border-color: rgba(95, 208, 160, 0.4); background: linear-gradient(180deg, var(--ok-soft), transparent 72%), var(--panel); }
+.step.is-final::after { width: 3px; background: var(--ok); }
+.step.is-skip { opacity: 0.62; }
+.step-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.7rem; }
+.step-label { color: var(--ink); font-weight: 600; }
+.step-badge { margin-left: auto; padding: 0.05rem 0.5rem; border: 1px solid var(--line-2); border-radius: 999px; color: var(--ink-3); font-family: var(--mono); font-size: var(--fs-label); line-height: 1.6; white-space: nowrap; }
+.step-badge.is-pass { border-color: rgba(95, 208, 160, 0.42); background: var(--ok-soft); color: var(--ok); }
+.step-badge.is-stop { border-color: rgba(240, 147, 122, 0.5); background: var(--warn-soft); color: var(--warn); }
+.step-body { display: flex; flex-wrap: wrap; gap: 0.15rem 1.1rem; margin-top: 0.3rem; font-size: var(--fs-small); }
+.step-obs { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.step-th { color: var(--ink-3); }
+.step-th::before { content: "阈值 "; opacity: 0.75; }
+
+/* 配对表成本条：轨道 100%，填充 = 候选 / 基线 */
+.bar-wrap { display: flex; align-items: center; gap: 0.35rem; }
+.bar { display: block; flex: 1 1 auto; width: 100%; min-width: 84px; height: 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: inherit; background: var(--ok); }
+/* 候选比基线贵：满格也不能是绿色（绿色会被读成「更便宜」） */
+.bar-fill.is-worse { background: var(--warn); }
+.bar-over { flex: none; color: var(--warn); font-size: var(--fs-label); line-height: 1; }
+.pair-id-cell { font-family: var(--mono); font-size: 0.9em; color: var(--ink); }
+/* 配对行的 provenance 标签：中性描边，不用强调色 */
+.tag-live { margin-left: 0.4rem; border-color: var(--line-2); background: var(--panel-2); color: var(--ink-2); }
+.pair-bar { width: 30%; min-width: 96px; }
+.delta { font-variant-numeric: tabular-nums; }
+.is-better { color: var(--ok); font-weight: 600; }
+
+/* 谱系 / 归档 / 快照行内排版 */
+.lin-head, .row-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.6rem; }
+.lin-id, .row-id { font-family: var(--mono); color: var(--ink); }
+.lin-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+.chip { display: inline-flex; align-items: baseline; gap: 0.3rem; padding: 0.05rem 0.45rem; border: 1px solid var(--line-2); border-radius: 999px; background: var(--panel-2); color: var(--ink-2); font-family: var(--mono); font-size: var(--fs-label); line-height: 1.6; }
+.chip em { color: var(--ink-3); font-style: normal; }
+.chip b { color: var(--accent-2); font-weight: 650; }
+.row-meta { margin-top: 0.2rem; color: var(--ink-3); font-size: var(--fs-small); }
+.tag { padding: 0 0.4rem; border: 1px solid var(--line-2); border-radius: 999px; color: var(--ink-3); font-family: var(--mono); font-size: var(--fs-label); line-height: 1.7; white-space: nowrap; }
+.tag.is-ok { border-color: rgba(95, 208, 160, 0.42); background: var(--ok-soft); color: var(--ok); }
+
+/* 留出集（仅聚合）：只报 solved/total，不出现任何 task_id */
+.holdout-line {
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px dashed var(--line-2);
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.holdout-line b { color: var(--ink-2); font-weight: 650; }
+
+/* 留出集归属：候选侧是哪个 genome、switches 是否与门禁候选一致（不折叠） */
+.holdout-attrib {
+  margin: var(--sp-2) 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  line-height: 1.55;
+}
+
+/* 配对表合计行：gate 级逐题求和，与扫描级分开 */
+.pairs tfoot td {
+  padding: 0.66rem 0.85rem;
+  border-top: 1px solid var(--line-2);
+  background: var(--panel-2);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+}
+
+.pairs tfoot .total-label { color: var(--ink); font-weight: 650; }
+.pairs tfoot .total-note { color: var(--ink-3); font-size: var(--fs-label); }
+.pairs tfoot .total-delta { font-weight: 650; }
+
+/* 谱系父子关系：genome ← parent（复用 --ink-3 / --mono 令牌） */
+.lineage-parent {
+  font-family: var(--mono);
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+/* S2 口径说明放在表格之前：与数字同屏，不用滚到表尾才读到 */
+#pair-scope-note { margin: var(--sp-4) 0 var(--sp-3); }
+
+/* 脚注区：口径说明 / 错误（<details>） */
+.warnings { margin-top: var(--sp-4); color: var(--ink-3); font-size: var(--fs-small); line-height: 1.6; }
+.warnings summary { cursor: pointer; color: var(--ink-2); font-weight: 600; }
+.warnings ul { margin: 0.45rem 0 0; padding-left: 1.1rem; }
+.warnings li { margin-bottom: 0.3rem; }
+.warnings.is-error { padding-left: 0.8rem; border-left: 2px solid var(--warn); color: #ffd9cc; }

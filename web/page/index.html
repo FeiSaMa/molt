@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>molt · 同一套题，跑两次</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <a class="skip" href="#main">跳到内容</a>
+
+  <header class="topbar">
+    <!-- 左：项目名 + 一句话定位；右：徽章组 -->
+    <div class="brand">
+      <strong>molt</strong>
+      <span class="brand-sub">自进化 agent 引擎的外层编排器</span>
+    </div>
+    <div class="badge-group">
+      <ul class="badges" aria-label="证据环境">
+        <li class="badge">scenario <b data-bind="meta.scenarioVersion">—</b></li>
+        <li class="badge">shell <b data-bind="meta.shellId">—</b></li>
+        <li class="badge">live <b data-bind="provenance.live">—</b></li>
+        <li class="badge">replay <b data-bind="provenance.replay">—</b></li>
+        <li class="badge">fixture <b data-bind="provenance.fixture">—</b></li>
+      </ul>
+      <span class="badge-note" data-bind="provenance.note">—</span>
+    </div>
+  </header>
+
+  <div id="data-warning" class="data-warning" hidden>数据未加载：请确认 data/bundle.js 与本目录同级可读。</div>
+
+  <main id="main">
+    <!-- ============ S1 两次运行对照 ============ -->
+    <section id="run-compare" class="screen" aria-labelledby="s1-title">
+      <p class="eyebrow">第 1 次 → 第 2 次</p>
+      <h1 id="s1-title">同一套 <b data-bind="meta.searchTaskCount">—</b> 道题，我们跑了两次</h1>
+      <p class="lede">
+        第一次：thinking = <code>high</code>，context = <code>full</code>。
+        第二次：thinking = <code>low</code>，context = <code>full</code>。
+        题一道没变，prompt 与工具集也没变——只改了这两个开关。
+      </p>
+
+      <ul class="kpis">
+        <li class="kpi"><span class="kpi-label">通过题数</span>
+          <span class="kpi-value"><b data-bind="s1.solvedBase">—</b> → <b data-bind="s1.solvedCand">—</b></span>
+          <span class="kpi-note" data-bind="s1.solvedNote">—</span></li>
+
+        <li class="kpi"><span class="kpi-label">单题成本（gate 级）</span>
+          <span class="kpi-value">$<b data-bind="s1.cpsBase">—</b> → $<b data-bind="s1.cpsCand">—</b></span>
+          <span class="kpi-note"><b data-bind="s1.cpsDropText">—</b> · 门禁逐题配对</span></li>
+
+        <li class="kpi"><span class="kpi-label" id="kpi3-label">执行成本（扫描级）</span>
+          <span class="kpi-value">$<b data-bind="s1.scanBaseCost">—</b> → $<b data-bind="s1.scanCandCost">—</b></span>
+          <span class="kpi-note"><b data-bind="s1.scanCostDropPct">—</b> · <span id="kpi3-note-tail">扫描级口径</span></span></li>
+
+        <li class="kpi kpi-accent"><span class="kpi-label">门禁判定</span>
+          <span class="kpi-value" data-bind="s1.verdict">—</span>
+          <span class="kpi-note" data-bind="s1.reason">—</span></li>
+      </ul>
+
+      <p class="footnote" id="scan-note">
+        <b>两个口径分开看。</b>gate 级 = 门禁逐题配对（数据面可复算，主数字用它）；
+        扫描级 = 两条完整 <b data-bind="meta.searchTaskCount">—</b> 题扫描（<span id="scan-note-basis">口径见数据面</span>）。
+        墙钟（同批 <b data-bind="meta.searchTaskCount">—</b> 题）<b data-bind="s1.scanBaseWall">—</b>s → <b data-bind="s1.scanCandWall">—</b>s，
+        <b data-bind="s1.scanWallDropPct">—</b>（扫描级）。
+        起点是 <code>high/full</code>，不是「基线被改进」。
+        <span class="muted" id="verify-note"></span>
+      </p>
+    </section>
+
+    <!-- ============ S2 逐题配对表 ============ -->
+    <section id="pairs" class="screen" aria-labelledby="s2-title">
+      <h2 id="s2-title">逐题：每一分钱花在哪</h2>
+      <p class="lede"><b data-bind="meta.searchTaskCount">—</b> 道题逐题配对。<span data-bind="s2.ledeNote">—</span></p>
+
+      <p class="footnote" id="pair-scope-note">
+        口径：逐题配对来自门禁决策；单题成本合计只用于 gate 级，不等于扫描级成本合计。
+      </p>
+
+      <div class="table-wrap">
+        <table class="pairs">
+          <caption class="sr-only">门禁逐题配对表</caption>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">题目</th>
+              <th scope="col" class="num">第 1 次 · 成本</th>
+              <th scope="col" class="num">第 2 次 · 成本</th>
+              <th scope="col" class="num">成本差</th>
+              <th scope="col" class="num">通过差</th>
+              <th scope="col">对比</th>
+            </tr>
+          </thead>
+          <tbody id="pairs-body"><!-- W-03 渲染 --></tbody>
+          <tfoot id="pairs-foot"><!-- W-14 渲染：合计行 --></tfoot>
+        </table>
+      </div>
+
+      <p class="footnote">
+        invalid 比例 <b data-bind="s2.invalidBase">—</b> /
+        <b data-bind="s2.invalidCand">—</b>，
+        阈值 <b data-bind="s2.invalidMax">—</b>；k = <b data-bind="s2.k">—</b>。
+        <b>不要</b>对逐 run 成本求和：<span id="sum-note-tail">同一道题可能在多条扫描里各有一条 run。</span>
+      </p>
+    </section>
+
+    <!-- ============ S3 门禁链 ============ -->
+    <section id="gate" class="screen" aria-labelledby="s3-title">
+      <h2 id="s3-title">六个判定步骤，一次放行</h2>
+      <p class="lede">判定顺序固定：前四步不合格直接给出结论并停止；后两步决定采纳还是拒绝。</p>
+
+      <ol class="gate-chain" id="gate-chain"><!-- W-03 渲染：6 个 li，检查项 + 阈值 + 结果 --></ol>
+
+      <dl class="gate-facts">
+        <div><dt>limits_identical</dt><dd data-bind="s3.limitsIdentical">—</dd></div>
+        <div><dt>budget_check</dt><dd data-bind="s3.budgetCheck">—</dd></div>
+        <div><dt>verdict</dt><dd data-bind="s3.verdict">—</dd></div>
+        <div><dt>reason</dt><dd data-bind="s3.reason">—</dd></div>
+      </dl>
+    </section>
+
+    <!-- ============ B5 可回退 ============ -->
+    <section id="rollback" class="screen" aria-labelledby="b5-title">
+      <h2 id="b5-title">学到了什么，怎么退回去</h2>
+      <p class="lede">
+        只改两个开关：thinking <code>high → low</code>，context 不动，tools 仍是 <code>bash</code>。
+        每一次采纳都有归档与快照，退回上一代是一个事务。
+      </p>
+
+      <div class="two-col">
+        <div class="panel">
+          <h3>候选谱系 <span class="muted">（← 表示派生来源）</span></h3>
+          <ol class="lineage" id="lineage"><!-- W-03 渲染 --></ol>
+        </div>
+        <div class="panel">
+          <h3>可回退点</h3>
+          <ul class="archives" id="archives"><!-- W-03 渲染 --></ul>
+          <ul class="snapshots" id="snapshots"><!-- W-03 渲染 --></ul>
+          <p class="holdout-line">留出集（仅聚合）：<b data-bind="holdout.baseSolved">—</b>/<b data-bind="holdout.baseTotal">—</b> → <b data-bind="holdout.candSolved">—</b>/<b data-bind="holdout.candTotal">—</b></p>
+          <p class="holdout-attrib"><span class="muted" id="holdout-attribution"></span></p>
+        </div>
+      </div>
+
+      <p class="footnote">
+        回退 = 指针切回上一代归档（journal → generation → snapshot → archive → pointer），
+        一个事务完成，不需要重跑题目。
+      </p>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <p>
+      数据来自 <code>molt export</code>；本页只读 <code>web/data/</code>，不发起任何网络请求。
+      <span class="muted"><span id="revision-clause" hidden>revision <b data-bind="meta.revision">—</b> · </span>证据截至
+        <b data-bind="meta.generatedAt">—</b></span>
+    </p>
+  </footer>
+
+  <noscript><p class="data-warning">本页需要开启 JavaScript 才能读取证据数据。</p></noscript>
+
+  <script defer src="../data/bundle.js"></script>
+  <script defer src="model.js"></script>
+  <script defer src="render.js"></script>
+  <script defer src="app.js"></script>
+</body>
+</html>
