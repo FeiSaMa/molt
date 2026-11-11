@@ -119,6 +119,9 @@ molt export --scenario demo --state state/demo --out web/data
 ## 约束
 
 - 本目录只读；页面代码不要写进 `web/data/`。
+- 仓库只交付数据面，不含 HTML 页面；未实现的冗余项（memory / skill / multi-agent /
+  compaction / 双模型 / escalation 等）与页面边界见
+  [ADR-0009](../docs/decisions/0009-scope-and-redundancy.md)。
 - `web/**` 在 `molt.core.isolation.DEFAULT_DENY_PATHS` 中，agent 侧不读 `web/`；
   需要数据时走导出命令重新生成。
 - B2b 的 agent 只启用 sandboxed bash（read/write/edit 不启用）；bash 无网络且看不到

@@ -55,6 +55,15 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
   仓库只交付 `web/data`，不含 HTML 页面。
 - `molt doctor --repo-policy`：只读检查协作文件、冻结面与契约域。
 
+**范围与冗余（ADR-0009）**
+
+- not claimed 包含所有**未实现 / 按需**的冗余项：6 开关 / SoL-Pi、compaction 维度、
+  本地 9B/双模型、LLM proposer 主路径、memory/RAG、skill evolving、multi-agent、
+  模型维度、escalation/routing、git tag 回滚、HTML 页面。
+- 实现原则：只在现有**端口 / adapter / shell** 边界内扩展；不改 core 协议。
+  确需改 core 时先写 ADR，并按新 major 走（`schemas/vN/`）。
+- 详见 [ADR-0009](docs/decisions/0009-scope-and-redundancy.md)。
+
 ## 二、三层与七端口
 
 | 层 | 位置 | 职责 | 禁止 |
@@ -189,7 +198,7 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 
 ## 八、契约变更流程
 
-1. 先在 `docs/decisions/` 落 ADR（新增 `000N-*.md`，格式对齐现有 8 篇）。
+1. 先在 `docs/decisions/` 落 ADR（新增 `000N-*.md`，格式对齐现有 9 篇）。
 2. 改 `schemas/v1/**`（major 变更才新开 `schemas/v2/`），再跑 `molt schema docs` 生成
    `docs/protocol.md`，然后 `molt schema validate --all` +
    `molt scenario validate --scenario scenarios/demo/scenario.json`。
@@ -230,4 +239,4 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 - [docs/style.md](docs/style.md)：代码 / JSON / Markdown / 时间 / 路径 / claim 语言。
 - [docs/architecture.md](docs/architecture.md)：三层、七端口、数据流、事务。
 - [docs/protocol.md](docs/protocol.md)：11 类记录字段表（生成物）。
-- [docs/decisions/](docs/decisions/)：ADR 0001–0008。
+- [docs/decisions/](docs/decisions/)：ADR 0001–0009。

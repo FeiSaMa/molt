@@ -26,6 +26,16 @@ B2d 增加 `molt demo`（1 live 候选 + 1 replay 基线 + 10 题扫描回放）
   `candidate-scan` 是 9 条 replay。页面必须按 `demo_group` + `provenance` 分开标注，
   不得暗示两条都 live。
 
+## 设计冗余与按需实现
+
+系统分为**承重墙**与**简单题冗余**：外部 pytest + 全 `bench/**` 哈希、holdout 隔离、
+原子快照/回退、audit 重算/脱敏/secret scan、七端口与协议边界、bash-only bwrap + trust +
+Pi 账本不可砍；6 开关/SoL-Pi、compaction、双模型、memory/RAG、skill evolving、
+multi-agent、模型维度、escalation、git tag 回滚、HTML 页面等**现在不实现，按需**。
+真实 Pi 基线 10/10 已饱和，简单题上这些机制没有输入；未来只在现有端口 / adapter / shell
+边界内扩展，改 core 必须先写 ADR 并按新 major 走。冗余项不写进 claim。
+详见 [ADR-0009](docs/decisions/0009-scope-and-redundancy.md)。
+
 ## 分层
 
 | 层 | 位置 | 职责 |
@@ -75,7 +85,8 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
   [ADR-0005 proposer](docs/decisions/0005-proposer.md)、
   [ADR-0006 isolation](docs/decisions/0006-isolation.md)、
   [ADR-0007 svc-config](docs/decisions/0007-svc-config.md)、
-  [ADR-0008 demo](docs/decisions/0008-demo.md)。
+  [ADR-0008 demo](docs/decisions/0008-demo.md)、
+  [ADR-0009 范围与冗余](docs/decisions/0009-scope-and-redundancy.md)。
 - 旧契约已归档：[`docs/archive/contracts-v0.md`](docs/archive/contracts-v0.md)。
 
 ## 关键口径
