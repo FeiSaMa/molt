@@ -217,6 +217,7 @@ probe-5 的 `case_04` 用 `["bb", "bb", "aaa"]`，但它被 baseline 的 `dict.f
 - 单一约定：C1b；迁移题只有 4 道，x8 还出现负迁移。
 - probe shell 是独立 shell；probe 结果不进入 demo 的 `bench_hash`，也不进入对外 claim。
 - 2c 的 gate 使用 $2.5 execution cap，`scenario.policy` 仍是 $1.0；两者不同层，报告只把 gate 作为附加信号。
+- oracle 的约定文本来自 probes/design.json，不在 oracle genome 的 artifacts 中；该文件已冻结并记录 sha256（见 probes/ARCHITECTURE.md），修改需重跑 oracle。
 
 ## 9. 复算命令
 

@@ -126,6 +126,13 @@ gate.json：paired baseline/candidate、cost_per_solved、verdict
 x5 的 gen3 续跑；当前脚本一次调用只跑其中 10 次（每格 2 reps + x5 gen3 两次），
 `rows.json` 里多出的 gen4 reps 3–4 不是这一次调用的产物。
 
+### oracle 与 design.json 的依赖（已冻结）
+
+probe / probe-c2 的 oracle 分支直接读取 `probes/design.json` 的约定文本，
+该文件不在 oracle genome 的 artifacts 中，修改它不会改变 genome_id。
+事件期间该文件冻结，sha256 = `b2477c2893bff53cb1493be13bf409b9a775aa2ada91562e23e97466754f3fe2`（2026-11-12）。
+任何修改必须同时重算 oracle genome 并重跑 oracle 证据，否则 prompt 与 genome 指纹会脱钩。
+
 ## 4. 现场状态机
 
 ```
