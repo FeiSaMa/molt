@@ -194,6 +194,8 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 - **Tier 2（内部，页面不得依赖）**：`redaction.json`、`events/*.jsonl`、`bundle.js`、各文件的 `ext` 子对象、`web/data/probe/`。随时可变。
 - **Tier 3（聚合）**：`search_results.json`、`report_results.json` 只保证 `solved` / `total` / `cost_total_usd` / `cost_per_solved_usd` / `invalid_ratio`。
 
+`web/data/probe/` 是独立演示数据面，页面可以读取；它不属于 demo-6 的 Tier 1 契约，也不得被当作 demo-6 证据。
+
 **语义不变量**：
 
 - `runs[].provenance.kind ∈ {fixture, live, replay}`；`live` 仅指真实模型调用；`replay` 必须带 `replay_of_run_id`；`fixture` 不得标成 `live`。
@@ -242,6 +244,8 @@ shells/<id>/tools/*.json       # 新增工具声明候选
       `molt scenario validate --scenario scenarios/demo/scenario.json` 通过；
       `docs/protocol.md` 无手改漂移。
 - [ ] 零写入：命令跑完仓库树不变（`tests/test_zero_write.py` + `git status --porcelain` 为空）。
+      例外：现场 `run_demo` 会写 `web/data/probe/{state,run}.json` 与 `shells/probe/memory/live.md`，
+      它们被 gitignore，属于允许的生成物；其余路径仍按零写入要求。
 - [ ] 证据可复算：涉及 run/result 的变更能在 `molt audit` 下重算出同样数字。
 - [ ] replay / live 标注：`run.ext.provenance.kind` 与实际一致，`replay_of_run_id` 存在。
 - [ ] claim 口径：措辞符合 §一（未观察到下降 + 单题成本不升，附配对表）。

@@ -10,13 +10,13 @@
 uv run python -m probes.run_demo --profile fast
 ```
 
-- 实测 140.8s / $0.045 / `v3_stable_headroom`（`web/data/probe/run.json`：`wall_ms=140797`、`cost_usd=0.045428`）
-- 写 `web/data/probe/state.json`；页面轮询 `revision`（`AGENTS.md`「`web/data` 契约冻结」）
+- 彩排两次：98.2s / $0.0507、88.8s / $0.0723（`probes/report/rehearsal/run{1,2}/run.json`，均 `v3_stable_headroom`）
+- 写 `web/data/probe/state.json`；页面轮询 `revision`（契约见 `probes/report/probe_state_schema.json`，展示规则见 `probes/report/VISUAL_SPEC.md`）
 - 降级：抽到 `partial_transfer` 切预录，页面标 `REPLAY`（`probes/report/VISUAL_SPEC.md`）
 
 ## 关键数字（各带出处）
 
-- v3 16/16：`probes/report/2c/memory-v3/verdict.json`（`v3_stable_all`，4 题 × 4 reps）
+- v3 16/16：`probes/report/2c/memory-v3/verdict.json`（`v3_stable_all`，4 题 × 4 reps；verdict 顶层 `runs` 只有 10 条，累计 18 条逐题行在 `probes/report/2c/memory-v3/rows.json`）
 - headroom 12/12 vs 0/10：同上 + `probes/report/2c/rows.json`（汇总见 `docs/research/headroom-probe.md` §5）
 - 控制 2/2：`probes/report/2c/control-rows.json`（ctl-a 2/2、ctl-b 2/2）
 - 矩阵 F/K：`probes/report/matrix/verdict.json`（四格 F=0、K=2）

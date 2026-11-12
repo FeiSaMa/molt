@@ -4,7 +4,7 @@
 
 ## 三个数字
 
-1. **v3：x5/x6/x7/x8 各 4/4，合计 16/16**（`probes/report/2c/memory-v3/verdict.json`）。
+1. **v3：x5/x6/x7/x8 各 4/4，合计 16/16**（`probes/report/2c/memory-v3/verdict.json` 的 `v3_stable_all`，verdict 顶层 `runs` 10 条；累计 18 条逐题行在 `probes/report/2c/memory-v3/rows.json`）。
 2. **v3 vs baseline**：all-four 16/16 vs 2/12；headroom-three（x5/x6/x7）12/12 vs 0/10。
 3. **v3 成本 $0.4589434**（reflection $0.02970132 + 18 runs）；签名漂移 v2 10/12 → v3 5/16。
 

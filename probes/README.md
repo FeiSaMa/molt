@@ -24,7 +24,7 @@
 
 | 脚本 | 作用 | 是否调模型 | 典型成本 |
 | --- | --- | --- | --- |
-| `accept.py` | Batch 1 验收：11 个 `--stage` 用真实文件/命令判定 | 否（只跑 `pi --version`） | $0，秒级 |
+| `accept.py` | Batch 1 验收：12 个 `--stage` 用真实文件/命令判定 | 否（只跑 `pi --version`） | $0，秒级 |
 | `run_validity.py` | 2a 有效性：oracle/控制/族题，16 runs | 是 | ≈ $0.80 |
 | `run_matrix.py` | 2b 矩阵：4 格 × (2 控制 + 2 族题) × 2 reps + oracle 4 = 36 runs | 是 | ≈ $1.00（上限 $2.00） |
 | `build_memory.py` | 从失败 trace 生成 `sources/*.md`、`gen2.md` 和 memory proposal | 否（确定性） | $0，秒级 |
@@ -32,7 +32,7 @@
 | `run_memory_v2.py` | gen3 反思记忆在 x5/x6/x7 上对比 v1 | 是 | ≈ $0.53（含反思） |
 | `run_memory_v3.py` | gen4 约束反思在 x5–x8，另加 x5 gen3 两次续跑 | 是 | ≈ $0.46（证据 18 runs；单次调用 10 runs 更低） |
 | `run_c2.py` | C2 舍入族有效性门：16 runs | 是 | ≈ $0.73（上限 $1.50） |
-| `run_demo.py` | 现场演示：Run1 → 反思 → Run2，增量写 state/run | 是 | fast ≈ $0.045 / 141s；full 上限 $1.20 / 420s |
+| `run_demo.py` | 现场演示：Run1 → 反思 → Run2，增量写 state/run | 是 | fast ≈ $0.05–0.07 / 98s、89s（彩排两次，见 `probes/report/rehearsal/`）；full 上限 $1.20 / 420s |
 | `build_probe_example.py` | 从 2c 证据生成可视化样例 `example.json` | 否（确定性） | $0，秒级 |
 | `check_matrix_functions.py` | 检查矩阵 run 是否真的改动了 `ext.probe.function` 指向的函数 | 否（AST） | $0，秒级 |
 | `compare.py` | 只读冻结决策表，提供 `lookup` / `verdict_for` | 否 | $0 |
@@ -62,7 +62,7 @@
 | `report/<dir>` | 内容 | 复算命令 |
 | --- | --- | --- |
 | `preflight/` | `pi` 预检、blind/stub spike、prompt 修复前后的对照 | `uv run python -m probes.accept --stage max_preflight` |
-| `batch1/` | 盲测/占位/oracle traces、`rows.json` | `uv run python -m probes.accept --stage blind`（需保留 `/tmp/molt-probe/batch1`） |
+| `batch1/` | 盲测/占位/oracle traces、`rows.json` | `uv run python -m probes.accept --stage blind`（`/tmp/molt-probe/batch1/blind` 缺失时自动读 tracked `blind-trace.json`） |
 | `validity/` | 2a 16 runs、`verdict.json`（`green`） | `uv run python probes/run_validity.py`（真调模型，≈$0.80） |
 | `matrix/` | 2b 36 runs、`verdict.json`、`decision-meta.json`、`function-check*.json`、作废的 v1/v2 结果 | `uv run python probes/run_matrix.py`；静态检查 `uv run python probes/check_matrix_functions.py`（已知 `all_ok=false`） |
 | `2c/` | 主实验 rows/gate/verdict、`solutions/`、`memory-traces/`、`memory-v2/`、`memory-v3/`、`followup.json`、`x8-analysis.md` | `uv run python probes/run_2c.py`（≈$2.30）；`build_memory.py`；`run_memory_v2.py` / `run_memory_v3.py`；`uv run python -m probes.accept --stage memory` |
@@ -77,12 +77,16 @@
 ```bash
 uv run pytest -q
 uv run python -m probes.accept --stage <name>
+uv run python -m probes.accept --stage history
 uv run python -m molt scenario validate --scenario scenarios/probe/scenario.json
 uv run python -m molt genome verify shells/probe/genomes/gen4.json
 ```
 
+`history` 只读 tracked JSON 重算 v3/headroom/控制/稳定性；历史 runner（`run_2c.py`、
+`run_memory_v3.py` 等）是新实验入口，不是累计报告的重建器，重跑会覆盖 `rows/verdict`。
+
 `--stage` 可选：`max_preflight`、`freeze`、`isolation`、`ambiguity`、`leak`、`default_bias`、
-`c2`、`family`、`blind`、`memory`、`visual`。
+`c2`、`family`、`blind`、`history`、`memory`、`visual`。
 
 ## 边界
 

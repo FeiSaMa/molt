@@ -181,6 +181,9 @@ verdict.json（各批脚本自算）
   rows 汇总 → F/K 或 solved/cost_total → 预注册规则 → verdict
 ```
 
+blind 的离线验收走 tracked `probes/report/batch1/blind-trace.json`；
+`/tmp/molt-probe/batch1/blind` 缺失不影响 `accept --stage blind`。
+
 可重算（确定性）：
 
 - 所有 sha256：`artifacts`、`verification.tests_hash_*`、`verifier_hash`、`genome_id`、

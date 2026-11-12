@@ -142,7 +142,7 @@
    不一定。C1a 那一格 pro-high 有过一次降级（T1 上 1/2，写出 `(len, s)` 半猜中，F=1），pro-max 是 F=0；但那是单格 2 reps 的采样，不能推成“max 更稳”的规律。v4/C1b 四格 F 全 0，max 与 high 没分出差别。
 
 10. **数据能复算吗？**
-    能。`probes/accept.py` 九个 stage、`python -m molt audit` 只读重算、`python -m molt genome verify` 校验 genome；逐题行在 `probes/report/2c/rows.json` 与 `control-rows.json`，反思原文在 `2c/memory-v3/reflection.json`，彩排在 `probes/report/rehearsal/`。
+    能。`probes/accept.py` 12 个 stage、`python -m molt audit` 只读重算、`python -m molt genome verify` 校验 genome；离线验收见 `--stage history`（重算 16/16、0/10→12/12、4/4、6/6），blind 在 `/tmp` 缺失时读 tracked `probes/report/batch1/blind-trace.json`；逐题行在 `probes/report/2c/rows.json` 与 `control-rows.json`，反思原文在 `2c/memory-v3/reflection.json`，彩排在 `probes/report/rehearsal/`。
 
 ---
 

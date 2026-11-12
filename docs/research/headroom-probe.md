@@ -224,11 +224,16 @@ probe-5 的 `case_04` 用 `["bb", "bb", "aaa"]`，但它被 baseline 的 `dict.f
 uv run pytest -q
 uv run python probes/accept.py --stage memory
 uv run python probes/accept.py --stage isolation
+uv run python -m probes.accept --stage history
 uv run python -m molt scenario validate --scenario scenarios/probe/scenario.json
 uv run python -m molt scenario validate --scenario scenarios/demo/scenario.json
 uv run python -m molt genome verify shells/probe/genomes/gen2.json
 uv run python -m molt genome verify shells/probe/genomes/gen2-sig.json
 ```
+
+`--stage history` 只读 tracked JSON 重算 v3/headroom/控制/稳定性；`run_memory_v3.py`
+的 8 次 gen4 + 2 次 gen3 是新实验入口，不等于报告里的 16+2 条累计证据，重跑会覆盖
+`probes/report/2c/memory-v3/rows.json` 与 `verdict.json`。
 
 2c 的 verdict/gate 来自：
 

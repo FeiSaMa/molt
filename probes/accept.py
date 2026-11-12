@@ -43,6 +43,7 @@ STAGES = (
     "c2",
     "family",
     "blind",
+    "history",
     "memory",
     "visual",
 )
@@ -561,10 +562,30 @@ def stage_family() -> tuple[bool, str, int]:
     return _ok(f"family_tasks={len(family)} facets={facets}")
 
 
-def stage_blind() -> tuple[bool, str, int]:
-    state = Path("/tmp/molt-probe/batch1/blind")
+def _blind_trace_check() -> tuple[bool, str, int]:
+    trace_path = ROOT / "probes/report/batch1/blind-trace.json"
+    if not trace_path.is_file():
+        return _fail("missing blind-trace.json")
+    trace = _load_json(trace_path)
+    if trace.get("passed") is not False:
+        return _fail(f"blind trace passed={trace.get('passed')!r} != false")
+    if trace.get("timed_out") is not False:
+        return _fail(f"blind trace timed_out={trace.get('timed_out')!r} != false")
+    cases = trace.get("diagnostic", {}).get("cases", [])
+    case = next((item for item in cases if item.get("case_id") == "case_01"), None)
+    if case is None:
+        return _fail("blind trace missing case_01")
+    if case.get("passed") is not False:
+        return _fail(f"blind trace case_01 passed={case.get('passed')!r} != false")
+    if case.get("expected") == case.get("actual"):
+        return _fail(f"blind trace case_01 expected == actual: {case}")
+    return _ok("source=tracked-trace passed=false timed_out=false case_01=discriminating")
+
+
+def stage_blind(state: Path | None = None) -> tuple[bool, str, int]:
+    state = Path("/tmp/molt-probe/batch1/blind") if state is None else Path(state)
     if not (state / "runs").is_dir():
-        return _fail("missing /tmp/molt-probe/batch1/blind")
+        return _blind_trace_check()
     runs = StateStore(state).list_runs()
     if not runs:
         return _fail("blind state has 0 runs")
@@ -582,6 +603,115 @@ def stage_blind() -> tuple[bool, str, int]:
     if case.get("expected") != ["b", "aa"] or case.get("actual") != ["aa", "b"]:
         return _fail(f"case_01 expected/actual 不符: {case}")
     return _ok(f"run={run.run_id} outcome=failed case_01=discriminating")
+
+
+def _history_counts(rows: list[dict]) -> tuple[int, int]:
+    return sum(1 for row in rows if row.get("solved") == 1), len(rows)
+
+
+def stage_history() -> tuple[bool, str, int]:
+    """只读 tracked 证据，重算 2c/v3/控制/稳定性的汇总数字。"""
+    paths = {
+        "v3": ROOT / "probes/report/2c/memory-v3/rows.json",
+        "2c": ROOT / "probes/report/2c/rows.json",
+        "followup": ROOT / "probes/report/2c/followup.json",
+        "control": ROOT / "probes/report/2c/control-rows.json",
+        "stability": ROOT / "probes/report/stability/reflections.json",
+    }
+    for label, path in paths.items():
+        if not path.is_file():
+            return _fail(f"missing {label}: {path.relative_to(ROOT)}")
+
+    v3_runs = _load_json(paths["v3"])["runs"]
+    gen4 = [row for row in v3_runs if row.get("memory") == "gen4"]
+    gen3 = [row for row in v3_runs if row.get("memory") == "gen3"]
+    gen4_tasks = {
+        task: [row for row in gen4 if row.get("task_id") == task]
+        for task in ("probe-order-x5", "probe-order-x6", "probe-order-x7", "probe-order-x8")
+    }
+    gen4_counts = {task: _history_counts(rows) for task, rows in gen4_tasks.items()}
+    gen4_ok = all(passes == 4 and runs == 4 for passes, runs in gen4_counts.values())
+    gen3_counts = _history_counts([row for row in gen3 if row.get("task_id") == "probe-order-x5"])
+    gen3_ok = len(gen3) == 2 and gen3_counts == (2, 2)
+    total_runs = len(gen4) + len(gen3)
+
+    main_runs = _load_json(paths["2c"])["runs"]
+    followup = _load_json(paths["followup"]).get("x5_x6_replication", {}).get("runs", [])
+    baseline = [
+        row
+        for row in main_runs
+        if row.get("genome") == "v0-pro-max"
+        and row.get("task_id") in ("probe-order-x5", "probe-order-x6", "probe-order-x7")
+    ]
+    baseline += [
+        row
+        for row in followup
+        if row.get("group") == "baseline"
+        and row.get("task_id") in ("probe-order-x5", "probe-order-x6")
+    ]
+    baseline_counts = {
+        task: _history_counts([row for row in baseline if row.get("task_id") == task])
+        for task in ("probe-order-x5", "probe-order-x6", "probe-order-x7")
+    }
+    baseline_ok = baseline_counts == {
+        "probe-order-x5": (0, 4),
+        "probe-order-x6": (0, 4),
+        "probe-order-x7": (0, 2),
+    }
+
+    headroom_v3 = [
+        row
+        for row in gen4
+        if row.get("task_id") in ("probe-order-x5", "probe-order-x6", "probe-order-x7")
+    ]
+    headroom_v3_counts = {
+        task: _history_counts([row for row in headroom_v3 if row.get("task_id") == task])
+        for task in ("probe-order-x5", "probe-order-x6", "probe-order-x7")
+    }
+    headroom_v3_ok = headroom_v3_counts == {
+        "probe-order-x5": (4, 4),
+        "probe-order-x6": (4, 4),
+        "probe-order-x7": (4, 4),
+    }
+
+    control_runs = _load_json(paths["control"])["runs"]
+    control_counts = {
+        task: _history_counts([row for row in control_runs if row.get("task_id") == task])
+        for task in ("probe-ctl-a", "probe-ctl-b")
+    }
+    control_ok = control_counts == {
+        "probe-ctl-a": (2, 2),
+        "probe-ctl-b": (2, 2),
+    }
+
+    stability_runs = _load_json(paths["stability"])["runs"]
+    stability_length = sum(1 for row in stability_runs if row.get("category") == "length")
+    stability_ok = len(stability_runs) == 6 and stability_length == 6
+
+    def fmt(counts: dict[str, tuple[int, int]]) -> str:
+        return ", ".join(
+            f"{task.removeprefix('probe-order-').removeprefix('probe-')} {passed}/{runs}"
+            for task, (passed, runs) in counts.items()
+        )
+
+    rows = [
+        ("v3 gen4（四题各 4 次）", "16/16", fmt(gen4_counts), gen4_ok),
+        ("v3 gen3 x5（另计）", "2/2", f"{gen3_counts[0]}/{gen3_counts[1]}", gen3_ok),
+        ("v3 总条数", "18", str(total_runs), total_runs == 18),
+        ("headroom baseline", "0/10", fmt(baseline_counts), baseline_ok),
+        ("headroom v3", "12/12", fmt(headroom_v3_counts), headroom_v3_ok),
+        ("control", "4/4", fmt(control_counts), control_ok),
+        ("stability length", "6/6", f"{stability_length}/6", stability_ok),
+    ]
+    print(f"{'item':<26} {'expected':<10} {'actual':<46} result")
+    for item, expected, actual, ok in rows:
+        print(f"{item:<26} {expected:<10} {actual:<46} {'PASS' if ok else 'FAIL'}")
+
+    failures = [item for item, _, _, ok in rows if not ok]
+    if failures:
+        return _fail("history mismatch: " + ", ".join(failures))
+    return _ok("v3=16+2 headroom=0/10->12/12 control=4/4 stability=6/6")
+
 
 
 def stage_memory() -> tuple[bool, str, int]:
@@ -755,6 +885,7 @@ def main() -> int:
         "c2": stage_c2,
         "family": stage_family,
         "blind": stage_blind,
+        "history": stage_history,
         "memory": stage_memory,
         "visual": stage_visual,
     }[args.stage]

@@ -17,6 +17,7 @@
     "memory",
     "run2",
     "verdict",
+    "verdict_note",
     "cost_usd",
     "wall_ms",
     "note"
