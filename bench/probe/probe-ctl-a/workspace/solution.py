@@ -1,0 +1,16 @@
+"""Label helpers."""
+
+from __future__ import annotations
+
+
+def sign_label(n: int) -> str:
+    """Return "pos" for n > 0, "neg" for n < 0, and "zero" for n == 0.
+
+    >>> sign_label(2)
+    'pos'
+    >>> sign_label(-2)
+    'neg'
+    >>> sign_label(0)
+    'zero'
+    """
+    return "pos" if n >= 0 else "neg"

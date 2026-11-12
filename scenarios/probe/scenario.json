@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_version": "probe-4",
+  "scenario_id": "probe",
+  "title": "probe-4：C1b 重锚（T2/x3 + 控制 + C1b 迁移）",
+  "shell_id": "probe",
+  "shell_version": "0.3.0",
+  "bench_hash": "40a53476218a078540cccbfdb48bc846dd6d3a35e147ddc889e8e4ed59a4d759",
+  "task_sets": {
+    "search": [
+      "probe-order-2",
+      "probe-order-x3",
+      "probe-ctl-a",
+      "probe-ctl-b",
+      "probe-order-x5",
+      "probe-order-x6",
+      "probe-order-x7",
+      "probe-order-x8"
+    ],
+    "report": []
+  },
+  "policy": {
+    "k": 0,
+    "invalid_ratio_max": 0.25,
+    "budget": {
+      "execution_budget_usd": 1.0,
+      "search_overhead_budget_usd": 0.1
+    }
+  },
+  "isolation": {
+    "network": "provider_only"
+  },
+  "ext": {
+    "default_runtime": "pi",
+    "allowed_runtimes": [
+      "pi"
+    ],
+    "expected_task_counts": {
+      "search": 8,
+      "report": 0
+    },
+    "require_positive_budget": true,
+    "note": "probe-4：C1b 重锚（T2/x3）；T1/x1/x2/x4 为 retired C1a。"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "probe-order-x8",
+  "scenario_version": "probe-4",
+  "shell_id": "probe",
+  "scope": "search",
+  "title": "按包内规则统计不同名称数",
+  "workspace_ref": "bench/probe/probe-order-x8/workspace",
+  "tests_ref": "bench/probe/probe-order-x8/tests",
+  "timeout_s": 120,
+  "ext": {
+    "probe": {
+      "convention_id": "C1",
+      "facet": "C1b",
+      "kind": "transfer",
+      "function": "distinct_count"
+    }
+  }
+}

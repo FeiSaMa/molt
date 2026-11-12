@@ -88,6 +88,7 @@ class PiRuntime:
     builtin_excludes: tuple[str, ...] = ()
     timeout_grace_s: float = 5.0
     _sandbox: SandboxProbe | None = field(default=None, init=False)
+    _pi_version_cache: str | None = field(default=None, init=False)
 
     def _model_for(self, genome: Genome) -> str:
         ext = genome.ext.get("pi")
@@ -96,6 +97,62 @@ class PiRuntime:
             if isinstance(model, str) and model:
                 return model
         return self.model
+
+    def _thinking_for(self, genome: Genome) -> str:
+        ext = genome.ext.get("pi")
+        if isinstance(ext, Mapping):
+            thinking = ext.get("thinking")
+            if isinstance(thinking, str) and thinking:
+                return thinking
+        return genome.switches.thinking
+
+    def _thinking_source(self, genome: Genome) -> str:
+        ext = genome.ext.get("pi")
+        if isinstance(ext, Mapping):
+            thinking = ext.get("thinking")
+            if isinstance(thinking, str) and thinking:
+                return "ext.pi.thinking"
+        return "switches.thinking"
+
+    def _pi_version(self) -> str:
+        if self._pi_version_cache is None:
+            try:
+                completed = subprocess.run(
+                    [self.pi_executable, "--version"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=False,
+                )
+                output = (completed.stdout or completed.stderr).strip()
+                self._pi_version_cache = output.splitlines()[0] if output else "unknown"
+            except Exception:  # noqa: BLE001 - 版本探测失败不能影响主流程
+                self._pi_version_cache = "unknown"
+        return self._pi_version_cache
+
+    def _planned_argv(self, genome: Genome, workdir: Path) -> list[str]:
+        try:
+            return build_pi_argv(
+                model=self._model_for(genome),
+                thinking=self._thinking_for(genome),
+                session_id="planned",
+                session_dir=str((Path(workdir) / ".pi-sessions").resolve()),
+                tools_args=self.tools_argv_fn(genome.switches.tools),
+                builtin_excludes=self.builtin_excludes,
+                prompt=None,
+            )
+        except Exception:  # noqa: BLE001 - 计划 argv 仅用于失败路径诊断
+            return []
+
+    def _probe_payload(self, genome: Genome, thinking: str) -> dict[str, object]:
+        raw = genome.ext.get("probe")
+        probe = raw if isinstance(raw, Mapping) else {}
+        return {
+            "mode": "max" if thinking == "max" else "high_only",
+            "cell": probe.get("cell"),
+            "convention_id": probe.get("convention_id"),
+            "oracle": bool(probe.get("oracle", False)),
+        }
 
     def _sandbox_probe(self, workdir: Path) -> SandboxProbe:
         if self._sandbox is not None:
@@ -135,6 +192,10 @@ class PiRuntime:
         started = time.monotonic()
         prompt_path = workdir / ".molt" / "prompt.txt"
         prompt = prompt_path.read_text(encoding="utf-8") if prompt_path.is_file() else task.title
+        model = self._model_for(genome)
+        thinking = self._thinking_for(genome)
+        thinking_source = self._thinking_source(genome)
+        pi_version = self._pi_version()
 
         sandbox = self._sandbox_probe(workdir)
         if sandbox.available:
@@ -163,10 +224,9 @@ class PiRuntime:
         session_dir = (workdir / ".pi-sessions").resolve()
         session_dir.mkdir(parents=True, exist_ok=True)
         session_id = safe_session_id(f"molt-{uuid.uuid4().hex}")
-        model = self._model_for(genome)
         argv = build_pi_argv(
             model=model,
-            thinking=genome.switches.thinking,
+            thinking=thinking,
             session_id=session_id,
             session_dir=str(session_dir),
             tools_args=self.tools_argv_fn(genome.switches.tools),
@@ -230,6 +290,7 @@ class PiRuntime:
                 trust=trust,
                 sandbox=sandbox,
                 error=f"{type(exc).__name__}: {exc}",
+                argv=argv,
             )
 
         wall_ms = int((time.monotonic() - started) * 1000)
@@ -294,9 +355,14 @@ class PiRuntime:
         diagnostic = {
             "runtime": {
                 "adapter": "pi",
-                "pi_version": "1.5.0",
+                "pi_version": pi_version,
                 "provenance": "live",
                 "model": model,
+                "model_requested": model,
+                "model_effective": model,
+                "thinking_requested": thinking,
+                "thinking_effective": thinking,
+                "thinking_source": thinking_source,
                 "argv": argv,
                 "returncode": returncode,
                 "timed_out": timed_out,
@@ -319,7 +385,8 @@ class PiRuntime:
                 },
                 "ledger": ledger.to_dict() if ledger else None,
                 "ledger_error": ledger_error,
-            }
+            },
+            "probe": self._probe_payload(genome, thinking),
         }
         return RuntimeOutcome(
             outcome=outcome,
@@ -344,9 +411,15 @@ class PiRuntime:
         trust: TrustResult | None,
         sandbox: SandboxProbe,
         error: str | None,
+        argv: Sequence[str] | None = None,
     ) -> RuntimeOutcome:
         wall_ms = int((time.monotonic() - started) * 1000)
         after = _workspace_files(workdir)
+        model = self._model_for(genome)
+        thinking = self._thinking_for(genome)
+        thinking_source = self._thinking_source(genome)
+        actual_argv = list(argv or [])
+        planned_argv = [] if argv is not None else self._planned_argv(genome, workdir)
         return RuntimeOutcome(
             outcome=outcome,
             usage=Usage(0, 0, 0.0, wall_ms, 0),
@@ -356,9 +429,16 @@ class PiRuntime:
             diagnostic={
                 "runtime": {
                     "adapter": "pi",
-                    "pi_version": "1.5.0",
+                    "pi_version": self._pi_version(),
                     "provenance": "live",
-                    "model": self._model_for(genome),
+                    "model": model,
+                    "model_requested": model,
+                    "model_effective": model,
+                    "thinking_requested": thinking,
+                    "thinking_effective": thinking,
+                    "thinking_source": thinking_source,
+                    "argv": actual_argv,
+                    "planned_argv": planned_argv,
                     "project_trust": trust.project_trust if trust else "not_required",
                     "trust": trust.to_dict() if trust else None,
                     "reason": reason,
@@ -368,7 +448,8 @@ class PiRuntime:
                     ),
                     "sandbox": sandbox.to_dict(),
                     "tools_allowlist": ["bash"],
-                }
+                },
+                "probe": self._probe_payload(genome, thinking),
             },
         )
 

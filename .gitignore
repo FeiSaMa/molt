@@ -22,3 +22,6 @@ npm-debug.log*
 # 本地覆盖与凭据
 .env
 .pi/
+
+# probe 原始流（体积大，不入库）
+probes/report/**/response*.jsonl

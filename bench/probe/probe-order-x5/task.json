@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "probe-order-x5",
+  "scenario_version": "probe-4",
+  "shell_id": "probe",
+  "scope": "search",
+  "title": "按包内规则去重并排序",
+  "workspace_ref": "bench/probe/probe-order-x5/workspace",
+  "tests_ref": "bench/probe/probe-order-x5/tests",
+  "timeout_s": 120,
+  "ext": {
+    "probe": {
+      "convention_id": "C1",
+      "facet": "C1b",
+      "kind": "transfer",
+      "function": "unique"
+    }
+  }
+}

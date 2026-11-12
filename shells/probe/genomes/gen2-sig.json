@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_version": "probe-4",
+  "genome_id": "sha256:0661a618667be02c6c391226305fed89da3932ad440fbf6906b88efbbf43d4a6",
+  "parent_id": "sha256:4309fd0cd7cbe5a5935ab5f1df1ec54cbcbeeab8f18cd216c0e782a023c32cf0",
+  "shell_id": "probe",
+  "shell_version": "0.3.0",
+  "switches": {
+    "thinking": "high",
+    "context": "full",
+    "tools": "bash"
+  },
+  "prompt_ref": "shells/probe/prompts/probe.md",
+  "tools_ref": "shells/probe/tools",
+  "skills_ref": [],
+  "runtime": {
+    "runtime_id": "pi",
+    "version": "1.5.2"
+  },
+  "budget": {
+    "tokens": 600000,
+    "wall_ms": 600000,
+    "turns": 32,
+    "attempts": 1
+  },
+  "artifacts": {
+    "shells/probe/manifest.json": "f83eea2562b58348f81ce8d60a0f06ac847589ea015b08c3758c10801f1686bf",
+    "shells/probe/harness.py": "5851b3dd43129664b1af6d651b348353be527f8f19ebfc47f0ada71d5849d3a0",
+    "shells/probe/verifier.py": "b194ce321b416674ada40f5b00980cc489b7deeff8a59c0ff6e1d3573e809521",
+    "shells/probe/task_provider.py": "66dd637729514d2f3ca296deb40d52ce67a771a021d99e86d27dd72a3d657d4d",
+    "shells/probe/switches.schema.json": "f172be3e3d2cf23b2b5465abe3158e436ddd8b95b17d92f58522cb02b7dc9867",
+    "shells/probe/tools/bash.json": "1965ea16840b0ad63488a05b2d5ae7a9354845df4843246eb578e3e89c0a8191",
+    "shells/probe/prompts/probe.md": "492c9fa04ce7476902c102823452a3a8ad8fd8d27f573c7143d729306a350b08",
+    "shells/probe/memory/sources/pro-max-probe-order-2.md": "9a6667afca93c8cc484b181ec7c3753d9625b4f94da5b80474c9ac1dd555f89d",
+    "shells/probe/memory/sources/pro-max-probe-order-x3.md": "c2e5e4e2f75f237659c76c5e4d9c9f8ef9dc989eb43b87523b7aa14e4e79c468",
+    "shells/probe/memory/gen2.md": "c006367021e01a02bddc2e9d8729fdf56ae3838b291d0dd370be4fd1012f30ee"
+  },
+  "ext": {
+    "pi": {
+      "model": "deepseek/deepseek-v4-pro",
+      "thinking": "max"
+    },
+    "probe": {
+      "convention_id": "C1",
+      "cell": "gen2-sig",
+      "oracle": false
+    },
+    "memory_ref": "shells/probe/memory/gen2.md",
+    "note": "gen2: deterministic memory from pro-max T2/x3 failures; prompt-parameterized"
+  }
+}

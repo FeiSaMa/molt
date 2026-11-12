@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "probe-order-x1",
+  "scenario_version": "probe-3",
+  "shell_id": "probe",
+  "scope": "search",
+  "title": "按包内规则返回下标序",
+  "workspace_ref": "bench/probe/probe-order-x1/workspace",
+  "tests_ref": "bench/probe/probe-order-x1/tests",
+  "timeout_s": 120,
+  "ext": {
+    "probe": {
+      "convention_id": "C1",
+      "facet": "C1a",
+      "kind": "convention",
+      "function": "rank"
+    }
+  }
+}
