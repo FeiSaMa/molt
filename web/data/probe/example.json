@@ -1,0 +1,1219 @@
+{
+  "cost_usd": 2.04981153,
+  "lineage": [
+    {
+      "gen": "v0",
+      "label": "baseline",
+      "note": "2c baseline + replicate2；x8 2/2 不计入 headroom",
+      "passes": 0,
+      "runs": 10,
+      "scope": [
+        "probe-order-x5",
+        "probe-order-x6",
+        "probe-order-x7"
+      ]
+    },
+    {
+      "gen": "gen2",
+      "label": "回放",
+      "note": "失败用例原文回放（gen2.md）；x8 0/4 负迁移",
+      "passes": 8,
+      "runs": 12,
+      "scope": [
+        "probe-order-x5",
+        "probe-order-x6",
+        "probe-order-x7"
+      ]
+    },
+    {
+      "gen": "gen3",
+      "label": "反思",
+      "note": "一次反思产出规则（gen3.md）；x8 0/2",
+      "passes": 12,
+      "runs": 12,
+      "scope": [
+        "probe-order-x5",
+        "probe-order-x6",
+        "probe-order-x7"
+      ]
+    },
+    {
+      "gen": "gen4",
+      "label": "约束反思",
+      "note": "约束反思（gen4.md）；x5 含 2 次 gen3 续跑；x8 4/4",
+      "passes": 12,
+      "runs": 12,
+      "scope": [
+        "probe-order-x5",
+        "probe-order-x6",
+        "probe-order-x7"
+      ]
+    }
+  ],
+  "live": false,
+  "memory": {
+    "attempts": 1,
+    "cost_usd": 0.02970132,
+    "line_cases": [
+      [
+        "probe-order-2/case_01",
+        "probe-order-2/case_03",
+        "probe-order-x3/case_01",
+        "probe-order-x3/case_02"
+      ],
+      [
+        "probe-order-2/case_01",
+        "probe-order-x3/case_01",
+        "probe-order-x3/case_02"
+      ],
+      [
+        "probe-order-2/case_01",
+        "probe-order-x3/case_01",
+        "probe-order-x3/case_02",
+        "probe-order-x3/case_03"
+      ],
+      [
+        "probe-order-2/case_02",
+        "probe-order-2/case_03",
+        "probe-order-x3/case_02"
+      ],
+      [
+        "probe-order-x3/case_01",
+        "probe-order-x3/case_02",
+        "probe-order-x3/case_03"
+      ]
+    ],
+    "lines": [
+      "1. 先忽略大小写进行归类，每类只保留一个结果。",
+      "2. 每类若有多种写法，只保留字符编码最小的那种写法。",
+      "3. 归类后按书写长度从短到长排列。",
+      "4. 长度相同时，按不区分大小写的字符编码升序排列。",
+      "5. 若只需保留前若干项，则先完成归类与排序，再按顺序截取。"
+    ],
+    "reflection_model": "deepseek-v4-pro",
+    "source_cases": [
+      "probe-order-2/case_01",
+      "probe-order-2/case_02",
+      "probe-order-2/case_03",
+      "probe-order-x3/case_01",
+      "probe-order-x3/case_02",
+      "probe-order-x3/case_03"
+    ],
+    "sources": [
+      "shells/probe/memory/sources/pro-max-probe-order-2.md",
+      "shells/probe/memory/sources/pro-max-probe-order-x3.md"
+    ]
+  },
+  "negative_transfer": {
+    "baseline_passes": 2,
+    "baseline_runs": 2,
+    "baseline_signature": "(names) -> int",
+    "drifted_passes": 0,
+    "drifted_runs": 2,
+    "drifted_signature": "(names, k) -> list[str]",
+    "note": "x8 baseline 2/2；gen2 0/2（签名漂移到 (names, k) -> list[str]）；gen4 4/4，3/4 保持原签名",
+    "restored_passes": 4,
+    "restored_runs": 4,
+    "restored_signature": "(names) -> int",
+    "restored_signature_runs": 3,
+    "status": "restored",
+    "task_id": "probe-order-x8"
+  },
+  "note": "example generated from 2c evidence; not a live run",
+  "phase": "done",
+  "revision": "db03240fe2cca4470e9e5432dac429502344678ab32dd579770562aeb47439f4",
+  "run1": {
+    "cost_usd": 1.59086813,
+    "headroom_solved": 0,
+    "solved": 1,
+    "tasks": [
+      {
+        "cases": [
+          {
+            "actual": [
+              "DELTA",
+              "Delta",
+              "delta",
+              "ee"
+            ],
+            "case_id": "case_01",
+            "expected": [
+              "ee",
+              "DELTA"
+            ],
+            "input": [
+              "Delta",
+              "ee",
+              "DELTA",
+              "delta"
+            ],
+            "passed": false
+          },
+          {
+            "actual": [
+              "bb",
+              "cc"
+            ],
+            "case_id": "case_02",
+            "expected": [
+              "bb",
+              "cc"
+            ],
+            "input": [
+              "cc",
+              "bb"
+            ],
+            "passed": true
+          },
+          {
+            "actual": [
+              "b",
+              "c"
+            ],
+            "case_id": "case_03",
+            "expected": [
+              "b",
+              "c"
+            ],
+            "input": [
+              "c",
+              "b"
+            ],
+            "passed": true
+          }
+        ],
+        "code_after": "\"\"\"Unique helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef unique(names: list[str]) -> list[str]:\n    \"\"\"Drop duplicate names and return them in this package's preferred sequence.\n\n    >>> unique([\"cc\", \"bb\"])\n    ['bb', 'cc']\n    >>> unique([\"dd\", \"ee\"])\n    ['dd', 'ee']\n    \"\"\"\n    return sorted(set(names))\n",
+        "code_before": "\"\"\"Unique helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef unique(names: list[str]) -> list[str]:\n    \"\"\"Drop duplicate names and return them in this package's preferred sequence.\n\n    >>> unique([\"cc\", \"bb\"])\n    ['bb', 'cc']\n    >>> unique([\"dd\", \"ee\"])\n    ['dd', 'ee']\n    \"\"\"\n    return sorted(set(names))\n",
+        "diff_lines": [
+          {
+            "text": "\"\"\"Unique helpers.\"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "from __future__ import annotations",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "def unique(names: list[str]) -> list[str]:",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"Drop duplicate names and return them in this package's preferred sequence.",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "    >>> unique([\"cc\", \"bb\"])",
+            "type": "same"
+          },
+          {
+            "text": "    ['bb', 'cc']",
+            "type": "same"
+          },
+          {
+            "text": "    >>> unique([\"dd\", \"ee\"])",
+            "type": "same"
+          },
+          {
+            "text": "    ['dd', 'ee']",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "    return sorted(set(names))",
+            "type": "same"
+          }
+        ],
+        "function": "unique",
+        "id": "probe-order-x5",
+        "passed": false,
+        "passes": 0,
+        "run_id": "397d3453-probe-order-x5-a1-6f6369",
+        "runs": 4,
+        "signature": "(names) -> list[str]"
+      },
+      {
+        "cases": [
+          {
+            "actual": [
+              "ff",
+              "gg",
+              "ECHO",
+              "Echo"
+            ],
+            "case_id": "case_01",
+            "expected": [
+              "ff",
+              "gg",
+              "ECHO"
+            ],
+            "input": [
+              [
+                "Echo",
+                "ff"
+              ],
+              [
+                "ECHO",
+                "gg"
+              ]
+            ],
+            "passed": false
+          },
+          {
+            "actual": [
+              "bb",
+              "cc"
+            ],
+            "case_id": "case_02",
+            "expected": [
+              "bb",
+              "cc"
+            ],
+            "input": [
+              [
+                "cc"
+              ],
+              [
+                "bb"
+              ]
+            ],
+            "passed": true
+          },
+          {
+            "actual": [
+              "b",
+              "c"
+            ],
+            "case_id": "case_03",
+            "expected": [
+              "b",
+              "c"
+            ],
+            "input": [
+              [
+                "c"
+              ],
+              [
+                "b"
+              ]
+            ],
+            "passed": true
+          }
+        ],
+        "code_after": "\"\"\"Merge and dedupe helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe_merge(a: list[str], b: list[str]) -> list[str]:\n    \"\"\"Merge and dedupe two name lists in this package's preferred sequence.\n\n    >>> dedupe_merge([\"cc\"], [\"bb\"])\n    ['bb', 'cc']\n    >>> dedupe_merge([\"c\"], [\"b\"])\n    ['b', 'c']\n    \"\"\"\n    return sorted(set(a + b), key=lambda s: (len(s), s))\n",
+        "code_before": "\"\"\"Merge and dedupe helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe_merge(a: list[str], b: list[str]) -> list[str]:\n    \"\"\"Merge and dedupe two name lists in this package's preferred sequence.\n\n    >>> dedupe_merge([\"cc\"], [\"bb\"])\n    ['bb', 'cc']\n    >>> dedupe_merge([\"c\"], [\"b\"])\n    ['b', 'c']\n    \"\"\"\n    return sorted(set(a + b))\n",
+        "diff_lines": [
+          {
+            "text": "\"\"\"Merge and dedupe helpers.\"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "from __future__ import annotations",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "def dedupe_merge(a: list[str], b: list[str]) -> list[str]:",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"Merge and dedupe two name lists in this package's preferred sequence.",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "    >>> dedupe_merge([\"cc\"], [\"bb\"])",
+            "type": "same"
+          },
+          {
+            "text": "    ['bb', 'cc']",
+            "type": "same"
+          },
+          {
+            "text": "    >>> dedupe_merge([\"c\"], [\"b\"])",
+            "type": "same"
+          },
+          {
+            "text": "    ['b', 'c']",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "    return sorted(set(a + b))",
+            "type": "del"
+          },
+          {
+            "text": "    return sorted(set(a + b), key=lambda s: (len(s), s))",
+            "type": "add"
+          }
+        ],
+        "function": "dedupe_merge",
+        "id": "probe-order-x6",
+        "passed": false,
+        "passes": 0,
+        "run_id": "4309fd0c-probe-order-x6-a1-10de98",
+        "runs": 4,
+        "signature": "(a, b) -> list[str]"
+      },
+      {
+        "cases": [
+          {
+            "actual": "Foxtrot",
+            "case_id": "case_01",
+            "expected": "gg",
+            "input": [
+              "Foxtrot",
+              "gg",
+              "FOXTROT"
+            ],
+            "passed": false
+          },
+          {
+            "actual": "bb",
+            "case_id": "case_02",
+            "expected": "bb",
+            "input": [
+              "cc",
+              "bb"
+            ],
+            "passed": true
+          },
+          {
+            "actual": null,
+            "case_id": "case_03",
+            "expected": null,
+            "input": [],
+            "passed": true
+          }
+        ],
+        "code_after": "\"\"\"Extrema and dedupe helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe_min(names: list[str]) -> str | None:\n    \"\"\"Return the smallest distinct name in this package's preferred sequence, or None when empty.\n\n    >>> dedupe_min([\"cc\", \"bb\"])\n    'bb'\n    >>> dedupe_min([]) is None\n    True\n    \"\"\"\n    if not names:\n        return None\n    return min(dict.fromkeys(names), key=str.casefold)\n",
+        "code_before": "\"\"\"Extrema and dedupe helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe_min(names: list[str]) -> str | None:\n    \"\"\"Return the smallest distinct name in this package's preferred sequence, or None when empty.\n\n    >>> dedupe_min([\"cc\", \"bb\"])\n    'bb'\n    >>> dedupe_min([]) is None\n    True\n    \"\"\"\n    return None if not names else min(set(names))\n",
+        "diff_lines": [
+          {
+            "text": "\"\"\"Extrema and dedupe helpers.\"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "from __future__ import annotations",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "def dedupe_min(names: list[str]) -> str | None:",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"Return the smallest distinct name in this package's preferred sequence, or None when empty.",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "    >>> dedupe_min([\"cc\", \"bb\"])",
+            "type": "same"
+          },
+          {
+            "text": "    'bb'",
+            "type": "same"
+          },
+          {
+            "text": "    >>> dedupe_min([]) is None",
+            "type": "same"
+          },
+          {
+            "text": "    True",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "    return None if not names else min(set(names))",
+            "type": "del"
+          },
+          {
+            "text": "    if not names:",
+            "type": "add"
+          },
+          {
+            "text": "        return None",
+            "type": "add"
+          },
+          {
+            "text": "    return min(dict.fromkeys(names), key=str.casefold)",
+            "type": "add"
+          }
+        ],
+        "function": "dedupe_min",
+        "id": "probe-order-x7",
+        "passed": false,
+        "passes": 0,
+        "run_id": "397d3453-probe-order-x7-a1-57b6a3",
+        "runs": 2,
+        "signature": "(names) -> str | None"
+      },
+      {
+        "cases": [
+          {
+            "actual": 2,
+            "case_id": "case_01",
+            "expected": 2,
+            "input": [
+              "Hotel",
+              "ii",
+              "HOTEL"
+            ],
+            "passed": true
+          },
+          {
+            "actual": 2,
+            "case_id": "case_02",
+            "expected": 2,
+            "input": [
+              "cc",
+              "bb"
+            ],
+            "passed": true
+          },
+          {
+            "actual": 1,
+            "case_id": "case_03",
+            "expected": 1,
+            "input": [
+              "dd",
+              "dd"
+            ],
+            "passed": true
+          }
+        ],
+        "code_after": "\"\"\"Distinct count helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef distinct_count(names: list[str]) -> int:\n    \"\"\"Return the number of distinct names under this package's grouping.\n\n    >>> distinct_count([\"cc\", \"bb\"])\n    2\n    >>> distinct_count([\"dd\", \"dd\"])\n    1\n    \"\"\"\n    return len({name.casefold() for name in names})\n",
+        "code_before": "\"\"\"Distinct count helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef distinct_count(names: list[str]) -> int:\n    \"\"\"Return the number of distinct names under this package's grouping.\n\n    >>> distinct_count([\"cc\", \"bb\"])\n    2\n    >>> distinct_count([\"dd\", \"dd\"])\n    1\n    \"\"\"\n    return len(set(names))\n",
+        "diff_lines": [
+          {
+            "text": "\"\"\"Distinct count helpers.\"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "from __future__ import annotations",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "def distinct_count(names: list[str]) -> int:",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"Return the number of distinct names under this package's grouping.",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "    >>> distinct_count([\"cc\", \"bb\"])",
+            "type": "same"
+          },
+          {
+            "text": "    2",
+            "type": "same"
+          },
+          {
+            "text": "    >>> distinct_count([\"dd\", \"dd\"])",
+            "type": "same"
+          },
+          {
+            "text": "    1",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "    return len(set(names))",
+            "type": "del"
+          },
+          {
+            "text": "    return len({name.casefold() for name in names})",
+            "type": "add"
+          }
+        ],
+        "function": "distinct_count",
+        "id": "probe-order-x8",
+        "passed": true,
+        "passes": 2,
+        "run_id": "397d3453-probe-order-x8-a1-78101c",
+        "runs": 2,
+        "signature": "(names) -> int"
+      }
+    ],
+    "total": 4,
+    "wall_ms": 3068945
+  },
+  "run2": {
+    "cost_usd": 0.4589434,
+    "headroom_solved": 3,
+    "solved": 4,
+    "tasks": [
+      {
+        "cases": [
+          {
+            "actual": [
+              "ee",
+              "DELTA"
+            ],
+            "case_id": "case_01",
+            "expected": [
+              "ee",
+              "DELTA"
+            ],
+            "input": [
+              "Delta",
+              "ee",
+              "DELTA",
+              "delta"
+            ],
+            "passed": true
+          },
+          {
+            "actual": [
+              "bb",
+              "cc"
+            ],
+            "case_id": "case_02",
+            "expected": [
+              "bb",
+              "cc"
+            ],
+            "input": [
+              "cc",
+              "bb"
+            ],
+            "passed": true
+          },
+          {
+            "actual": [
+              "b",
+              "c"
+            ],
+            "case_id": "case_03",
+            "expected": [
+              "b",
+              "c"
+            ],
+            "input": [
+              "c",
+              "b"
+            ],
+            "passed": true
+          }
+        ],
+        "code_after": "\"\"\"Unique helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef unique(names: list[str]) -> list[str]:\n    \"\"\"Drop duplicate names and return them in this package's preferred sequence.\n\n    >>> unique([\"cc\", \"bb\"])\n    ['bb', 'cc']\n    >>> unique([\"dd\", \"ee\"])\n    ['dd', 'ee']\n    \"\"\"\n    groups: dict[str, str] = {}\n    for name in names:\n        key = name.casefold()\n        groups[key] = min(groups.get(key, name), name)\n    return sorted(groups.values(), key=lambda s: (len(s), s.casefold()))\n",
+        "code_before": "\"\"\"Unique helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef unique(names: list[str]) -> list[str]:\n    \"\"\"Drop duplicate names and return them in this package's preferred sequence.\n\n    >>> unique([\"cc\", \"bb\"])\n    ['bb', 'cc']\n    >>> unique([\"dd\", \"ee\"])\n    ['dd', 'ee']\n    \"\"\"\n    return sorted(set(names))\n",
+        "diff_lines": [
+          {
+            "text": "\"\"\"Unique helpers.\"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "from __future__ import annotations",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "def unique(names: list[str]) -> list[str]:",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"Drop duplicate names and return them in this package's preferred sequence.",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "    >>> unique([\"cc\", \"bb\"])",
+            "type": "same"
+          },
+          {
+            "text": "    ['bb', 'cc']",
+            "type": "same"
+          },
+          {
+            "text": "    >>> unique([\"dd\", \"ee\"])",
+            "type": "same"
+          },
+          {
+            "text": "    ['dd', 'ee']",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "    return sorted(set(names))",
+            "type": "del"
+          },
+          {
+            "text": "    groups: dict[str, str] = {}",
+            "type": "add"
+          },
+          {
+            "text": "    for name in names:",
+            "type": "add"
+          },
+          {
+            "text": "        key = name.casefold()",
+            "type": "add"
+          },
+          {
+            "text": "        groups[key] = min(groups.get(key, name), name)",
+            "type": "add"
+          },
+          {
+            "text": "    return sorted(groups.values(), key=lambda s: (len(s), s.casefold()))",
+            "type": "add"
+          }
+        ],
+        "function": "unique",
+        "id": "probe-order-x5",
+        "note": "v3 的 4/4 含 2 次 gen3 续跑；本卡展示 gen4 r1",
+        "passed": true,
+        "passes": 4,
+        "run_id": "be19bd9f-probe-order-x5-a1-9dd136",
+        "runs": 4,
+        "signature": "(names) -> list[str]"
+      },
+      {
+        "cases": [
+          {
+            "actual": [
+              "ff",
+              "gg",
+              "ECHO"
+            ],
+            "case_id": "case_01",
+            "expected": [
+              "ff",
+              "gg",
+              "ECHO"
+            ],
+            "input": [
+              [
+                "Echo",
+                "ff"
+              ],
+              [
+                "ECHO",
+                "gg"
+              ]
+            ],
+            "passed": true
+          },
+          {
+            "actual": [
+              "bb",
+              "cc"
+            ],
+            "case_id": "case_02",
+            "expected": [
+              "bb",
+              "cc"
+            ],
+            "input": [
+              [
+                "cc"
+              ],
+              [
+                "bb"
+              ]
+            ],
+            "passed": true
+          },
+          {
+            "actual": [
+              "b",
+              "c"
+            ],
+            "case_id": "case_03",
+            "expected": [
+              "b",
+              "c"
+            ],
+            "input": [
+              [
+                "c"
+              ],
+              [
+                "b"
+              ]
+            ],
+            "passed": true
+          }
+        ],
+        "code_after": "\"\"\"Merge and dedupe helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe_merge(a: list[str], b: list[str]) -> list[str]:\n    \"\"\"Merge and dedupe two name lists in this package's preferred sequence.\n\n    >>> dedupe_merge([\"cc\"], [\"bb\"])\n    ['bb', 'cc']\n    >>> dedupe_merge([\"c\"], [\"b\"])\n    ['b', 'c']\n    \"\"\"\n    best: dict[str, str] = {}\n    for name in a + b:\n        key = name.casefold()\n        if key not in best or name < best[key]:\n            best[key] = name\n    return sorted(best.values(), key=lambda s: (len(s), s.casefold()))\n",
+        "code_before": "\"\"\"Merge and dedupe helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe_merge(a: list[str], b: list[str]) -> list[str]:\n    \"\"\"Merge and dedupe two name lists in this package's preferred sequence.\n\n    >>> dedupe_merge([\"cc\"], [\"bb\"])\n    ['bb', 'cc']\n    >>> dedupe_merge([\"c\"], [\"b\"])\n    ['b', 'c']\n    \"\"\"\n    return sorted(set(a + b), key=lambda s: (len(s), s))\n",
+        "diff_lines": [
+          {
+            "text": "\"\"\"Merge and dedupe helpers.\"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "from __future__ import annotations",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "def dedupe_merge(a: list[str], b: list[str]) -> list[str]:",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"Merge and dedupe two name lists in this package's preferred sequence.",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "    >>> dedupe_merge([\"cc\"], [\"bb\"])",
+            "type": "same"
+          },
+          {
+            "text": "    ['bb', 'cc']",
+            "type": "same"
+          },
+          {
+            "text": "    >>> dedupe_merge([\"c\"], [\"b\"])",
+            "type": "same"
+          },
+          {
+            "text": "    ['b', 'c']",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "    return sorted(set(a + b), key=lambda s: (len(s), s))",
+            "type": "del"
+          },
+          {
+            "text": "    best: dict[str, str] = {}",
+            "type": "add"
+          },
+          {
+            "text": "    for name in a + b:",
+            "type": "add"
+          },
+          {
+            "text": "        key = name.casefold()",
+            "type": "add"
+          },
+          {
+            "text": "        if key not in best or name < best[key]:",
+            "type": "add"
+          },
+          {
+            "text": "            best[key] = name",
+            "type": "add"
+          },
+          {
+            "text": "    return sorted(best.values(), key=lambda s: (len(s), s.casefold()))",
+            "type": "add"
+          }
+        ],
+        "function": "dedupe_merge",
+        "id": "probe-order-x6",
+        "passed": true,
+        "passes": 4,
+        "run_id": "be19bd9f-probe-order-x6-a1-6939ac",
+        "runs": 4,
+        "signature": "(a, b) -> list[str]"
+      },
+      {
+        "cases": [
+          {
+            "actual": "gg",
+            "case_id": "case_01",
+            "expected": "gg",
+            "input": [
+              "Foxtrot",
+              "gg",
+              "FOXTROT"
+            ],
+            "passed": true
+          },
+          {
+            "actual": "bb",
+            "case_id": "case_02",
+            "expected": "bb",
+            "input": [
+              "cc",
+              "bb"
+            ],
+            "passed": true
+          },
+          {
+            "actual": null,
+            "case_id": "case_03",
+            "expected": null,
+            "input": [],
+            "passed": true
+          }
+        ],
+        "code_after": "\"\"\"Extrema and dedupe helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe_min(names: list[str]) -> str | None:\n    \"\"\"Return the smallest distinct name in this package's preferred sequence, or None when empty.\n\n    >>> dedupe_min([\"cc\", \"bb\"])\n    'bb'\n    >>> dedupe_min([]) is None\n    True\n    \"\"\"\n    if not names:\n        return None\n    groups: dict[str, str] = {}\n    for name in names:\n        key = name.casefold()\n        if key not in groups or name < groups[key]:\n            groups[key] = name\n    return min(groups.values(), key=lambda name: (len(name), name.casefold()))\n",
+        "code_before": "\"\"\"Extrema and dedupe helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe_min(names: list[str]) -> str | None:\n    \"\"\"Return the smallest distinct name in this package's preferred sequence, or None when empty.\n\n    >>> dedupe_min([\"cc\", \"bb\"])\n    'bb'\n    >>> dedupe_min([]) is None\n    True\n    \"\"\"\n    if not names:\n        return None\n    return min(dict.fromkeys(names), key=str.casefold)\n",
+        "diff_lines": [
+          {
+            "text": "\"\"\"Extrema and dedupe helpers.\"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "from __future__ import annotations",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "def dedupe_min(names: list[str]) -> str | None:",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"Return the smallest distinct name in this package's preferred sequence, or None when empty.",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "    >>> dedupe_min([\"cc\", \"bb\"])",
+            "type": "same"
+          },
+          {
+            "text": "    'bb'",
+            "type": "same"
+          },
+          {
+            "text": "    >>> dedupe_min([]) is None",
+            "type": "same"
+          },
+          {
+            "text": "    True",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "    if not names:",
+            "type": "same"
+          },
+          {
+            "text": "        return None",
+            "type": "same"
+          },
+          {
+            "text": "    return min(dict.fromkeys(names), key=str.casefold)",
+            "type": "del"
+          },
+          {
+            "text": "    groups: dict[str, str] = {}",
+            "type": "add"
+          },
+          {
+            "text": "    for name in names:",
+            "type": "add"
+          },
+          {
+            "text": "        key = name.casefold()",
+            "type": "add"
+          },
+          {
+            "text": "        if key not in groups or name < groups[key]:",
+            "type": "add"
+          },
+          {
+            "text": "            groups[key] = name",
+            "type": "add"
+          },
+          {
+            "text": "    return min(groups.values(), key=lambda name: (len(name), name.casefold()))",
+            "type": "add"
+          }
+        ],
+        "function": "dedupe_min",
+        "id": "probe-order-x7",
+        "passed": true,
+        "passes": 4,
+        "run_id": "be19bd9f-probe-order-x7-a1-40def7",
+        "runs": 4,
+        "signature": "(names) -> str | None"
+      },
+      {
+        "cases": [
+          {
+            "actual": 2,
+            "case_id": "case_01",
+            "expected": 2,
+            "input": [
+              "Hotel",
+              "ii",
+              "HOTEL"
+            ],
+            "passed": true
+          },
+          {
+            "actual": 2,
+            "case_id": "case_02",
+            "expected": 2,
+            "input": [
+              "cc",
+              "bb"
+            ],
+            "passed": true
+          },
+          {
+            "actual": 1,
+            "case_id": "case_03",
+            "expected": 1,
+            "input": [
+              "dd",
+              "dd"
+            ],
+            "passed": true
+          }
+        ],
+        "code_after": "\"\"\"Distinct count helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef distinct_count(names: list[str]) -> int:\n    \"\"\"Return the number of distinct names under this package's grouping.\n\n    Names are grouped case-insensitively; from each group the variant with\n    the smallest character encoding is kept.  Groups are ordered by written\n    length, then by case-insensitive character encoding.\n\n    >>> distinct_count([\"cc\", \"bb\"])\n    2\n    >>> distinct_count([\"dd\", \"dd\"])\n    1\n    >>> distinct_count([\"aB\", \"Ab\", \"ab\", \"cc\"])\n    2\n    \"\"\"\n    groups: dict[str, str] = {}\n    for name in names:\n        key = name.casefold()\n        kept = groups.get(key)\n        if kept is None or name < kept:\n            groups[key] = name\n    ordered = sorted(groups.values(), key=lambda s: (len(s), s.casefold()))\n    return len(ordered)\n",
+        "code_before": "\"\"\"Distinct count helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef distinct_count(names: list[str]) -> int:\n    \"\"\"Return the number of distinct names under this package's grouping.\n\n    >>> distinct_count([\"cc\", \"bb\"])\n    2\n    >>> distinct_count([\"dd\", \"dd\"])\n    1\n    \"\"\"\n    return len({name.casefold() for name in names})\n",
+        "diff_lines": [
+          {
+            "text": "\"\"\"Distinct count helpers.\"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "from __future__ import annotations",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "def distinct_count(names: list[str]) -> int:",
+            "type": "same"
+          },
+          {
+            "text": "    \"\"\"Return the number of distinct names under this package's grouping.",
+            "type": "same"
+          },
+          {
+            "text": "",
+            "type": "same"
+          },
+          {
+            "text": "    Names are grouped case-insensitively; from each group the variant with",
+            "type": "add"
+          },
+          {
+            "text": "    the smallest character encoding is kept.  Groups are ordered by written",
+            "type": "add"
+          },
+          {
+            "text": "    length, then by case-insensitive character encoding.",
+            "type": "add"
+          },
+          {
+            "text": "",
+            "type": "add"
+          },
+          {
+            "text": "    >>> distinct_count([\"cc\", \"bb\"])",
+            "type": "same"
+          },
+          {
+            "text": "    2",
+            "type": "same"
+          },
+          {
+            "text": "    >>> distinct_count([\"dd\", \"dd\"])",
+            "type": "same"
+          },
+          {
+            "text": "    1",
+            "type": "same"
+          },
+          {
+            "text": "    >>> distinct_count([\"aB\", \"Ab\", \"ab\", \"cc\"])",
+            "type": "add"
+          },
+          {
+            "text": "    2",
+            "type": "add"
+          },
+          {
+            "text": "    \"\"\"",
+            "type": "same"
+          },
+          {
+            "text": "    return len({name.casefold() for name in names})",
+            "type": "del"
+          },
+          {
+            "text": "    groups: dict[str, str] = {}",
+            "type": "add"
+          },
+          {
+            "text": "    for name in names:",
+            "type": "add"
+          },
+          {
+            "text": "        key = name.casefold()",
+            "type": "add"
+          },
+          {
+            "text": "        kept = groups.get(key)",
+            "type": "add"
+          },
+          {
+            "text": "        if kept is None or name < kept:",
+            "type": "add"
+          },
+          {
+            "text": "            groups[key] = name",
+            "type": "add"
+          },
+          {
+            "text": "    ordered = sorted(groups.values(), key=lambda s: (len(s), s.casefold()))",
+            "type": "add"
+          },
+          {
+            "text": "    return len(ordered)",
+            "type": "add"
+          }
+        ],
+        "function": "distinct_count",
+        "id": "probe-order-x8",
+        "passed": true,
+        "passes": 4,
+        "run_id": "be19bd9f-probe-order-x8-a1-205a7d",
+        "runs": 4,
+        "signature": "(names) -> int"
+      }
+    ],
+    "total": 4,
+    "wall_ms": 560946
+  },
+  "schema_version": "1.0.0",
+  "started_at": "2026-11-11T00:00:00Z",
+  "updated_at": "2026-11-12T00:00:00Z",
+  "verdict": "v3_stable_all",
+  "verdict_note": "v3 16/16；x8 基线 2/2，不计入 headroom；主 2c（v1）为 partial_transfer",
+  "wall_ms": 3629891
+}

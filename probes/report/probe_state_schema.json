@@ -1,0 +1,445 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://molt.local/schemas/probe_state.schema.json",
+  "title": "molt probe live state",
+  "description": "web/data/probe/state.json 的契约。页面只依赖这里声明的字段；未知键必须忽略（向前兼容）。字段语义与降级规则见 probes/report/VISUAL_SPEC.md。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "live",
+    "phase",
+    "started_at",
+    "updated_at",
+    "revision",
+    "lineage",
+    "run1",
+    "memory",
+    "run2",
+    "verdict",
+    "cost_usd",
+    "wall_ms",
+    "note"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0",
+      "description": "数据面版本；破坏性变更升 major"
+    },
+    "live": {
+      "type": "boolean",
+      "description": "是否真实模型调用。false 一律按 REPLAY 展示；不得把恢复出来的数据标成 live"
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "run1",
+        "reflection",
+        "run2",
+        "done",
+        "partial",
+        "timeout"
+      ],
+      "description": "当前阶段。partial = 300s 硬上限或证据不完整；timeout = 被中止"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "probe 开始时间（ISO 8601，带时区）"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "最后一次写 state 的时间。live=true 且超过 120s 未更新即按 REPLAY 展示"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "内容哈希（sha256 小写十六进制）。只作刷新信号，不是兼容性信号"
+    },
+    "lineage": {
+      "type": "array",
+      "description": "代际时间线，按实验先后排序；节点只标通过数，不画通过率曲线",
+      "items": {
+        "$ref": "#/definitions/lineage_node"
+      }
+    },
+    "run1": {
+      "$ref": "#/definitions/run",
+      "description": "Run 1（baseline）的逐题证据"
+    },
+    "memory": {
+      "$ref": "#/definitions/memory",
+      "description": "反思产出的规则，以及它解释的失败用例"
+    },
+    "run2": {
+      "$ref": "#/definitions/run",
+      "description": "Run 2（带 memory）的逐题证据；与 run1 是同一个函数的前后对照"
+    },
+    "negative_transfer": {
+      "$ref": "#/definitions/negative_transfer",
+      "description": "可选的负迁移证据（画面 4）。缺失时页面整块隐藏，不留空洞"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "",
+        "partial_transfer",
+        "v3_stable_all",
+        "v3_stable_headroom"
+      ],
+      "description": "本次 probe 的最终判定。三档：partial_transfer = 迁移只部分成立（2c 主实验 v1 口径）；v3_stable_all = v3 全题集稳定通过（含 x8）；v3_stable_headroom = 仅 headroom 题（x5–x7）稳定通过。空串表示尚未判定。页面照抄，不改写"
+    },
+    "verdict_note": {
+      "type": "string",
+      "description": "verdict 的口径注记（如「x8 基线 2/2 不计入 headroom」「主 2c 为 partial_transfer」）。页脚必须与 verdict 同排显示为小字，不允许只显示关键字"
+    },
+    "cost_usd": {
+      "type": "number",
+      "minimum": 0,
+      "description": "本次 probe 展示证据的总成本（USD）；口径见 VISUAL_SPEC 的页脚一节"
+    },
+    "wall_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "本次 probe 的墙钟（毫秒）。live 为会话墙钟；replay/example 为展示 run 的墙钟之和"
+    },
+    "note": {
+      "type": "string",
+      "description": "自由文本注记；页面只用于 tooltip，不参与布局"
+    }
+  },
+  "definitions": {
+    "lineage_node": {
+      "type": "object",
+      "required": [
+        "gen",
+        "label",
+        "passes",
+        "runs"
+      ],
+      "properties": {
+        "gen": {
+          "type": "string",
+          "minLength": 1,
+          "description": "代际标识（v0 / gen2 / gen3 / gen4）"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "短标签（baseline / 回放 / 反思 / 约束反思）"
+        },
+        "passes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "该节点通过数；与 runs 配对展示为 passes/runs"
+        },
+        "runs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "该节点的 run 数。不同节点题集/分母可能不同，页面不得据此画比率曲线"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "该节点覆盖的 task id；用于 tooltip 说明分母"
+        },
+        "note": {
+          "type": "string",
+          "description": "补充说明（如 x8 不计入、含续跑）"
+        }
+      }
+    },
+    "run": {
+      "type": "object",
+      "required": [
+        "solved",
+        "total",
+        "tasks"
+      ],
+      "properties": {
+        "solved": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "通过的题数"
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "本次 run 的题数（不是 run 次数）"
+        },
+        "headroom_solved": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "headroom 口径的通过数（只计 x5–x7，不含 baseline-solvable 的 x8）；与 solved 分开，避免把 x8 算成记忆提升"
+        },
+        "cost_usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "该 run 组的总成本（USD）；页面用于页脚拆分 tooltip"
+        },
+        "wall_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "该 run 组的总墙钟（毫秒）"
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/task"
+          }
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "required": [
+        "id",
+        "function",
+        "signature",
+        "passed",
+        "cases",
+        "code_before",
+        "code_after",
+        "diff_lines"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "task_id，如 probe-order-x5"
+        },
+        "run_id": {
+          "type": "string",
+          "description": "该卡对应 run 的 run_id，用于追溯证据；不得写 state 路径"
+        },
+        "function": {
+          "type": "string",
+          "minLength": 1,
+          "description": "被修改的函数名；run1 与 run2 的同一个 task 必须相同"
+        },
+        "signature": {
+          "type": "string",
+          "description": "该 run 结束时的函数签名，如 (names) -> int；无法解析时写 missing"
+        },
+        "passed": {
+          "type": "boolean",
+          "description": "该 run 是否全 case 通过"
+        },
+        "passes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "该题在重复实验中的通过次数（Run2 的 4/4 徽章用）"
+        },
+        "runs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "该题在重复实验中的 run 次数"
+        },
+        "note": {
+          "type": "string",
+          "description": "题级注记（如含 gen3 续跑）"
+        },
+        "cases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/case"
+          }
+        },
+        "code_before": {
+          "type": "string",
+          "description": "修改前完整源码。run1 为 workspace/stub；run2 为 run1 选中的 baseline 快照"
+        },
+        "code_after": {
+          "type": "string",
+          "description": "修改后完整源码，来自对应 run 的 solution 快照"
+        },
+        "diff_lines": {
+          "type": "array",
+          "description": "行级差异流（difflib 口径）。split 视图由页面按 same/add/del 重建，见 VISUAL_SPEC",
+          "items": {
+            "$ref": "#/definitions/diff_line"
+          }
+        }
+      }
+    },
+    "case": {
+      "type": "object",
+      "required": [
+        "case_id",
+        "input",
+        "expected",
+        "actual",
+        "passed"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input": {
+          "description": "任意 JSON 值：数组 / 对象 / 标量 / null。x6 这类双参数 case 用 [arg1, arg2]"
+        },
+        "expected": {
+          "description": "任意 JSON 值：数组 / 对象 / 标量 / null"
+        },
+        "actual": {
+          "description": "任意 JSON 值：数组 / 对象 / 标量 / null；异常时可为 null"
+        },
+        "passed": {
+          "type": "boolean",
+          "description": "actual == expected"
+        }
+      }
+    },
+    "diff_line": {
+      "type": "object",
+      "required": [
+        "type",
+        "text"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "same",
+            "add",
+            "del"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "description": "单行文本，不含行尾换行符"
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "required": [
+        "lines",
+        "source_cases",
+        "reflection_model",
+        "cost_usd"
+      ],
+      "properties": {
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "反思产出的规则，逐行；v3 为 5 行"
+        },
+        "line_cases": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": "可选：与 lines 等长的映射，每行指向它能解释的 source_cases。缺失时页面不画连线"
+        },
+        "source_cases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "反思输入的失败 case，建议用 <task_id>/<case_id> 限定，避免跨题重名"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "可选：来源文件（仓库相对路径）。页脚 N sources 用其长度"
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "可选：反思调用次数；页脚 1 reflection 用"
+        },
+        "reflection_model": {
+          "type": "string",
+          "description": "反思所用模型；尚未反思时写空串"
+        },
+        "cost_usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "产出 memory 的成本（USD）"
+        }
+      }
+    },
+    "negative_transfer": {
+      "type": "object",
+      "required": [
+        "task_id",
+        "baseline_signature",
+        "drifted_signature",
+        "restored_signature",
+        "status"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseline_signature": {
+          "type": "string",
+          "description": "baseline 的签名（起点）"
+        },
+        "drifted_signature": {
+          "type": "string",
+          "description": "负迁移时的签名（带 k / 返回 list）"
+        },
+        "restored_signature": {
+          "type": "string",
+          "description": "修复后的签名；应与 baseline_signature 相同才算 restored"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "none",
+            "active",
+            "restored"
+          ],
+          "description": "none = 未发生；active = 仍在漂移；restored = 已恢复"
+        },
+        "baseline_passes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "baseline_runs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "drifted_passes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "drifted_runs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "restored_passes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "restored_runs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "restored_signature_runs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "修复后仍保持 baseline 签名的 run 数"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

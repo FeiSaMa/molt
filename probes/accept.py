@@ -37,6 +37,7 @@ STAGES = (
     "family",
     "blind",
     "memory",
+    "visual",
 )
 RULE_WORDS = (
     "canonical",
@@ -464,6 +465,100 @@ def stage_memory() -> tuple[bool, str, int]:
     )
 
 
+def stage_visual() -> tuple[bool, str, int]:
+    """Validate the visual spec's machine contract and its checked-in example."""
+    from jsonschema import Draft7Validator
+
+    schema_path = ROOT / "probes/report/probe_state_schema.json"
+    example_path = ROOT / "web/data/probe/example.json"
+    spec_path = ROOT / "probes/report/VISUAL_SPEC.md"
+    generator_path = ROOT / "probes/build_probe_example.py"
+    for path in (schema_path, example_path, spec_path, generator_path):
+        if not path.is_file():
+            return _fail(f"missing {path.relative_to(ROOT)}")
+
+    schema = _load_json(schema_path)
+    example = _load_json(example_path)
+    errors = sorted(
+        Draft7Validator(schema).iter_errors(example),
+        key=lambda error: list(error.path),
+    )
+    if errors:
+        first = errors[0]
+        return _fail(f"schema error at {list(first.path)}: {first.message}")
+
+    if example.get("live") is not False:
+        return _fail("example.live must be false")
+    if example.get("note") != "example generated from 2c evidence; not a live run":
+        return _fail("example.note mismatch")
+    if example.get("phase") != "done":
+        return _fail(f"example.phase={example.get('phase')!r} != done")
+    run1 = example["run1"]
+    run2 = example["run2"]
+    if (run1["solved"], run1["total"]) != (1, 4):
+        return _fail(f"run1={run1['solved']}/{run1['total']} != 1/4")
+    if (run2["solved"], run2["total"]) != (4, 4):
+        return _fail(f"run2={run2['solved']}/{run2['total']} != 4/4")
+    if (run1.get("headroom_solved"), run2.get("headroom_solved")) != (0, 3):
+        return _fail("headroom_solved must be 0 (run1) / 3 (run2); x8 is not headroom")
+    if not example.get("verdict_note"):
+        return _fail("example.verdict_note missing")
+    if [node["gen"] for node in example["lineage"]] != ["v0", "gen2", "gen3", "gen4"]:
+        return _fail("lineage generations mismatch")
+    if (example["lineage"][0]["passes"], example["lineage"][0]["runs"]) != (0, 10):
+        return _fail("v0 lineage must be 0/10")
+    if example["negative_transfer"]["status"] != "restored":
+        return _fail("negative_transfer.status != restored")
+    signatures = (
+        example["negative_transfer"]["baseline_signature"],
+        example["negative_transfer"]["drifted_signature"],
+        example["negative_transfer"]["restored_signature"],
+    )
+    if signatures != ("(names) -> int", "(names, k) -> list[str]", "(names) -> int"):
+        return _fail(f"negative-transfer signatures mismatch: {signatures}")
+    memory = example["memory"]
+    if (len(memory["sources"]), len(memory["source_cases"]), memory["attempts"]) != (2, 6, 1):
+        return _fail("memory footer counts mismatch")
+    if len(memory["line_cases"]) != len(memory["lines"]):
+        return _fail("memory.line_cases length mismatch")
+
+    allowed = {"same", "add", "del"}
+    for run_name, run in (("run1", run1), ("run2", run2)):
+        for task in run["tasks"]:
+            types = {line["type"] for line in task["diff_lines"]}
+            if not types <= allowed:
+                return _fail(f"{run_name}/{task['id']}: bad diff type {types - allowed}")
+    x5 = next(task for task in run1["tasks"] if task["id"] == "probe-order-x5")
+    if any(line["type"] != "same" for line in x5["diff_lines"]):
+        return _fail("run1 x5 must be the NO EDIT card")
+    x8 = next(task for task in run1["tasks"] if task["id"] == "probe-order-x8")
+    if not x8["passed"]:
+        return _fail("run1 x8 must stay visible as a passing control")
+    if not all(task["passed"] for task in run2["tasks"]):
+        return _fail("run2 must be 4/4")
+
+    for path in (example_path, generator_path, spec_path):
+        text = path.read_text(encoding="utf-8")
+        for needle in ("/home/feisama", "/tmp/molt-probe"):
+            if needle in text:
+                return _fail(f"{path.relative_to(ROOT)} contains {needle}")
+
+    with tempfile.TemporaryDirectory(prefix="molt-probe-visual-") as temporary:
+        target = Path(temporary) / "example.json"
+        result = _run(
+            [sys.executable, str(generator_path), "--out", str(target)],
+            timeout=180,
+        )
+        if result.returncode != 0:
+            return _fail(f"generator failed: {result.stderr.strip()[-400:]}")
+        if target.read_bytes() != example_path.read_bytes():
+            return _fail("example.json is stale; rerun probes/build_probe_example.py")
+    return _ok(
+        f"schema=ok run1=1/4 run2=4/4 lineage=0/10→8/12→12/12→12/12 "
+        f"memory=2s/6c/1r revision={example['revision'][:12]}…"
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--stage", required=True, choices=STAGES)
@@ -478,6 +573,7 @@ def main() -> int:
         "family": stage_family,
         "blind": stage_blind,
         "memory": stage_memory,
+        "visual": stage_visual,
     }[args.stage]
     ok, reason, code = func()
     print(f"stage={args.stage} result={'ok' if ok else 'fail'} reason={reason}")
