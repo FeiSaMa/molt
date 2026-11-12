@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "c2-ctl-b",
+  "scenario_version": "c2-1",
+  "shell_id": "probe-c2",
+  "scope": "search",
+  "title": "按 n 切块",
+  "workspace_ref": "bench/probe-c2/c2-ctl-b/workspace",
+  "tests_ref": "bench/probe-c2/c2-ctl-b/tests",
+  "timeout_s": 120,
+  "ext": {
+    "probe": {
+      "convention_id": null,
+      "facet": null,
+      "kind": "control",
+      "function": "chunk"
+    }
+  }
+}

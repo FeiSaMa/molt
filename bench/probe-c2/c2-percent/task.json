@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "c2-percent",
+  "scenario_version": "c2-1",
+  "shell_id": "probe-c2",
+  "scope": "search",
+  "title": "百分数两位格式化",
+  "workspace_ref": "bench/probe-c2/c2-percent/workspace",
+  "tests_ref": "bench/probe-c2/c2-percent/tests",
+  "timeout_s": 120,
+  "ext": {
+    "probe": {
+      "convention_id": "C2",
+      "facet": "C2a",
+      "facet_label": "half_up_percent",
+      "kind": "family",
+      "function": "format_percent"
+    }
+  }
+}

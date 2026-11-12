@@ -186,6 +186,32 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 按冻结面处理。CODEOWNERS 因此只锁 `/shells/` 与 `/bench/` 的整体 owner，
 **不为 `genomes/`、`prompts/`、`tools/` 单独加锁**，避免候选迭代被拖死。
 
+### `web/data` 契约冻结（前端）
+
+`web/data/` 是引擎与页面的唯一接口；页面由前端 owner 维护，破坏性变更会让页面静默出错。
+
+**冻结三层**：
+
+- **Tier 1（冻结）**：`index.json`、`scenario.json`、`runs.json`、`gate.json`、`variants.json` 的字段名、类型、可空性与取值域。只允许新增字段；改名、删字段、改语义一律禁止。
+- **Tier 2（内部，页面不得依赖）**：`redaction.json`、`events/*.jsonl`、`bundle.js`、各文件的 `ext` 子对象、`web/data/probe/`。随时可变。
+- **Tier 3（聚合）**：`search_results.json`、`report_results.json` 只保证 `solved` / `total` / `cost_total_usd` / `cost_per_solved_usd` / `invalid_ratio`。
+
+`web/data/probe/` 是独立演示数据面，页面可以读取；它不属于 demo-6 的 Tier 1 契约，也不得被当作 demo-6 证据。
+
+**语义不变量**：
+
+- `runs[].provenance.kind ∈ {fixture, live, replay}`；`live` 仅指真实模型调用；`replay` 必须带 `replay_of_run_id`；`fixture` 不得标成 `live`。
+- `runs[].demo_group ∈ {closure, scan10, candidate-scan}`；`null` 表示未分组。
+- `gate.decisions[].verdict ∈ {adopt, reject, incomparable, unstable}`。
+- `holdout.detail` 固定 `"not-exported"`；页面不得展示 holdout 逐题。
+- `index.revision` 是刷新信号，不是兼容性信号；不得用它做缓存键。
+
+**版本与流程**：
+
+- `index.schema_version` 当前 `1.0.0`。Tier 1 的破坏性变更必须升 major、写 ADR、在 PR 描述里列出字段差异，并提前通知前端 owner。
+- 新增字段按 minor 处理；页面必须忽略未知键。
+- probe 数据永不进入 `web/data` 的五个 Tier 1 文件；`web/data/probe/` 是独立演示数据面（Tier 2），导出层仍只写 15 个文件，页面按需读取，不得把它当 demo-6 证据。隔离靠 state 白名单（`--state /tmp/molt-probe/...`），导出层不承担过滤职责（`molt/export.py` 不过滤 probe 记录）。
+
 ## 七、禁止清单
 
 - 直推 `main`；`git push --force`（含 `--force-with-lease`）到 `main`。
@@ -220,6 +246,8 @@ shells/<id>/tools/*.json       # 新增工具声明候选
       `molt scenario validate --scenario scenarios/demo/scenario.json` 通过；
       `docs/protocol.md` 无手改漂移。
 - [ ] 零写入：命令跑完仓库树不变（`tests/test_zero_write.py` + `git status --porcelain` 为空）。
+      例外：现场 `run_demo` 会写 `web/data/probe/{state,run}.json` 与 `shells/probe/memory/live.md`，
+      它们被 gitignore，属于允许的生成物；其余路径仍按零写入要求。
 - [ ] 证据可复算：涉及 run/result 的变更能在 `molt audit` 下重算出同样数字。
 - [ ] replay / live 标注：`run.ext.provenance.kind` 与实际一致，`replay_of_run_id` 存在。
 - [ ] claim 口径：措辞符合 §一（未观察到下降 + 单题成本不升，附配对表）。

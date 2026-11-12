@@ -197,3 +197,9 @@ gate，并断言 search 流零 holdout id、report 流至少一条 `holdout.acce
 - **可迁移性**：`tests/test_adapter_conformance.py` 对「两 shell × 两 runtime」做协议与端到端检查；
   两 shell 的证据都由同一个 `molt audit` 重算通过。详见
   [ADR-0007](decisions/0007-svc-config.md)。
+
+## 十一、已知缺口
+
+四类已知偏差与承重墙缺口见 [`docs/research/core-known-gaps.md`](research/core-known-gaps.md)：
+成本浮点比较（K1）、`non_inferior` 采纳语义（K2）、`k=0` 文档不一致（K3）、
+verifier 的 `sitecustomize` 逃逸（K4）。赛前冻结 core，赛后按 ADR 处理。

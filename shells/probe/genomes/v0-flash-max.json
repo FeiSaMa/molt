@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_version": "probe-6",
+  "genome_id": "sha256:329d423461527be14af83cb45e80aa9635bc520a393734e9e4c06b449a044df0",
+  "parent_id": null,
+  "shell_id": "probe",
+  "shell_version": "0.3.0",
+  "switches": {
+    "thinking": "high",
+    "context": "full",
+    "tools": "bash"
+  },
+  "prompt_ref": "shells/probe/prompts/probe-0.2.0.md",
+  "tools_ref": "shells/probe/tools",
+  "skills_ref": [],
+  "runtime": {
+    "runtime_id": "pi",
+    "version": "1.5.2"
+  },
+  "budget": {
+    "tokens": 600000,
+    "wall_ms": 600000,
+    "turns": 32,
+    "attempts": 1
+  },
+  "artifacts": {
+    "shells/probe/manifest.json": "f83eea2562b58348f81ce8d60a0f06ac847589ea015b08c3758c10801f1686bf",
+    "shells/probe/harness.py": "5851b3dd43129664b1af6d651b348353be527f8f19ebfc47f0ada71d5849d3a0",
+    "shells/probe/verifier.py": "b194ce321b416674ada40f5b00980cc489b7deeff8a59c0ff6e1d3573e809521",
+    "shells/probe/task_provider.py": "66dd637729514d2f3ca296deb40d52ce67a771a021d99e86d27dd72a3d657d4d",
+    "shells/probe/switches.schema.json": "f172be3e3d2cf23b2b5465abe3158e436ddd8b95b17d92f58522cb02b7dc9867",
+    "shells/probe/tools/bash.json": "1965ea16840b0ad63488a05b2d5ae7a9354845df4843246eb578e3e89c0a8191",
+    "shells/probe/prompts/probe-0.2.0.md": "2e09a5a65765487fee0ac1fe80e6910267467c0fb6780cc6a76422859f5c8153"
+  },
+  "ext": {
+    "pi": {
+      "model": "deepseek/deepseek-flash",
+      "thinking": "max"
+    },
+    "probe": {
+      "convention_id": "C1",
+      "cell": "flash-max",
+      "oracle": false
+    },
+    "note": "probe-1 为 1 题探索，probe-2 为 4 题正式，probe-3 为 8 题矩阵；2b 矩阵为 probe-3 权威测量；prompt-parameterized；probe-4 为 C1b 重锚矩阵。"
+  }
+}

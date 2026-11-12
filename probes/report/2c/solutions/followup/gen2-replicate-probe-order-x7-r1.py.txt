@@ -1,0 +1,31 @@
+"""Extrema and dedupe helpers."""
+
+from __future__ import annotations
+
+
+def dedupe_min(names: list[str], k: int | None = None) -> list[str]:
+    """Return the distinct names ordered by this package's preferred sequence.
+
+    Names that differ only by case collapse to their case-sensitive smallest
+    variant. The preferred sequence ranks lowercase letters before their
+    uppercase counterparts and otherwise follows ASCII order. When k is given,
+    only the k smallest names are returned.
+
+    >>> dedupe_min(["cc", "bb"])
+    ['bb', 'cc']
+    >>> dedupe_min([])
+    []
+    """
+    best: dict[str, str] = {}
+    for name in names:
+        folded = name.lower()
+        if folded not in best or name < best[folded]:
+            best[folded] = name
+
+    ordered = sorted(
+        best.values(),
+        key=lambda s: tuple((c.isupper(), c.lower()) for c in s),
+    )
+    if k is None:
+        return ordered
+    return ordered[:k]

@@ -1,0 +1,219 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "state": "web/data/probe/state.json",
+    "task_id": "probe-order-2",
+    "cases": [
+      {
+        "case_id": "case_01",
+        "input": [
+          "Alpha",
+          "bb",
+          "ALPHA",
+          "alpha"
+        ],
+        "expected": [
+          "bb",
+          "ALPHA"
+        ],
+        "actual": [
+          "Alpha",
+          "bb",
+          "ALPHA",
+          "alpha"
+        ],
+        "passed": false
+      },
+      {
+        "case_id": "case_02",
+        "input": [
+          "B",
+          "a",
+          "A",
+          "b"
+        ],
+        "expected": [
+          "A",
+          "B"
+        ],
+        "actual": [
+          "B",
+          "a",
+          "A",
+          "b"
+        ],
+        "passed": false
+      },
+      {
+        "case_id": "case_03",
+        "input": [
+          "bb",
+          "aa",
+          "bb"
+        ],
+        "expected": [
+          "aa",
+          "bb"
+        ],
+        "actual": [
+          "bb",
+          "aa"
+        ],
+        "passed": false
+      },
+      {
+        "case_id": "case_04",
+        "input": [
+          "aaa",
+          "bb",
+          "bb"
+        ],
+        "expected": [
+          "bb",
+          "aaa"
+        ],
+        "actual": [
+          "aaa",
+          "bb"
+        ],
+        "passed": false
+      }
+    ],
+    "prompt": "下面是同一代码库上一轮失败用例。请只用不超过 5 行描述这个库在分组、去重、排序上的规则。不要提及参数名、返回值类型、函数名或文件路径。不要写代码。\n\n## task-a\n\n- case_id: case_01\n  input: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  expected: [\"bb\", \"ALPHA\"]\n  actual: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  run: r1\n\n- case_id: case_02\n  input: [\"B\", \"a\", \"A\", \"b\"]\n  expected: [\"A\", \"B\"]\n  actual: [\"B\", \"a\", \"A\", \"b\"]\n  run: r1\n\n- case_id: case_03\n  input: [\"bb\", \"aa\", \"bb\"]\n  expected: [\"aa\", \"bb\"]\n  actual: [\"bb\", \"aa\"]\n  run: r1\n\n- case_id: case_04\n  input: [\"aaa\", \"bb\", \"bb\"]\n  expected: [\"bb\", \"aaa\"]\n  actual: [\"aaa\", \"bb\"]\n  run: r1\n"
+  },
+  "pi_version": "1.5.2",
+  "runs": [
+    {
+      "model": "deepseek/deepseek-v4-pro",
+      "run": 1,
+      "session_id": "stability-deepseek-deepseek-v4-pro-r1",
+      "prompt": "下面是同一代码库上一轮失败用例。请只用不超过 5 行描述这个库在分组、去重、排序上的规则。不要提及参数名、返回值类型、函数名或文件路径。不要写代码。\n\n## task-a\n\n- case_id: case_01\n  input: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  expected: [\"bb\", \"ALPHA\"]\n  actual: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  run: r1\n\n- case_id: case_02\n  input: [\"B\", \"a\", \"A\", \"b\"]\n  expected: [\"A\", \"B\"]\n  actual: [\"B\", \"a\", \"A\", \"b\"]\n  run: r1\n\n- case_id: case_03\n  input: [\"bb\", \"aa\", \"bb\"]\n  expected: [\"aa\", \"bb\"]\n  actual: [\"bb\", \"aa\"]\n  run: r1\n\n- case_id: case_04\n  input: [\"aaa\", \"bb\", \"bb\"]\n  expected: [\"bb\", \"aaa\"]\n  actual: [\"aaa\", \"bb\"]\n  run: r1\n",
+      "raw_output": "- 分组与去重均忽略大小写，同一组只保留一个“代表”元素。\n- 代表元素选取：在同组所有原写法中取按字符编码（字典序）最小的写法（因此全大写常先于混合或小写形式）。\n- 对去重后的代表按字符串长度升序排序；长度相同时再按字典序升序排序。\n- 完全相同的副本以及仅大小写不同的副本都不会重复出现。",
+      "cost_usd": 0.02812498,
+      "wall_ms": 90777,
+      "exit": 0,
+      "timed_out": false,
+      "assistant_messages": 1,
+      "stderr_tail": "Warning: No project session found with id 'stability-deepseek-deepseek-v4-pro-r1'; creating a new session with that id.\n",
+      "category": "length",
+      "category_basis": "明确出现按长度排序的表述：- 对去重后的代表按字符串长度升序排序；长度相同时再按字典序升序排序。",
+      "banned_terms": [],
+      "mentions_param_or_return": [],
+      "line_count": 4,
+      "frequency_or_uppercase_sort": false
+    },
+    {
+      "model": "deepseek/deepseek-v4-pro",
+      "run": 2,
+      "session_id": "stability-deepseek-deepseek-v4-pro-r2",
+      "prompt": "下面是同一代码库上一轮失败用例。请只用不超过 5 行描述这个库在分组、去重、排序上的规则。不要提及参数名、返回值类型、函数名或文件路径。不要写代码。\n\n## task-a\n\n- case_id: case_01\n  input: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  expected: [\"bb\", \"ALPHA\"]\n  actual: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  run: r1\n\n- case_id: case_02\n  input: [\"B\", \"a\", \"A\", \"b\"]\n  expected: [\"A\", \"B\"]\n  actual: [\"B\", \"a\", \"A\", \"b\"]\n  run: r1\n\n- case_id: case_03\n  input: [\"bb\", \"aa\", \"bb\"]\n  expected: [\"aa\", \"bb\"]\n  actual: [\"bb\", \"aa\"]\n  run: r1\n\n- case_id: case_04\n  input: [\"aaa\", \"bb\", \"bb\"]\n  expected: [\"bb\", \"aaa\"]\n  actual: [\"aaa\", \"bb\"]\n  run: r1\n",
+      "raw_output": "- 判重标准为忽略大小写后的相等：仅大小写形式不同的值归为同一组，每组只保留一个代表。\n- 代表取该组内按大小写敏感字典序最小者，故全大写形式通常优先于小写或混合大小写形式。\n- 去重后的结果按字符串长度从小到大排列。\n- 长度相同时再按字典序从小到大排列。",
+      "cost_usd": 0.01128706,
+      "wall_ms": 29005,
+      "exit": 0,
+      "timed_out": false,
+      "assistant_messages": 1,
+      "stderr_tail": "Warning: No project session found with id 'stability-deepseek-deepseek-v4-pro-r2'; creating a new session with that id.\n",
+      "category": "length",
+      "category_basis": "明确出现按长度排序的表述：- 去重后的结果按字符串长度从小到大排列。 / - 长度相同时再按字典序从小到大排列。",
+      "banned_terms": [],
+      "mentions_param_or_return": [],
+      "line_count": 4,
+      "frequency_or_uppercase_sort": false
+    },
+    {
+      "model": "deepseek/deepseek-v4-pro",
+      "run": 3,
+      "session_id": "stability-deepseek-deepseek-v4-pro-r3",
+      "prompt": "下面是同一代码库上一轮失败用例。请只用不超过 5 行描述这个库在分组、去重、排序上的规则。不要提及参数名、返回值类型、函数名或文件路径。不要写代码。\n\n## task-a\n\n- case_id: case_01\n  input: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  expected: [\"bb\", \"ALPHA\"]\n  actual: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  run: r1\n\n- case_id: case_02\n  input: [\"B\", \"a\", \"A\", \"b\"]\n  expected: [\"A\", \"B\"]\n  actual: [\"B\", \"a\", \"A\", \"b\"]\n  run: r1\n\n- case_id: case_03\n  input: [\"bb\", \"aa\", \"bb\"]\n  expected: [\"aa\", \"bb\"]\n  actual: [\"bb\", \"aa\"]\n  run: r1\n\n- case_id: case_04\n  input: [\"aaa\", \"bb\", \"bb\"]\n  expected: [\"bb\", \"aaa\"]\n  actual: [\"aaa\", \"bb\"]\n  run: r1\n",
+      "raw_output": "- 忽略字母大小写分组：同一内容的不同大小写变体视为一组，每组仅保留一个。\n- 组内优先保留全大写形态，其余重复项剔除。\n- 去重后的结果按字符串长度从短到长排列。\n- 长度相同时按字母顺序排列。",
+      "cost_usd": 0.01738942,
+      "wall_ms": 47239,
+      "exit": 0,
+      "timed_out": false,
+      "assistant_messages": 1,
+      "stderr_tail": "Warning: No project session found with id 'stability-deepseek-deepseek-v4-pro-r3'; creating a new session with that id.\n",
+      "category": "length",
+      "category_basis": "明确出现按长度排序的表述：- 去重后的结果按字符串长度从短到长排列。 / - 长度相同时按字母顺序排列。",
+      "banned_terms": [],
+      "mentions_param_or_return": [],
+      "line_count": 4,
+      "frequency_or_uppercase_sort": false
+    },
+    {
+      "model": "deepseek/deepseek-flash",
+      "run": 1,
+      "session_id": "stability-deepseek-deepseek-flash-r1",
+      "prompt": "下面是同一代码库上一轮失败用例。请只用不超过 5 行描述这个库在分组、去重、排序上的规则。不要提及参数名、返回值类型、函数名或文件路径。不要写代码。\n\n## task-a\n\n- case_id: case_01\n  input: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  expected: [\"bb\", \"ALPHA\"]\n  actual: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  run: r1\n\n- case_id: case_02\n  input: [\"B\", \"a\", \"A\", \"b\"]\n  expected: [\"A\", \"B\"]\n  actual: [\"B\", \"a\", \"A\", \"b\"]\n  run: r1\n\n- case_id: case_03\n  input: [\"bb\", \"aa\", \"bb\"]\n  expected: [\"aa\", \"bb\"]\n  actual: [\"bb\", \"aa\"]\n  run: r1\n\n- case_id: case_04\n  input: [\"aaa\", \"bb\", \"bb\"]\n  expected: [\"bb\", \"aaa\"]\n  actual: [\"aaa\", \"bb\"]\n  run: r1\n",
+      "raw_output": "1. 分组只忽略字母大小写，大小写不同但其余相同的视为同一组。  \n2. 每组只保留一个代表，取组内按区分大小写的字典序最小的写法，因此全大写通常优先。  \n3. 去重以组为单位，同组其他写法全部丢弃。  \n4. 结果先按代表长度升序排列，长度相同再按区分大小写的字典序升序排列，原始顺序不保留。",
+      "cost_usd": 0.0016947,
+      "wall_ms": 8055,
+      "exit": 0,
+      "timed_out": false,
+      "assistant_messages": 1,
+      "stderr_tail": "Warning: No project session found with id 'stability-deepseek-deepseek-flash-r1'; creating a new session with that id.\n",
+      "category": "length",
+      "category_basis": "明确出现按长度排序的表述：4. 结果先按代表长度升序排列，长度相同再按区分大小写的字典序升序排列，原始顺序不保留。",
+      "banned_terms": [],
+      "mentions_param_or_return": [],
+      "line_count": 4,
+      "frequency_or_uppercase_sort": false
+    },
+    {
+      "model": "deepseek/deepseek-flash",
+      "run": 2,
+      "session_id": "stability-deepseek-deepseek-flash-r2",
+      "prompt": "下面是同一代码库上一轮失败用例。请只用不超过 5 行描述这个库在分组、去重、排序上的规则。不要提及参数名、返回值类型、函数名或文件路径。不要写代码。\n\n## task-a\n\n- case_id: case_01\n  input: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  expected: [\"bb\", \"ALPHA\"]\n  actual: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  run: r1\n\n- case_id: case_02\n  input: [\"B\", \"a\", \"A\", \"b\"]\n  expected: [\"A\", \"B\"]\n  actual: [\"B\", \"a\", \"A\", \"b\"]\n  run: r1\n\n- case_id: case_03\n  input: [\"bb\", \"aa\", \"bb\"]\n  expected: [\"aa\", \"bb\"]\n  actual: [\"bb\", \"aa\"]\n  run: r1\n\n- case_id: case_04\n  input: [\"aaa\", \"bb\", \"bb\"]\n  expected: [\"bb\", \"aaa\"]\n  actual: [\"aaa\", \"bb\"]\n  run: r1\n",
+      "raw_output": "- 仅大小写不同的字符串视为同一组，分组时忽略大小写。\n- 每组只保留一个代表：优先保留全大写写法；若该组没有全大写写法，则保留字典序最小的写法。\n- 去重结果先按字符串长度升序排列。\n- 长度相同时再按字典序升序排列。",
+      "cost_usd": 0.0073395,
+      "wall_ms": 38353,
+      "exit": 0,
+      "timed_out": false,
+      "assistant_messages": 1,
+      "stderr_tail": "Warning: No project session found with id 'stability-deepseek-deepseek-flash-r2'; creating a new session with that id.\n",
+      "category": "length",
+      "category_basis": "明确出现按长度排序的表述：- 去重结果先按字符串长度升序排列。 / - 长度相同时再按字典序升序排列。",
+      "banned_terms": [],
+      "mentions_param_or_return": [],
+      "line_count": 4,
+      "frequency_or_uppercase_sort": false
+    },
+    {
+      "model": "deepseek/deepseek-flash",
+      "run": 3,
+      "session_id": "stability-deepseek-deepseek-flash-r3",
+      "prompt": "下面是同一代码库上一轮失败用例。请只用不超过 5 行描述这个库在分组、去重、排序上的规则。不要提及参数名、返回值类型、函数名或文件路径。不要写代码。\n\n## task-a\n\n- case_id: case_01\n  input: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  expected: [\"bb\", \"ALPHA\"]\n  actual: [\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"]\n  run: r1\n\n- case_id: case_02\n  input: [\"B\", \"a\", \"A\", \"b\"]\n  expected: [\"A\", \"B\"]\n  actual: [\"B\", \"a\", \"A\", \"b\"]\n  run: r1\n\n- case_id: case_03\n  input: [\"bb\", \"aa\", \"bb\"]\n  expected: [\"aa\", \"bb\"]\n  actual: [\"bb\", \"aa\"]\n  run: r1\n\n- case_id: case_04\n  input: [\"aaa\", \"bb\", \"bb\"]\n  expected: [\"bb\", \"aaa\"]\n  actual: [\"aaa\", \"bb\"]\n  run: r1\n",
+      "raw_output": "- 分组忽略大小写：同一文本的不同大小写写法视为同一组。\n- 每组只保留一个代表，优先采用全大写写法；组内没有大写写法时保留原小写形式。\n- 去重后的结果按文本长度从短到长排列。\n- 长度相同时按字典序从小到大排列。",
+      "cost_usd": 0.0053163,
+      "wall_ms": 27529,
+      "exit": 0,
+      "timed_out": false,
+      "assistant_messages": 1,
+      "stderr_tail": "Warning: No project session found with id 'stability-deepseek-deepseek-flash-r3'; creating a new session with that id.\n",
+      "category": "length",
+      "category_basis": "明确出现按长度排序的表述：- 去重后的结果按文本长度从短到长排列。 / - 长度相同时按字典序从小到大排列。",
+      "banned_terms": [],
+      "mentions_param_or_return": [],
+      "line_count": 4,
+      "frequency_or_uppercase_sort": false
+    }
+  ],
+  "cost_total": 0.07115196,
+  "stats": {
+    "pro_runs": 3,
+    "flash_runs": 3,
+    "pro_length": 3,
+    "flash_length": 3,
+    "category_counts": {
+      "length": 6,
+      "frequency": 0,
+      "uppercase_count": 0,
+      "other": 0
+    },
+    "banned_term_runs": 0,
+    "param_or_return_runs": 0,
+    "runs": 6,
+    "cost_total": 0.07115196
+  },
+  "conclusion": "6/6 输出都明确按长度升序排序（pro 3/3、flash 3/3）；未出现频率或大写数量排序，也未提及 k/limit/数量上限或参数名/返回类型。"
+}

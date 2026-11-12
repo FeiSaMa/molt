@@ -1,0 +1,269 @@
+{
+  "schema_version": "1.0.0",
+  "convention_id": "C1",
+  "facets": {
+    "C1a": {
+      "rule": "排序键 (len(s), s.casefold(), s)",
+      "applies_to": [
+        "top_k",
+        "rank",
+        "merge",
+        "min_max"
+      ]
+    },
+    "C1b": {
+      "rule": "在 C1a 基础上做 casefold 去重，保留 raw 最小代表",
+      "applies_to": [
+        "dedupe",
+        "dedupe_top_k"
+      ]
+    }
+  },
+  "tasks": {
+    "probe-order-1": {
+      "convention_id": "C1",
+      "facet": "C1a",
+      "facet_label": "length_priority",
+      "function": "top_k",
+      "params": [
+        "names",
+        "k"
+      ],
+      "default_impl": "sorted(names)[:k]",
+      "project_impl": "sorted(names, key=lambda s: (len(s), s.casefold(), s))[:k]",
+      "why_default_fails": "默认 sorted 只按 raw 字典序；C1a 的键是 (len(s), s.casefold(), s)，先长度、再 casefold、最后 raw。判别用例 case_01 的默认输出 [\"aa\", \"b\"] 与 C1a 的 [\"b\", \"aa\"] 不同。",
+      "convention_text": "本包的 C1 是 shortlex 变体，分两个 facet：C1a 排序键为 (len(s), s.casefold(), s)，用于 top_k/rank/merge/min_max；C1b 在 C1a 基础上做 casefold 去重、保留 raw 最小代表，用于 dedupe/dedupe_top_k。本题 top_k 只做 C1a，不去重。",
+      "kind": "retired",
+      "note": "C1a facet 可被 pro-high 半猜中，退出族题"
+    },
+    "probe-order-2": {
+      "convention_id": "C1",
+      "facet": "C1b",
+      "facet_label": "casefold_dedupe",
+      "function": "dedupe",
+      "params": [
+        "names"
+      ],
+      "default_impl": "sorted(set(names))",
+      "project_impl": "sorted({name.casefold(): min((item for item in names if item.casefold() == name.casefold()), key=lambda s: (len(s), s.casefold(), s)) for name in names}.values(), key=lambda s: (len(s), s.casefold(), s))",
+      "why_default_fails": "默认 sorted(set(names)) 是大小写敏感去重；C1b 先按 C1a 排序，再按 casefold 分组保留 raw 最小代表。case_01/02 默认保留四项，C1b 只保留两组代表。case_04 用 [\"aaa\", \"bb\", \"bb\"] 区分长度排序与频次排序：默认 sorted(set()) / 频次排序 / dict.fromkeys 保序去重都给 [\"aaa\", \"bb\"]，C1b 给 [\"bb\", \"aaa\"]。",
+      "convention_text": "C1b：先按 C1a 排序键 (len(s), s.casefold(), s) 排序，再按 casefold 分组，保留每组第一个（C1a 下 raw 最小代表）。本题 dedupe 只做 C1b。",
+      "kind": "family",
+      "note": "C1b 族题锚点；case_04 判别长度排序与频次排序（baseline 必败）"
+    },
+    "probe-ctl-a": {
+      "convention_id": null,
+      "facet": null,
+      "function": "sign_label",
+      "params": [
+        "n"
+      ],
+      "spec_impl": "\"pos\" if n > 0 else (\"neg\" if n < 0 else \"zero\")",
+      "note": "规格完整：n>0 pos、n<0 neg、n==0 zero；无隐藏约定。",
+      "kind": "control"
+    },
+    "probe-ctl-b": {
+      "convention_id": null,
+      "facet": null,
+      "function": "chunk",
+      "params": [
+        "items",
+        "n"
+      ],
+      "spec_impl": "[items[i:i + n] for i in range(0, len(items), n)]",
+      "note": "规格完整：按 n 切块、最后一块可短、n>0；无隐藏约定。",
+      "kind": "control"
+    },
+    "probe-order-x1": {
+      "convention_id": "C1",
+      "facet": "C1a",
+      "facet_label": "length_priority",
+      "function": "rank",
+      "params": [
+        "names"
+      ],
+      "default_impl": "sorted(range(len(names)), key=lambda index: names[index])",
+      "project_impl": "sorted(range(len(names)), key=lambda index: (len(names[index]), names[index].casefold(), names[index]))",
+      "why_default_fails": "默认按 raw 字符串排序下标；C1a 先按名称长度、再 casefold、最后 raw。case_01 的默认下标序 [2,1,0] 与 C1a 的 [1,2,0] 不同。",
+      "convention_text": "C1a 排序键 (len(s), s.casefold(), s)；rank 返回该序下的下标。",
+      "kind": "retired",
+      "note": "C1a facet 可被 pro-high 半猜中，退出族题"
+    },
+    "probe-order-x2": {
+      "convention_id": "C1",
+      "facet": "C1a",
+      "facet_label": "length_priority",
+      "function": "merge",
+      "params": [
+        "a",
+        "b"
+      ],
+      "default_impl": "sorted(a + b)",
+      "project_impl": "sorted(a + b, key=lambda s: (len(s), s.casefold(), s))",
+      "why_default_fails": "默认只按 raw 字典序合并；C1a 先长度、再 casefold、最后 raw。case_01 的默认输出 [aa,b,ccc,dddd] 与 C1a 的 [b,aa,ccc,dddd] 不同。",
+      "convention_text": "C1a 排序键 (len(s), s.casefold(), s)；merge 合并两表并保留重复。",
+      "kind": "retired",
+      "note": "C1a facet 可被 pro-high 半猜中，退出族题"
+    },
+    "probe-order-x3": {
+      "convention_id": "C1",
+      "facet": "C1b",
+      "facet_label": "casefold_dedupe",
+      "function": "dedupe_top_k",
+      "params": [
+        "names",
+        "k"
+      ],
+      "default_impl": "sorted(set(names))[:k]",
+      "project_impl": "sorted({name.casefold(): min((item for item in names if item.casefold() == name.casefold()), key=lambda s: (len(s), s.casefold(), s)) for name in names}.values(), key=lambda s: (len(s), s.casefold(), s))[:k]",
+      "why_default_fails": "默认是大小写敏感去重后取前 k；C1b 先按 C1a 排序，再按 casefold 分组保留 raw 最小代表，最后取前 k。case_01 的默认前两项是 GAMMA/Gamma，C1b 是 dd/GAMMA。",
+      "convention_text": "C1b：先按 C1a 排序键 (len(s), s.casefold(), s) 排序，再按 casefold 分组保留每组第一个，最后取前 k。",
+      "kind": "family",
+      "note": "C1b 族题锚点"
+    },
+    "probe-order-x4": {
+      "convention_id": "C1",
+      "facet": "C1a",
+      "facet_label": "length_priority",
+      "function": "min_max",
+      "params": [
+        "names"
+      ],
+      "default_impl": "(min(names), max(names))",
+      "project_impl": "(min(names, key=lambda s: (len(s), s.casefold(), s)), max(names, key=lambda s: (len(s), s.casefold(), s)))",
+      "why_default_fails": "默认按 raw 字符串取 min/max；C1a 先长度、再 casefold、最后 raw。case_01 的默认最小是 cc，C1a 的最小是 d。",
+      "convention_text": "C1a 排序键 (len(s), s.casefold(), s)；min_max 返回该序下的最小与最大。",
+      "kind": "retired",
+      "note": "C1a facet 可被 pro-high 半猜中，退出族题"
+    },
+    "probe-order-x5": {
+      "convention_id": "C1",
+      "facet": "C1b",
+      "facet_label": "casefold_dedupe",
+      "kind": "transfer",
+      "function": "unique",
+      "params": [
+        "names"
+      ],
+      "default_impl": "sorted(set(names))",
+      "project_impl": "sorted({name.casefold(): min((item for item in names if item.casefold() == name.casefold()), key=lambda s: (len(s), s.casefold(), s)) for name in names}.values(), key=lambda s: (len(s), s.casefold(), s))",
+      "why_default_fails": "默认是大小写敏感去重；C1b 先按 C1a 排序再按 casefold 分组保留 raw 最小代表。case_01 默认保留四项，C1b 只保留 ee/DELTA。",
+      "convention_text": "C1b：先按 C1a 排序键 (len(s), s.casefold(), s) 排序，再按 casefold 分组保留每组第一个。 unique 返回去重后的完整序列。"
+    },
+    "probe-order-x6": {
+      "convention_id": "C1",
+      "facet": "C1b",
+      "facet_label": "casefold_dedupe",
+      "kind": "transfer",
+      "function": "dedupe_merge",
+      "params": [
+        "a",
+        "b"
+      ],
+      "default_impl": "sorted(set(a + b))",
+      "project_impl": "sorted({name.casefold(): min((item for item in a + b if item.casefold() == name.casefold()), key=lambda s: (len(s), s.casefold(), s)) for name in a + b}.values(), key=lambda s: (len(s), s.casefold(), s))",
+      "why_default_fails": "默认是大小写敏感去重；C1b 先拼接再按 C1a 排序、casefold 分组保留 raw 最小代表。case_01 默认保留四项，C1b 保留 ff/gg/ECHO。",
+      "convention_text": "C1b：先按 C1a 排序键 (len(s), s.casefold(), s) 排序，再按 casefold 分组保留每组第一个。 dedupe_merge 先拼接两表再去重。"
+    },
+    "probe-order-x7": {
+      "convention_id": "C1",
+      "facet": "C1b",
+      "facet_label": "casefold_dedupe",
+      "kind": "transfer",
+      "function": "dedupe_min",
+      "params": [
+        "names"
+      ],
+      "default_impl": "min(set(names)) if names else None",
+      "project_impl": "min({name.casefold(): min((item for item in names if item.casefold() == name.casefold()), key=lambda s: (len(s), s.casefold(), s)) for name in names}.values(), key=lambda s: (len(s), s.casefold(), s)) if names else None",
+      "why_default_fails": "默认按 raw 字符串取 min；C1b 先按 casefold 分组保留 raw 最小代表，再取 C1a 最小。case_01 默认返回 FOXTROT，C1b 返回 gg。",
+      "convention_text": "C1b：先按 C1a 排序键 (len(s), s.casefold(), s) 排序，再按 casefold 分组保留每组第一个。 dedupe_min 返回去重后的 C1a 最小者，空列表返回 None。"
+    },
+    "probe-order-x8": {
+      "convention_id": "C1",
+      "facet": "C1b",
+      "facet_label": "casefold_dedupe",
+      "kind": "transfer",
+      "function": "distinct_count",
+      "params": [
+        "names"
+      ],
+      "default_impl": "len(set(names))",
+      "project_impl": "len({name.casefold() for name in names})",
+      "why_default_fails": "默认按大小写敏感集合计数；C1b 按 casefold 分组计数。case_01 默认 3，C1b 2。",
+      "convention_text": "C1b：先按 C1a 排序键 (len(s), s.casefold(), s) 排序，再按 casefold 分组保留每组第一个。 distinct_count 返回 casefold 分组数。"
+    }
+  },
+  "C2": {
+    "convention_id": "C2",
+    "facets": {
+      "C2a": {
+        "rule": "保留两位小数，采用 half-up（0.5 远离零）；负数同样远离零",
+        "applies_to": [
+          "format_percent"
+        ]
+      },
+      "C2b": {
+        "rule": "保留两位小数，采用 half-up（0.5 远离零）；负数同样远离零",
+        "applies_to": [
+          "round_ratio"
+        ]
+      }
+    },
+    "tasks": {
+      "c2-percent": {
+        "convention_id": "C2",
+        "facet": "C2a",
+        "facet_label": "half_up_percent",
+        "function": "format_percent",
+        "params": [
+          "p"
+        ],
+        "default_impl": "format(p, '.2f')",
+        "project_impl": "format(p.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP), '.2f')",
+        "why_default_fails": "12.125 默认（half-even）给 12.12，项目（half-up）给 12.13；-12.125 默认 -12.12，项目 -12.13。",
+        "convention_text": "C2a：保留两位小数，采用 half-up（0.5 远离零）；负数同样远离零。format_percent 返回字符串。",
+        "kind": "family",
+        "note": "C2a 族题；默认实现走 Decimal 上下文 half-even"
+      },
+      "c2-ratio": {
+        "convention_id": "C2",
+        "facet": "C2b",
+        "facet_label": "half_up_ratio",
+        "function": "round_ratio",
+        "params": [
+          "x"
+        ],
+        "default_impl": "x.quantize(Decimal('0.01'))",
+        "project_impl": "x.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)",
+        "why_default_fails": "12.125 默认（half-even）给 12.12，项目（half-up）给 12.13；-12.125 默认 -12.12，项目 -12.13。",
+        "convention_text": "C2b：保留两位小数，采用 half-up（0.5 远离零）；负数同样远离零。round_ratio 返回 Decimal。",
+        "kind": "family",
+        "note": "C2b 族题；默认实现走 Decimal 上下文 half-even"
+      },
+      "c2-ctl-a": {
+        "convention_id": null,
+        "facet": null,
+        "function": "sign_label",
+        "params": [
+          "n"
+        ],
+        "spec_impl": "\"pos\" if n > 0 else (\"neg\" if n < 0 else \"zero\")",
+        "note": "规格完整：n>0 pos、n<0 neg、n==0 zero；无隐藏约定。",
+        "kind": "control"
+      },
+      "c2-ctl-b": {
+        "convention_id": null,
+        "facet": null,
+        "function": "chunk",
+        "params": [
+          "items",
+          "n"
+        ],
+        "spec_impl": "[items[i:i + n] for i in range(0, len(items), n)]",
+        "note": "规格完整：按 n 切块、最后一块可短、n>0；无隐藏约定。",
+        "kind": "control"
+      }
+    }
+  }
+}

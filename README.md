@@ -144,3 +144,23 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
   gate `adopt`，真实数字与负结果见 ADR-0008，证据在 `web/data`）。
 - 已实现：`web/page/` 零构建展示页（白底 8 屏、scroll-snap 逐屏、`file://` 直开、
   只读 `web/data`、`node web/page/check.mjs` 验收 462 条）；导出流程不产页面。
+- 已知缺口：`docs/research/core-known-gaps.md`（成本浮点、`non_inferior` 语义、`k` 文档、verifier 逃逸）。
+
+## 研究实验（probe）
+
+`probes/` 是一套独立的测量仪器，用来验证“失败 → 反思 → 记忆 → 同族新题迁移”是否有可测效果。
+它不属于 demo-6 的对外 claim，`molt/core`、`schemas/v1`、demo 题集与 `web/data` 的五个 Tier 1 文件均未改动。
+
+- 仪器与命令：[`probes/README.md`](probes/README.md)
+- 数据流与比较域：[`probes/ARCHITECTURE.md`](probes/ARCHITECTURE.md)
+- 实验报告：[`docs/research/headroom-probe.md`](docs/research/headroom-probe.md)
+- 一页结论：[`probes/report/FINAL.md`](probes/report/FINAL.md)
+- 8 分钟讲稿与 Q&A：[`probes/report/PITCH.md`](probes/report/PITCH.md)
+- 页面数据契约与四画面：[`probes/report/VISUAL_SPEC.md`](probes/report/VISUAL_SPEC.md)
+
+关键数字（证据见上述文档）：
+
+- 记忆 v3 在 4 道迁移题 × 4 次重复上 **16/16**；有 headroom 的三题 **12/12 vs 基线 0/10**。
+- 反思稳定性 **6/6**（pro 3/3、flash 3/3）选择同一排序规则。
+- 现场 fast 彩排 **98s / 89s**，两次均为 `v3_stable_headroom`。
+- 已知边界：单约定（C1b）、单模型对、2–4 reps；C2 舍入族因 half-up 是领域常识而无 headroom。

@@ -1,0 +1,26 @@
+"""Unique helpers."""
+
+from __future__ import annotations
+
+
+def unique(names: list[str], k: int | None = None) -> list[str]:
+    """Drop duplicate names and return them in this package's preferred sequence.
+
+    Names are compared case-insensitively, and the all-uppercase spelling is
+    preferred when several spellings of the same name appear.  The result is
+    ordered by length, then alphabetically (case-insensitively).
+
+    >>> unique(["cc", "bb"])
+    ['bb', 'cc']
+    >>> unique(["dd", "ee"])
+    ['dd', 'ee']
+    """
+    chosen: dict[str, str] = {}
+    for name in names:
+        key = name.lower()
+        if key not in chosen or name == key.upper():
+            chosen[key] = name
+    result = sorted(chosen.values(), key=lambda name: (len(name), name.lower()))
+    if k is not None:
+        return result[:k]
+    return result

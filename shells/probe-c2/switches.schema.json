@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "shell_id": "probe-c2",
+  "locked": true,
+  "dimensions": {
+    "thinking": {
+      "values": [
+        "high"
+      ],
+      "default": "high"
+    },
+    "context": {
+      "values": [
+        "full"
+      ],
+      "default": "full"
+    },
+    "tools": {
+      "values": [
+        "bash"
+      ],
+      "default": "bash"
+    }
+  },
+  "combinations": 1,
+  "ext": {}
+}

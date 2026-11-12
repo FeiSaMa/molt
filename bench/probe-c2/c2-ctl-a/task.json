@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "c2-ctl-a",
+  "scenario_version": "c2-1",
+  "shell_id": "probe-c2",
+  "scope": "search",
+  "title": "三档符号标签",
+  "workspace_ref": "bench/probe-c2/c2-ctl-a/workspace",
+  "tests_ref": "bench/probe-c2/c2-ctl-a/tests",
+  "timeout_s": 120,
+  "ext": {
+    "probe": {
+      "convention_id": null,
+      "facet": null,
+      "kind": "control",
+      "function": "sign_label"
+    }
+  }
+}

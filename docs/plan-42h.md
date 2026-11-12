@@ -80,7 +80,7 @@ cost_per_solved = 全部运行成本 / 通过题数
 
 副作用指标全部落 `run.json`（契约要加字段）：`model`、`thinking_level`、`cost_usd`、`cache_read_tokens`、`turns`、`max_context_tokens`。
 
-门禁：候选通过题数不得少于基线；只掉 1 题时用 3 次重复判断是不是噪声。`result.json` 同时写 search 与 holdout 两组分数，holdout 不参与选择。
+门禁：候选通过题数不得少于基线；当前实现为 k=0 一票否决（"3 次重复判噪声"未实现，见 `docs/research/core-known-gaps.md` K3）。`result.json` 同时写 search 与 holdout 两组分数，holdout 不参与选择。
 
 ## 6. 42 小时排期
 

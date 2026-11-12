@@ -1,0 +1,32 @@
+{
+  "task_id": "probe-order-x3",
+  "rep": 1,
+  "run_id": "a0dfa94e-probe-order-x3-a1-86e31c",
+  "state": "/tmp/molt-probe/matrix-v3/pro-max/probe-order-x3-r1",
+  "cases": [
+    {
+      "case_id": "case_01",
+      "expected": [
+        "dd",
+        "GAMMA"
+      ],
+      "actual": [
+        "GAMMA",
+        "Gamma"
+      ],
+      "passed": false
+    },
+    {
+      "case_id": "case_02",
+      "expected": [
+        "c",
+        "D"
+      ],
+      "actual": [
+        "D",
+        "c"
+      ],
+      "passed": false
+    }
+  ]
+}

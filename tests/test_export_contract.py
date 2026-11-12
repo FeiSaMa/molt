@@ -379,7 +379,12 @@ def test_cli_export_writes_nothing_inside_repository(tmp_path: Path) -> None:
 
 def test_committed_sample_and_readme_are_usable() -> None:
     sample = ROOT / "web" / "data"
-    assert _files(sample) == EXPECTED
+    # `web/data/probe/` 是独立的演示数据面（probes/report/VISUAL_SPEC.md），
+    # 不属于 Tier 1 的 15 文件契约；导出层仍然只写这 15 个文件。
+    committed = {
+        path for path in _files(sample) if not path.startswith("probe/")
+    }
+    assert committed == EXPECTED
     index = _load(sample / "index.json")
     assert set(index["files"]) == EXPECTED - {"index.json"}
     for name, meta in index["files"].items():

@@ -1,0 +1,22 @@
+"""Unique helpers."""
+
+from __future__ import annotations
+
+
+def unique(names: list[str], limit: int | None = None) -> list[str]:
+    """Drop duplicate names and return them in this package's preferred sequence.
+
+    >>> unique(["cc", "bb"])
+    ['bb', 'cc']
+    >>> unique(["dd", "ee"])
+    ['dd', 'ee']
+    """
+    kept: dict[str, str] = {}
+    for name in names:
+        key = name.lower()
+        if key not in kept or name < kept[key]:
+            kept[key] = name
+    result = sorted(kept.values(), key=lambda s: (len(s), s.lower()))
+    if limit is not None:
+        result = result[:limit]
+    return result

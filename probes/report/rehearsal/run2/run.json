@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "mode": "live",
+  "phase": "done",
+  "started_at": "2026-11-12T04:31:32Z",
+  "finished_at": "2026-11-12T04:33:01Z",
+  "wall_ms": 88773,
+  "cost_usd": 0.072286,
+  "verdict": "v3_stable_headroom",
+  "verdict_note": "fast profile：x8 未跑，离线证据见 memory-v3 4/4",
+  "memory_ref": "shells/probe/memory/live.md",
+  "memory_sha256": "995dcb47fb07eeb1d31ca48b3398bbf541964282d8d1108cd71feb02f14fc9ba",
+  "pi_version": "1.5.2",
+  "genomes": {
+    "run1": {
+      "genome_id": "sha256:a2ce93d848bac18ba43de58b4571ca38c67740f6e6e1e18101eb1d0d864e5fb7",
+      "path": "genomes/run1.json"
+    },
+    "run2": {
+      "genome_id": "sha256:a3a358ee6fb3a980953879b054ab4cdf0a6e4f6ac8853ec9987a971192ddb5dd",
+      "path": "genomes/run2.json"
+    }
+  },
+  "phases": [
+    {
+      "name": "run1",
+      "wall_ms": 19259,
+      "cost_usd": 0.030226,
+      "tasks": 1
+    },
+    {
+      "name": "reflection",
+      "wall_ms": 16899,
+      "cost_usd": 0.005107,
+      "tasks": 1
+    },
+    {
+      "name": "run2",
+      "wall_ms": 51925,
+      "cost_usd": 0.036954,
+      "tasks": 2
+    }
+  ],
+  "runs": [
+    {
+      "phase": "run1",
+      "task_id": "probe-order-2",
+      "run_id": "a2ce93d8-probe-order-2-a1-c79f4b",
+      "outcome": "failed",
+      "passed": false,
+      "cost_usd": 0.030226,
+      "wall_ms": 19259
+    },
+    {
+      "phase": "run2",
+      "task_id": "probe-order-x5",
+      "run_id": "a3a358ee-probe-order-x5-a1-ba559f",
+      "outcome": "passed",
+      "passed": true,
+      "cost_usd": 0.025181,
+      "wall_ms": 25593
+    },
+    {
+      "phase": "run2",
+      "task_id": "probe-order-x6",
+      "run_id": "a3a358ee-probe-order-x6-a1-64521b",
+      "outcome": "passed",
+      "passed": true,
+      "cost_usd": 0.011773,
+      "wall_ms": 26332
+    }
+  ],
+  "budget": {
+    "max_wall_s": 360.0,
+    "max_cost_usd": 0.6,
+    "exceeded": false,
+    "reason": ""
+  },
+  "note": "live demo deepseek/deepseek-v4-pro（fast）：run1 0/1，run2 2/2"
+}

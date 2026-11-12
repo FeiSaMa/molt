@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "shell_id": "probe-c2",
+  "shell_version": "0.3.0",
+  "name": "probe-c2",
+  "artifact_roots": [
+    "molt/core",
+    "schemas/v1",
+    "shells/probe-c2"
+  ],
+  "entrypoints": {
+    "harness": "shells/probe-c2/harness.py",
+    "verifier": "shells/probe-c2/verifier.py",
+    "task_provider": "shells/probe-c2/task_provider.py"
+  },
+  "capabilities": {
+    "switch_domains": {
+      "thinking": [
+        "high"
+      ],
+      "context": [
+        "full"
+      ],
+      "tools": [
+        "bash"
+      ]
+    },
+    "max_execution_budget_usd": 1.0,
+    "max_wall_ms": 600000,
+    "max_turns": 32,
+    "max_attempts": 1
+  },
+  "ext": {
+    "note": "C2 有效性门：probe 的同构隔离副本（task_provider 只读 bench/probe-c2）"
+  }
+}

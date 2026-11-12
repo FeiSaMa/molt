@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "shell_id": "probe",
+  "shell_version": "0.3.0",
+  "name": "probe",
+  "artifact_roots": [
+    "molt/core",
+    "schemas/v1",
+    "shells/probe",
+    "shells/probe/memory"
+  ],
+  "entrypoints": {
+    "harness": "shells/probe/harness.py",
+    "verifier": "shells/probe/verifier.py",
+    "task_provider": "shells/probe/task_provider.py"
+  },
+  "capabilities": {
+    "switch_domains": {
+      "thinking": [
+        "high"
+      ],
+      "context": [
+        "full"
+      ],
+      "tools": [
+        "bash"
+      ]
+    },
+    "max_execution_budget_usd": 1.0,
+    "max_wall_ms": 600000,
+    "max_turns": 32,
+    "max_attempts": 1
+  },
+  "ext": {
+    "note": "Batch 1 probe shell：单题、单格、thinking 由 ext.pi.thinking 覆盖"
+  }
+}

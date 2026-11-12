@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "probe-order-x4",
+  "scenario_version": "probe-3",
+  "shell_id": "probe",
+  "scope": "search",
+  "title": "按包内规则取最小与最大",
+  "workspace_ref": "bench/probe/probe-order-x4/workspace",
+  "tests_ref": "bench/probe/probe-order-x4/tests",
+  "timeout_s": 120,
+  "ext": {
+    "probe": {
+      "convention_id": "C1",
+      "facet": "C1a",
+      "kind": "convention",
+      "function": "min_max"
+    }
+  }
+}

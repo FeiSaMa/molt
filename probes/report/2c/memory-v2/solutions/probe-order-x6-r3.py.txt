@@ -1,0 +1,25 @@
+"""Merge and dedupe helpers."""
+
+from __future__ import annotations
+
+
+def dedupe_merge(a: list[str], b: list[str], k: int | None = None) -> list[str]:
+    """Merge and dedupe two name lists in this package's preferred sequence.
+
+    >>> dedupe_merge(["cc"], ["bb"])
+    ['bb', 'cc']
+    >>> dedupe_merge(["c"], ["b"])
+    ['b', 'c']
+    """
+    unique: dict[str, str] = {}
+    for word in a + b:
+        key = word.lower()
+        current = unique.get(key)
+        if current is None:
+            unique[key] = word
+        elif word.isupper() and not current.isupper():
+            unique[key] = word
+    result = sorted(unique.values(), key=lambda word: (len(word), word.lower()))
+    if k is not None:
+        result = result[:k]
+    return result

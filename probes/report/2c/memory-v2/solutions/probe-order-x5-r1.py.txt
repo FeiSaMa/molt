@@ -1,0 +1,32 @@
+"""Unique helpers."""
+
+from __future__ import annotations
+
+
+def unique(names: list[str], k: int | None = None) -> list[str]:
+    """Return case-insensitively unique names in the package's preferred order.
+
+    Case variants of the same word collapse to a single entry, keeping an
+    ALL-CAPS variant when one exists. Results are ordered by length
+    ascending; ties are ordered by lowercased lexicographic order. ``k`` is
+    an optional upper bound on the result length (no padding when there are
+    fewer unique names).
+
+    >>> unique(["cc", "bb"])
+    ['bb', 'cc']
+    >>> unique(["dd", "ee"])
+    ['dd', 'ee']
+    >>> unique(["b", "B"])
+    ['B']
+    """
+    best: dict[str, str] = {}
+    for name in names:
+        key = name.lower()
+        if key not in best:
+            best[key] = name
+        elif name.isupper() and not best[key].isupper():
+            best[key] = name
+    result = sorted(best.values(), key=lambda item: (len(item), item.lower()))
+    if k is not None:
+        return result[:k]
+    return result
