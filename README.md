@@ -143,3 +143,4 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
   `demo` 现场闭环（1 live + 1 replay + 10 题扫描回放，180s 硬上限；选定高→低起点，
   gate `adopt`，真实数字与负结果见 ADR-0008，证据在 `web/data`）。
 - 未实现：HTML 报告页面。
+- 已知缺口：`docs/research/core-known-gaps.md`（成本浮点、`non_inferior` 语义、`k` 文档、verifier 逃逸）。
