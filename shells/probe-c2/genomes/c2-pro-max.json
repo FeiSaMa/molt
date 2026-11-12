@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_version": "c2-1",
+  "genome_id": "sha256:f9914edc62abbc627c37d51cea4570305924882b7f626cf3a10db71dc4e10718",
+  "parent_id": null,
+  "shell_id": "probe-c2",
+  "shell_version": "0.3.0",
+  "switches": {
+    "thinking": "high",
+    "context": "full",
+    "tools": "bash"
+  },
+  "prompt_ref": "shells/probe-c2/prompts/probe.md",
+  "tools_ref": "shells/probe-c2/tools",
+  "skills_ref": [],
+  "runtime": {
+    "runtime_id": "pi",
+    "version": "1.5.2"
+  },
+  "budget": {
+    "tokens": 600000,
+    "wall_ms": 420000,
+    "turns": 32,
+    "attempts": 1
+  },
+  "artifacts": {
+    "shells/probe-c2/manifest.json": "d98c86cb5e8aa41e39120574fa15dfc58f0017ee4201ca3054d83fa41a7e75bd",
+    "shells/probe-c2/harness.py": "f54ca7d25a9802767ad2112e2baaccb736c9561e3ce4bf6258293529a8f4d078",
+    "shells/probe-c2/verifier.py": "b194ce321b416674ada40f5b00980cc489b7deeff8a59c0ff6e1d3573e809521",
+    "shells/probe-c2/task_provider.py": "99f0327e194b28ea7eec6ef4eb0d6c7e15378200d00f27de6cd824344b02682d",
+    "shells/probe-c2/switches.schema.json": "87755dc91eda9eaad1e9d714ef03e8d7a9234a102a4088958700f0477ed2d299",
+    "shells/probe-c2/tools/bash.json": "1965ea16840b0ad63488a05b2d5ae7a9354845df4843246eb578e3e89c0a8191",
+    "shells/probe-c2/prompts/probe.md": "492c9fa04ce7476902c102823452a3a8ad8fd8d27f573c7143d729306a350b08"
+  },
+  "ext": {
+    "pi": {
+      "model": "deepseek/deepseek-v4-pro",
+      "thinking": "max"
+    },
+    "probe": {
+      "convention_id": "C2",
+      "cell": "c2-pro-max",
+      "oracle": false
+    },
+    "note": "C2 有效性门：pro-max 基线，无记忆、无 oracle 注入"
+  }
+}

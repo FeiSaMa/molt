@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_version": "c2-1",
+  "scenario_id": "probe-c2",
+  "title": "probe-c2：C2 舍入族有效性门（2 族 + 2 控制）",
+  "shell_id": "probe-c2",
+  "shell_version": "0.3.0",
+  "bench_hash": "dc9353489fb2a0cbd69b929edc270769d12c57078796983a674f04c905b4f52a",
+  "task_sets": {
+    "search": [
+      "c2-percent",
+      "c2-ratio",
+      "c2-ctl-a",
+      "c2-ctl-b"
+    ],
+    "report": []
+  },
+  "policy": {
+    "k": 0,
+    "invalid_ratio_max": 0.25,
+    "budget": {
+      "execution_budget_usd": 1.5,
+      "search_overhead_budget_usd": 0.1
+    }
+  },
+  "isolation": {
+    "network": "provider_only"
+  },
+  "ext": {
+    "default_runtime": "pi",
+    "allowed_runtimes": [
+      "pi"
+    ],
+    "expected_task_counts": {
+      "search": 4,
+      "report": 0
+    },
+    "require_positive_budget": true,
+    "base_shell": "probe",
+    "note": "C2 舍入族有效性门；与 probe-6 隔离。probe shell 的 task_provider 硬编码 bench/probe，为保住 probe-6 artifacts，C2 使用同构 shell probe-c2。"
+  }
+}

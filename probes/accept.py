@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 from collections.abc import Callable
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +35,7 @@ STAGES = (
     "ambiguity",
     "leak",
     "default_bias",
+    "c2",
     "family",
     "blind",
     "memory",
@@ -211,7 +213,14 @@ def _walk_run_ids(value: Any) -> list[str]:
 
 def _eval_impl(expr: str, params: list[str]) -> Callable[..., Any]:
     signature = ", ".join(params)
-    return eval(f"lambda {signature}: {expr}", {"__builtins__": __builtins__})  # noqa: S307
+    return eval(  # noqa: S307
+        f"lambda {signature}: {expr}",
+        {
+            "__builtins__": __builtins__,
+            "Decimal": Decimal,
+            "ROUND_HALF_UP": ROUND_HALF_UP,
+        },
+    )
 
 
 def stage_ambiguity() -> tuple[bool, str, int]:
@@ -359,6 +368,174 @@ def stage_default_bias() -> tuple[bool, str, int]:
             checked += 1
             discriminating_total += len(discriminating)
     return _ok(f"tasks={checked} discriminating_cases={discriminating_total}")
+
+
+def _c2_value(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, list):
+        return [_c2_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _c2_value(item) for key, item in value.items()}
+    return value
+
+
+def _c2_verifier_class():
+    path = ROOT / "shells/probe-c2/verifier.py"
+    spec = importlib.util.spec_from_file_location("probe_c2_verifier_accept", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.ProbeVerifier
+
+
+def _write_c2_impl(workspace: Path, function: str, params: list[str], impl: str) -> None:
+    signature = ", ".join(params)
+    text = (
+        '"""Generated implementation for c2 validity check."""\n\n'
+        "from __future__ import annotations\n\n"
+        "from decimal import ROUND_HALF_UP, Decimal\n\n\n"
+        f"def {function}({signature}):\n"
+        f"    return {impl}\n"
+    )
+    (workspace / "solution.py").write_text(text, encoding="utf-8")
+
+
+def stage_c2() -> tuple[bool, str, int]:
+    """C2 舍入族：题面、默认偏置、泄漏与可解性。"""
+    path = ROOT / "probes/design.json"
+    if not path.is_file():
+        return _fail("missing probes/design.json")
+    data = _load_json(path)
+    convention = data.get("C2")
+    if not isinstance(convention, dict) or convention.get("convention_id") != "C2":
+        return _fail("design.C2 missing or convention_id != C2")
+    facets = convention.get("facets")
+    if not isinstance(facets, dict) or sorted(facets) != ["C2a", "C2b"]:
+        return _fail(f"design.C2.facets={sorted(facets) if isinstance(facets, dict) else facets}")
+    tasks = convention.get("tasks")
+    if not isinstance(tasks, dict) or set(tasks) != {
+        "c2-percent",
+        "c2-ratio",
+        "c2-ctl-a",
+        "c2-ctl-b",
+    }:
+        return _fail(f"design.C2.tasks={sorted(tasks) if isinstance(tasks, dict) else tasks}")
+
+    rule_words = (
+        "half",
+        "half-up",
+        "half_up",
+        "half-even",
+        "half_even",
+        "round_half",
+        "banker",
+        "away from zero",
+        "远离零",
+    )
+    verifier_cls = _c2_verifier_class()
+    checked = 0
+    discriminating_total = 0
+    scanned = 0
+    with tempfile.TemporaryDirectory(prefix="molt-c2-accept-") as tmp:
+        for task_id, entry in tasks.items():
+            base = ROOT / "bench/probe-c2" / task_id
+            task_path = base / "task.json"
+            workspace = base / "workspace/solution.py"
+            for required in (task_path, workspace, base / "tests/check_cases.py"):
+                if not required.is_file():
+                    return _fail(f"{task_id}: missing {required.relative_to(ROOT)}")
+            task_data = _load_json(task_path)
+            if task_data.get("scenario_version") != "c2-1":
+                return _fail(f"{task_id}: scenario_version != c2-1")
+            if task_data.get("shell_id") != "probe-c2":
+                return _fail(f"{task_id}: shell_id != probe-c2")
+            if task_data.get("scope") != "search":
+                return _fail(f"{task_id}: scope != search")
+
+            for area in ("tests", "workspace"):
+                for path in sorted((base / area).rglob("*")):
+                    if not path.is_file():
+                        continue
+                    text = path.read_text(encoding="utf-8", errors="ignore").lower()
+                    for word in rule_words:
+                        if word in text:
+                            return _fail(f"{path.relative_to(ROOT)} 含 C2 规则词 {word!r}")
+                    scanned += 1
+
+            tree = ast.parse(workspace.read_text(encoding="utf-8"))
+            doc = ast.get_docstring(next(node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)))
+            examples = doctest.DocTestParser().get_examples(doc or "")
+            if not examples:
+                return _fail(f"{task_id}: no workspace examples")
+            function = entry["function"]
+            params = entry["params"]
+            if entry.get("convention_id") is None:
+                spec_fn = _eval_impl(entry["spec_impl"], params)
+                for example in examples:
+                    expr = example.source.strip()
+                    result = eval(  # noqa: S307
+                        expr,
+                        {
+                            "__builtins__": __builtins__,
+                            "Decimal": Decimal,
+                            "ROUND_HALF_UP": ROUND_HALF_UP,
+                            function: spec_fn,
+                        },
+                    )
+                    if repr(result) != example.want.strip():
+                        return _fail(f"{task_id}: spec example {expr!r} 不符")
+                    checked += 1
+                continue
+
+            default_fn = _eval_impl(entry["default_impl"], params)
+            project_fn = _eval_impl(entry["project_impl"], params)
+            context = {
+                "__builtins__": __builtins__,
+                "Decimal": Decimal,
+                "ROUND_HALF_UP": ROUND_HALF_UP,
+                function: default_fn,
+            }
+            project_context = {**context, function: project_fn}
+            for example in examples:
+                expr = example.source.strip()
+                default_result = eval(expr, context)  # noqa: S307
+                project_result = eval(expr, project_context)  # noqa: S307
+                if json.dumps(_c2_value(default_result), sort_keys=True) != json.dumps(
+                    _c2_value(project_result), sort_keys=True
+                ):
+                    return _fail(f"{task_id}: example {expr!r} 输出不同")
+                checked += 1
+
+            task = Task.from_dict(task_data)
+            case_sets: dict[str, dict[str, Any]] = {}
+            for variant, key in (("default", "default_impl"), ("project", "project_impl")):
+                work = Path(tmp) / f"{task_id}-{variant}" / "workspace"
+                shutil.copytree(base / "workspace", work)
+                _write_c2_impl(work, function, params, entry[key])
+                verifier = verifier_cls(ROOT)
+                before = verifier.guard(task, work)
+                result = verifier.verify(task, work, before=before)
+                case_sets[variant] = {
+                    case["case_id"]: case for case in result.diagnostic["cases"]
+                }
+            project_cases = case_sets["project"]
+            if not project_cases or not all(case["passed"] for case in project_cases.values()):
+                return _fail(f"{task_id}: project_impl 未全过")
+            default_cases = case_sets["default"]
+            discriminating = [
+                case_id
+                for case_id, case in default_cases.items()
+                if not case["passed"] and project_cases.get(case_id, {}).get("passed")
+            ]
+            if not discriminating:
+                return _fail(f"{task_id}: 无 default 失败/project 通过 的隐藏用例")
+            discriminating_total += len(discriminating)
+
+    return _ok(
+        f"tasks={len(tasks)} examples={checked} "
+        f"discriminating_cases={discriminating_total} scanned={scanned}"
+    )
 
 
 def stage_family() -> tuple[bool, str, int]:
@@ -570,6 +747,7 @@ def main() -> int:
         "ambiguity": stage_ambiguity,
         "leak": stage_leak,
         "default_bias": stage_default_bias,
+        "c2": stage_c2,
         "family": stage_family,
         "blind": stage_blind,
         "memory": stage_memory,

@@ -193,5 +193,77 @@
       "why_default_fails": "默认按大小写敏感集合计数；C1b 按 casefold 分组计数。case_01 默认 3，C1b 2。",
       "convention_text": "C1b：先按 C1a 排序键 (len(s), s.casefold(), s) 排序，再按 casefold 分组保留每组第一个。 distinct_count 返回 casefold 分组数。"
     }
+  },
+  "C2": {
+    "convention_id": "C2",
+    "facets": {
+      "C2a": {
+        "rule": "保留两位小数，采用 half-up（0.5 远离零）；负数同样远离零",
+        "applies_to": [
+          "format_percent"
+        ]
+      },
+      "C2b": {
+        "rule": "保留两位小数，采用 half-up（0.5 远离零）；负数同样远离零",
+        "applies_to": [
+          "round_ratio"
+        ]
+      }
+    },
+    "tasks": {
+      "c2-percent": {
+        "convention_id": "C2",
+        "facet": "C2a",
+        "facet_label": "half_up_percent",
+        "function": "format_percent",
+        "params": [
+          "p"
+        ],
+        "default_impl": "format(p, '.2f')",
+        "project_impl": "format(p.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP), '.2f')",
+        "why_default_fails": "12.125 默认（half-even）给 12.12，项目（half-up）给 12.13；-12.125 默认 -12.12，项目 -12.13。",
+        "convention_text": "C2a：保留两位小数，采用 half-up（0.5 远离零）；负数同样远离零。format_percent 返回字符串。",
+        "kind": "family",
+        "note": "C2a 族题；默认实现走 Decimal 上下文 half-even"
+      },
+      "c2-ratio": {
+        "convention_id": "C2",
+        "facet": "C2b",
+        "facet_label": "half_up_ratio",
+        "function": "round_ratio",
+        "params": [
+          "x"
+        ],
+        "default_impl": "x.quantize(Decimal('0.01'))",
+        "project_impl": "x.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)",
+        "why_default_fails": "12.125 默认（half-even）给 12.12，项目（half-up）给 12.13；-12.125 默认 -12.12，项目 -12.13。",
+        "convention_text": "C2b：保留两位小数，采用 half-up（0.5 远离零）；负数同样远离零。round_ratio 返回 Decimal。",
+        "kind": "family",
+        "note": "C2b 族题；默认实现走 Decimal 上下文 half-even"
+      },
+      "c2-ctl-a": {
+        "convention_id": null,
+        "facet": null,
+        "function": "sign_label",
+        "params": [
+          "n"
+        ],
+        "spec_impl": "\"pos\" if n > 0 else (\"neg\" if n < 0 else \"zero\")",
+        "note": "规格完整：n>0 pos、n<0 neg、n==0 zero；无隐藏约定。",
+        "kind": "control"
+      },
+      "c2-ctl-b": {
+        "convention_id": null,
+        "facet": null,
+        "function": "chunk",
+        "params": [
+          "items",
+          "n"
+        ],
+        "spec_impl": "[items[i:i + n] for i in range(0, len(items), n)]",
+        "note": "规格完整：按 n 切块、最后一块可短、n>0；无隐藏约定。",
+        "kind": "control"
+      }
+    }
   }
 }

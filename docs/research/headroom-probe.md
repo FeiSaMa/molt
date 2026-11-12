@@ -166,7 +166,39 @@ probe-5 的 `case_04` 用 `["bb", "bb", "aaa"]`，但它被 baseline 的 `dict.f
 - 2c 主实验 + 控制：$2.30024424（`probes/report/2c/verdict.json`）
 - x8/x7 followup：$0.66560745；x5/x6 新增 8 runs：$0.89713394；followup 累计 $1.56274139（`probes/report/2c/followup.json`）
 
-## 6. 负结果
+## 6. C2 舍入族（轻量）
+
+目标：只验证“欠定约定族 + 默认偏置”在 C2 上是否成立；不写迁移题、不做反思、不跑 Run2。
+
+设计：
+
+- C2a：`format_percent(p: Decimal) -> str`，保留两位小数，half-up（0.5 远离零），负数同向远离零。
+- C2b：`round_ratio(x: Decimal) -> Decimal`，同一舍入规则。
+- 默认实现：`f"{p:.2f}"` / `x.quantize(Decimal("0.01"))`，即 Decimal 上下文的 half-even。
+- 隐藏用例：`12.125 → 12.13`、`-12.125 → -12.13`；默认 half-even 给 `12.12` / `-12.12`。
+- 控制：`c2-ctl-a`（`sign_label`）、`c2-ctl-b`（`chunk`），规格完整、无隐藏约定。
+- 题集：4 题（2 族 + 2 控制），`scenario_version=c2-1`。probe shell 的 task_provider 硬编码
+  `bench/probe`；为保住 probe-6 的 artifact/genome，C2 使用同构隔离 shell `probe-c2`
+  （`task_provider` 只读 `bench/probe-c2`），scenario 的 `base_shell` 记为 `probe`。
+
+16 次结果（`probes/report/c2/verdict.json`）：
+
+| cell | task | passes/runs |
+|---|---|---|
+| family | `c2-percent` | 4/4 |
+| family | `c2-ratio` | 4/4 |
+| control | `c2-ctl-a` | 2/2 |
+| control | `c2-ctl-b` | 2/2 |
+| oracle | `c2-percent` | 2/2 |
+| oracle | `c2-ratio` | 2/2 |
+
+- 16/16 run 有有效 outcome，无缺样本；成本 **$0.73449113**，未触发 $1.3 stop。
+- 判定：**`c2_invalid`**。族题 best-of-4 为 2/2（期望 0/2）；baseline 在 4 reps 内都直接猜到了
+  `ROUND_HALF_UP`，默认 half-even 偏置没有形成必败门槛。
+- 结论只覆盖有效性：C2 不能作为“默认偏置有效性”的第二个正面样本；不声称记忆迁移，也不生成
+  可视化样例。
+
+## 7. 负结果
 
 - **prompt 硬编码 `top_k`**：v1 矩阵的 T2 全部无效；`probes/report/matrix/verdict-v1-invalid.json` 的
   `invalid_reason="probe prompt hardcoded top_k; T2 runs invalid"`，成本 $1.37784319。
@@ -176,7 +208,7 @@ probe-5 的 `case_04` 用 `["bb", "bb", "aaa"]`，但它被 baseline 的 `dict.f
 - **x8 记忆负迁移**：v1 memory 0/4 vs baseline 2/2；v2 仍 0/2（`x8_still_negative`）；签名被改成 `-> list[str]` 并加 `k`（`probes/report/2c/x8-analysis.md`、`memory-v2/verdict.json`）。
 - **x7 抖动（v1）**：v1 4 次仅 1 次通过（`followup.json`）；v2 达到 4/4，但 2/4 runs 仍有签名漂移。
 
-## 7. 局限
+## 8. 局限
 
 - 样本小：每格 2 reps，2c 每题最多 4 reps；没有统计显著性。
 - 单一模型对：pro/flash × high/max；没有多模型、多 seed。
@@ -184,7 +216,7 @@ probe-5 的 `case_04` 用 `["bb", "bb", "aaa"]`，但它被 baseline 的 `dict.f
 - probe shell 是独立 shell；probe 结果不进入 demo 的 `bench_hash`，也不进入对外 claim。
 - 2c 的 gate 使用 $2.5 execution cap，`scenario.policy` 仍是 $1.0；两者不同层，报告只把 gate 作为附加信号。
 
-## 8. 复算命令
+## 9. 复算命令
 
 ```bash
 uv run pytest -q
@@ -206,6 +238,6 @@ uv run python -m molt genome verify shells/probe/genomes/gen2-sig.json
 - `probes/report/2c/memory-v2/verdict.json`（反思式 memory v2：x5/x6/x7/x8）
 - `probes/report/2c/memory-v3/verdict.json`（规则型 memory v3：x5/x6/x7/x8）
 
-## 9. 结论
+## 10. 结论
 
 **v3 在 4 道迁移题、4 次重复下 16/16 全部通过（`v3_stable_all`）；x8 从 0/2 修到 4/4，但 x8 baseline 2/2，属于基线本就可解，不构成提升；签名漂移 v2 10/12 → v3 5/16；主 verdict 仍 `partial_transfer`，不声称通用自进化。**
