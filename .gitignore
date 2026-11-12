@@ -25,3 +25,10 @@ npm-debug.log*
 
 # probe 原始流（体积大，不入库）
 probes/report/**/response*.jsonl
+
+# 现场 probe 产出：由 probes/run_demo.py 生成，不入库
+# - state.json / run.json 是当场证据（页面轮询用）
+# - live.md 是当场反思产出，genome artifacts 只在本次运行内引用
+web/data/probe/state.json
+web/data/probe/run.json
+shells/probe/memory/live.md

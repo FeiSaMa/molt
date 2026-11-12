@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "task_id": "probe-ctl-b",
-  "scenario_version": "probe-4",
+  "scenario_version": "probe-6",
   "shell_id": "probe",
   "scope": "search",
   "title": "按 n 切块",

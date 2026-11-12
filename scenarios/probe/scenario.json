@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "probe-4",
+  "scenario_version": "probe-6",
   "scenario_id": "probe",
-  "title": "probe-4：C1b 重锚（T2/x3 + 控制 + C1b 迁移）",
+  "title": "probe-6：C1b 稳定性重锚（T2 baseline 必败判别用例 + 8 题不变）",
   "shell_id": "probe",
   "shell_version": "0.3.0",
-  "bench_hash": "40a53476218a078540cccbfdb48bc846dd6d3a35e147ddc889e8e4ed59a4d759",
+  "bench_hash": "9b8de5e6c731925ba7b1e8d6b18362dce889e188c4bd047c6af98c6f79e586a9",
   "task_sets": {
     "search": [
       "probe-order-2",
@@ -40,6 +40,6 @@
       "report": 0
     },
     "require_positive_budget": true,
-    "note": "probe-4：C1b 重锚（T2/x3）；T1/x1/x2/x4 为 retired C1a。"
+    "note": "probe-6：把 T2 case_04 换成 baseline 必败的 [\"aaa\",\"bb\",\"bb\"]；probe-5 的 case_04 被 baseline 意外通过、未进入反思。题集 8 题不变，主证据仍为 probe-4。"
   }
 }

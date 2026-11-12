@@ -16,6 +16,7 @@ def main() -> int:
         ("case_01", ["Alpha", "bb", "ALPHA", "alpha"], ["bb", "ALPHA"]),
         ("case_02", ["B", "a", "A", "b"], ["A", "B"]),
         ("case_03", ["bb", "aa", "bb"], ["aa", "bb"]),
+        ("case_04", ["aaa", "bb", "bb"], ["bb", "aaa"]),
     )
     results = []
     for case_id, names, expected in cases:

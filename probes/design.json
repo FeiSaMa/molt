@@ -46,10 +46,10 @@
       ],
       "default_impl": "sorted(set(names))",
       "project_impl": "sorted({name.casefold(): min((item for item in names if item.casefold() == name.casefold()), key=lambda s: (len(s), s.casefold(), s)) for name in names}.values(), key=lambda s: (len(s), s.casefold(), s))",
-      "why_default_fails": "默认 sorted(set(names)) 是大小写敏感去重；C1b 先按 C1a 排序，再按 casefold 分组保留 raw 最小代表。case_01/02 默认保留四项，C1b 只保留两组代表。",
+      "why_default_fails": "默认 sorted(set(names)) 是大小写敏感去重；C1b 先按 C1a 排序，再按 casefold 分组保留 raw 最小代表。case_01/02 默认保留四项，C1b 只保留两组代表。case_04 用 [\"aaa\", \"bb\", \"bb\"] 区分长度排序与频次排序：默认 sorted(set()) / 频次排序 / dict.fromkeys 保序去重都给 [\"aaa\", \"bb\"]，C1b 给 [\"bb\", \"aaa\"]。",
       "convention_text": "C1b：先按 C1a 排序键 (len(s), s.casefold(), s) 排序，再按 casefold 分组，保留每组第一个（C1a 下 raw 最小代表）。本题 dedupe 只做 C1b。",
       "kind": "family",
-      "note": "C1b 族题锚点"
+      "note": "C1b 族题锚点；case_04 判别长度排序与频次排序（baseline 必败）"
     },
     "probe-ctl-a": {
       "convention_id": null,

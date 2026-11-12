@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "probe-4",
-  "genome_id": "sha256:e111104961f48e85091cfb44d244641109893bfe14f1f764e076f5dac25883e1",
-  "parent_id": "sha256:4309fd0cd7cbe5a5935ab5f1df1ec54cbcbeeab8f18cd216c0e782a023c32cf0",
+  "scenario_version": "probe-6",
+  "genome_id": "sha256:3a16b9742ebcaf6e064a77a6dba8f621e8fa0b87e85e6e2b3f091aa718a3d69f",
+  "parent_id": "sha256:a2ce93d848bac18ba43de58b4571ca38c67740f6e6e1e18101eb1d0d864e5fb7",
   "shell_id": "probe",
   "shell_version": "0.3.0",
   "switches": {

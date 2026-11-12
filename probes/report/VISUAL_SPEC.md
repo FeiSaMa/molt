@@ -596,6 +596,10 @@ if live === true && now - started_at > 300_000
 `PARTIAL`（300s 规则只对 live 生效）。`note` 原文是
 `example generated from 2c evidence; not a live run`。
 
+`example.json` 固定为 probe-4 的离线证据；页面轮询的现场 `state.json` 是 probe-6
+（T2 checker 的 `case_04` 改为 baseline 必败的判别用例）。不要拿 example 的 case 数校验 live，也不要把
+两者算进同一个通过率。
+
 ---
 
 ## 10. 可访问性
@@ -682,7 +686,7 @@ if live === true && now - started_at > 300_000
 2. **不要用纯红/纯绿**，不要只靠颜色表达状态；不要用 emoji 当状态图标。
 3. **不要把 `example.json` / `replay` 标成 `LIVE`**；不要把 `fixture` 标成 live。
 4. **不要隐藏 x8 的 baseline 2/2**；不要把 x8 写成「从 0 修到 4/4」。
-5. **不要跨 `scenario_version` 比较**；本数据只有 `probe-4`。
+5. **不要跨 `scenario_version` 比较**；`example.json` 是 probe-4 的离线证据，现场 live `state.json` 是 probe-6（T2 `case_04` 为 baseline 必败判别用例），两者不要混算。
 6. **不要重算通过率**（`solved/total` 只用于显示计数）；不要用 `4/4` 画任何曲线。
 7. **不要改写 verdict**，也不要省略 `verdict_note`；`v3_stable_all` 就是 `v3_stable_all`，
    2c 主口径的 `partial_transfer` 写在 note 里。

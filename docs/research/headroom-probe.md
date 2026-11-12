@@ -17,7 +17,7 @@ demo-6 的成功率已经饱和（`AGENTS.md` §一记录真实基线 10/10）�
 - 控制题：`sign_label`、`chunk`，规格完整、无隐藏约定；用于判断探针是否“只是模型不会做题”。
 - oracle：pro-max + 注入 C1 全文；用于确认题目可解、harness 正常。
 - 2 道族题：`probe-order-2`（`dedupe`）、`probe-order-x3`（`dedupe_top_k`）；4 道迁移题：`x5..x8`（`unique`、`dedupe_merge`、`dedupe_min`、`distinct_count`）。
-- 题目与 facet 登记在 `probes/design.json`；当前 12 道题、probe-4、`shell_version=0.3.0`。
+- 题目与 facet 登记在 `probes/design.json`；当前 12 道题、probe-6（主证据为 probe-4；probe-6 只用于现场 demo）、`shell_version=0.3.0`。
 
 ## 3. 仪器
 
@@ -128,6 +128,14 @@ x8 的归因见 `probes/report/2c/x8-analysis.md`：baseline 用 `len({casefold}
 | v1 回放（原始反例） | 4/4 | 3/4 | 1/4 | 0/4 | —（未系统统计） | negative |
 | v2 反思（gen3） | 4/4 | 4/4 | 4/4 | 0/2 | 10/12 | negative |
 | v3 约束反思（gen4） | 4/4 | 4/4 | 4/4 | 4/4 | 5/16 | fixed，但 baseline 2/2 |
+
+### 演示稳定性（probe-6）
+
+probe-4 的 T2 只有三个失败用例，长度升序与频次升序都能拟合：case_01/02/03 的期望在两个排序规则下相同，因此 fast profile（Run1 只跑 T2、Run2 跑 x5/x6）的反思会在两种规则之间摆动。实跑 5 轮 fast：3 轮 `v3_stable_headroom`，2 轮不是（1 轮 `partial_transfer`，x5 被频次规则带偏；1 轮反思调用超时中止）。这不是题面通过率变化，而是演示记忆的稳定性问题。
+
+probe-5 的 `case_04` 用 `["bb", "bb", "aaa"]`，但它被 baseline 的 `dict.fromkeys` 保序去重意外通过，未进入反思素材。probe-6 把它改为 `["aaa", "bb", "bb"]`：长度排序给 `["bb", "aaa"]`；频次排序、`sorted(set())` 与 `dict.fromkeys` 都给 `["aaa", "bb"]`，baseline 必败，因此该用例会进入反思。
+
+主证据仍是 probe-4（`probes/report/2c/**`、`web/data/probe/example.json`）；probe-6 只用于现场 live demo，不与 probe-4 的数字混算。
 
 ## 5. 结果表
 

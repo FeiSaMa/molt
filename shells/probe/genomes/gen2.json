@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "probe-4",
-  "genome_id": "sha256:2f5117a959cd094a0623b0cc2899b8041dfa62a909d73dcf84a1fbfac7bb3201",
+  "scenario_version": "probe-6",
+  "genome_id": "sha256:44f6b2c1b1e003aa8a95d542a3eaa7f6d50779a0140a9170d6772ee898b7c838",
   "parent_id": "sha256:397d3453bbfdca2092891e9da3406a544c5f7824ea116f4f389a1ce770369433",
   "shell_id": "probe",
   "shell_version": "0.3.0",

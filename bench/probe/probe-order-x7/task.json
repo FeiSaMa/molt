@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "task_id": "probe-order-x7",
-  "scenario_version": "probe-4",
+  "scenario_version": "probe-6",
   "shell_id": "probe",
   "scope": "search",
   "title": "按包内规则去重后取最小",

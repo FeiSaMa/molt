@@ -36,11 +36,15 @@ Batch 1 需要新增 `bench/probe/**`（probe 题集），但**不修改** demo 
 3. **`bench_tree_hash` 已变**：HEAD `d585d2f` 为
    `d0fc43b4db3b8f09f2bd5a370553e75dbdd3001cc983ea546c198c0974363168`；加入
    `bench/probe/**` 后为
-   `2b167c22b2267d7dedd482556d3179defb3ec9883a4bb2e1b1abd9839901d3fa`。
+   `2b167c22b2267d7dedd482556d3179defb3ec9883a4bb2e1b1abd9839901d3fa`；
+   `probe-5` 给 T2 增加判别用例并重算题集哈希后为
+   `9f49cbc9203bee8b6e672b92029f5ce479d75c2e80c3ab506e6fb1e86daecc22`；
+   `probe-6` 换成 baseline 必败的 `["aaa", "bb", "bb"]` 判别用例后为
+   `533b76d76783f63f8bfa5cd351af4db35330e74a6dd88ee5082e2ebbd17e63f7`。
    它是 **verifier 的运行期 guard 指纹**：每次 run 的
    `verification.tests_hash_before/after` 会持久化为证据，但**不作为跨 run 比较键**，
-   也不得用于跨 `scenario_version` 比较。它变化只表示 bench 树新增了未引用题，
-   不代表 demo 题面或判分语义变化。
+   也不得用于跨 `scenario_version` 比较。它变化只表示 bench 树新增了未引用题或
+   probe 题面变更，不代表 demo 题面或判分语义变化。
 4. **`doctor --repo-policy` 不是门**：`molt/cli.py:996-1023` 的
    `REPO_POLICY_FROZEN` 只检查冻结面路径**存在性**（`root.glob(...)`），不查内容或哈希。
    真正的门是 `molt scenario validate`（`compute_bench_hash` 比对）与
@@ -52,7 +56,7 @@ Batch 1 需要新增 `bench/probe/**`（probe 题集），但**不修改** demo 
 
 ## 后果
 
-- `scenarios/probe/scenario.json` 使用独立 `scenario_version=probe-2`；demo 保持 `demo-6`。
+- `scenarios/probe/scenario.json` 使用独立 `scenario_version=probe-2`（当前 `probe-6`）；demo 保持 `demo-6`。
 - 新增 probe 题不得改变 demo 的 `bench_hash`；任何对 demo 题的修改仍需按 §六升版本并重跑基线。
 - `bench_tree_hash` 的新值写入证据时，必须与 run 的时间点一起记录，不能拿旧 run 的哈希
   与新树哈希直接比较。
