@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>molt · 同一套题，跑两次</title>
+<meta name="description" content="molt 路演页：同一套搜索题跑两次，成功率不变，成本下降。数据只读 web/data，页面不发起任何网络请求。">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<a class="skip" href="#s1">跳到内容</a>
+
+<div id="data-warning" class="data-warning" hidden>数据未加载：请确认 data/bundle.js 与本目录同级可读。</div>
+
+<!-- 常驻 HUD：左上项目名 / 右侧圆点导航 / 右下页码 -->
+<div class="hud-brand" aria-hidden="true">molt</div>
+<nav class="hud-dots" id="dots" aria-label="屏导航"></nav>
+<div class="hud-pager" aria-live="off"><span id="pager-cur">01</span> / <span id="pager-total">08</span></div>
+
+<main class="deck" id="main">
+
+  <!-- ===================== S1 封面 ===================== -->
+  <section class="slide slide--cover" id="s1" aria-labelledby="s1-title">
+    <div class="parallax parallax--cover" aria-hidden="true"></div>
+    <span class="slide-no" aria-hidden="true">01</span>
+    <div class="ink" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="slide-inner">
+      <p class="kicker" data-reveal style="--i:0">BOHACK 2026 · 天津 · 日新 Renew</p>
+
+      <h1 id="s1-title" data-reveal style="--i:1">同一套 <em data-bind="meta.searchTaskCount">—</em> 道题，<br>我们跑了两次。</h1>
+
+      <p class="lede lede--wide" data-reveal style="--i:2">
+        第一次 <code>high/full</code>，第二次 <code>low/full</code>；题面、prompt、工具都没换。
+      </p>
+
+      <ul class="chips chips--hero" data-reveal style="--i:3">
+        <li class="chip-line">scenario <b data-bind="meta.scenarioVersion">—</b></li>
+        <li class="chip-line">shell <b data-bind="meta.shellId">—</b></li>
+        <li class="chip-line">共 <b data-bind="provenance.total">—</b> 条 search 运行</li>
+      </ul>
+
+      <p class="scroll-hint" data-reveal style="--i:4">
+        滚动 <span class="hint-line" aria-hidden="true"></span><span class="hint-arrow" aria-hidden="true">↓</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== S2 通过题数 ===================== -->
+  <section class="slide" id="s2" aria-labelledby="s2-title">
+    <span class="slide-no" aria-hidden="true">02</span>
+    <div class="ink" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="slide-inner">
+      <h2 id="s2-title" data-reveal style="--i:0">通过题数</h2>
+
+      <div class="kpi-pair" data-reveal style="--i:1">
+        <span class="kpi-num count" data-bind="s1.solvedBase">—</span>
+        <span class="kpi-arrow" aria-hidden="true">→</span>
+        <span class="kpi-num kpi-num--hot count" data-bind="s1.solvedCand">—</span>
+      </div>
+
+      <p class="claim" data-reveal style="--i:2">成功率没有变化。这是门禁的前提，不是结论。</p>
+
+      <p class="footnote" data-reveal style="--i:3">
+        真实 Pi 基线 <b data-bind="s1.solvedBase">—</b>/<b data-bind="s1.totalBase">—</b>；
+        fixture 的 3/10 只用于 calibrate 校准，不是真实难度。
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== S3 成本 ===================== -->
+  <section class="slide" id="s3" aria-labelledby="s3-title">
+    <div class="parallax parallax--cost" aria-hidden="true"></div>
+    <span class="slide-no" aria-hidden="true">03</span>
+    <div class="ink" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="slide-inner">
+      <h2 id="s3-title" data-reveal style="--i:0">单题成本（gate 级）</h2>
+
+      <div class="kpi-pair kpi-pair--money" data-reveal style="--i:1">
+        <span class="kpi-num kpi-num--money"><span class="unit">$</span><span data-bind="s1.cpsBase">—</span></span>
+        <span class="kpi-arrow" aria-hidden="true">→</span>
+        <span class="kpi-num kpi-num--money kpi-num--hot"><span class="unit">$</span><span data-bind="s1.cpsCand">—</span></span>
+      </div>
+
+      <p class="drop" data-reveal style="--i:2"><b data-bind="s1.cpsDropText">—</b></p>
+
+      <p class="plain-talk" data-reveal style="--i:3">同样的钱，能跑 <b data-bind="s1.costMultiplier">—</b> 倍的题。</p>
+
+      <p class="claim" data-reveal style="--i:4"><b data-bind="meta.searchTaskCount">—</b> 道题，每题都少花这些钱。</p>
+
+      <p class="footnote footnote--tight" data-reveal style="--i:5">
+        扫描级（<span id="scan-note-basis">口径见数据面</span>）：
+        <b data-bind="s1.scanBaseCost">—</b> → <b data-bind="s1.scanCandCost">—</b>，
+        墙钟 <span class="nw"><b data-bind="s1.scanBaseWall">—</b>s → <b data-bind="s1.scanCandWall">—</b>s</span>
+        <span class="nw">（<b data-bind="s1.scanCostDropPct">—</b> / <b data-bind="s1.scanWallDropPct">—</b>）</span>。
+        <span id="verify-note"></span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== S4 逐题配对 ===================== -->
+  <section class="slide slide--table" id="s4" aria-labelledby="s4-title">
+    <span class="slide-no" aria-hidden="true">04</span>
+    <div class="ink" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="slide-inner slide-inner--wide">
+      <h2 id="s4-title" data-reveal style="--i:0">每一题，都更便宜</h2>
+
+      <p class="lede" data-reveal style="--i:1"><span data-bind="s2.ledeNote">—</span></p>
+
+      <p class="plain-talk" data-reveal style="--i:2">最省的一题（<b data-bind="s2.bestTask">—</b>）成本降到原来的 <b data-bind="s2.bestKeepPct">—</b>%；最少的一题（<b data-bind="s2.worstTask">—</b>）也降到 <b data-bind="s2.worstKeepPct">—</b>%。</p>
+
+      <p class="footnote footnote--tight" id="pair-scope-note" data-reveal style="--i:2">
+        口径：逐题配对来自门禁决策；单题成本合计只用于 gate 级，不等于扫描级成本合计。
+      </p>
+
+      <div class="table-wrap" data-reveal style="--i:3">
+        <table class="pairs">
+          <caption class="sr-only">门禁逐题配对表</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="col-idx">题号</th>
+              <th scope="col">题目</th>
+              <th scope="col" class="num">第一次 · 成本</th>
+              <th scope="col" class="num">第二次 · 成本</th>
+              <th scope="col" class="num">成本差</th>
+              <th scope="col" class="num">通过差</th>
+              <th scope="col" class="col-bar">对比条</th>
+            </tr>
+          </thead>
+          <tbody id="pairs-body"><!-- render.js 渲染 --></tbody>
+          <tfoot>
+            <tr class="pairs-total">
+              <td class="idx total-label">合计</td>
+              <td class="total-note">gate 级配对合计，不等于扫描级</td>
+              <td class="num"><span class="tf-label">基线</span> <b data-bind="s2.totalBase">—</b></td>
+              <td class="num"><span class="tf-label">候选</span> <b data-bind="s2.totalCand">—</b></td>
+              <td class="num tf-delta"><b data-bind="s2.totalDelta">—</b></td>
+              <td class="num"><b data-bind="s2.totalPassDelta">—</b></td>
+              <td class="col-bar"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== S5 门禁六步 ===================== -->
+  <section class="slide slide--gate" id="s5" aria-labelledby="s5-title">
+    <div class="parallax parallax--grid" aria-hidden="true"></div>
+    <span class="slide-no" aria-hidden="true">05</span>
+    <div class="ink" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="slide-inner slide-inner--wide">
+      <h2 id="s5-title" data-reveal style="--i:0">六个判定步骤，一次放行</h2>
+
+      <ol class="gate-chain" id="gate-chain"><!-- render.js 渲染 --></ol>
+
+      <p class="verdict-line" data-reveal style="--i:1">
+        <span class="verdict-kicker">当前结论</span>
+        <span class="verdict-body"><b data-bind="s3.verdict">—</b> · <b data-bind="s3.reason">—</b></span>
+      </p>
+
+      <p class="footnote footnote--tight" data-reveal style="--i:2">
+        limits_identical <b data-bind="s3.limitsIdentical">—</b>
+        · budget <b data-bind="s3.budgetCheck">—</b>
+        · invalid 阈值 <b data-bind="s2.invalidMax">—</b>
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== S6 可回退 ===================== -->
+  <section class="slide slide--rollback" id="s6" aria-labelledby="s6-title">
+    <span class="slide-no" aria-hidden="true">06</span>
+    <div class="ink" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="slide-inner slide-inner--wide">
+      <h2 class="slide-h-lead" id="s6-title" data-reveal style="--i:0">学到了什么，怎么退回去</h2>
+
+      <p class="lede" data-reveal style="--i:1">
+        只改两个开关——thinking <code>high → low</code>，context 与 tools 不动。
+      </p>
+
+      <ol class="lineage" id="lineage"><!-- render.js 渲染 --></ol>
+
+      <p class="footnote footnote--tight rollback-band" data-reveal style="--i:2">
+        回退 = 指针切回上一代归档（journal → generation → snapshot → archive → pointer），一个事务，不重跑题目。
+      </p>
+
+      <div class="rollback-grid" data-reveal style="--i:3">
+        <div class="rollback-col">
+          <p class="mini-label">归档 archives</p>
+          <ul class="archives" id="archives"><!-- render.js 渲染 --></ul>
+        </div>
+        <div class="rollback-col">
+          <p class="mini-label">快照 snapshots</p>
+          <ul class="snapshots" id="snapshots"><!-- render.js 渲染 --></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== S7 留出集与证据 ===================== -->
+  <section class="slide slide--evidence" id="s7" aria-labelledby="s7-title">
+    <span class="slide-no" aria-hidden="true">07</span>
+    <div class="ink" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="slide-inner slide-inner--wide">
+      <h2 id="s7-title" data-reveal style="--i:0">留出集没有掉，证据可复算</h2>
+
+      <div class="holdout" data-reveal style="--i:1">
+        <p class="holdout-big">
+          <b class="count" data-bind="holdout.baseSolved">—</b>/<b data-bind="holdout.baseTotal">—</b>
+          <span class="kpi-arrow" aria-hidden="true">→</span>
+          <span class="holdout-cand"><b class="count" data-bind="holdout.candSolved">—</b>/<b data-bind="holdout.candTotal">—</b></span>
+        </p>
+        <span class="aside">仅聚合，无逐题明细</span>
+      </div>
+
+      <p class="plain-talk" data-reveal style="--i:2" id="holdout-plain">
+        <span id="holdout-plain-ok">留出集 <b data-bind="holdout.candSolved">—</b>/<b data-bind="holdout.candTotal">—</b>：说明提升不是只对这 <b data-bind="meta.searchTaskCount">—</b> 道题调参。</span>
+        <span id="holdout-plain-drop" hidden>留出集掉题（<b data-bind="holdout.baseSolved">—</b>/<b data-bind="holdout.baseTotal">—</b> → <b data-bind="holdout.candSolved">—</b>/<b data-bind="holdout.candTotal">—</b>），需人工复核。</span>
+      </p>
+
+      <ul class="evidence" data-reveal style="--i:3">
+        <li><span class="ev-num count" data-bind="provenance.live">—</span><span class="ev-label">live</span></li>
+        <li><span class="ev-num count" data-bind="provenance.replay">—</span><span class="ev-label">replay</span></li>
+        <li><span class="ev-num count" data-bind="provenance.fixture">—</span><span class="ev-label">fixture</span></li>
+      </ul>
+
+      <p class="note-line" data-reveal style="--i:2"><span data-bind="provenance.note">—</span></p>
+
+      <p class="note-line note-line--attrib" data-reveal style="--i:2">
+        <span id="holdout-attribution">—</span>
+      </p>
+
+      <p class="footnote footnote--tight" data-reveal style="--i:3">
+        审计 <b data-bind="audit.ok">—</b> ｜ checked runs <b data-bind="audit.runs">—</b>
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== S8 收尾 ===================== -->
+  <section class="slide slide--end" id="s8" aria-labelledby="s8-title">
+    <span class="slide-no" aria-hidden="true">08</span>
+    <div class="ink" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="slide-inner">
+      <h2 class="end-line" id="s8-title" data-reveal style="--i:0">
+        成功率不变，成本降了 <em data-bind="s1.cpsDropPct">—</em>%。
+      </h2>
+
+      <p class="lede" data-reveal style="--i:1">每一次采纳都能回退；每一条数字都能从 web/data 复算。</p>
+
+      <p class="meta-line" data-reveal style="--i:2">
+        <span id="revision-clause" hidden>revision <b data-bind="meta.revision">—</b> · </span>证据截至
+        <b data-bind="meta.generatedAt">—</b>
+      </p>
+
+      <p class="source-line" data-reveal style="--i:2">数据来源：molt export · 只读 web/data · 页面不发起任何网络请求</p>
+
+      <footer class="colophon"><!-- render.js：口径说明 / 错误折叠块 --></footer>
+    </div>
+  </section>
+
+</main>
+
+<noscript><p class="data-warning data-warning--fixed">本页需要开启 JavaScript 才能读取证据数据。</p></noscript>
+
+<script defer src="../data/bundle.js"></script>
+<script defer src="model.js"></script>
+<script defer src="render.js"></script>
+<script defer src="app.js"></script>
+</body>
+</html>

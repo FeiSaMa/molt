@@ -45,7 +45,7 @@ memory / RAG、skill evolving、multi-agent、模型维度、escalation、git ta
 | 模型维度 | 搜索空间只到 6 组，模型未成为变量 | 同一 shell 需要跨模型比较且预算允许时 | adapter/model registry + genome `runtime`/`ext` |
 | escalation / routing | 失败成本低，路由无收益 | 失败成本高、或不同题族需要不同型号/预算时 | adapter/gateway 层；不改 core `policy.decide` |
 | git tag 回滚 | 当前用 snapshot/archive 足够 | 进入发布流程、需要对外版本标签时 | release/CI 流程（docs/ops），不进 core 协议 |
-| HTML 页面 | 仓库只交付 `web/data` 数据面 | 现场展示需要页面时 | 队友 C 消费 `web/data`；页面代码不进本仓库 |
+| HTML 页面 | 仓库只交付 `web/data` 数据面 | 现场展示需要页面时 | 队友 C 消费 `web/data`；`web/page/` 已落地为零构建消费方页面（见文末追加节），导出流程仍不产 HTML |
 
 触发条件按「有真实输入 + 有可测收益」判断，不以「设计上完备」为理由提前实现。
 
@@ -69,3 +69,10 @@ memory / RAG、skill evolving、multi-agent、模型维度、escalation、git ta
   也不会为了演示而临时加机制。
 - 未来实现任一冗余项时，必须带测试与证据（run/result/pair/gate 或对应 adapter 证据），
   不允许只改文档或只在 fixture 上自证。
+
+## 后续（2026-11-11 追加，不改上文决定）
+
+`web/page/` 已作为**零构建静态展示页**落地（`file://` 直开、零外部请求、只读 `web/data`、
+`node web/page/check.mjs` 验收）。这是「消费数据面的页面」，不是导出流程的产物：
+`molt export` / `molt demo` 仍然只写 `web/data`，不生成 HTML。
+上文「按需」清单中「HTML 页面」一项的现状以此节为准；其余决定不变。

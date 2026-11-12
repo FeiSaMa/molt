@@ -1,0 +1,1733 @@
+/* ==========================================================================
+   molt · 路演页 · 白底 / 衬线标题 / 一屏一项 / 滚动翻页
+   纯静态：零外链资源、零 webfont、零图片；所有装饰由 CSS 绘制。
+   不使用 :has 选择器、CSS 嵌套、容器查询、新式颜色混合函数，保证 file:// 直开可用。
+   动效只做增强：初始隐藏状态一律写在 .js-ready 下，无 JS 时全部可见。
+   ========================================================================== */
+
+/* ---------- 1. 设计令牌 ---------- */
+:root {
+  color-scheme: light;
+
+  /* 纸与墨 */
+  --paper: #FCFCFD;
+  --paper-2: #F4F5F7;
+  --ink: #14161A;
+  --ink-2: #3A4048;
+  --ink-3: #6B7280;
+  --line: #E6E8EC;
+
+  /* 三色语义：朱红 = 结论/降幅，靖蓝 = 结构/序号，金 = 极少用的点缀 */
+  --red: #C0392B;
+  --indigo: #1B4D8F;
+  --gold: #B98A2F;
+
+  /* 字体三档 */
+  --font-display: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+  --font-body: -apple-system, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei",
+    "Noto Sans CJK SC", sans-serif;
+  --font-num: "SF Mono", ui-monospace, "JetBrains Mono", Consolas, monospace;
+
+  /* 字号阶梯 */
+  --fs-display: clamp(2.6rem, 6.2vw, 7rem);
+  --fs-title: clamp(1.55rem, 2.4vw, 2.4rem);
+  --fs-body: clamp(1rem, 1.5vw, 1.5rem);
+  --fs-foot: clamp(0.8rem, 1vw, 0.95rem);
+  --fs-kpi: clamp(3rem, 9vw, 12rem);
+  --fs-kpi-money: clamp(2.2rem, 4.6vw, 5.2rem);
+
+  /* 版心 */
+  --pad-x: clamp(48px, 8vw, 168px);
+  --measure: min(92vw, 1180px);
+  --text-measure: min(92vw, 30ch);
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* ---------- 2. 基础 ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: clamp(15px, 0.5vw + 9px, 18px);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 投影上不要系统滚动条的灰色凹槽：只把滚动条本身画成 0 宽，
+   滚动能力保留（滚轮 / 键盘 / 圆点导航都照常）。不用 overflow:hidden ——
+   那会连带禁掉键盘与滚轮翻页。 */
+html,
+body {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  display: none;
+}
+
+p {
+  margin: 0;
+}
+
+b,
+strong {
+  font-weight: 700;
+}
+
+em {
+  font-style: normal;
+}
+
+code {
+  padding: 0.08em 0.36em;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper-2);
+  color: var(--indigo);
+  font-family: var(--font-num);
+  font-size: 0.84em;
+  white-space: nowrap;
+}
+
+::selection {
+  background: rgba(192, 57, 43, 0.16);
+  color: var(--ink);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- 3. 可访问性 ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip {
+  position: fixed;
+  top: -5rem;
+  left: var(--pad-x);
+  z-index: 40;
+  padding: 0.55rem 0.9rem;
+  border-radius: 3px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.skip:focus {
+  top: 1rem;
+}
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 3px;
+}
+
+a:focus,
+summary:focus,
+[tabindex]:focus {
+  outline: 2px solid var(--indigo);
+  outline-offset: 3px;
+}
+
+/* ---------- 4. 常驻 HUD ---------- */
+.hud-brand {
+  position: fixed;
+  top: clamp(20px, 3.4vh, 40px);
+  left: var(--pad-x);
+  z-index: 20;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(0.95rem, 1.1vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  line-height: 1;
+  text-transform: lowercase;
+  pointer-events: none;
+}
+
+.hud-pager {
+  position: fixed;
+  right: var(--pad-x);
+  bottom: clamp(18px, 3vh, 34px);
+  z-index: 20;
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.hud-dots {
+  position: fixed;
+  top: 50%;
+  right: clamp(16px, 2.2vw, 40px);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transform: translateY(-50%);
+}
+
+.hud-dots button {
+  display: block;
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.hud-dots button.is-active {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+/* ---------- 5. 滚动容器与屏 ---------- */
+.deck {
+  height: 100vh;
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  /* 滚动条隐藏但滚动保留：file:// 直开时系统滚动条是一条灰槽，投影上很显眼 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.deck::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.slide {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: clamp(56px, 9vh, 110px) var(--pad-x);
+  overflow: hidden;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  /* 布局 / 绘制隔离：一屏的 reflow 与重绘不外溢到相邻屏（8 屏同时参与排版是翻页卡顿的根因之一） */
+  contain: layout paint;
+}
+
+.slide-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: min(88vw, 1080px);
+}
+
+.slide-inner--wide {
+  max-width: var(--measure);
+}
+
+/* 每屏右上角的超大淡色屏号：纯装饰，不进标题层级 */
+.slide-no {
+  position: absolute;
+  top: clamp(24px, 4vh, 56px);
+  right: clamp(32px, 4vw, 72px);
+  z-index: 1;
+  color: rgba(20, 22, 26, 0.045);
+  font-family: var(--font-display);
+  font-size: clamp(80px, 9vw, 150px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ---------- 6. 排版 ---------- */
+h1,
+h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+h1 {
+  font-size: var(--fs-display);
+  line-height: 1.06;
+}
+
+h2 {
+  font-size: var(--fs-title);
+  line-height: 1.12;
+}
+
+/* 每屏的「小标题」：衬线 + 一道朱红短线，读起来是一个栏目而不是一句口号 */
+h2::before {
+  content: "";
+  display: block;
+  width: 2.4rem;
+  height: 2px;
+  margin-bottom: clamp(0.7rem, 1.4vh, 1.1rem);
+  background: var(--red);
+}
+
+.kicker {
+  margin: 0 0 clamp(1rem, 2.4vh, 2rem);
+  color: var(--indigo);
+  font-family: var(--font-body);
+  font-size: clamp(0.72rem, 0.95vw, 0.9rem);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+}
+
+h1 em {
+  color: var(--red);
+  font-style: normal;
+}
+
+.lede {
+  max-width: min(78ch, 1180px);
+  margin: clamp(1.1rem, 2.6vh, 2rem) 0 0;
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  text-wrap: balance;
+}
+
+.lede--wide {
+  max-width: 38em;
+}
+
+.claim {
+  max-width: min(78ch, 1180px);
+  margin: clamp(1.1rem, 2.6vh, 1.9rem) 0 0;
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+  line-height: 1.7;
+}
+
+/* 人话句：一句话解释上面那组数字在人身上是什么感觉。
+   字号比正文略高一档、颜色比主张淡一档 —— 它是解释，不是结论。 */
+.plain-talk {
+  max-width: min(92vw, 1180px);
+  margin: clamp(0.9rem, 2.1vh, 1.5rem) 0 0;
+  color: var(--ink-2);
+  font-size: clamp(18px, 1.35vw, 20px);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.plain-talk b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.footnote {
+  max-width: min(78ch, 1180px);
+  margin: clamp(1.1rem, 2.6vh, 1.9rem) 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-foot);
+  line-height: 1.65;
+}
+
+.footnote--tight {
+  margin-top: clamp(0.8rem, 1.8vh, 1.3rem);
+}
+
+.footnote b {
+  color: var(--ink-2);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* S3 的口径补句单独起一行：数据行与定性行各自完整，不在括号中间断行 */
+#verify-note {
+  display: block;
+}
+
+/* ---------- 7. 装饰层（全部 CSS 绘制） ---------- */
+.parallax {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translate3d(0, calc(var(--p, 0) * -48px), 0);
+  /* 装饰层自成孤岛：样式 / 布局 / 绘制都不与正文互相触发 */
+  contain: strict;
+}
+
+/* S1：右侧大圆 + 极淡网格 */
+.parallax--cover::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -18vw;
+  width: min(62vw, 720px);
+  height: min(62vw, 720px);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+.parallax--cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(20, 22, 26, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 22, 26, 0.045) 1px, transparent 1px);
+  background-size: 96px 96px;
+  -webkit-mask-image: linear-gradient(to bottom right, transparent 42%, #000 100%);
+  mask-image: linear-gradient(to bottom right, transparent 42%, #000 100%);
+  opacity: 0.85;
+}
+
+/* S3：右侧斜切色块 */
+.parallax--cost::before {
+  content: "";
+  position: absolute;
+  top: -10%;
+  right: 0;
+  width: 34vw;
+  height: 120%;
+  background: var(--paper-2);
+  clip-path: polygon(38% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* S5：细网格，压得更淡 */
+.parallax--grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(27, 77, 143, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(27, 77, 143, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 88%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 88%);
+}
+
+/* ---------- 7b. 墨水晕染层（每屏一个，三团色斑） ----------
+   软边全靠 radial-gradient，不用 filter: blur()：
+   blur 会把整层变成离屏滤镜，翻页时每屏一次全屏滤镜是卡顿元凶。
+   默认 opacity: 0（无 JS / 减少动效时不可见），只有 .js-ready 下才挂动画。 */
+.ink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+  /* 无 JS 时整层不参与渲染（内容不依赖它）；.js-ready 下才挂上 */
+  display: none;
+}
+
+.js-ready .ink {
+  display: block;
+}
+
+.ink i {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+}
+
+/* 起点缩到 .25、全透明 —— 只在 .js-ready 下才有「起点」这回事 */
+.js-ready .ink i {
+  opacity: 0;
+  transform: scale(0.25);
+}
+
+/* 三团：靖蓝（左上）/ 朱红（右上偏下）/ 墨黑（下方中部），尺寸与位置互相错开 */
+.ink i:nth-child(1) {
+  top: -6%;
+  left: -8%;
+  width: min(52vw, 760px);
+  height: min(52vw, 760px);
+  background: radial-gradient(circle at center, rgba(27, 77, 143, 0.16), rgba(27, 77, 143, 0) 62%);
+}
+
+.ink i:nth-child(2) {
+  top: 8%;
+  right: -12%;
+  width: min(55vw, 820px);
+  height: min(55vw, 820px);
+  background: radial-gradient(circle at center, rgba(192, 57, 43, 0.13), rgba(192, 57, 43, 0) 62%);
+}
+
+.ink i:nth-child(3) {
+  bottom: -18%;
+  left: 18%;
+  width: min(46vw, 680px);
+  height: min(46vw, 680px);
+  background: radial-gradient(circle at center, rgba(20, 22, 26, 0.10), rgba(20, 22, 26, 0) 62%);
+}
+
+/* ---------- 8. S1 封面 ---------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips--hero {
+  margin-top: clamp(1.6rem, 4vh, 3rem);
+}
+
+.chip-line {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: clamp(0.72rem, 0.9vw, 0.85rem);
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+/* S1 徽章行：放大一档，读起来是信息而不是脚注 */
+.chips--hero .chip-line {
+  padding: 0.46rem 0.9rem;
+  color: var(--ink-2);
+  font-size: clamp(14px, 0.95vw, 15px);
+}
+
+.chip-line b {
+  margin-left: 0.35rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.scroll-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: clamp(2rem, 6vh, 4.5rem) 0 0;
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+}
+
+.hint-line {
+  display: block;
+  width: clamp(28px, 4vw, 56px);
+  height: 1px;
+  background: var(--line);
+}
+
+.hint-arrow {
+  display: inline-block;
+  color: var(--ink-2);
+  font-size: 1.1rem;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+/* ---------- 9. 巨型数字 ---------- */
+.kpi-pair {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(0.4rem, 1.4vw, 1.6rem);
+  margin-top: clamp(0.6rem, 2vh, 1.6rem);
+}
+
+.kpi-num {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--fs-kpi);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-num--hot {
+  color: var(--red);
+}
+
+.kpi-num--money {
+  font-size: var(--fs-kpi-money);
+  letter-spacing: 0.005em;
+}
+
+/* 单位/前缀：0.28em 的小号朱红，用相对位移抬到数字顶部（不改行盒高度） */
+.unit {
+  position: relative;
+  top: -1.7em;
+  margin-right: 0.08em;
+  color: var(--red);
+  font-size: 0.28em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* 不让金额/百分比在括号中间断行 */
+.nw {
+  white-space: nowrap;
+}
+
+.kpi-arrow {
+  flex: none;
+  color: var(--indigo);
+  font-family: var(--font-body);
+  font-size: clamp(1.1rem, 2.2vw, 2rem);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.drop {
+  margin: clamp(1rem, 2.4vh, 1.8rem) 0 0;
+  color: var(--red);
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6vw, 6rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 10. S4 配对表 ---------- */
+/* 表格屏比其它屏宽：1080p 下给到 1440px，其余屏仍走 --measure */
+.slide--table .slide-inner--wide {
+  max-width: min(92vw, 1440px);
+}
+
+/* 表格屏的导语与口径说明吃满版心，避免在宽屏上缩成窄栏 */
+.slide--table .lede,
+.slide--table .footnote {
+  max-width: none;
+}
+
+.table-wrap {
+  margin-top: clamp(0.7rem, 1.6vh, 1.2rem);
+  overflow-x: auto;
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+
+.pairs {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: clamp(15px, 1.32vw, 19px);
+}
+
+.pairs caption {
+  text-align: left;
+}
+
+.pairs thead th {
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-3);
+  font-family: var(--font-body);
+  font-size: clamp(13px, 0.9vw, 14px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.pairs th.num,
+.pairs td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.col-idx {
+  width: 4.2rem;
+}
+
+.col-bar {
+  width: 24%;
+}
+
+.pairs td.idx,
+.pairs th.col-idx {
+  text-align: left;
+}
+
+.pairs tbody td {
+  height: clamp(2.6rem, 4.4vh, 3.4rem);
+  padding: 0 0.8rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+  vertical-align: middle;
+  line-height: 1.35;
+}
+
+/* 斑马纹：极轻，只用来帮眼睛横向追踪，不参与语义 */
+.pairs tbody tr:nth-child(even) td {
+  background: rgba(20, 22, 26, 0.018);
+}
+
+.pairs tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.pairs tbody tr:hover td {
+  background: var(--paper-2);
+}
+
+/* 通过差列：门禁不变量，退到脚注级灰 */
+.pairs tbody td:nth-child(6) {
+  color: var(--ink-3);
+}
+
+.pair-id-cell {
+  color: var(--ink);
+  font-family: var(--font-num);
+  font-size: 0.86em;
+}
+
+.tag-live {
+  margin-left: 0.45rem;
+  padding: 0 0.34rem;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.delta {
+  color: var(--ink-2);
+}
+
+/* 成本差：负数统一朱红，和结论同色 */
+.pairs .delta.is-better {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.is-better {
+  color: var(--indigo);
+  font-weight: 600;
+}
+
+.pairs tfoot td {
+  padding: 0.7rem 0.8rem;
+  border-top: 2px solid var(--line);
+  border-bottom: 2px solid var(--line);
+  background: var(--paper-2);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.pairs tfoot .total-label {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.pairs tfoot .total-note {
+  color: var(--ink-3);
+  font-size: 0.76rem;
+  white-space: normal;
+}
+
+.tf-label {
+  margin-right: 0.3rem;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+}
+
+.tf-delta b {
+  color: var(--red);
+}
+
+/* 对比条：宽度 = 候选 / 基线（由 render.js 写成 --w） */
+.bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.bar {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 72px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bar-fill {
+  display: block;
+  width: var(--w, 0%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--indigo);
+}
+
+.bar-fill.is-worse {
+  background: var(--red);
+}
+
+.bar-over {
+  flex: none;
+  color: var(--red);
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+/* ---------- 11. S5 门禁链 ---------- */
+/* 6 步排成 3 列 × 2 行：每格 ≥300px，步骤名不折行，读数不再挤成一条 */
+.gate-chain {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(20px, 2.4vw, 40px);
+  margin: clamp(1rem, 2.4vh, 1.8rem) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: gate;
+}
+
+.gate-chain li {
+  position: relative;
+  counter-increment: gate;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(16px, 1.8vh, 22px) 0 0;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+/* 节点序号：靖蓝等宽 20px，独立成行 */
+.gate-chain li::before {
+  content: counter(gate, decimal-leading-zero);
+  display: block;
+  margin-bottom: clamp(10px, 1.2vh, 14px);
+  color: var(--indigo);
+  font-family: var(--font-num);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+/* 状态灯：右上角小圆点，通过=靖蓝 / 停步与终判=朱红 */
+.gate-chain li::after {
+  content: "";
+  position: absolute;
+  top: clamp(16px, 1.8vh, 22px);
+  right: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--indigo);
+}
+
+.step.is-stop::after {
+  background: var(--red);
+}
+
+.step.is-final::after {
+  background: var(--red);
+}
+
+.step-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.step-label {
+  display: block;
+  color: var(--ink);
+  font-size: clamp(20px, 1.35vw, 22px);
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.step-badge {
+  display: inline-block;
+  padding: 0.02rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+
+.step-badge.is-pass {
+  border-color: rgba(27, 77, 143, 0.32);
+  color: var(--indigo);
+}
+
+.step-badge.is-stop {
+  border-color: rgba(192, 57, 43, 0.38);
+  color: var(--red);
+}
+
+.step-badge.is-skip {
+  color: var(--ink-3);
+  opacity: 0.7;
+}
+
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: clamp(10px, 1.4vh, 16px);
+  font-size: clamp(17px, 1.05vw, 18px);
+  line-height: 1.45;
+}
+
+.step-obs {
+  display: block;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.step-th {
+  display: block;
+  color: var(--ink-3);
+  font-size: clamp(14px, 0.95vw, 15px);
+}
+
+.step-th::before {
+  content: "阈值 ";
+  opacity: 0.8;
+}
+
+.step.is-skip {
+  opacity: 0.55;
+}
+
+/* 当前结论：独立成一条横跨整行的带，标签在上、结论在下，基线不再错位 */
+.verdict-line {
+  display: grid;
+  gap: clamp(6px, 1vh, 10px);
+  margin: clamp(1.2rem, 2.8vh, 2rem) 0 0;
+  padding: clamp(14px, 1.8vh, 22px) clamp(16px, 2vw, 28px);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--paper-2);
+  color: var(--ink-2);
+}
+
+.verdict-kicker {
+  color: var(--ink-3);
+  font-family: var(--font-body);
+  font-size: clamp(12px, 0.86vw, 14px);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1;
+}
+
+.verdict-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.8rem;
+}
+
+.verdict-body b:first-of-type {
+  color: var(--red);
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.verdict-body b + b {
+  color: var(--ink-2);
+  font-family: var(--font-num);
+  font-size: clamp(18px, 1.3vw, 20px);
+  font-weight: 600;
+}
+
+/* 门禁屏底部事实行：抬到 15–16px，用 · 分隔 */
+.slide--gate .footnote {
+  font-size: clamp(15px, 0.95vw, 16px);
+}
+
+/* ---------- 12. S6 谱系 / 归档 ---------- */
+
+/* S6 是「学到了什么」的主屏：标题单独放大一档（1080p ≈ 61px），
+   其余屏继续用 --fs-title，避免 8 屏标题一起变吵。 */
+.slide-h-lead {
+  font-size: clamp(2.1rem, 4vw, 3.8rem);
+  line-height: 1.1;
+}
+
+.slide-h-lead::before {
+  margin-bottom: clamp(0.85rem, 1.7vh, 1.35rem);
+}
+
+.lineage {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: clamp(24px, 3vw, 56px);
+  margin: clamp(1rem, 2.4vh, 1.8rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 时间线：2px 主线，节点骑在线上 */
+.lineage li {
+  position: relative;
+  padding-top: clamp(18px, 2.2vh, 24px);
+  border-top: 2px solid var(--line);
+  color: var(--ink-2);
+  text-align: left;
+}
+
+/* 节点圆点：10px，未采纳为空心，被采纳为朱红实心 */
+.lineage li::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.lineage li.is-adopted::before {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+/* 节点之间的连线 */
+.lineage li::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: calc(-1 * clamp(24px, 3vw, 56px));
+  height: 2px;
+  background: var(--line);
+}
+
+.lineage li:last-child::after {
+  display: none;
+}
+
+.lin-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.55rem;
+}
+
+.lin-id {
+  color: var(--ink);
+  font-family: var(--font-num);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.lineage-parent {
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.lin-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.26rem;
+  margin-top: 0.6rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.24rem;
+  padding: 0.04rem 0.34rem;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink-2);
+  font-family: var(--font-num);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.chip em {
+  color: var(--ink-3);
+}
+
+.chip b {
+  color: var(--indigo);
+  font-weight: 600;
+}
+
+.row-meta {
+  margin-top: 0.35rem;
+  color: var(--ink-3);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tag {
+  padding: 0 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+
+.lineage .tag {
+  font-size: 14px;
+}
+
+.tag.is-ok {
+  border-color: rgba(192, 57, 43, 0.34);
+  color: var(--red);
+}
+
+/* 「回退 = …」：一条 17px 的说明带，上下细线收边 */
+.rollback-band {
+  max-width: none;
+  margin: clamp(1rem, 2.2vh, 1.6rem) 0 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.rollback-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 2.4rem);
+  margin-top: clamp(0.9rem, 2vh, 1.5rem);
+}
+
+.mini-label {
+  margin: 0 0 0.3rem;
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+}
+
+.archives,
+.snapshots {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.archives li,
+.snapshots li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: clamp(14px, 0.92vw, 15px);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.archives li:last-child,
+.snapshots li:last-child {
+  border-bottom: 0;
+}
+
+.row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.5rem;
+}
+
+.row-id {
+  color: var(--ink);
+  font-family: var(--font-num);
+  font-size: 14px;
+}
+
+/* 快照的 tree hash 用等宽，方便逐字符核对 */
+.snapshots .row-id {
+  font-size: 15px;
+}
+
+/* 空容器：只画一个虚线占位，不显示任何猜测数字 */
+#gate-chain:empty::before,
+#lineage:empty::before,
+#archives:empty::before,
+#snapshots:empty::before {
+  content: "—";
+  display: block;
+  padding: 0.6rem 0.2rem;
+  border-top: 1px dashed var(--line);
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: 0.8rem;
+}
+
+/* ---------- 13. S7 留出集与证据 ---------- */
+.holdout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem 1.4rem;
+  margin-top: clamp(0.8rem, 2vh, 1.4rem);
+}
+
+.holdout-big {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 6.4vw, 6.4rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.holdout-big b {
+  font-weight: 700;
+}
+
+.holdout-cand {
+  color: var(--red);
+}
+
+.holdout-cand b {
+  color: inherit;
+}
+
+.holdout-big .kpi-arrow {
+  margin: 0 0.3em;
+  vertical-align: middle;
+}
+
+.aside {
+  color: var(--ink-3);
+  font-size: var(--fs-foot);
+}
+
+.evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(1.2rem, 4vw, 4rem);
+  margin: clamp(1.2rem, 3vh, 2.2rem) 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.evidence li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-top: clamp(0.6rem, 1.4vh, 1rem);
+}
+
+.ev-num {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.4vw, 3rem);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ev-label {
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+}
+
+.note-line {
+  max-width: min(78ch, 1180px);
+  margin: clamp(0.8rem, 1.8vh, 1.3rem) 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-foot);
+  line-height: 1.6;
+}
+
+.note-line--attrib {
+  margin-top: 0.25rem;
+}
+
+/* ---------- 14. S8 收尾 ---------- */
+.slide--end .slide-inner {
+  max-width: min(88vw, 1000px);
+}
+
+.end-line {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6vw, 6rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+}
+
+.end-line::before {
+  display: none;
+}
+
+.end-line em {
+  color: var(--red);
+}
+
+.meta-line {
+  margin: clamp(1.4rem, 3.4vh, 2.6rem) 0 0;
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: clamp(0.72rem, 0.86vw, 0.82rem);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.meta-line b {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.source-line {
+  margin: 0.35rem 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-foot);
+  line-height: 1.6;
+}
+
+/* 页脚承载口径说明：默认展开、无折叠、无箭头。
+   放 S8 左下角（68ch 的窄栏，1ch 按正文实际字号解析），
+   字号按视口 13.5–16px，逐条 8px 间隔。 */
+.colophon {
+  max-width: 68ch;
+  margin-top: clamp(1rem, 2.4vh, 1.8rem);
+  margin-right: auto;
+  color: var(--ink-3);
+  font-size: clamp(13.5px, 1.05vw, 16px);
+  line-height: 1.55;
+}
+
+.warnings {
+  color: var(--ink-3);
+  line-height: 1.55;
+}
+
+.warnings-title {
+  margin: 0 0 0.4rem;
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: clamp(14px, 0.95vw, 15px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.warnings-title::before {
+  display: none;
+}
+
+.warnings-list {
+  margin: 0;
+  padding-left: 1.05em;
+}
+
+.warnings-list li {
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+
+.warnings-list li:last-child {
+  margin-bottom: 0;
+}
+
+.warnings.is-error {
+  padding-left: 0.7rem;
+  border-left: 2px solid var(--red);
+  color: var(--red);
+}
+
+.warnings.is-error summary {
+  cursor: pointer;
+  color: var(--red);
+  font-size: 13px;
+}
+
+/* ---------- 15. 数据未加载提示 ---------- */
+.data-warning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  padding: 0.55rem var(--pad-x);
+  border-bottom: 1px solid rgba(192, 57, 43, 0.35);
+  background: #FBEFED;
+  color: var(--red);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.data-warning--fixed {
+  position: fixed;
+  bottom: 0;
+  top: auto;
+}
+
+/* ---------- 16. 动效（只在 .js-ready 下启用，全部只动 transform / opacity） ----------
+   性能契约（对应 W-22 §4.2）：
+   ① 不再给 .slide 写 opacity / transform 过渡 —— 8 屏齐动是卡顿元凶；
+      换场视觉交给 .ink 晕染（一次性 keyframes）+ .slide-inner 的内容入场。
+   ② .is-revealed 记住「这屏已经播过」，离开当前屏时状态不回退，
+      避免整屏元素一起倒放 900ms（这是第二个卡顿来源）。
+   ③ 晕染挂在 .is-active 上：每次进入某一屏（下翻 / 上翻 / 圆点 / Home / End）
+      都重播一次；app.js 的 restartInk 在激活后显式重启，保证同屏二次进入也重播。
+      will-change 只挂当前屏。
+   ---------------------------------------------------------------------------- */
+
+/* 内容整块入场：10px → 0，与晕染同时开始 */
+.js-ready .slide-inner {
+  transform: translateY(10px);
+}
+
+.js-ready .slide.is-active .slide-inner {
+  transform: none;
+  transition: transform 900ms var(--ease);
+  will-change: transform;
+}
+
+.js-ready .slide.is-revealed .slide-inner {
+  transform: none;
+  transition: none;
+}
+
+/* 元素入场：90ms 错峰，总时长 900ms */
+.js-ready [data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+.js-ready .slide.is-active [data-reveal] {
+  opacity: 1;
+  transform: none;
+  transition: opacity 900ms var(--ease), transform 900ms var(--ease);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* 播过就停在终态（不加这条，切屏时上一屏会整屏倒放） */
+.js-ready .slide.is-revealed [data-reveal] {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+/* 条形生长：0 → --w，900ms，行间延迟 50ms（render.js 写 inline transition-delay） */
+.js-ready .bar-fill {
+  width: 0;
+}
+
+.js-ready .slide.is-active .bar-fill {
+  width: var(--w, 0%);
+  transition: width 900ms var(--ease);
+}
+
+.js-ready .slide.is-revealed .bar-fill {
+  width: var(--w, 0%);
+  transition: none;
+}
+
+/* 门禁链逐格点亮：110ms/格 */
+.js-ready .gate-chain li {
+  opacity: 0;
+}
+
+.js-ready .slide.is-active .gate-chain li {
+  opacity: 1;
+  transition: opacity 300ms var(--ease);
+}
+
+.js-ready .slide.is-revealed .gate-chain li {
+  opacity: 1;
+  transition: none;
+}
+
+.js-ready .gate-chain li::after {
+  transform: scale(0.6);
+}
+
+.js-ready .slide.is-active .gate-chain li::after {
+  transform: scale(1);
+  transition: transform 300ms var(--ease);
+}
+
+.js-ready .slide.is-revealed .gate-chain li::after {
+  transform: scale(1);
+  transition: none;
+}
+
+.js-ready .slide.is-active .gate-chain li:nth-child(1) { transition-delay: 0ms; }
+.js-ready .slide.is-active .gate-chain li:nth-child(2) { transition-delay: 110ms; }
+.js-ready .slide.is-active .gate-chain li:nth-child(3) { transition-delay: 220ms; }
+.js-ready .slide.is-active .gate-chain li:nth-child(4) { transition-delay: 330ms; }
+.js-ready .slide.is-active .gate-chain li:nth-child(5) { transition-delay: 440ms; }
+.js-ready .slide.is-active .gate-chain li:nth-child(6) { transition-delay: 550ms; }
+
+/* S8 大字揭示：1200ms 从左往右拉开 */
+.js-ready .end-line {
+  clip-path: inset(0 100% 0 0);
+}
+
+.js-ready .slide.is-active .end-line {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1200ms var(--ease);
+}
+
+.js-ready .slide.is-revealed .end-line {
+  clip-path: inset(0 0 0 0);
+  transition: none;
+}
+
+/* 墨水晕染：每次进入某一屏都播一次，fill-mode both 停在 opacity:0。
+   选择器挂 .is-active（不是「首访标记」）：离开当前屏即取消动画，回来重新命中。 */
+.js-ready .slide.is-active .ink i {
+  animation-name: ink-bloom;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.16, 0.62, 0.3, 1);
+}
+
+.js-ready .slide.is-active .ink i:nth-child(1) {
+  animation-duration: 1400ms;
+  animation-delay: 0ms;
+}
+
+.js-ready .slide.is-active .ink i:nth-child(2) {
+  animation-duration: 1700ms;
+  animation-delay: 120ms;
+}
+
+.js-ready .slide.is-active .ink i:nth-child(3) {
+  animation-duration: 2000ms;
+  animation-delay: 240ms;
+}
+
+/* will-change 只挂在当前屏：切走即自动移除，不会 8 屏常驻合成层 */
+.js-ready .slide.is-active .ink i {
+  will-change: transform, opacity;
+}
+
+@keyframes ink-bloom {
+  0%   { transform: scale(0.25); opacity: 0; }
+  22%  { opacity: 1; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* 封面滚动提示的轻微浮动 */
+.js-ready .slide.is-active .hint-arrow {
+  animation: hint-bob 1.6s ease-in-out infinite;
+}
+
+@keyframes hint-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+/* ---------- 17. 减少动态效果：全部关闭 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  .deck {
+    scroll-behavior: auto;
+  }
+
+  .slide,
+  .js-ready .slide {
+    opacity: 1 !important;
+    transform: none !important;
+    will-change: auto;
+  }
+
+  /* 不作晕染、不位移、不计数、不视差：内容直接终态 */
+  .ink,
+  .ink i,
+  .js-ready .slide.is-active .ink i {
+    display: none !important;
+    animation: none !important;
+  }
+
+  .slide-inner,
+  .js-ready .slide-inner {
+    transform: none !important;
+    will-change: auto;
+  }
+
+  [data-reveal],
+  .js-ready [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .parallax {
+    transform: none !important;
+  }
+
+  .bar-fill,
+  .js-ready .bar-fill,
+  .js-ready .slide.is-active .bar-fill {
+    width: var(--w, 0%) !important;
+  }
+
+  .gate-chain li,
+  .js-ready .gate-chain li {
+    opacity: 1 !important;
+  }
+
+  .gate-chain li::after,
+  .js-ready .gate-chain li::after {
+    transform: none !important;
+  }
+
+  .end-line,
+  .js-ready .end-line {
+    clip-path: none !important;
+  }
+}
+
+/* ---------- 18. 自适应 ---------- */
+/* 门禁 6 步：3 列 → 2 列（保证每格 >=300px）→ 1 列 */
+@media (max-width: 1180px) {
+  .gate-chain {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .gate-chain {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .step-label {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 1100px) {
+  .lineage {
+    grid-auto-flow: row;
+    gap: 20px;
+  }
+
+  .lineage li::after {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  :root {
+    --pad-x: clamp(22px, 5vw, 40px);
+  }
+
+  .rollback-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hud-dots {
+    display: none;
+  }
+
+  .kpi-num {
+    font-size: clamp(2.6rem, 13vw, 5rem);
+  }
+
+  .kpi-num--money {
+    font-size: clamp(1.6rem, 7.4vw, 2.6rem);
+  }
+
+  .lede,
+  .claim,
+  .footnote,
+  .note-line {
+    max-width: none;
+  }
+}
+
+@media (max-height: 720px) {
+  .slide {
+    padding-top: clamp(44px, 7vh, 70px);
+    padding-bottom: clamp(44px, 7vh, 70px);
+  }
+
+  .scroll-hint {
+    margin-top: clamp(1rem, 3vh, 2rem);
+  }
+}
+
+/* 720p 投影：表格行高按视口收紧（1080p 仍走 clamp(2.6rem, 4.4vh, 3.4rem)），
+   保证 10 行 + 合计 + 人话句仍在同一屏内。 */
+@media (max-height: 780px) {
+  .slide--table .pairs tbody td {
+    height: clamp(1.9rem, 3.7vh, 3.4rem);
+  }
+}

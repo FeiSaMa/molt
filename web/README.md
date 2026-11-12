@@ -1,7 +1,8 @@
-# web/data —— 给页面用的只读数据面
+# web —— 数据面（data/）与展示页（page/）
 
-本目录由 `molt export` 从 `state/` 生成，**只含数据，不含页面代码**。页面（HTML/CSS/JS）
-由后续批次实现；`file://` 直开时读 `bundle.js` 里的 `window.MOLT_VIEW`，走 HTTP 时读同名 JSON。
+本目录含两件事：`data/`（只读数据面，由 `molt export` 从 `state/` 生成，**禁手改**）与
+`page/`（零构建静态展示页，只读 `data/`）。`file://` 直开时页面读 `data/bundle.js` 里的
+`window.MOLT_VIEW`，走 HTTP 时读同名 JSON。
 
 ## 文件与字段来源
 
@@ -22,6 +23,62 @@
 | `events/search.jsonl` | search 流事件，逐行一个 `event` 记录，按 `(ts, event_id)` 排序 | `state/events/search/*.jsonl`；无 per-run 目录时回退读 `state/events/search.jsonl` |
 | `events/report.jsonl` | report 流**聚合事件**（`holdout.accessed` / `report.scored`）；`holdout.accessed` 只保留 `count`，不含 `task_ids`；per-run 事件不导出 | 同上，`report` 流；导出层剥离 run 明细与 task id |
 | `bundle.js` | `window.MOLT_VIEW = {scenario,variants,runs,search_results,report_results,gate,proposals,archive,snapshots,audit,redaction,events}` | 上述 payload 的合并，供 `file://` 直开 |
+
+## 展示页 web/page/
+
+零构建静态页：`file://` 双击 `web/page/index.html` 即可打开，**无构建步骤、无 npm 依赖、
+无外部请求**，只读 `../data/bundle.js` 注入的 `window.MOLT_VIEW`。数据是 `molt export` 的
+产物，页面不是。
+
+| 文件 | 职责 |
+|---|---|
+| `index.html` | 骨架：8 屏 section（封面 / 通过题数 / 单题成本 / 逐题配对 / 门禁 / 可回退 / 留出集与证据 / 收尾）+ 徽章位 + 脚注 |
+| `app.css` | 全部样式；不引外部字体与 CDN |
+| `model.js` | 纯数据层：`window.MOLT_VIEW` → 展示模型（UMD，node 可直接 `require` 做验收） |
+| `render.js` | 渲染层：展示模型 → DOM，只消费 `model.js` 的输出，不碰原始 payload |
+| `app.js` | 装配：`boot()` 串 `MOLT_VIEW → MOLT_MODEL.build → MOLT_RENDER.render`，失败只报错、不造数字 |
+| `check.mjs` | 验收脚本（node 直跑，无依赖）：462 条断言，覆盖数据口径与页面约束 |
+
+**打开方式**：`file://` 双击 `web/page/index.html`。不要为它引入构建步骤，也不要用
+`fetch` 或 ES module 读数据——`file://` 下两者都会被拦；唯一数据入口是 `data/bundle.js`。
+
+**8 屏（一屏一项，滚动翻页）**：
+
+1. 封面：主张 + 三个环境徽章（scenario / shell / 运行条数）
+2. 通过题数：10 → 10（成功率不变；fixture 3/10 只用于 calibrate）
+3. 单题成本：gate 级 `$0.003556 → $0.001068`（**−70.0%**）；扫描级数字作为 ADR-0008 引用放在脚注
+4. 逐题配对：10 行 + 合计行，口径说明在表格上方
+5. 门禁：六个判定步骤（3×2 网格）+ 结论带（`adopt` / `lower_cost_per_solved`）
+6. 可回退：三代 genome 谱系 + 归档 + 快照
+7. 留出集与证据：5/5 → 5/5（仅聚合）、live/replay/fixture 三数、holdout 归属、`audit`
+8. 收尾：一句话结论 + 证据截至时间 + 数据来源
+
+**验收**：`node web/page/check.mjs`，期望 `462 passed, 0 failed`、退出码 0。
+
+**版式与动效**：
+
+- **视觉**：白底（`--paper #FCFCFD`），标题走衬线系统栈（`Noto Serif CJK SC` → `Source Han Serif SC` →
+  `Songti SC` → `SimSun` → `serif`），配色为墨黑 / 朱红 / 靖蓝三色语义（朱红 = 结论与降幅，
+  靖蓝 = 结构与序号）。**不引 webfont、不引 CDN**，字体全靠系统栈。
+- **翻屏**：`scroll-snap-type: y mandatory` 逐屏吸附（`scroll-snap-align: start` +
+  `scroll-snap-stop: always`）；键盘 `↑` / `↓` / `PgUp` / `PgDn` / `Home` / `End` 跳页
+  （`←` / `→` / `Space` 同义），右侧圆点可点选，末屏不吞键。
+- **动效**：换场缩放淡入、元素错峰入场、背景视差、整数计数、条形生长、门禁逐节点点亮；
+  **只动 `transform` / `opacity`**，不触发布局。
+- **两条降级路径**：
+  1. `prefers-reduced-motion: reduce` 全部关闭，内容直接呈终态（计数不跳动、条形不生长）；
+  2. **无 JS 时所有内容默认可见**——初始隐藏态只写在 `html.js-ready` 之下，脚本跑起来才加该类。
+- **已知缺口**：
+  - `window.MOLT_VIEW` 只有 12 个键、**不含 `index`**，因此页脚 `revision` 恒为空并被整体隐藏，
+    第 8 屏只显示「证据截至 …」；
+  - `100dvh` / `scroll-snap-stop` 在旧版 Chrome 上降级为普通滚动（不吸附），内容仍完整可达。
+
+**口径纪律**（与下文「数据使用警告」同一套，页面已按此实现）：
+
+1. provenance 徽章由数据动态渲染（当前 `live 1 · replay 20 · fixture 0`，共 21 条），不硬编码；
+2. holdout 只展示聚合分，不出现逐题 id；
+3. 扫描级与 gate 级分开标注，不混用；
+4. 逐 run 成本不得求和（`closure` 与 `scan10` 各含一条同源的 `smoke-add`）。
 
 ## 聚合 vs 明细（aggregate vs detail；页面务必注意）
 
@@ -87,8 +144,8 @@ fail closed：`kind="live"` 同时带 `replay_of_run_id`、`kind="live"` 无 `mo
    录制时的 genome_id（如 v0/fixture），closure 的 live run 用同 switches 的 pi 变体；
    `gate.json` 的 `candidate_genome_id` 与 `result` 才是门禁口径。页面归因读
    `gate.json` / `search_results` / `report_results`，`runs[].genome_id` 只作明细展示。
-3. **本仓库只交付数据面**（`web/data`，15 文件，无页面代码）。页面由队友 C 消费该数据面；
-   必须按 `demo_group` + `provenance` 分开标注：`closure` 的 **1 live + 1 replay**，
+3. **数据面只含数据；页面在 `page/`，不写进 `data/`**（`web/data` 15 文件，只读禁手改）。
+   页面必须按 `demo_group` + `provenance` 分开标注：`closure` 的 **1 live + 1 replay**，
    以及 `scan10` 的 **10 条 replay**。不得把 scan10 说成第二次 live 运行。
 
 ## 重新生成
@@ -118,10 +175,10 @@ molt export --scenario demo --state state/demo --out web/data
 
 ## 约束
 
-- 本目录只读；页面代码不要写进 `web/data/`。
-- 仓库只交付数据面，不含 HTML 页面；未实现的冗余项（memory / skill / multi-agent /
-  compaction / 双模型 / escalation 等）与页面边界见
-  [ADR-0009](../docs/decisions/0009-scope-and-redundancy.md)。
+- `data/` 只读、禁手改；页面代码不要写进 `web/data/`。
+- `data/` 只含数据（`molt export` 的产物）；页面在 `web/page/`，是消费数据面的零构建静态页，
+  不是导出流程的产物。未实现的冗余项（memory / skill / multi-agent / compaction / 双模型 /
+  escalation 等）与页面边界见 [ADR-0009](../docs/decisions/0009-scope-and-redundancy.md)。
 - `web/**` 在 `molt.core.isolation.DEFAULT_DENY_PATHS` 中，agent 侧不读 `web/`；
   需要数据时走导出命令重新生成。
 - B2b 的 agent 只启用 sandboxed bash（read/write/edit 不启用）；bash 无网络且看不到
