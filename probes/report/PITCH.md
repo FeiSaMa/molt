@@ -133,7 +133,7 @@
    现场 fast 约 $0.05–0.07（彩排 0.0507 / 0.0723）。全部实验 $10 量级：可复算台账 $8.87，其中三次作废/负结果矩阵合计约 $3.0（v1 作废 $1.38、C1a $0.83、C2 $0.73）。
 
 7. **现场失败怎么办？**
-   切预录：读 `probes/report/rehearsal/run1/state.json`，页面按 `live=false` 标 `REPLAY`，并显示 `verdict_note`。不伪装 live。
+   把 `probes/report/rehearsal/run1/state-replay.json` 复制到 `web/data/probe/state.json`，页面应显示 `REPLAY`（该文件 `live=false`），并显示 `verdict_note`。不伪装 live。
 
 8. **和 SWE-bench 比？**
    不比。那是能力基准（模型能不能做题），这是“跨运行学习”的仪器（同一模型两次运行之间有没有迁移）。两个问题不同，数字不可互换。
@@ -156,6 +156,6 @@
 
 # 现场降级
 
-- **网络 / 模型卡住**：切 `probes/report/rehearsal/run1/state.json`，页面标 `REPLAY`（`live=false` 或 120s stale 都会自动标）。
+- **网络 / 模型卡住**：把 `probes/report/rehearsal/run1/state-replay.json` 复制到 `web/data/probe/state.json`，页面应显示 `REPLAY`（该文件 `live=false`；`live=true` 但 120s 未更新也会自动标）。
 - **页面 404**：`web/data/probe/example.json` 兜底，显示 `REPLAY · EXAMPLE`。
 - **超 360s**：页面显示 `PARTIAL · 360s cap`，保留最后数据，不补跑。
