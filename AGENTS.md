@@ -191,7 +191,7 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 **冻结三层**：
 
 - **Tier 1（冻结）**：`index.json`、`scenario.json`、`runs.json`、`gate.json`、`variants.json` 的字段名、类型、可空性与取值域。只允许新增字段；改名、删字段、改语义一律禁止。
-- **Tier 2（内部，页面不得依赖）**：`redaction.json`、`events/*.jsonl`、`bundle.js`、各文件的 `ext` 子对象。随时可变。
+- **Tier 2（内部，页面不得依赖）**：`redaction.json`、`events/*.jsonl`、`bundle.js`、各文件的 `ext` 子对象、`web/data/probe/`。随时可变。
 - **Tier 3（聚合）**：`search_results.json`、`report_results.json` 只保证 `solved` / `total` / `cost_total_usd` / `cost_per_solved_usd` / `invalid_ratio`。
 
 **语义不变量**：
