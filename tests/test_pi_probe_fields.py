@@ -50,19 +50,31 @@ def _harness():
     return module.ProbeHarness
 
 
-def _actual_pi_version() -> str:
+def _fake_pi(tmp_path: Path) -> str:
+    path = tmp_path / "pi"
+    path.write_text(
+        "#!/bin/sh\n"
+        'if [ "$1" = "--version" ]; then echo 1.5.2; exit 0; fi\n'
+        "exit 0\n",
+        encoding="utf-8",
+    )
+    path.chmod(0o755)
+    return str(path)
+
+
+def _actual_pi_version(executable: str = "pi") -> str:
     completed = subprocess.run(
-        ["pi", "--version"], capture_output=True, text=True, check=False, timeout=10
+        [executable, "--version"], capture_output=True, text=True, check=False, timeout=10
     )
     return (completed.stdout or completed.stderr).strip().splitlines()[0]
 
 
-def _runtime() -> PiRuntime:
+def _runtime(pi_executable: str = "pi") -> PiRuntime:
     return PiRuntime(
         repo_root=ROOT,
         tools_argv_fn=lambda mode: ["--tools", "bash"],
         sandbox_wrapper=None,
-        pi_executable="pi",
+        pi_executable=pi_executable,
     )
 
 
@@ -86,8 +98,10 @@ def _usage() -> SessionUsage:
     )
 
 
-def _patch_success(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> PiRuntime:
-    runtime = _runtime()
+def _patch_success(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, pi_executable: str = "pi"
+) -> PiRuntime:
+    runtime = _runtime(pi_executable)
     runtime.spawn = lambda *args, **kwargs: _FakeProcess()
     usage = _usage()
     monkeypatch.setattr(
@@ -100,7 +114,8 @@ def _patch_success(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> PiRuntime
 
 
 def test_success_records_seven_fields_and_max(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    runtime = _patch_success(monkeypatch, tmp_path)
+    fake = _fake_pi(tmp_path)
+    runtime = _patch_success(monkeypatch, tmp_path, fake)
     workdir = tmp_path / "work"
     (workdir / ".molt").mkdir(parents=True)
     (workdir / ".molt/prompt.txt").write_text("do the task", encoding="utf-8")
@@ -116,12 +131,13 @@ def test_success_records_seven_fields_and_max(monkeypatch: pytest.MonkeyPatch, t
     assert meta["thinking_source"] == "ext.pi.thinking"
     assert meta["argv"][meta["argv"].index("--thinking") + 1] == "max"
     assert "high" not in meta["argv"]
-    assert meta["pi_version"] == _actual_pi_version()
+    assert meta["pi_version"] == _actual_pi_version(fake)
     assert result.diagnostic["probe"]["mode"] == "max"
 
 
 def test_failure_after_argv_keeps_argv(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    runtime = _runtime()
+    fake = _fake_pi(tmp_path)
+    runtime = _runtime(fake)
 
     def boom(*args: object, **kwargs: object) -> None:
         raise RuntimeError("boom")
@@ -135,13 +151,14 @@ def test_failure_after_argv_keeps_argv(monkeypatch: pytest.MonkeyPatch, tmp_path
     assert meta["reason"] == "spawn_error"
     assert meta["argv"]
     assert meta["planned_argv"] == []
-    assert meta["pi_version"] == _actual_pi_version()
+    assert meta["pi_version"] == _actual_pi_version(fake)
 
 
 def test_failure_before_argv_records_planned_argv(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    runtime = _runtime()
+    fake = _fake_pi(tmp_path)
+    runtime = _runtime(fake)
     monkeypatch.setattr(
         PiRuntime,
         "_sandbox_probe",
@@ -170,7 +187,7 @@ def test_failure_before_argv_records_planned_argv(
     assert meta["argv"] == []
     assert meta["planned_argv"]
     assert meta["planned_argv"][meta["planned_argv"].index("--thinking") + 1] == "max"
-    assert meta["pi_version"] == _actual_pi_version()
+    assert meta["pi_version"] == _actual_pi_version(fake)
 
 
 def test_prompt_uses_task_function_and_omits_stale_high() -> None:
