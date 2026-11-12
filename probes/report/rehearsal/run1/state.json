@@ -1,0 +1,559 @@
+{
+  "schema_version": "1.0.0",
+  "live": true,
+  "phase": "done",
+  "started_at": "2026-11-12T04:29:45Z",
+  "updated_at": "2026-11-12T04:31:24Z",
+  "revision": "84083bf9a64b0122576e17d078c5a67e1670257f2ec783465c5ea14faeb0de30",
+  "lineage": [
+    {
+      "gen": "v0",
+      "label": "baseline",
+      "passes": 0,
+      "runs": 1,
+      "scope": [
+        "probe-order-2"
+      ],
+      "note": "live baseline（无记忆）；族题 probe-order-2"
+    },
+    {
+      "gen": "live",
+      "label": "反思",
+      "passes": 2,
+      "runs": 2,
+      "scope": [
+        "probe-order-x5",
+        "probe-order-x6"
+      ],
+      "note": "live memory: shells/probe/memory/live.md；x8 未跑"
+    }
+  ],
+  "run1": {
+    "solved": 0,
+    "total": 1,
+    "headroom_solved": 0,
+    "cost_usd": 0.028324,
+    "wall_ms": 37825,
+    "tasks": [
+      {
+        "id": "probe-order-2",
+        "run_id": "a2ce93d8-probe-order-2-a1-d834ec",
+        "function": "dedupe",
+        "signature": "(names) -> list[str]",
+        "passed": false,
+        "passes": 0,
+        "runs": 1,
+        "cases": [
+          {
+            "case_id": "case_01",
+            "input": [
+              "Alpha",
+              "bb",
+              "ALPHA",
+              "alpha"
+            ],
+            "expected": [
+              "bb",
+              "ALPHA"
+            ],
+            "actual": [
+              "Alpha",
+              "bb",
+              "ALPHA",
+              "alpha"
+            ],
+            "passed": false
+          },
+          {
+            "case_id": "case_02",
+            "input": [
+              "B",
+              "a",
+              "A",
+              "b"
+            ],
+            "expected": [
+              "A",
+              "B"
+            ],
+            "actual": [
+              "B",
+              "a",
+              "A",
+              "b"
+            ],
+            "passed": false
+          },
+          {
+            "case_id": "case_03",
+            "input": [
+              "bb",
+              "aa",
+              "bb"
+            ],
+            "expected": [
+              "aa",
+              "bb"
+            ],
+            "actual": [
+              "bb",
+              "aa"
+            ],
+            "passed": false
+          },
+          {
+            "case_id": "case_04",
+            "input": [
+              "aaa",
+              "bb",
+              "bb"
+            ],
+            "expected": [
+              "bb",
+              "aaa"
+            ],
+            "actual": [
+              "aaa",
+              "bb"
+            ],
+            "passed": false
+          }
+        ],
+        "code_before": "\"\"\"Name helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe(names: list[str]) -> list[str]:\n    \"\"\"Drop duplicate names, keeping one representative each.\n\n    >>> dedupe([\"aa\", \"bb\", \"cc\"])\n    ['aa', 'bb', 'cc']\n    >>> dedupe([\"dd\", \"ee\"])\n    ['dd', 'ee']\n    \"\"\"\n    return sorted(set(names))\n",
+        "code_after": "\"\"\"Name helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe(names: list[str]) -> list[str]:\n    \"\"\"Drop duplicate names, keeping one representative each.\n\n    >>> dedupe([\"aa\", \"bb\", \"cc\"])\n    ['aa', 'bb', 'cc']\n    >>> dedupe([\"dd\", \"ee\"])\n    ['dd', 'ee']\n    \"\"\"\n    return list(dict.fromkeys(names))\n",
+        "diff_lines": [
+          {
+            "type": "same",
+            "text": "\"\"\"Name helpers.\"\"\""
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": "from __future__ import annotations"
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": "def dedupe(names: list[str]) -> list[str]:"
+          },
+          {
+            "type": "same",
+            "text": "    \"\"\"Drop duplicate names, keeping one representative each."
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": "    >>> dedupe([\"aa\", \"bb\", \"cc\"])"
+          },
+          {
+            "type": "same",
+            "text": "    ['aa', 'bb', 'cc']"
+          },
+          {
+            "type": "same",
+            "text": "    >>> dedupe([\"dd\", \"ee\"])"
+          },
+          {
+            "type": "same",
+            "text": "    ['dd', 'ee']"
+          },
+          {
+            "type": "same",
+            "text": "    \"\"\""
+          },
+          {
+            "type": "del",
+            "text": "    return sorted(set(names))"
+          },
+          {
+            "type": "add",
+            "text": "    return list(dict.fromkeys(names))"
+          }
+        ],
+        "note": "outcome=failed"
+      }
+    ]
+  },
+  "memory": {
+    "lines": [
+      "- 分组与去重以忽略大小写后的文本相等为准，同组（含完全相同的重复项）只保留一个代表。",
+      "- 同一组内若存在全大写形态，则优先保留该全大写形态；否则保留原值，不统一改写大小写。",
+      "- 最终结果先按字符串长度升序排序；长度相同时再按字典序升序排序。"
+    ],
+    "source_cases": [
+      "probe-order-2/case_01",
+      "probe-order-2/case_02",
+      "probe-order-2/case_03",
+      "probe-order-2/case_04"
+    ],
+    "sources": [
+      "shells/probe/memory/live.md"
+    ],
+    "attempts": 1,
+    "reflection_model": "deepseek/deepseek-v4-pro",
+    "cost_usd": 0.009395
+  },
+  "run2": {
+    "solved": 2,
+    "total": 2,
+    "headroom_solved": 2,
+    "cost_usd": 0.013004,
+    "wall_ms": 28419,
+    "tasks": [
+      {
+        "id": "probe-order-x5",
+        "run_id": "4fb7ffe4-probe-order-x5-a1-983ba7",
+        "function": "unique",
+        "signature": "(names) -> list[str]",
+        "passed": true,
+        "passes": 1,
+        "runs": 1,
+        "cases": [
+          {
+            "case_id": "case_01",
+            "input": [
+              "Delta",
+              "ee",
+              "DELTA",
+              "delta"
+            ],
+            "expected": [
+              "ee",
+              "DELTA"
+            ],
+            "actual": [
+              "ee",
+              "DELTA"
+            ],
+            "passed": true
+          },
+          {
+            "case_id": "case_02",
+            "input": [
+              "cc",
+              "bb"
+            ],
+            "expected": [
+              "bb",
+              "cc"
+            ],
+            "actual": [
+              "bb",
+              "cc"
+            ],
+            "passed": true
+          },
+          {
+            "case_id": "case_03",
+            "input": [
+              "c",
+              "b"
+            ],
+            "expected": [
+              "b",
+              "c"
+            ],
+            "actual": [
+              "b",
+              "c"
+            ],
+            "passed": true
+          }
+        ],
+        "code_before": "\"\"\"Unique helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef unique(names: list[str]) -> list[str]:\n    \"\"\"Drop duplicate names and return them in this package's preferred sequence.\n\n    >>> unique([\"cc\", \"bb\"])\n    ['bb', 'cc']\n    >>> unique([\"dd\", \"ee\"])\n    ['dd', 'ee']\n    \"\"\"\n    return sorted(set(names))\n",
+        "code_after": "\"\"\"Unique helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef unique(names: list[str]) -> list[str]:\n    \"\"\"Drop duplicate names and return them in this package's preferred sequence.\n\n    >>> unique([\"cc\", \"bb\"])\n    ['bb', 'cc']\n    >>> unique([\"dd\", \"ee\"])\n    ['dd', 'ee']\n    \"\"\"\n    groups: dict[str, str] = {}\n    for name in names:\n        key = name.lower()\n        kept = groups.get(key)\n        if kept is None:\n            groups[key] = name\n        elif kept.isupper():\n            continue\n        elif name.isupper():\n            groups[key] = name\n    return sorted(groups.values(), key=lambda s: (len(s), s))\n",
+        "diff_lines": [
+          {
+            "type": "same",
+            "text": "\"\"\"Unique helpers.\"\"\""
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": "from __future__ import annotations"
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": "def unique(names: list[str]) -> list[str]:"
+          },
+          {
+            "type": "same",
+            "text": "    \"\"\"Drop duplicate names and return them in this package's preferred sequence."
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": "    >>> unique([\"cc\", \"bb\"])"
+          },
+          {
+            "type": "same",
+            "text": "    ['bb', 'cc']"
+          },
+          {
+            "type": "same",
+            "text": "    >>> unique([\"dd\", \"ee\"])"
+          },
+          {
+            "type": "same",
+            "text": "    ['dd', 'ee']"
+          },
+          {
+            "type": "same",
+            "text": "    \"\"\""
+          },
+          {
+            "type": "del",
+            "text": "    return sorted(set(names))"
+          },
+          {
+            "type": "add",
+            "text": "    groups: dict[str, str] = {}"
+          },
+          {
+            "type": "add",
+            "text": "    for name in names:"
+          },
+          {
+            "type": "add",
+            "text": "        key = name.lower()"
+          },
+          {
+            "type": "add",
+            "text": "        kept = groups.get(key)"
+          },
+          {
+            "type": "add",
+            "text": "        if kept is None:"
+          },
+          {
+            "type": "add",
+            "text": "            groups[key] = name"
+          },
+          {
+            "type": "add",
+            "text": "        elif kept.isupper():"
+          },
+          {
+            "type": "add",
+            "text": "            continue"
+          },
+          {
+            "type": "add",
+            "text": "        elif name.isupper():"
+          },
+          {
+            "type": "add",
+            "text": "            groups[key] = name"
+          },
+          {
+            "type": "add",
+            "text": "    return sorted(groups.values(), key=lambda s: (len(s), s))"
+          }
+        ]
+      },
+      {
+        "id": "probe-order-x6",
+        "run_id": "4fb7ffe4-probe-order-x6-a1-cce253",
+        "function": "dedupe_merge",
+        "signature": "(a, b) -> list[str]",
+        "passed": true,
+        "passes": 1,
+        "runs": 1,
+        "cases": [
+          {
+            "case_id": "case_01",
+            "input": [
+              [
+                "Echo",
+                "ff"
+              ],
+              [
+                "ECHO",
+                "gg"
+              ]
+            ],
+            "expected": [
+              "ff",
+              "gg",
+              "ECHO"
+            ],
+            "actual": [
+              "ff",
+              "gg",
+              "ECHO"
+            ],
+            "passed": true
+          },
+          {
+            "case_id": "case_02",
+            "input": [
+              [
+                "cc"
+              ],
+              [
+                "bb"
+              ]
+            ],
+            "expected": [
+              "bb",
+              "cc"
+            ],
+            "actual": [
+              "bb",
+              "cc"
+            ],
+            "passed": true
+          },
+          {
+            "case_id": "case_03",
+            "input": [
+              [
+                "c"
+              ],
+              [
+                "b"
+              ]
+            ],
+            "expected": [
+              "b",
+              "c"
+            ],
+            "actual": [
+              "b",
+              "c"
+            ],
+            "passed": true
+          }
+        ],
+        "code_before": "\"\"\"Merge and dedupe helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe_merge(a: list[str], b: list[str]) -> list[str]:\n    \"\"\"Merge and dedupe two name lists in this package's preferred sequence.\n\n    >>> dedupe_merge([\"cc\"], [\"bb\"])\n    ['bb', 'cc']\n    >>> dedupe_merge([\"c\"], [\"b\"])\n    ['b', 'c']\n    \"\"\"\n    return sorted(set(a + b))\n",
+        "code_after": "\"\"\"Merge and dedupe helpers.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef dedupe_merge(a: list[str], b: list[str]) -> list[str]:\n    \"\"\"Merge and dedupe two name lists in this package's preferred sequence.\n\n    >>> dedupe_merge([\"cc\"], [\"bb\"])\n    ['bb', 'cc']\n    >>> dedupe_merge([\"c\"], [\"b\"])\n    ['b', 'c']\n    \"\"\"\n    groups: dict[str, str] = {}\n    for s in a + b:\n        key = s.casefold()\n        cur = groups.get(key)\n        if cur is None:\n            groups[key] = s\n        elif s.isupper() and not cur.isupper():\n            groups[key] = s\n    return sorted(groups.values(), key=lambda s: (len(s), s))\n",
+        "diff_lines": [
+          {
+            "type": "same",
+            "text": "\"\"\"Merge and dedupe helpers.\"\"\""
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": "from __future__ import annotations"
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": "def dedupe_merge(a: list[str], b: list[str]) -> list[str]:"
+          },
+          {
+            "type": "same",
+            "text": "    \"\"\"Merge and dedupe two name lists in this package's preferred sequence."
+          },
+          {
+            "type": "same",
+            "text": ""
+          },
+          {
+            "type": "same",
+            "text": "    >>> dedupe_merge([\"cc\"], [\"bb\"])"
+          },
+          {
+            "type": "same",
+            "text": "    ['bb', 'cc']"
+          },
+          {
+            "type": "same",
+            "text": "    >>> dedupe_merge([\"c\"], [\"b\"])"
+          },
+          {
+            "type": "same",
+            "text": "    ['b', 'c']"
+          },
+          {
+            "type": "same",
+            "text": "    \"\"\""
+          },
+          {
+            "type": "del",
+            "text": "    return sorted(set(a + b))"
+          },
+          {
+            "type": "add",
+            "text": "    groups: dict[str, str] = {}"
+          },
+          {
+            "type": "add",
+            "text": "    for s in a + b:"
+          },
+          {
+            "type": "add",
+            "text": "        key = s.casefold()"
+          },
+          {
+            "type": "add",
+            "text": "        cur = groups.get(key)"
+          },
+          {
+            "type": "add",
+            "text": "        if cur is None:"
+          },
+          {
+            "type": "add",
+            "text": "            groups[key] = s"
+          },
+          {
+            "type": "add",
+            "text": "        elif s.isupper() and not cur.isupper():"
+          },
+          {
+            "type": "add",
+            "text": "            groups[key] = s"
+          },
+          {
+            "type": "add",
+            "text": "    return sorted(groups.values(), key=lambda s: (len(s), s))"
+          }
+        ]
+      }
+    ]
+  },
+  "verdict": "v3_stable_headroom",
+  "verdict_note": "fast profile：x8 未跑，离线证据见 memory-v3 4/4",
+  "cost_usd": 0.050723,
+  "wall_ms": 98217,
+  "note": "live demo deepseek/deepseek-v4-pro（fast）：run1 0/1，run2 2/2"
+}
