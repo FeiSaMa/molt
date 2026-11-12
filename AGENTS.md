@@ -206,7 +206,7 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 
 - `index.schema_version` 当前 `1.0.0`。Tier 1 的破坏性变更必须升 major、写 ADR、在 PR 描述里列出字段差异，并提前通知前端 owner。
 - 新增字段按 minor 处理；页面必须忽略未知键。
-- probe 数据永不进入 `web/data`；隔离靠 state 白名单（`--state /tmp/molt-probe/...`），导出层不承担过滤职责（`molt/export.py` 不过滤 probe 记录）。
+- probe 数据永不进入 `web/data` 的五个 Tier 1 文件；`web/data/probe/` 是独立演示数据面（Tier 2），导出层仍只写 15 个文件，页面按需读取，不得把它当 demo-6 证据。隔离靠 state 白名单（`--state /tmp/molt-probe/...`），导出层不承担过滤职责（`molt/export.py` 不过滤 probe 记录）。
 
 ## 七、禁止清单
 
