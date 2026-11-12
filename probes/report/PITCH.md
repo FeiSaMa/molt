@@ -158,4 +158,4 @@
 
 - **网络 / 模型卡住**：切 `probes/report/rehearsal/run1/state.json`，页面标 `REPLAY`（`live=false` 或 120s stale 都会自动标）。
 - **页面 404**：`web/data/probe/example.json` 兜底，显示 `REPLAY · EXAMPLE`。
-- **超 360s**：页面显示 `PARTIAL · 300s cap`，保留最后数据，不补跑。
+- **超 360s**：页面显示 `PARTIAL · 360s cap`，保留最后数据，不补跑。
