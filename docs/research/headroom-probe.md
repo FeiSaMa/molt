@@ -137,6 +137,8 @@ probe-5 的 `case_04` 用 `["bb", "bb", "aaa"]`，但它被 baseline 的 `dict.f
 
 主证据仍是 probe-4（`probes/report/2c/**`、`web/data/probe/example.json`）；probe-6 只用于现场 live demo，不与 probe-4 的数字混算。
 
+反思稳定性（2026-11-12）：对同一组 T2 失败用例（含 case_04）独立反思 6 次，pro 3/3、flash 3/3 都把排序规则描述为“长度升序”，0/6 漂移到频次或大写数量，0/6 提及 k/limit/数量上限。样本仅 6 次、单一 prompt，属描述性结果。证据：`probes/report/stability/reflections.json`。
+
 ## 5. 结果表
 
 矩阵 F/K（`probes/report/matrix/verdict.json`）：

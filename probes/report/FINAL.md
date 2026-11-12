@@ -21,6 +21,7 @@ uv run python -m probes.run_demo --profile fast
 - 控制 2/2：`probes/report/2c/control-rows.json`（ctl-a 2/2、ctl-b 2/2）
 - 矩阵 F/K：`probes/report/matrix/verdict.json`（四格 F=0、K=2）
 - 成本合计：`docs/research/headroom-probe.md` 的「成本」段（v4 矩阵 $0.99972634 + 2c 主实验与控制 $2.30024424 + followup 累计 $1.56274139）
+- 反思稳定性：pro 3/3 + flash 3/3 = 6/6 选择“长度排序”；probe-6 的 case_04 消除了频次歧义（`probes/report/stability/`）
 
 ## 三轮方法
 
