@@ -184,6 +184,30 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 按冻结面处理。CODEOWNERS 因此只锁 `/shells/` 与 `/bench/` 的整体 owner，
 **不为 `genomes/`、`prompts/`、`tools/` 单独加锁**，避免候选迭代被拖死。
 
+### `web/data` 契约冻结（前端）
+
+`web/data/` 是引擎与页面的唯一接口；页面由前端 owner 维护，破坏性变更会让页面静默出错。
+
+**冻结三层**：
+
+- **Tier 1（冻结）**：`index.json`、`scenario.json`、`runs.json`、`gate.json`、`variants.json` 的字段名、类型、可空性与取值域。只允许新增字段；改名、删字段、改语义一律禁止。
+- **Tier 2（内部，页面不得依赖）**：`redaction.json`、`events/*.jsonl`、`bundle.js`、各文件的 `ext` 子对象。随时可变。
+- **Tier 3（聚合）**：`search_results.json`、`report_results.json` 只保证 `solved` / `total` / `cost_total_usd` / `cost_per_solved_usd` / `invalid_ratio`。
+
+**语义不变量**：
+
+- `runs[].provenance.kind ∈ {fixture, live, replay}`；`live` 仅指真实模型调用；`replay` 必须带 `replay_of_run_id`；`fixture` 不得标成 `live`。
+- `runs[].demo_group ∈ {closure, scan10, candidate-scan}`；`null` 表示未分组。
+- `gate.decisions[].verdict ∈ {adopt, reject, incomparable, unstable}`。
+- `holdout.detail` 固定 `"not-exported"`；页面不得展示 holdout 逐题。
+- `index.revision` 是刷新信号，不是兼容性信号；不得用它做缓存键。
+
+**版本与流程**：
+
+- `index.schema_version` 当前 `1.0.0`。Tier 1 的破坏性变更必须升 major、写 ADR、在 PR 描述里列出字段差异，并提前通知前端 owner。
+- 新增字段按 minor 处理；页面必须忽略未知键。
+- probe 数据永不进入 `web/data`；隔离靠 state 白名单（`--state /tmp/molt-probe/...`），导出层不承担过滤职责（`molt/export.py` 不过滤 probe 记录）。
+
 ## 七、禁止清单
 
 - 直推 `main`；`git push --force`（含 `--force-with-lease`）到 `main`。
