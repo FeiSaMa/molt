@@ -1,5 +1,5 @@
 /*!
- * molt · web/page/render.js —— 渲染层（P0 四屏）
+ * molt · web/page/render.js —— 渲染层（8 屏路演版）
  *
  * 定位：只吃 MOLT_MODEL.build() 的输出，只写 DOM。
  *   - 所有文本走 textContent / createElement；数据按不可信输入处理，绝不拼 HTML 字符串。
@@ -106,6 +106,27 @@
    *   槽位名保持 HTML 里的扁平别名，两边解耦、互不改名。
    * ========================================================================== */
 
+  /* S4 合计行的通过差：逐题相加，任一行缺数就整格不给 */
+  function totalPassDelta(m) {
+    var pairs = m && m.s2 && isArr(m.s2.pairs) ? m.s2.pairs : [];
+    var sum = 0;
+    if (pairs.length === 0) return null;
+    for (var i = 0; i < pairs.length; i++) {
+      if (!isNum(pairs[i].passedDelta)) return null;
+      sum += pairs[i].passedDelta;
+    }
+    return sum;
+  }
+
+  /* 金额槽位：合计行给 "$0.035560"，与逐行一致 */
+  function usdCell(v, F) {
+    return isNum(v) ? "$" + F.usd(v) : DASH;
+  }
+
+  function signedUsdCell(v, F) {
+    return isNum(v) ? signedUsd(v, F) : DASH;
+  }
+
   /* 通过题数差 → 一句话。0 之外必须写清方向，不能永远说「不变」 */
   function solvedNote(v) {
     if (!isNum(v)) return DASH;
@@ -119,12 +140,12 @@
   function s2LedeNote(m) {
     var pairs = m && m.s2 && m.s2.pairs ? m.s2.pairs : [];
     var allFlat = pairs.length > 0;
-    var allCheaper = pairs.length > 0;
+    /* 「每题都更便宜」由 model 的只读派生字段给出，渲染层不重复判定 */
+    var allCheaper = !!(m && m.s2 && m.s2.allDropped === true);
 
     for (var i = 0; i < pairs.length; i++) {
       var p = pairs[i] || {};
       if (p.passedDelta !== 0) allFlat = false;
-      if (!(isNum(p.costDelta) && p.costDelta < 0)) allCheaper = false;
     }
 
     if (allFlat && allCheaper) return "通过数一道没掉，成本每题都更低。";
@@ -136,35 +157,38 @@
   }
 
   var BINDINGS = {
-    /* --- header --- */
+    /* --- HUD / 封面 --- */
     "meta.scenarioVersion": { path: "meta.scenarioVersion", f: asStr },
     "meta.shellId": { path: "meta.shellId", f: asStr },
     "meta.searchTaskCount": { path: "meta.searchTaskCount", f: asInt },
+    "provenance.total": { path: "provenance.total", f: asInt },
     "provenance.live": { path: "provenance.live", f: asInt },
     "provenance.replay": { path: "provenance.replay", f: asInt },
     "provenance.fixture": { path: "provenance.fixture", f: asInt },
     "provenance.note": { path: "provenance.note", f: asStr },
 
-    /* --- S1 四张 KPI 卡 --- */
+    /* --- S2 / S3 主数字 --- */
     "s1.solvedBase": { path: "s1.solvedBase", f: asInt },
     "s1.solvedCand": { path: "s1.solvedCand", f: asInt },
-    "s1.solvedNote": { path: "s1.solvedDelta", f: function (v) { return solvedNote(v); } },
+    "s1.totalBase": { path: "s1.totalBase", f: asInt },
     "s1.cpsBase": { path: "s1.cpsBase", f: function (v, F) { return F.usd(v); } },
     "s1.cpsCand": { path: "s1.cpsCand", f: function (v, F) { return F.usd(v); } },
     /* 带符号字符串（−70.0% / +3.2%）：负号由 model 给，HTML 里不再写字面负号 */
     "s1.cpsDropText": { path: "s1.cpsDropText", f: asStr },
-    "s1.verdict": { path: "s1.verdict", f: asStr },
-    "s1.reason": { path: "s1.reason", f: asStr },
+    /* 只读派生：同样的钱能跑几倍的题（1 位小数；「倍」字由 HTML 提供） */
+    "s1.costMultiplier": { path: "s1.costMultiplier", f: function (v, F) { return F.pct(v); } },
+    /* S8 结尾句用：只有数值，% 由 HTML 提供 */
+    "s1.cpsDropPct": { path: "s1.cpsDropPct", f: function (v, F) { return F.pct(v); } },
 
     /* 扫描级口径：一律取 s1.scan.display（ADR 形态给 ADR 常量，现场形态给 search_results），
        绝不直连 s1.scan.recomputed —— 那是 gate 级配对的候选合计。 */
     "s1.scanBaseCost": {
       path: "s1.scan.display.baseCostUsd",
-      f: function (v, F) { return F.usd(v); }
+      f: function (v, F) { return "$" + F.usd(v); }
     },
     "s1.scanCandCost": {
       path: "s1.scan.display.candCostUsd",
-      f: function (v, F) { return F.usd(v); }
+      f: function (v, F) { return "$" + F.usd(v); }
     },
     "s1.scanCostDropPct": { path: "s1.scan.display.costDropText", f: asStr },
     "s1.scanBaseWall": {
@@ -177,26 +201,44 @@
     },
     "s1.scanWallDropPct": { path: "s1.scan.display.wallDropText", f: asStr },
 
-    /* --- S2 配对表导语 + 脚注 --- */
+    /* --- S4 配对表导语 / 合计行（静态 tfoot 里的槽位） --- */
     "s2.ledeNote": { get: function (m) { return s2LedeNote(m); }, f: asStr },
-    "s2.invalidBase": { path: "s2.invalidBase", f: function (v, F) { return F.ratio(v); } },
-    "s2.invalidCand": { path: "s2.invalidCand", f: function (v, F) { return F.ratio(v); } },
+    "s2.totalBase": {
+      get: function (m) { return m && m.s2 && m.s2.totals ? m.s2.totals.base : null; },
+      f: usdCell
+    },
+    "s2.totalCand": {
+      get: function (m) { return m && m.s2 && m.s2.totals ? m.s2.totals.cand : null; },
+      f: usdCell
+    },
+    "s2.totalDelta": {
+      get: function (m) { return m && m.s2 && m.s2.totals ? m.s2.totals.delta : null; },
+      f: signedUsdCell
+    },
+    "s2.totalPassDelta": { get: totalPassDelta, f: function (v) { return signedInt(v); } },
     "s2.invalidMax": { path: "s2.invalidMax", f: function (v, F) { return F.ratio(v); } },
-    "s2.k": { path: "s2.k", f: asInt },
 
-    /* --- S3 事实块 --- */
+    /* S4 人话句：逐题降幅的两个极值（model 已算好，这里只格式化；不重算、不猜） */
+    "s2.bestTask": { path: "s2.bestTask", f: asStr },
+    "s2.bestKeepPct": { path: "s2.bestKeepPct", f: function (v, F) { return F.pct(v); } },
+    "s2.worstTask": { path: "s2.worstTask", f: asStr },
+    "s2.worstKeepPct": { path: "s2.worstKeepPct", f: function (v, F) { return F.pct(v); } },
+
+    /* --- S5 事实块 --- */
     "s3.limitsIdentical": { path: "s3.limitsIdentical", f: asBool },
     "s3.budgetCheck": { path: "s3.budgetCheck", f: asStr },
     "s3.verdict": { path: "s3.verdict", f: asStr },
     "s3.reason": { path: "s3.reason", f: asStr },
 
-    /* --- B5 留出集（仅聚合） --- */
+    /* --- S7 留出集（仅聚合）+ 证据 + 审计 --- */
     "holdout.baseSolved": { path: "holdout.baseSolved", f: asInt },
     "holdout.baseTotal": { path: "holdout.baseTotal", f: asInt },
     "holdout.candSolved": { path: "holdout.candSolved", f: asInt },
     "holdout.candTotal": { path: "holdout.candTotal", f: asInt },
+    "audit.ok": { path: "audit.ok", f: asBool },
+    "audit.runs": { path: "audit.runs", f: asInt },
 
-    /* --- footer --- */
+    /* --- S8 元信息 --- */
     "meta.revision": { path: "meta.revision", f: asStr },
     "meta.generatedAt": { path: "meta.generatedAt", f: function (v, F) { return F.iso(v); } }
   };
@@ -272,6 +314,12 @@
       }
 
       node.textContent = text;
+      /* 计数动效的钩子：只有标了 .count 且目标值是整数的槽位才参与计数，
+         目标值与最终文案都留在 DOM 属性里，无 JS 时 textContent 本身就是最终值。 */
+      if (node.className && /\bcount\b/.test(String(node.className)) && /^\d+$/.test(text)) {
+        node.setAttribute("data-count", text);
+        node.setAttribute("data-count-final", text);
+      }
       if (text === DASH) dashes += 1;
       else filled += 1;
     }
@@ -281,85 +329,46 @@
 
   /* ==========================================================================
    * 2. #verify-note —— 只写定性句，不写候选侧任何金额与秒数
-   *    S1 同段落里只允许存在一组扫描级数字（KPI3），否则评委一除就自相矛盾。
-   *    基线侧数字从 s1.scan.recomputed 取，经 fmt 格式化，不写字面量。
+   *    S3 同段落里只允许存在一组扫描级数字，否则评委一除就自相矛盾。
    * ========================================================================== */
 
   function verifyNote(m) {
     var scan = m && m.s1 && m.s1.scan ? m.s1.scan : null;
     if (!scan || !scan.verified) return "";
-    var F = fmtOf(m);
-    var rc = scan.recomputed || {};
-    var v = scan.verified;
-    var parts = [];
 
-    /* 现场形态（两条 live 扫描）：两侧都是 result 现算，直接说清口径与数字 */
+    /* 现场形态（两条 live 扫描）：两侧都是 result 现算 → 直接说清 */
     if (scan.source === "data") {
-      var d = scan.display || {};
-      var n = m.meta && isNum(m.meta.searchTaskCount) ? m.meta.searchTaskCount : null;
-      return "两侧均由 search_results 复算一致：$" + F.usd(d.baseCostUsd) +
-        " → $" + F.usd(d.candCostUsd) + "，" + F.sec(d.baseWallMs) +
-        "s → " + F.sec(d.candWallMs) + "s（两条完整" +
-        (isNum(n) ? " " + n + " " : " ") + "题扫描）。";
+      return "两侧均由 search_results 复算一致。";
     }
 
+    /* 回放形态：基线侧可由 runs 复算，候选侧只能引用 ADR-0008 */
+    var v = scan.verified;
     if (v.baseCost === true && v.baseWall === true) {
-      parts.push(
-        "基线侧 $" + F.usd(rc.baseCostUsd) + " / " + F.sec(rc.baseWallMs) + "s 已由 runs 独立复算一致"
-      );
-    } else if (v.baseCost === false || v.baseWall === false) {
-      parts.push(
-        "基线侧与扫描级口径不一致（runs 复算 $" + F.usd(rc.baseCostUsd) +
-        " / " + F.sec(rc.baseWallMs) + "s）"
-      );
+      return "基线侧已由 runs 复算一致；候选侧为引用值，未随本数据面导出。";
     }
-
-    if (v.candCost === false || v.candWall === false) {
-      parts.push("候选侧扫描级数字引自 ADR-0008，未随本数据面导出");
-    } else if (v.candCost === true && v.candWall === true) {
-      /* 即使可复算也不在这里再报一遍金额：首屏只留 KPI3 那一组扫描级数字 */
-      parts.push("候选侧同批数据可复算，与扫描级口径一致");
+    if (v.baseCost === false || v.baseWall === false) {
+      return "基线侧与扫描级口径不一致，需人工核对；候选侧为引用值。";
     }
-
-    return parts.length === 0 ? "" : parts.join("；") + "。";
+    return "候选侧为引用值，未随本数据面导出。";
   }
 
   /* ==========================================================================
-   * 2a. KPI3 的 label / note 尾巴 + #scan-note 的口径依据
-   *     静态兜底文本留在 index.html 里（不许写死任何数字），这里按 source 覆写。
+   * 2a. #scan-note-basis —— 只写口径来源，不重复任何金额
    * ========================================================================== */
 
   function writeScanScopeText(doc, m) {
     var scan = m && m.s1 && m.s1.scan ? m.s1.scan : null;
     if (!scan) return;
-
-    var n = m.meta && isNum(m.meta.searchTaskCount) ? m.meta.searchTaskCount : null;
-    var countText = isNum(n) ? String(n) + " 题" : "全部题";
     var isData = scan.source === "data";
-
-    var label = doc.getElementById("kpi3-label");
-    if (label) {
-      label.textContent = isData
-        ? "执行成本（扫描级 · 两条 live 扫描）"
-        : "执行成本（扫描级 · 引用 ADR-0008）";
-    }
-
-    var tail = doc.getElementById("kpi3-note-tail");
-    if (tail) {
-      tail.textContent = isData
-        ? "两条 " + countText + "扫描复算"
-        : "候选侧未随数据面导出";
-    }
 
     var basis = doc.getElementById("scan-note-basis");
     if (basis) {
       basis.textContent = isData
-        ? "两侧都由 search_results 复算，未引用 ADR 常量"
-        : "引自 ADR-0008，候选侧未随本数据面导出（基线侧已由 runs 复算一致）";
+        ? "两侧由 search_results 复算"
+        : "引用 ADR-0008";
     }
 
-    /* 「不要对逐 run 求和」的理由随形态变：回放形态是 closure/scan10 重复同一题，
-       现场形态是同题在两条扫描里各有一条 run。 */
+    /* 「不要对逐 run 求和」的理由随形态变 */
     var sumNote = doc.getElementById("sum-note-tail");
     if (sumNote) {
       sumNote.textContent = isData
@@ -379,7 +388,8 @@
 
     /* 现场形态：两条扫描都是 live，没有 replay/fixture 混合，不需要 gate/scan 拆分说明 */
     if (scan.source === "data") {
-      return "两次扫描都是 live 运行，逐题配对直接来自 gate 决策；本形态没有 replay/fixture 混合。";
+      return "两次扫描都是 live 运行，逐题配对直接来自 gate 决策；本形态没有 replay/fixture 混合。" +
+        "不要对逐 run 成本求和：同一道题在两条扫描里各有一条 run。";
     }
 
     if (!scan.counts || !scan.recomputed) return "";
@@ -401,7 +411,8 @@
 
     return "逐题配对含 " + c.candReplay + " 条 replay + " + liveN + " 条 closure live" + tail +
       "→ 这是 gate 级口径；成本合计 $" + F.usd(rc.candPairCostUsd) +
-      " 只用于门禁配对，不等于扫描级。";
+      " 只用于门禁配对，不等于扫描级。" +
+      "不要对逐 run 成本求和：同一道题在多条扫描里各有一条 run。";
   }
 
   /* ==========================================================================
@@ -422,7 +433,7 @@
     return "0";
   }
 
-  function costBar(doc, ratio, F) {
+  function costBar(doc, ratio, F, rowIndex) {
     var wrap = el(doc, "span", "bar-wrap");
     var track = el(doc, "span", "bar");
     var fill = el(doc, "span", "bar-fill");
@@ -437,7 +448,15 @@
     }
 
     if (worse) fill.className = "bar-fill is-worse";
-    fill.style.width = width + "%";
+    /* 宽度写成 CSS 变量：0 → var(--w) 的生长动画由 app.css 负责，
+       无 JS / 减少动效时 var(--w) 直接就是终值。
+       没有 CSSOM 的极简 DOM（例如验收脚本的 stub）退化为直接写 width。 */
+    if (fill.style && typeof fill.style.setProperty === "function") {
+      fill.style.setProperty("--w", width + "%");
+      if (isNum(rowIndex)) fill.style.transitionDelay = (rowIndex * 50) + "ms";
+    } else {
+      fill.style.width = width + "%";
+    }
     track.appendChild(fill);
     wrap.appendChild(track);
 
@@ -463,7 +482,7 @@
       var p = pairs[i] || {};
       var tr = doc.createElement("tr");
 
-      tr.appendChild(el(doc, "td", "num", asInt(p.index)));
+      tr.appendChild(el(doc, "td", "idx", asInt(p.index)));
 
       var idCell = el(doc, "td", "pair-id-cell");
       idCell.appendChild(el(doc, "span", null, asStr(p.taskId)));
@@ -482,7 +501,7 @@
       tr.appendChild(el(doc, "td", "num", signedInt(p.passedDelta)));
 
       var barCell = el(doc, "td", "pair-bar");
-      barCell.appendChild(costBar(doc, p.ratio, F));
+      barCell.appendChild(costBar(doc, p.ratio, F, i));
       /* 成本条的视觉差异（宽度 / 颜色）对读屏不可见，补一行文字等价物 */
       barCell.appendChild(el(doc, "span", "sr-only",
         "基线 $" + F.usd(p.baseCost) + "，候选 $" + F.usd(p.candCost) +
@@ -492,37 +511,7 @@
       body.appendChild(tr);
     }
 
-    renderPairsTotal(doc, m, F);
-
     return pairs.length;
-  }
-
-  /* 表格合计行（<tfoot>）：gate 级逐题求和，明确不等于扫描级 */
-  function renderPairsTotal(doc, m, F) {
-    var foot = doc.getElementById("pairs-foot");
-    if (!foot) return 0;
-    clear(foot);
-
-    var t = m.s2 && m.s2.totals ? m.s2.totals : null;
-    var pairs = m.s2 && m.s2.pairs ? m.s2.pairs : [];
-    var passSum = 0;
-    var passOk = pairs.length > 0;
-    for (var i = 0; i < pairs.length; i++) {
-      if (!isNum(pairs[i].passedDelta)) { passOk = false; break; }
-      passSum += pairs[i].passedDelta;
-    }
-
-    var row = el(doc, "tr", "pairs-total");
-    row.appendChild(el(doc, "td", "num total-label", "合计"));
-    row.appendChild(el(doc, "td", "total-note", "gate 级配对合计，不等于扫描级"));
-    row.appendChild(el(doc, "td", "num", t && isNum(t.base) ? "$" + F.usd(t.base) : DASH));
-    row.appendChild(el(doc, "td", "num", t && isNum(t.cand) ? "$" + F.usd(t.cand) : DASH));
-    row.appendChild(el(doc, "td", "num total-delta", t && isNum(t.delta) ? signedUsd(t.delta, F) : DASH));
-    row.appendChild(el(doc, "td", "num", passOk ? signedInt(passSum) : DASH));
-    row.appendChild(el(doc, "td", "pair-bar", ""));
-
-    foot.appendChild(row);
-    return 1;
   }
 
   /* ==========================================================================
@@ -620,6 +609,7 @@
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i] || {};
       var li = doc.createElement("li");
+      if (r.adopted === true) li.className = "is-adopted";
 
       var head = el(doc, "div", "lin-head");
       head.appendChild(el(doc, "span", "lin-id", asStr(r.short)));
@@ -638,8 +628,7 @@
       li.appendChild(chips);
 
       var metaRow = el(doc, "div", "row-meta", "runtime " + asStr(r.runtimeId));
-      metaRow.appendChild(el(doc, "span", "muted", "（runtime 声明，不代表本页证据的 provenance）"));
-      metaRow.appendChild(el(doc, "span", "muted", " · " + genText(r.generation)));
+      metaRow.appendChild(el(doc, "span", null, "（声明值，非本页证据）"));
       li.appendChild(metaRow);
 
       list.appendChild(li);
@@ -724,22 +713,43 @@
    * 7. 脚注区：错误 / 口径说明（<details>，全 textContent）
    * ========================================================================== */
 
-  function detailBlock(doc, title, items, cls, open) {
-    var box = doc.createElement("details");
-    box.className = cls;
-    if (open) box.open = true;
-
-    var sum = doc.createElement("summary");
-    sum.textContent = title;
-    box.appendChild(sum);
-
-    var ul = doc.createElement("ul");
+  function noteList(doc, items, cls) {
+    var ul = el(doc, "ul", cls);
     for (var i = 0; i < items.length; i++) {
       var li = doc.createElement("li");
       li.textContent = String(items[i]);
       ul.appendChild(li);
     }
-    box.appendChild(ul);
+    return ul;
+  }
+
+  /* 数据错误：仍然折叠（错误不是常读内容，且出现时页面本身已经不可用） */
+  function errorBlock(doc, items) {
+    var box = doc.createElement("details");
+    box.className = "warnings is-error";
+    box.open = true;
+
+    var sum = doc.createElement("summary");
+    sum.textContent = "数据错误（" + items.length + "）";
+    box.appendChild(sum);
+    box.appendChild(noteList(doc, items, "warnings-list"));
+
+    return box;
+  }
+
+  /* 口径说明：默认展开、不折叠、无箭头 —— 它是 S8 的正文，不是「可展开的附录」。
+     每条 warning 全文渲染（不截断、不加省略号）。 */
+  function warningBlock(doc, items) {
+    var box = doc.createElement("section");
+    box.className = "warnings";
+    box.id = "warnings";
+
+    var title = doc.createElement("h3");
+    title.className = "warnings-title";
+    title.textContent = "口径说明";
+    box.appendChild(title);
+
+    box.appendChild(noteList(doc, items, "warnings-list"));
 
     return box;
   }
@@ -758,14 +768,29 @@
     var box = doc.createElement("div");
     box.id = "w03-notes";
 
-    if (errs.length > 0) {
-      box.appendChild(detailBlock(doc, "数据错误（" + errs.length + "）", errs, "warnings is-error", true));
-    }
-    if (warns.length > 0) {
-      box.appendChild(detailBlock(doc, "口径说明（" + warns.length + "）", warns, "warnings", false));
-    }
+    if (errs.length > 0) box.appendChild(errorBlock(doc, errs));
+    if (warns.length > 0) box.appendChild(warningBlock(doc, warns));
 
     host.appendChild(box);
+  }
+
+  /* ==========================================================================
+   * 7c. S7 人话句：措辞由 holdoutNote.dropped 决定（true 掉题 / false 没掉 / null 缺数）
+   *     两句都在 DOM 里，只切 hidden —— 槽位因此不会被摘掉。
+   * ========================================================================== */
+
+  function writeHoldoutPlain(doc, m) {
+    var okNode = doc.getElementById("holdout-plain-ok");
+    var dropNode = doc.getElementById("holdout-plain-drop");
+    if (!okNode || !dropNode) return;
+
+    var note = m && m.holdout && m.holdout.holdoutNote ? m.holdout.holdoutNote : null;
+    var dropped = note ? note.dropped : null;
+
+    /* dropped === true 才换成「掉题」句式；false 与 null 都保留默认句
+       （null = 数据不足，此时数字自己是「—」，句子不会变成断言）。 */
+    okNode.hidden = dropped === true;
+    dropNode.hidden = dropped !== true;
   }
 
   /* ==========================================================================
@@ -835,6 +860,7 @@
       out.counts.archives = renderArchives(doc, m);
       out.counts.snapshots = renderSnapshots(doc, m);
       renderHoldoutAttribution(doc, m);
+      writeHoldoutPlain(doc, m);
 
       /* 摘除 revision 子句之后再数一遍：断言用「渲染后存活槽位」，
          这样 revision 被摘掉（filled 少 1）或被填上都成立，但一个 — 都不许留。 */

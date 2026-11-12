@@ -134,6 +134,12 @@
     return round1((1 - to / from) * 100);
   }
 
+  // 保留率：候选 / 基线 × 100（「成本降到原来的 N%」里的 N），1 位小数
+  function keepPct(base, cand) {
+    if (!isNum(base) || !isNum(cand) || base <= 0) return null;
+    return round1((cand / base) * 100);
+  }
+
   function stripScheme(id) {
     return typeof id === "string" ? id.replace(/^sha256:/, "") : "";
   }
@@ -612,6 +618,8 @@
       cpsCand: null,
       cpsDropPct: null,
       cpsDropText: null,      // 带符号字符串（−70.0% / +3.2%），渲染层直接写
+      // 只读派生：cpsBase / cpsCand，即「同样的钱能跑几倍的题」（3.3 = 3.3 倍），1 位小数
+      costMultiplier: null,
       costBase: null,
       costCand: null,
       costDropPct: null,      // 由 costBase / costCand 复算（扫描级，页面 KPI 用）
@@ -678,6 +686,11 @@
     s1.cpsCand = numOrNull(cs.cost_per_solved_usd);
     s1.cpsDropPct = dropPct(s1.cpsBase, s1.cpsCand);
     s1.cpsDropText = dropTextOf(s1.cpsDropPct, "raw");
+    // 只读派生：1 / (cpsCand / cpsBase) === cpsBase / cpsCand。
+    // 「同样的钱能跑几倍的题」—— 分母是单题成本，不是总量，所以是倍数而不是百分比。
+    s1.costMultiplier = (isNum(s1.cpsBase) && isNum(s1.cpsCand) && s1.cpsCand > 0)
+      ? round1(s1.cpsBase / s1.cpsCand)
+      : null;
     s1.costBase = numOrNull(bs.cost_total_usd);
     s1.costCand = numOrNull(cs.cost_total_usd);
     s1.costDropPct = dropPct(s1.costBase, s1.costCand);
@@ -726,6 +739,16 @@
       totals: { base: null, cand: null, delta: null },
       invalid: { base: null, cand: null, max: null },
       k: null,
+      /* 只读派生：逐题降幅的两个极值 + 「10 题是否全部更便宜」
+         （S4 人话句只从这里取数，渲染层不再自己遍历比较） */
+      bestDrop: null,      // { taskId, baseCost, candCost, dropPct, keepPct } 降幅最大
+      worstDrop: null,     // 同上，降幅最小
+      allDropped: null,    // boolean；pairs 为空或任一题缺数时为 null（不明说「全部」）
+      // 扁平别名：渲染层直接 data-bind，不把对象结构写进 HTML
+      bestTask: null,
+      bestKeepPct: null,
+      worstTask: null,
+      worstKeepPct: null,
       // 便于渲染层直连 data-bind="s2.invalidBase" 这类槽位
       invalidBase: null,
       invalidCand: null,
@@ -788,6 +811,37 @@
     s2.invalidCand = s2.invalid.cand;
     s2.invalidMax = s2.invalid.max;
     s2.k = numOrNull(decision.k);
+
+    /* 逐题降幅极值：只认两侧都有数的行，缺数时不投票也不让 allDropped 变成 true */
+    var best = null;
+    var worst = null;
+    var allDropped = s2.pairs.length > 0;
+    for (var j = 0; j < s2.pairs.length; j++) {
+      var q = s2.pairs[j];
+      if (!isNum(q.baseCost) || !isNum(q.candCost) || q.baseCost <= 0) {
+        allDropped = null;   // 有题缺数：不能说「全部更便宜」
+        continue;
+      }
+      if (!(q.candCost < q.baseCost)) allDropped = false;
+      var d = dropPct(q.baseCost, q.candCost);
+      if (d === null) continue;
+      var item = {
+        taskId: q.taskId,
+        baseCost: q.baseCost,
+        candCost: q.candCost,
+        dropPct: d,
+        keepPct: keepPct(q.baseCost, q.candCost)
+      };
+      if (best === null || d > best.dropPct) best = item;
+      if (worst === null || d < worst.dropPct) worst = item;
+    }
+    s2.bestDrop = best;
+    s2.worstDrop = worst;
+    s2.allDropped = allDropped === null ? null : allDropped;
+    s2.bestTask = best ? best.taskId : null;
+    s2.bestKeepPct = best ? best.keepPct : null;
+    s2.worstTask = worst ? worst.taskId : null;
+    s2.worstKeepPct = worst ? worst.keepPct : null;
 
     return s2;
   }
@@ -1022,6 +1076,14 @@
       /* 归属可见：候选侧到底是哪个 genome 在跑、它的 switches 与门禁候选是否一致。
          这里只做标注，不改变任何数字。 */
       attribution: { candShort: null, baseShort: null, sameSwitches: null, note: null },
+      /* 只读派生：S7 人话句的取值来源（措辞由 dropped 决定，不由模板决定） */
+      holdoutNote: {
+        baseSolved: null,
+        baseTotal: null,
+        candSolved: null,
+        candTotal: null,
+        dropped: null        // true = 候选侧掉题；false = 没掉；null = 数据不足
+      },
       // 扁平别名：渲染层直接 data-bind，不把嵌套结构写进 HTML
       baseSolved: null,
       baseTotal: null,
@@ -1077,6 +1139,18 @@
     out.baseTotal = out.base.total;
     out.candSolved = out.cand.solved;
     out.candTotal = out.cand.total;
+
+    /* dropped 由两侧 solved 直接比出来：相等 → false，变小 → true，缺数 → null。
+       渲染层据此选句式，不写死「没有掉」。 */
+    out.holdoutNote = {
+      baseSolved: out.baseSolved,
+      baseTotal: out.baseTotal,
+      candSolved: out.candSolved,
+      candTotal: out.candTotal,
+      dropped: (out.baseSolved === null || out.candSolved === null)
+        ? null
+        : out.candSolved < out.baseSolved
+    };
 
     out.attribution = buildAttribution(
       pair.base ? pair.base.genome_id : null,
@@ -1229,8 +1303,12 @@
       b5: b5,
       holdout: holdout,
       audit: {
+        /* holdout 聚合契约自检（本轮导出） */
         aggregateOk: aggregateAudit.ok,
-        aggregateHits: aggregateAudit.hits
+        aggregateHits: aggregateAudit.hits,
+        /* 只读派生字段：audit.json 复算结果（S7 直接 data-bind） */
+        ok: isObj(v.audit) && typeof v.audit.ok === "boolean" ? v.audit.ok : null,
+        runs: isObj(v.audit) && isObj(v.audit.checked) ? intOrNull(v.audit.checked.runs) : null
       },
       fmt: fmt
     };

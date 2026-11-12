@@ -142,5 +142,5 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
   `export` 的 `web/data` 数据导出（只产数据面，不生成页面）、
   `demo` 现场闭环（1 live + 1 replay + 10 题扫描回放，180s 硬上限；选定高→低起点，
   gate `adopt`，真实数字与负结果见 ADR-0008，证据在 `web/data`）。
-- 已实现：`web/page/` 零构建展示页（`file://` 直开、只读 `web/data`、
-  `node web/page/check.mjs` 验收 233 条）；导出流程不产页面。
+- 已实现：`web/page/` 零构建展示页（白底 8 屏、scroll-snap 逐屏、`file://` 直开、
+  只读 `web/data`、`node web/page/check.mjs` 验收 462 条）；导出流程不产页面。
