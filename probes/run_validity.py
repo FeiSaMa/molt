@@ -1,4 +1,9 @@
-"""Batch 2a validity runner: oracle / control / family cells, one task per state."""
+"""Batch 2a validity runner: oracle / control / family cells, one task per state.
+Input: scenario ``probe``; genomes ``oracle`` / ``v0-pro-max``; 16 runs over two family and two control tasks.
+Output: ``probes/report/validity/{runs,verdict}.json``; green / too_easy / partial_headroom / probe_invalid.
+Model: real ``molt search --runtime pi`` calls.
+Cost: ~$0.80 evidence, $2.20 stop.
+"""
 
 from __future__ import annotations
 

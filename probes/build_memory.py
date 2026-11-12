@@ -1,4 +1,9 @@
-"""Build deterministic memory sources and a Proposal from failed matrix traces."""
+"""Build deterministic memory sources and a Proposal from failed matrix traces.
+Input: ``probes/report/matrix/runs.json`` and recorded traces; ``MOLT_PROBE_SOURCES`` when rebuilding a proposal.
+Output: ``shells/probe/memory/sources/*.md``, ``gen2.md``, ``2c/proposal.json``, ``2c/memory-traces/*.json``.
+Model: none (deterministic).
+Cost: $0, sub-second.
+"""
 
 # ruff: noqa: E402
 

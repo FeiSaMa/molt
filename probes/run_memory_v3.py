@@ -1,4 +1,9 @@
-"""Memory v3: gen4 rule-only memory on x5/x6/x7/x8, plus x5 gen3 r3/r4."""
+"""Memory v3: gen4 rule-only memory on x5/x6/x7/x8, plus x5 gen3 reps 3–4.
+Input: recorded ``2c/memory-v3/reflection.json``; ``gen4`` / ``gen3`` genomes; 10 runs per invocation.
+Output: ``probes/report/2c/memory-v3/{rows,verdict}.json``; evidence holds 18 runs (16 gen4 + 2 gen3).
+Model: real pi runs.
+Cost: ~$0.46 evidence, $1.20 limit.
+"""
 
 # ruff: noqa: E402
 

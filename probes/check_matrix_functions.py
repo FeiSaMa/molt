@@ -1,4 +1,9 @@
-"""Check whether matrix runs changed the function named by ext.probe.function."""
+"""Check whether matrix runs changed the function named by ext.probe.function.
+Input: ``probes/report/matrix/runs.json``, bench stubs and the run work directories it points to.
+Output: ``probes/report/matrix/function-check.json``; exit 1 if a target is missing/unchanged or extra functions appear.
+Model: none (AST only).
+Cost: $0, sub-second.
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,9 @@
-"""Memory v2: run gen3 (rule-based reflection) on x5/x6/x7, compare pass rates to v1."""
+"""Memory v2: run gen3 (rule-based reflection) on x5/x6/x7, compare pass rates to v1.
+Input: recorded ``2c/memory-v2/reflection.json``; ``gen3`` genome; x5–x7, 2 reps.
+Output: ``probes/report/2c/memory-v2/{rows,verdict}.json`` and a ``memory_v2`` block in ``2c/verdict.json``.
+Model: real pi runs (6); reflection cost is read from the recorded JSON.
+Cost: ~$0.53 evidence, $1.00 limit.
+"""
 
 # ruff: noqa: E402
 

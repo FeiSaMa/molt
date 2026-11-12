@@ -1,4 +1,9 @@
-"""One-off builder for the frozen decision table; not used at runtime."""
+"""One-off builder for the frozen decision table; not used at runtime.
+Input: only the rule functions in this module; no external data.
+Output: ``probes/decision-table.json``, committed verbatim and checked by sha256.
+Model: none.
+Cost: $0, deterministic.
+"""
 
 from __future__ import annotations
 

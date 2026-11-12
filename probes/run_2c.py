@@ -1,4 +1,9 @@
-"""Batch 2c: memory transfer vs baseline, gate via molt.core.policy.decide."""
+"""Batch 2c: memory transfer vs baseline, gate via molt.core.policy.decide.
+Input: scenario ``probe``; ``v0-pro-max`` / ``gen2`` genomes; x5–x8 and ctl-a/b, 2 reps per side.
+Output: ``probes/report/2c/{rows,gate,function-check,verdict}.json`` plus solution snapshots.
+Model: real pi runs (20).
+Cost: ~$2.30 evidence, $2.50 limit.
+"""
 
 # ruff: noqa: E402
 

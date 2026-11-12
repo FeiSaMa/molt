@@ -1,4 +1,9 @@
-"""Batch 2b matrix runner: oracle 4 + 4 cells × 4 tasks × 2 reps = 36 runs."""
+"""Batch 2b matrix runner: oracle 4 + 4 cells × 4 tasks × 2 reps = 36 runs.
+Input: scenario ``probe``; v0-{pro,flash}-{max,high} and ``oracle`` genomes; order-2/x3 + ctl-a/b.
+Output: ``probes/report/matrix/{runs,verdict,next-phase}.json`` plus a decision-table sha256 check.
+Model: real pi search runs (36).
+Cost: ~$1.00 evidence, $1.80 stop / $2.00 limit.
+"""
 
 # ruff: noqa: E402
 

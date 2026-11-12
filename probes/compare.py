@@ -1,4 +1,9 @@
-"""Read the frozen decision table; this module does not compute thresholds."""
+"""Read the frozen decision table; this module does not compute thresholds.
+Input: ``probes/decision-table.json`` (or an injected table) and an F vector keyed by cell.
+Output: the matching verdict/reason row; raises KeyError when the vector is not covered.
+Model: none.
+Cost: $0, pure JSON lookup.
+"""
 
 from __future__ import annotations
 

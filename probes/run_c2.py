@@ -1,4 +1,9 @@
-"""C2 舍入族有效性门：16 runs（族 2×4 / 控制 2×2 / oracle 2×2）。"""
+"""C2 舍入族有效性门：16 runs（族 2×4 / 控制 2×2 / oracle 2×2）。
+输入：``scenario=probe-c2``、``c2-pro-max``/``c2-oracle`` genome、c2-percent/ratio 与 c2-ctl-a/b。
+输出：``probes/report/c2/{rows,verdict}.json``；族题被 baseline 全解时判 ``c2_invalid``（负结果）。
+调模型：是，16 次真实 pi run。
+成本：约 $0.73，上限 $1.50。
+"""
 
 # ruff: noqa: E402
 
