@@ -1,0 +1,1476 @@
+{
+  "verdict": "partial_transfer",
+  "memory_solved": 3,
+  "baseline_solved": 1,
+  "control_solved": 2,
+  "memory_tasks": {
+    "probe-order-x5": {
+      "runs": 2,
+      "passes": 2,
+      "valid": 2,
+      "outcomes": [
+        "passed",
+        "passed"
+      ],
+      "cost_usd": 0.32104283,
+      "run_ids": [
+        "f0ed8eef-probe-order-x5-a1-8f367a",
+        "f0ed8eef-probe-order-x5-a1-3fd3e2"
+      ]
+    },
+    "probe-order-x6": {
+      "runs": 2,
+      "passes": 2,
+      "valid": 2,
+      "outcomes": [
+        "passed",
+        "passed"
+      ],
+      "cost_usd": 0.24713814,
+      "run_ids": [
+        "f0ed8eef-probe-order-x6-a1-8a6ccd",
+        "f0ed8eef-probe-order-x6-a1-663468"
+      ]
+    },
+    "probe-order-x7": {
+      "runs": 2,
+      "passes": 1,
+      "valid": 1,
+      "outcomes": [
+        "invalid",
+        "passed"
+      ],
+      "cost_usd": 0.22976545,
+      "run_ids": [
+        "f0ed8eef-probe-order-x7-a1-1e035e",
+        "f0ed8eef-probe-order-x7-a1-ec5c99"
+      ]
+    },
+    "probe-order-x8": {
+      "runs": 2,
+      "passes": 0,
+      "valid": 2,
+      "outcomes": [
+        "failed",
+        "failed"
+      ],
+      "cost_usd": 0.2421863,
+      "run_ids": [
+        "f0ed8eef-probe-order-x8-a1-20a70b",
+        "f0ed8eef-probe-order-x8-a1-1853b0"
+      ]
+    }
+  },
+  "baseline_tasks": {
+    "probe-order-x5": {
+      "runs": 2,
+      "passes": 0,
+      "valid": 2,
+      "outcomes": [
+        "failed",
+        "failed"
+      ],
+      "cost_usd": 0.21320931,
+      "run_ids": [
+        "397d3453-probe-order-x5-a1-6f6369",
+        "397d3453-probe-order-x5-a1-d83892"
+      ]
+    },
+    "probe-order-x6": {
+      "runs": 2,
+      "passes": 0,
+      "valid": 1,
+      "outcomes": [
+        "invalid",
+        "failed"
+      ],
+      "cost_usd": 0.38404318,
+      "run_ids": [
+        "397d3453-probe-order-x6-a1-0b1e19",
+        "397d3453-probe-order-x6-a1-593eba"
+      ]
+    },
+    "probe-order-x7": {
+      "runs": 2,
+      "passes": 0,
+      "valid": 2,
+      "outcomes": [
+        "failed",
+        "failed"
+      ],
+      "cost_usd": 0.31767657,
+      "run_ids": [
+        "397d3453-probe-order-x7-a1-1b931c",
+        "397d3453-probe-order-x7-a1-57b6a3"
+      ]
+    },
+    "probe-order-x8": {
+      "runs": 2,
+      "passes": 2,
+      "valid": 2,
+      "outcomes": [
+        "passed",
+        "passed"
+      ],
+      "cost_usd": 0.3047051,
+      "run_ids": [
+        "397d3453-probe-order-x8-a1-78101c",
+        "397d3453-probe-order-x8-a1-f4376b"
+      ]
+    }
+  },
+  "control_tasks": {
+    "probe-ctl-a": {
+      "runs": 2,
+      "passes": 2,
+      "valid": 2,
+      "outcomes": [
+        "passed",
+        "passed"
+      ],
+      "cost_usd": 0.02765259,
+      "run_ids": [
+        "f0ed8eef-probe-ctl-a-a1-13d55d",
+        "f0ed8eef-probe-ctl-a-a1-b32156"
+      ]
+    },
+    "probe-ctl-b": {
+      "runs": 2,
+      "passes": 2,
+      "valid": 2,
+      "outcomes": [
+        "passed",
+        "passed"
+      ],
+      "cost_usd": 0.01282477,
+      "run_ids": [
+        "f0ed8eef-probe-ctl-b-a1-339552",
+        "f0ed8eef-probe-ctl-b-a1-b03c44"
+      ]
+    }
+  },
+  "cost_total": 2.30024424,
+  "budget_limit": 2.5,
+  "budget_stopped": true,
+  "missing_runs": 0,
+  "expected_runs": 20,
+  "cost_note": [],
+  "gate_verdict": "adopt",
+  "gate_reason": "lower_cost_per_solved",
+  "gate_paired_tasks": [
+    "probe-order-x5",
+    "probe-order-x6",
+    "probe-order-x7",
+    "probe-order-x8"
+  ],
+  "proposal_id": "prop-2aca2a5b44e8f71a",
+  "gen2_genome_id": "sha256:f0ed8eef1af6e64b55b0f764125b1c8646916b7cad1d65baa51770e4e54e0fbf",
+  "memory_sha256": "c006367021e01a02bddc2e9d8729fdf56ae3838b291d0dd370be4fd1012f30ee",
+  "function_check_all_ok": false,
+  "function_check_violations": [
+    {
+      "group": "baseline",
+      "task_id": "probe-order-x5",
+      "rep": 1,
+      "function": "unique",
+      "present": true,
+      "changed": false,
+      "added": []
+    },
+    {
+      "group": "baseline",
+      "task_id": "probe-order-x5",
+      "rep": 2,
+      "function": "unique",
+      "present": true,
+      "changed": false,
+      "added": []
+    },
+    {
+      "group": "baseline",
+      "task_id": "probe-order-x6",
+      "rep": 1,
+      "function": "dedupe_merge",
+      "present": true,
+      "changed": false,
+      "added": []
+    },
+    {
+      "group": "baseline",
+      "task_id": "probe-order-x6",
+      "rep": 2,
+      "function": "dedupe_merge",
+      "present": true,
+      "changed": false,
+      "added": []
+    },
+    {
+      "group": "baseline",
+      "task_id": "probe-order-x7",
+      "rep": 1,
+      "function": "dedupe_min",
+      "present": true,
+      "changed": false,
+      "added": []
+    },
+    {
+      "group": "memory",
+      "task_id": "probe-order-x7",
+      "rep": 1,
+      "function": "dedupe_min",
+      "present": true,
+      "changed": false,
+      "added": []
+    }
+  ],
+  "missing_groups": [],
+  "gate_policy_note": "2c gate uses execution cap $2.5 (same for both sides); scenario.policy remains $1.0; gate is separate from the pre-registered count rule.",
+  "memory_target_changed": "x5/x6/x8 all target_changed; x7 r1 no-op (invalid), x7 r2 target_changed and passed.",
+  "baseline_target_changed": "x8 both target_changed/passed; x5/x6/x7 mostly no-op (baseline has no memory).",
+  "control_cost_usd": 0.04047736,
+  "main_cost_usd": 2.25976688,
+  "x8": "negative_transfer",
+  "note": "控制题已补跑，最终预算 $2.30024424；主实验 16 runs 未改。 稳定正例 1/4 题（x5 4/4；x6 3/4；x7 1/4；x8 0/4 负迁移）。 v3 是最终方法，判定见 memory_v3。",
+  "control_function_check_all_ok": true,
+  "control_function_check": {
+    "all_ok": true,
+    "violations": [],
+    "checks": [
+      {
+        "group": "control",
+        "task_id": "probe-ctl-a",
+        "rep": 1,
+        "function": "sign_label",
+        "present": true,
+        "changed": true,
+        "added": []
+      },
+      {
+        "group": "control",
+        "task_id": "probe-ctl-a",
+        "rep": 2,
+        "function": "sign_label",
+        "present": true,
+        "changed": true,
+        "added": []
+      },
+      {
+        "group": "control",
+        "task_id": "probe-ctl-b",
+        "rep": 1,
+        "function": "chunk",
+        "present": true,
+        "changed": true,
+        "added": []
+      },
+      {
+        "group": "control",
+        "task_id": "probe-ctl-b",
+        "rep": 2,
+        "function": "chunk",
+        "present": true,
+        "changed": true,
+        "added": []
+      }
+    ]
+  },
+  "followups": {
+    "x8_signature_constraint": {
+      "runs": [
+        {
+          "group": "no-memory",
+          "task_id": "probe-order-x8",
+          "rep": 1,
+          "state": "/tmp/molt-probe/sig/no-memory/x8-r1",
+          "run_id": "e1111049-probe-order-x8-a1-ead493",
+          "outcome": "failed",
+          "solved": 0,
+          "cost_usd": 0.04528454,
+          "wall_ms": 51721,
+          "signature": "(names) -> int",
+          "solution_snapshot": "probes/report/2c/solutions/followup/no-memory-probe-order-x8-r1.py.txt",
+          "target_changed": false,
+          "signature_changed": false,
+          "added_functions": []
+        },
+        {
+          "group": "no-memory",
+          "task_id": "probe-order-x8",
+          "rep": 2,
+          "state": "/tmp/molt-probe/sig/no-memory/x8-r2",
+          "run_id": "e1111049-probe-order-x8-a1-e101ad",
+          "outcome": "failed",
+          "solved": 0,
+          "cost_usd": 0.09379568,
+          "wall_ms": 142261,
+          "signature": "(names) -> int",
+          "solution_snapshot": "probes/report/2c/solutions/followup/no-memory-probe-order-x8-r2.py.txt",
+          "target_changed": false,
+          "signature_changed": false,
+          "added_functions": []
+        },
+        {
+          "group": "memory",
+          "task_id": "probe-order-x8",
+          "rep": 1,
+          "state": "/tmp/molt-probe/sig/memory/x8-r1",
+          "run_id": "0661a618-probe-order-x8-a1-13c549",
+          "outcome": "failed",
+          "solved": 0,
+          "cost_usd": 0.10650438,
+          "wall_ms": 197116,
+          "signature": "(names, k) -> list[str]",
+          "solution_snapshot": "probes/report/2c/solutions/followup/memory-probe-order-x8-r1.py.txt",
+          "target_changed": true,
+          "signature_changed": true,
+          "added_functions": []
+        },
+        {
+          "group": "memory",
+          "task_id": "probe-order-x8",
+          "rep": 2,
+          "state": "/tmp/molt-probe/sig/memory/x8-r2",
+          "run_id": "0661a618-probe-order-x8-a1-c54f63",
+          "outcome": "failed",
+          "solved": 0,
+          "cost_usd": 0.13756239,
+          "wall_ms": 209909,
+          "signature": "(names, k) -> list[str]",
+          "solution_snapshot": "probes/report/2c/solutions/followup/memory-probe-order-x8-r2.py.txt",
+          "target_changed": true,
+          "signature_changed": true,
+          "added_functions": [
+            "_uppercase_count"
+          ]
+        }
+      ],
+      "no_memory_solved": 0,
+      "memory_solved": 0,
+      "result": "not_explained_by_signature_constraint",
+      "note": "memory group still changed signature to list/k; no-memory group left the default body and also failed. Signature constraint was not followed by the memory group; control did not reproduce baseline.",
+      "cost_usd": 0.38314699
+    },
+    "x7_replication": {
+      "original_runs": [
+        {
+          "group": "memory",
+          "genome": "gen2",
+          "task_id": "probe-order-x7",
+          "rep": 1,
+          "state": "/tmp/molt-probe/2c/memory/probe-order-x7-r1",
+          "command": [
+            "/home/feisama/dev/molt/.venv/bin/python",
+            "-m",
+            "molt",
+            "search",
+            "--scenario",
+            "probe",
+            "--runtime",
+            "pi",
+            "--genome",
+            "shells/probe/genomes/gen2.json",
+            "--state",
+            "/tmp/molt-probe/2c/memory/probe-order-x7-r1",
+            "--task",
+            "probe-order-x7"
+          ],
+          "exit": 0,
+          "stdout": "search ok runs=1 result=result-search-f0ed8eef solved=0",
+          "stderr": "",
+          "run_id": "f0ed8eef-probe-order-x7-a1-1e035e",
+          "outcome": "invalid",
+          "cost_usd": 0.15391455,
+          "wall_ms": 607458,
+          "turns": 8,
+          "solved": 0,
+          "verifier_hash": "b194ce321b416674ada40f5b00980cc489b7deeff8a59c0ff6e1d3573e809521",
+          "target_changed": false,
+          "signature_changed": true,
+          "added_functions": []
+        },
+        {
+          "group": "memory",
+          "genome": "gen2",
+          "task_id": "probe-order-x7",
+          "rep": 2,
+          "state": "/tmp/molt-probe/2c/memory/probe-order-x7-r2",
+          "command": [
+            "/home/feisama/dev/molt/.venv/bin/python",
+            "-m",
+            "molt",
+            "search",
+            "--scenario",
+            "probe",
+            "--runtime",
+            "pi",
+            "--genome",
+            "shells/probe/genomes/gen2.json",
+            "--state",
+            "/tmp/molt-probe/2c/memory/probe-order-x7-r2",
+            "--task",
+            "probe-order-x7"
+          ],
+          "exit": 0,
+          "stdout": "search ok runs=1 result=result-search-f0ed8eef solved=1",
+          "stderr": "",
+          "run_id": "f0ed8eef-probe-order-x7-a1-ec5c99",
+          "outcome": "passed",
+          "cost_usd": 0.0758509,
+          "wall_ms": 145492,
+          "turns": 8,
+          "solved": 1,
+          "verifier_hash": "b194ce321b416674ada40f5b00980cc489b7deeff8a59c0ff6e1d3573e809521",
+          "target_changed": true,
+          "signature_changed": true,
+          "added_functions": []
+        }
+      ],
+      "replicate_runs": [
+        {
+          "group": "gen2-replicate",
+          "task_id": "probe-order-x7",
+          "rep": 1,
+          "state": "/tmp/molt-probe/2c-v1/replicate/x7-r1",
+          "run_id": "2f5117a9-probe-order-x7-a1-52210f",
+          "outcome": "failed",
+          "solved": 0,
+          "cost_usd": 0.16836943,
+          "wall_ms": 263978,
+          "signature": "(names, k) -> list[str]",
+          "solution_snapshot": "probes/report/2c/solutions/followup/gen2-replicate-probe-order-x7-r1.py.txt",
+          "target_changed": true,
+          "signature_changed": true,
+          "added_functions": []
+        },
+        {
+          "group": "gen2-replicate",
+          "task_id": "probe-order-x7",
+          "rep": 2,
+          "state": "/tmp/molt-probe/2c-v1/replicate/x7-r2",
+          "run_id": "2f5117a9-probe-order-x7-a1-a6288c",
+          "outcome": "failed",
+          "solved": 0,
+          "cost_usd": 0.11409103,
+          "wall_ms": 183326,
+          "signature": "(names, k) -> list[str] | None",
+          "solution_snapshot": "probes/report/2c/solutions/followup/gen2-replicate-probe-order-x7-r2.py.txt",
+          "target_changed": true,
+          "signature_changed": true,
+          "added_functions": []
+        }
+      ],
+      "original_passes": 1,
+      "replicate_passes": 0,
+      "total_passes": 1,
+      "total_runs": 4,
+      "status": "jitter",
+      "note": "original x7 r1 invalid/no-op, r2 pass; both replicate runs changed signature to list/k and failed.",
+      "cost_usd": 0.28246046
+    },
+    "cost_total": 1.56274139,
+    "x5_x6_replication": {
+      "runs": [
+        {
+          "group": "memory",
+          "genome": "gen2",
+          "task_id": "probe-order-x5",
+          "rep": 1,
+          "state": "/tmp/molt-probe/2c-v1/replicate2/memory/probe-order-x5-r1",
+          "run_id": "2f5117a9-probe-order-x5-a1-a8fa3d",
+          "outcome": "passed",
+          "solved": 1,
+          "cost_usd": 0.10532975,
+          "wall_ms": 136783,
+          "target_changed": true,
+          "added_functions": [],
+          "solution_snapshot": "probes/report/2c/solutions/followup/replicate2-memory-probe-order-x5-r1.py.txt"
+        },
+        {
+          "group": "memory",
+          "genome": "gen2",
+          "task_id": "probe-order-x5",
+          "rep": 2,
+          "state": "/tmp/molt-probe/2c-v1/replicate2/memory/probe-order-x5-r2",
+          "run_id": "2f5117a9-probe-order-x5-a1-20b9d6",
+          "outcome": "passed",
+          "solved": 1,
+          "cost_usd": 0.19086338,
+          "wall_ms": 377983,
+          "target_changed": true,
+          "added_functions": [],
+          "solution_snapshot": "probes/report/2c/solutions/followup/replicate2-memory-probe-order-x5-r2.py.txt"
+        },
+        {
+          "group": "memory",
+          "genome": "gen2",
+          "task_id": "probe-order-x6",
+          "rep": 1,
+          "state": "/tmp/molt-probe/2c-v1/replicate2/memory/probe-order-x6-r1",
+          "run_id": "2f5117a9-probe-order-x6-a1-d492a6",
+          "outcome": "failed",
+          "solved": 0,
+          "cost_usd": 0.10879035,
+          "wall_ms": 190515,
+          "target_changed": true,
+          "added_functions": [],
+          "solution_snapshot": "probes/report/2c/solutions/followup/replicate2-memory-probe-order-x6-r1.py.txt"
+        },
+        {
+          "group": "memory",
+          "genome": "gen2",
+          "task_id": "probe-order-x6",
+          "rep": 2,
+          "state": "/tmp/molt-probe/2c-v1/replicate2/memory/probe-order-x6-r2",
+          "run_id": "2f5117a9-probe-order-x6-a1-e913fa",
+          "outcome": "passed",
+          "solved": 1,
+          "cost_usd": 0.12091649,
+          "wall_ms": 179028,
+          "target_changed": true,
+          "added_functions": [],
+          "solution_snapshot": "probes/report/2c/solutions/followup/replicate2-memory-probe-order-x6-r2.py.txt"
+        },
+        {
+          "group": "baseline",
+          "genome": "v0-pro-max",
+          "task_id": "probe-order-x5",
+          "rep": 1,
+          "state": "/tmp/molt-probe/2c-v1/replicate2/baseline/probe-order-x5-r1",
+          "run_id": "4309fd0c-probe-order-x5-a1-10073a",
+          "outcome": "failed",
+          "solved": 0,
+          "cost_usd": 0.11378743,
+          "wall_ms": 168158,
+          "target_changed": false,
+          "added_functions": [],
+          "solution_snapshot": "probes/report/2c/solutions/followup/replicate2-baseline-probe-order-x5-r1.py.txt"
+        },
+        {
+          "group": "baseline",
+          "genome": "v0-pro-max",
+          "task_id": "probe-order-x5",
+          "rep": 2,
+          "state": "/tmp/molt-probe/2c-v1/replicate2/baseline/probe-order-x5-r2",
+          "run_id": "4309fd0c-probe-order-x5-a1-83674c",
+          "outcome": "failed",
+          "solved": 0,
+          "cost_usd": 0.11916282,
+          "wall_ms": 181051,
+          "target_changed": false,
+          "added_functions": [],
+          "solution_snapshot": "probes/report/2c/solutions/followup/replicate2-baseline-probe-order-x5-r2.py.txt"
+        },
+        {
+          "group": "baseline",
+          "genome": "v0-pro-max",
+          "task_id": "probe-order-x6",
+          "rep": 1,
+          "state": "/tmp/molt-probe/2c-v1/replicate2/baseline/probe-order-x6-r1",
+          "run_id": "4309fd0c-probe-order-x6-a1-10de98",
+          "outcome": "failed",
+          "solved": 0,
+          "cost_usd": 0.06573802,
+          "wall_ms": 87573,
+          "target_changed": true,
+          "added_functions": [],
+          "solution_snapshot": "probes/report/2c/solutions/followup/replicate2-baseline-probe-order-x6-r1.py.txt"
+        },
+        {
+          "group": "baseline",
+          "genome": "v0-pro-max",
+          "task_id": "probe-order-x6",
+          "rep": 2,
+          "state": "/tmp/molt-probe/2c-v1/replicate2/baseline/probe-order-x6-r2",
+          "run_id": "4309fd0c-probe-order-x6-a1-7bc404",
+          "outcome": "failed",
+          "solved": 0,
+          "cost_usd": 0.0725457,
+          "wall_ms": 117981,
+          "target_changed": true,
+          "added_functions": [],
+          "solution_snapshot": "probes/report/2c/solutions/followup/replicate2-baseline-probe-order-x6-r2.py.txt"
+        }
+      ],
+      "memory_passes": 3,
+      "memory_runs": 4,
+      "baseline_passes": 0,
+      "baseline_runs": 4,
+      "cost_usd": 0.89713394,
+      "this_round_cost_usd": 0.89713394
+    },
+    "x8_x7_prior_cost_usd": 0.66560745,
+    "budget_note": "x5/x6 本轮 8 runs $0.89713394；prior x8/x7 $0.66560745；累计 followup $1.56274139。本轮上限 $1.5 只看新增 8 runs（$0.8971），未触发本轮 $1.3 stop；累计值超 $1.5，属于跨轮累计，不是本轮新增花费。"
+  },
+  "stability": {
+    "x5": {
+      "memory_passes": 4,
+      "memory_runs": 4,
+      "baseline_passes": 0,
+      "baseline_runs": 4,
+      "status": "stable_pass"
+    },
+    "x6": {
+      "memory_passes": 3,
+      "memory_runs": 4,
+      "baseline_passes": 0,
+      "baseline_runs": 4,
+      "status": "jitter"
+    },
+    "x7": {
+      "memory_passes": 1,
+      "memory_runs": 4,
+      "baseline_passes": 0,
+      "baseline_runs": 2,
+      "status": "jitter"
+    },
+    "x8": {
+      "memory_passes": 0,
+      "memory_runs": 4,
+      "baseline_passes": 2,
+      "baseline_runs": 2,
+      "status": "negative_transfer"
+    }
+  },
+  "memory_v2": {
+    "verdict": "reflection_better",
+    "comparison": "pass_rate; v1 has 4 runs, v2 has 2 runs",
+    "v1": {
+      "x5": {
+        "passes": 4,
+        "runs": 4,
+        "rate": 1.0
+      },
+      "x6": {
+        "passes": 3,
+        "runs": 4,
+        "rate": 0.75
+      },
+      "x7": {
+        "passes": 1,
+        "runs": 4,
+        "rate": 0.25
+      },
+      "x8": {
+        "memory_passes": 0,
+        "memory_runs": 4,
+        "baseline_passes": 2,
+        "baseline_runs": 2,
+        "rate": 0.0
+      }
+    },
+    "v2": {
+      "probe-order-x5": {
+        "runs": 2,
+        "passes": 2,
+        "valid": 2,
+        "signature_changed": 2,
+        "rate": 1.0
+      },
+      "probe-order-x6": {
+        "runs": 4,
+        "passes": 4,
+        "valid": 4,
+        "signature_changed": 4,
+        "rate": 1.0
+      },
+      "probe-order-x7": {
+        "runs": 4,
+        "passes": 4,
+        "valid": 4,
+        "signature_changed": 2,
+        "rate": 1.0
+      },
+      "probe-order-x8": {
+        "runs": 2,
+        "passes": 0,
+        "valid": 2,
+        "signature_changed": 2,
+        "rate": 0.0
+      }
+    },
+    "better": [
+      "x6",
+      "x7"
+    ],
+    "worse": [],
+    "budget_stopped": false,
+    "missing_runs": 0,
+    "cost_total": 0.53273915,
+    "reflection_cost_usd": 0.03685308,
+    "gen3_genome_id": "sha256:905657d89c1f9038b16744b90927957818a539b83f4f45d6eeae50f845cbb876",
+    "memory_sha256": "78da840441052ef2883164c894fb6aa99b6a0749612dfb7d3e5fa3335a7c70aa",
+    "signature_changed_runs": [
+      "probe-order-x5-r1",
+      "probe-order-x5-r2",
+      "probe-order-x6-r1",
+      "probe-order-x6-r2",
+      "probe-order-x7-r1",
+      "probe-order-x8-r1",
+      "probe-order-x8-r2",
+      "probe-order-x6-r3",
+      "probe-order-x6-r4",
+      "probe-order-x7-r3"
+    ],
+    "runs": [
+      {
+        "task_id": "probe-order-x5",
+        "rep": 1,
+        "state": "/tmp/molt-probe/2c-v2/probe-order-x5-r1",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen3.json",
+          "--state",
+          "/tmp/molt-probe/2c-v2/probe-order-x5-r1",
+          "--task",
+          "probe-order-x5"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-905657d8 solved=1",
+        "stderr": "",
+        "run_id": "905657d8-probe-order-x5-a1-51d96a",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.0391849,
+        "wall_ms": 40408,
+        "turns": 5,
+        "target_changed": true,
+        "signature": "(names, k) -> list[str]",
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v2/solutions/probe-order-x5-r1.py.txt"
+      },
+      {
+        "task_id": "probe-order-x5",
+        "rep": 2,
+        "state": "/tmp/molt-probe/2c-v2/probe-order-x5-r2",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen3.json",
+          "--state",
+          "/tmp/molt-probe/2c-v2/probe-order-x5-r2",
+          "--task",
+          "probe-order-x5"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-905657d8 solved=1",
+        "stderr": "",
+        "run_id": "905657d8-probe-order-x5-a1-257e1a",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.0131369,
+        "wall_ms": 24289,
+        "turns": 7,
+        "target_changed": true,
+        "signature": "(names, k) -> list[str]",
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v2/solutions/probe-order-x5-r2.py.txt"
+      },
+      {
+        "task_id": "probe-order-x6",
+        "rep": 1,
+        "state": "/tmp/molt-probe/2c-v2/probe-order-x6-r1",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen3.json",
+          "--state",
+          "/tmp/molt-probe/2c-v2/probe-order-x6-r1",
+          "--task",
+          "probe-order-x6"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-905657d8 solved=1",
+        "stderr": "",
+        "run_id": "905657d8-probe-order-x6-a1-45fbd8",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.00928805,
+        "wall_ms": 17414,
+        "turns": 5,
+        "target_changed": true,
+        "signature": "(a, b, k) -> list[str]",
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v2/solutions/probe-order-x6-r1.py.txt"
+      },
+      {
+        "task_id": "probe-order-x6",
+        "rep": 2,
+        "state": "/tmp/molt-probe/2c-v2/probe-order-x6-r2",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen3.json",
+          "--state",
+          "/tmp/molt-probe/2c-v2/probe-order-x6-r2",
+          "--task",
+          "probe-order-x6"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-905657d8 solved=1",
+        "stderr": "",
+        "run_id": "905657d8-probe-order-x6-a1-22b2a1",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.0286917,
+        "wall_ms": 33018,
+        "turns": 5,
+        "target_changed": true,
+        "signature": "(a, b, k) -> list[str]",
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v2/solutions/probe-order-x6-r2.py.txt"
+      },
+      {
+        "task_id": "probe-order-x7",
+        "rep": 1,
+        "state": "/tmp/molt-probe/2c-v2/probe-order-x7-r1",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen3.json",
+          "--state",
+          "/tmp/molt-probe/2c-v2/probe-order-x7-r1",
+          "--task",
+          "probe-order-x7"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-905657d8 solved=1",
+        "stderr": "",
+        "run_id": "905657d8-probe-order-x7-a1-a99831",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.10641444,
+        "wall_ms": 162849,
+        "turns": 8,
+        "target_changed": true,
+        "signature": "(names, k) -> str | list[str] | None",
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v2/solutions/probe-order-x7-r1.py.txt"
+      },
+      {
+        "task_id": "probe-order-x7",
+        "rep": 2,
+        "state": "/tmp/molt-probe/2c-v2/probe-order-x7-r2",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen3.json",
+          "--state",
+          "/tmp/molt-probe/2c-v2/probe-order-x7-r2",
+          "--task",
+          "probe-order-x7"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-905657d8 solved=1",
+        "stderr": "",
+        "run_id": "905657d8-probe-order-x7-a1-428179",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.07245366,
+        "wall_ms": 106069,
+        "turns": 8,
+        "target_changed": true,
+        "signature": "(names) -> str | None",
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v2/solutions/probe-order-x7-r2.py.txt"
+      }
+    ],
+    "signature_changed_count": 10,
+    "caveat": "10/12 v2 runs changed signature (probe-order-x5-r1, probe-order-x5-r2, probe-order-x6-r1, probe-order-x6-r2, probe-order-x7-r1, probe-order-x8-r1, probe-order-x8-r2, probe-order-x6-r3, probe-order-x6-r4, probe-order-x7-r3); x8 is x8_still_negative (0/2). Verdict is pass-rate based and is not changed by signature drift.",
+    "x8": {
+      "passes": 0,
+      "runs": 2,
+      "result": "x8_still_negative",
+      "signature_changed": 2
+    }
+  },
+  "memory_v3": {
+    "verdict": "v3_stable_all",
+    "comparison": "16 gen4 runs (4 tasks x 4 reps); x5 gen3 extension 2 runs separately for v2 4/4",
+    "v2": {
+      "probe-order-x6": {
+        "runs": 4,
+        "passes": 4,
+        "valid": 4,
+        "signature_changed": 4,
+        "rate": 1.0
+      },
+      "probe-order-x7": {
+        "runs": 4,
+        "passes": 4,
+        "valid": 4,
+        "signature_changed": 2,
+        "rate": 1.0
+      },
+      "probe-order-x8": {
+        "runs": 2,
+        "passes": 0,
+        "valid": 2,
+        "signature_changed": 2,
+        "rate": 0.0
+      },
+      "probe-order-x5": {
+        "passes": 4,
+        "runs": 4,
+        "rate": 1.0,
+        "note": "2 memory-v2 + 2 gen3 extension"
+      }
+    },
+    "v3": {
+      "probe-order-x5": {
+        "runs": 4,
+        "passes": 4,
+        "valid": 4,
+        "rate": 1.0,
+        "signature_changed": 2
+      },
+      "probe-order-x6": {
+        "runs": 4,
+        "passes": 4,
+        "valid": 4,
+        "rate": 1.0,
+        "signature_changed": 2
+      },
+      "probe-order-x7": {
+        "runs": 4,
+        "passes": 4,
+        "valid": 4,
+        "rate": 1.0,
+        "signature_changed": 0
+      },
+      "probe-order-x8": {
+        "runs": 4,
+        "passes": 4,
+        "valid": 4,
+        "rate": 1.0,
+        "signature_changed": 1
+      }
+    },
+    "x8": {
+      "passes": 4,
+      "runs": 4,
+      "result": "x8_fixed"
+    },
+    "x5_v3": {
+      "runs": 4,
+      "passes": 4,
+      "valid": 4,
+      "rate": 1.0,
+      "signature_changed": 2
+    },
+    "x5_gen3_extension": {
+      "runs": [
+        {
+          "memory": "gen3",
+          "task_id": "probe-order-x5",
+          "rep": 3,
+          "state": "/tmp/molt-probe/2c-v2/probe-order-x5-r3",
+          "command": [
+            "/home/feisama/dev/molt/.venv/bin/python",
+            "-m",
+            "molt",
+            "search",
+            "--scenario",
+            "probe",
+            "--runtime",
+            "pi",
+            "--genome",
+            "shells/probe/genomes/gen3.json",
+            "--state",
+            "/tmp/molt-probe/2c-v2/probe-order-x5-r3",
+            "--task",
+            "probe-order-x5"
+          ],
+          "exit": 0,
+          "stdout": "search ok runs=1 result=result-search-905657d8 solved=1",
+          "stderr": "",
+          "run_id": "905657d8-probe-order-x5-a1-c5ee36",
+          "outcome": "passed",
+          "solved": 1,
+          "cost_usd": 0.00640006,
+          "wall_ms": 11163,
+          "turns": 4,
+          "target_changed": true,
+          "signature": "(names, k) -> list[str]",
+          "signature_changed": true,
+          "added_functions": [],
+          "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen3-probe-order-x5-r3.py.txt"
+        },
+        {
+          "memory": "gen3",
+          "task_id": "probe-order-x5",
+          "rep": 4,
+          "state": "/tmp/molt-probe/2c-v2/probe-order-x5-r4",
+          "command": [
+            "/home/feisama/dev/molt/.venv/bin/python",
+            "-m",
+            "molt",
+            "search",
+            "--scenario",
+            "probe",
+            "--runtime",
+            "pi",
+            "--genome",
+            "shells/probe/genomes/gen3.json",
+            "--state",
+            "/tmp/molt-probe/2c-v2/probe-order-x5-r4",
+            "--task",
+            "probe-order-x5"
+          ],
+          "exit": 0,
+          "stdout": "search ok runs=1 result=result-search-905657d8 solved=1",
+          "stderr": "",
+          "run_id": "905657d8-probe-order-x5-a1-bf6947",
+          "outcome": "passed",
+          "solved": 1,
+          "cost_usd": 0.04150458,
+          "wall_ms": 38007,
+          "turns": 6,
+          "target_changed": true,
+          "signature": "(names, k) -> list[str]",
+          "signature_changed": true,
+          "added_functions": [],
+          "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen3-probe-order-x5-r4.py.txt"
+        }
+      ],
+      "passes": 2,
+      "runs_count": 2
+    },
+    "signature_drift": {
+      "v2": "10/12",
+      "v3": "5/16",
+      "v3_runs": [
+        "probe-order-x5-r2",
+        "probe-order-x6-r1",
+        "probe-order-x6-r2",
+        "probe-order-x8-r3",
+        "probe-order-x5-r3"
+      ]
+    },
+    "cost_total": 0.4589434,
+    "reflection_cost_usd": 0.02970132,
+    "budget_stopped": false,
+    "missing_runs": 0,
+    "gen4_genome_id": "sha256:be19bd9ffc230fcb440f47ffd0ada62894349e8dbfa6ae04745e397e366dea29",
+    "memory_sha256": "b73d64debc84b0e0337d577564e2e01f3b9549ce8096d35f81de3f2f0f848075",
+    "runs": [
+      {
+        "memory": "gen4",
+        "task_id": "probe-order-x5",
+        "rep": 1,
+        "state": "/tmp/molt-probe/2c-v3/probe-order-x5-r1",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen4.json",
+          "--state",
+          "/tmp/molt-probe/2c-v3/probe-order-x5-r1",
+          "--task",
+          "probe-order-x5"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-be19bd9f solved=1",
+        "stderr": "",
+        "run_id": "be19bd9f-probe-order-x5-a1-9dd136",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.00989023,
+        "wall_ms": 17179,
+        "turns": 4,
+        "target_changed": true,
+        "signature": "(names) -> list[str]",
+        "signature_changed": false,
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen4-probe-order-x5-r1.py.txt"
+      },
+      {
+        "memory": "gen4",
+        "task_id": "probe-order-x5",
+        "rep": 2,
+        "state": "/tmp/molt-probe/2c-v3/probe-order-x5-r2",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen4.json",
+          "--state",
+          "/tmp/molt-probe/2c-v3/probe-order-x5-r2",
+          "--task",
+          "probe-order-x5"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-be19bd9f solved=1",
+        "stderr": "",
+        "run_id": "be19bd9f-probe-order-x5-a1-810609",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.02462944,
+        "wall_ms": 37664,
+        "turns": 5,
+        "target_changed": true,
+        "signature": "(names, limit) -> list[str]",
+        "signature_changed": true,
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen4-probe-order-x5-r2.py.txt"
+      },
+      {
+        "memory": "gen4",
+        "task_id": "probe-order-x6",
+        "rep": 1,
+        "state": "/tmp/molt-probe/2c-v3/probe-order-x6-r1",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen4.json",
+          "--state",
+          "/tmp/molt-probe/2c-v3/probe-order-x6-r1",
+          "--task",
+          "probe-order-x6"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-be19bd9f solved=1",
+        "stderr": "",
+        "run_id": "be19bd9f-probe-order-x6-a1-d95ccf",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.05387668,
+        "wall_ms": 63024,
+        "turns": 5,
+        "target_changed": true,
+        "signature": "(a, b, limit) -> list[str]",
+        "signature_changed": true,
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen4-probe-order-x6-r1.py.txt"
+      },
+      {
+        "memory": "gen4",
+        "task_id": "probe-order-x6",
+        "rep": 2,
+        "state": "/tmp/molt-probe/2c-v3/probe-order-x6-r2",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen4.json",
+          "--state",
+          "/tmp/molt-probe/2c-v3/probe-order-x6-r2",
+          "--task",
+          "probe-order-x6"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-be19bd9f solved=1",
+        "stderr": "",
+        "run_id": "be19bd9f-probe-order-x6-a1-65bfb1",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.02220416,
+        "wall_ms": 36213,
+        "turns": 8,
+        "target_changed": true,
+        "signature": "(a, b, limit) -> list[str]",
+        "signature_changed": true,
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen4-probe-order-x6-r2.py.txt"
+      },
+      {
+        "memory": "gen4",
+        "task_id": "probe-order-x7",
+        "rep": 1,
+        "state": "/tmp/molt-probe/2c-v3/probe-order-x7-r1",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen4.json",
+          "--state",
+          "/tmp/molt-probe/2c-v3/probe-order-x7-r1",
+          "--task",
+          "probe-order-x7"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-be19bd9f solved=1",
+        "stderr": "",
+        "run_id": "be19bd9f-probe-order-x7-a1-40def7",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.02857351,
+        "wall_ms": 51050,
+        "turns": 5,
+        "target_changed": true,
+        "signature": "(names) -> str | None",
+        "signature_changed": false,
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen4-probe-order-x7-r1.py.txt"
+      },
+      {
+        "memory": "gen4",
+        "task_id": "probe-order-x7",
+        "rep": 2,
+        "state": "/tmp/molt-probe/2c-v3/probe-order-x7-r2",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen4.json",
+          "--state",
+          "/tmp/molt-probe/2c-v3/probe-order-x7-r2",
+          "--task",
+          "probe-order-x7"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-be19bd9f solved=1",
+        "stderr": "",
+        "run_id": "be19bd9f-probe-order-x7-a1-901089",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.00988627,
+        "wall_ms": 16451,
+        "turns": 5,
+        "target_changed": true,
+        "signature": "(names) -> str | None",
+        "signature_changed": false,
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen4-probe-order-x7-r2.py.txt"
+      },
+      {
+        "memory": "gen4",
+        "task_id": "probe-order-x8",
+        "rep": 1,
+        "state": "/tmp/molt-probe/2c-v3/probe-order-x8-r1",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen4.json",
+          "--state",
+          "/tmp/molt-probe/2c-v3/probe-order-x8-r1",
+          "--task",
+          "probe-order-x8"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-be19bd9f solved=1",
+        "stderr": "",
+        "run_id": "be19bd9f-probe-order-x8-a1-205a7d",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.0409684,
+        "wall_ms": 43180,
+        "turns": 5,
+        "target_changed": true,
+        "signature": "(names) -> int",
+        "signature_changed": false,
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen4-probe-order-x8-r1.py.txt"
+      },
+      {
+        "memory": "gen4",
+        "task_id": "probe-order-x8",
+        "rep": 2,
+        "state": "/tmp/molt-probe/2c-v3/probe-order-x8-r2",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen4.json",
+          "--state",
+          "/tmp/molt-probe/2c-v3/probe-order-x8-r2",
+          "--task",
+          "probe-order-x8"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-be19bd9f solved=1",
+        "stderr": "",
+        "run_id": "be19bd9f-probe-order-x8-a1-ef1cbc",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.02151134,
+        "wall_ms": 35413,
+        "turns": 7,
+        "target_changed": true,
+        "signature": "(names) -> int",
+        "signature_changed": false,
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen4-probe-order-x8-r2.py.txt"
+      },
+      {
+        "memory": "gen3",
+        "task_id": "probe-order-x5",
+        "rep": 3,
+        "state": "/tmp/molt-probe/2c-v2/probe-order-x5-r3",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen3.json",
+          "--state",
+          "/tmp/molt-probe/2c-v2/probe-order-x5-r3",
+          "--task",
+          "probe-order-x5"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-905657d8 solved=1",
+        "stderr": "",
+        "run_id": "905657d8-probe-order-x5-a1-c5ee36",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.00640006,
+        "wall_ms": 11163,
+        "turns": 4,
+        "target_changed": true,
+        "signature": "(names, k) -> list[str]",
+        "signature_changed": true,
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen3-probe-order-x5-r3.py.txt"
+      },
+      {
+        "memory": "gen3",
+        "task_id": "probe-order-x5",
+        "rep": 4,
+        "state": "/tmp/molt-probe/2c-v2/probe-order-x5-r4",
+        "command": [
+          "/home/feisama/dev/molt/.venv/bin/python",
+          "-m",
+          "molt",
+          "search",
+          "--scenario",
+          "probe",
+          "--runtime",
+          "pi",
+          "--genome",
+          "shells/probe/genomes/gen3.json",
+          "--state",
+          "/tmp/molt-probe/2c-v2/probe-order-x5-r4",
+          "--task",
+          "probe-order-x5"
+        ],
+        "exit": 0,
+        "stdout": "search ok runs=1 result=result-search-905657d8 solved=1",
+        "stderr": "",
+        "run_id": "905657d8-probe-order-x5-a1-bf6947",
+        "outcome": "passed",
+        "solved": 1,
+        "cost_usd": 0.04150458,
+        "wall_ms": 38007,
+        "turns": 6,
+        "target_changed": true,
+        "signature": "(names, k) -> list[str]",
+        "signature_changed": true,
+        "added_functions": [],
+        "solution_snapshot": "probes/report/2c/memory-v3/solutions/gen3-probe-order-x5-r4.py.txt"
+      }
+    ],
+    "baseline_comparison": {
+      "all_four": {
+        "v3_passes": 16,
+        "v3_runs": 16,
+        "baseline_passes": 2,
+        "baseline_runs": 12,
+        "note": "x5 0/4, x6 0/4, x7 0/2, x8 2/2"
+      },
+      "headroom_three": {
+        "v3_passes": 12,
+        "v3_runs": 12,
+        "baseline_passes": 0,
+        "baseline_runs": 10
+      }
+    }
+  }
+}

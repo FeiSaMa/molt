@@ -1,0 +1,529 @@
+{
+  "summary": {
+    "oracle/probe-order-2": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "oracle/probe-order-x3": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "pro-max/probe-ctl-a": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "pro-max/probe-ctl-b": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "pro-high/probe-ctl-a": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "pro-high/probe-ctl-b": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "flash-max/probe-ctl-a": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "flash-max/probe-ctl-b": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "flash-high/probe-ctl-a": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "flash-high/probe-ctl-b": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "pro-max/probe-order-2": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "pro-max/probe-order-x3": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "pro-high/probe-order-2": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "pro-high/probe-order-x3": {
+      "runs": 2,
+      "target_changed": 0,
+      "target_unchanged": 2,
+      "target_missing": 0
+    },
+    "flash-max/probe-order-2": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "flash-max/probe-order-x3": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "flash-high/probe-order-2": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    },
+    "flash-high/probe-order-x3": {
+      "runs": 2,
+      "target_changed": 2,
+      "target_unchanged": 0,
+      "target_missing": 0
+    }
+  },
+  "checks": [
+    {
+      "cell": "oracle",
+      "task_id": "probe-order-2",
+      "rep": 1,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "dedupe",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "oracle",
+      "task_id": "probe-order-2",
+      "rep": 2,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "dedupe",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "oracle",
+      "task_id": "probe-order-x3",
+      "rep": 1,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "dedupe_top_k",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "oracle",
+      "task_id": "probe-order-x3",
+      "rep": 2,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "dedupe_top_k",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-ctl-a",
+      "rep": 1,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "sign_label",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-ctl-a",
+      "rep": 2,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "sign_label",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-ctl-b",
+      "rep": 1,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "chunk",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-ctl-b",
+      "rep": 2,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "chunk",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-ctl-a",
+      "rep": 1,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "sign_label",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-ctl-a",
+      "rep": 2,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "sign_label",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-ctl-b",
+      "rep": 1,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "chunk",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-ctl-b",
+      "rep": 2,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "chunk",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-ctl-a",
+      "rep": 1,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "sign_label",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-ctl-a",
+      "rep": 2,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "sign_label",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-ctl-b",
+      "rep": 1,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "chunk",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-ctl-b",
+      "rep": 2,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "chunk",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-ctl-a",
+      "rep": 1,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "sign_label",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-ctl-a",
+      "rep": 2,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "sign_label",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-ctl-b",
+      "rep": 1,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "chunk",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-ctl-b",
+      "rep": 2,
+      "solved": 1,
+      "outcome": "passed",
+      "function": "chunk",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-order-2",
+      "rep": 1,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-order-2",
+      "rep": 2,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-order-x3",
+      "rep": 1,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe_top_k",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-order-x3",
+      "rep": 2,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe_top_k",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-order-2",
+      "rep": 1,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-order-2",
+      "rep": 2,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-order-x3",
+      "rep": 1,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe_top_k",
+      "target_present": true,
+      "target_changed": false,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-order-x3",
+      "rep": 2,
+      "solved": 0,
+      "outcome": "invalid",
+      "function": "dedupe_top_k",
+      "target_present": true,
+      "target_changed": false,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-order-2",
+      "rep": 1,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-order-2",
+      "rep": 2,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-order-x3",
+      "rep": 1,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe_top_k",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-order-x3",
+      "rep": 2,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe_top_k",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-order-2",
+      "rep": 1,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-order-2",
+      "rep": 2,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-order-x3",
+      "rep": 1,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe_top_k",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-order-x3",
+      "rep": 2,
+      "solved": 0,
+      "outcome": "failed",
+      "function": "dedupe_top_k",
+      "target_present": true,
+      "target_changed": true,
+      "added_functions": []
+    }
+  ],
+  "all_ok": false,
+  "violations": [
+    {
+      "cell": "pro-high",
+      "task_id": "probe-order-x3",
+      "rep": 1,
+      "target_present": true,
+      "target_changed": false,
+      "added_functions": []
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-order-x3",
+      "rep": 2,
+      "target_present": true,
+      "target_changed": false,
+      "added_functions": []
+    }
+  ]
+}

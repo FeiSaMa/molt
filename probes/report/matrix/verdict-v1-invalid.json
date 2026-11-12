@@ -1,0 +1,1691 @@
+{
+  "verdict": "memory_trigger",
+  "reason": "memory_trigger: trigger pro_max F=0; no other F=2",
+  "F": {
+    "pro-max": 0,
+    "pro-high": 0,
+    "flash-max": 0,
+    "flash-high": 0
+  },
+  "K": {
+    "pro-max": 2,
+    "pro-high": 2,
+    "flash-max": 2,
+    "flash-high": 2
+  },
+  "family_tasks": {
+    "pro-max": {
+      "probe-order-1": {
+        "runs": 2,
+        "passes": 0,
+        "valid": 2,
+        "outcomes": [
+          "failed",
+          "failed"
+        ],
+        "run_ids": [
+          "1e4085ea-probe-order-1-a1-6e2396",
+          "1e4085ea-probe-order-1-a1-6a2614"
+        ]
+      },
+      "probe-order-2": {
+        "runs": 2,
+        "passes": 0,
+        "valid": 2,
+        "outcomes": [
+          "failed",
+          "failed"
+        ],
+        "run_ids": [
+          "1e4085ea-probe-order-2-a1-b06aac",
+          "1e4085ea-probe-order-2-a1-fb6b15"
+        ]
+      }
+    },
+    "pro-high": {
+      "probe-order-1": {
+        "runs": 2,
+        "passes": 0,
+        "valid": 2,
+        "outcomes": [
+          "failed",
+          "failed"
+        ],
+        "run_ids": [
+          "79664de1-probe-order-1-a1-f8b404",
+          "79664de1-probe-order-1-a1-af9083"
+        ]
+      },
+      "probe-order-2": {
+        "runs": 2,
+        "passes": 0,
+        "valid": 2,
+        "outcomes": [
+          "failed",
+          "failed"
+        ],
+        "run_ids": [
+          "79664de1-probe-order-2-a1-0a1775",
+          "79664de1-probe-order-2-a1-85a087"
+        ]
+      }
+    },
+    "flash-max": {
+      "probe-order-1": {
+        "runs": 2,
+        "passes": 0,
+        "valid": 2,
+        "outcomes": [
+          "failed",
+          "failed"
+        ],
+        "run_ids": [
+          "6e7e5a98-probe-order-1-a1-1e3fe6",
+          "6e7e5a98-probe-order-1-a1-1069f8"
+        ]
+      },
+      "probe-order-2": {
+        "runs": 2,
+        "passes": 0,
+        "valid": 2,
+        "outcomes": [
+          "failed",
+          "failed"
+        ],
+        "run_ids": [
+          "6e7e5a98-probe-order-2-a1-1dffb8",
+          "6e7e5a98-probe-order-2-a1-089296"
+        ]
+      }
+    },
+    "flash-high": {
+      "probe-order-1": {
+        "runs": 2,
+        "passes": 0,
+        "valid": 2,
+        "outcomes": [
+          "failed",
+          "failed"
+        ],
+        "run_ids": [
+          "11f4aa6a-probe-order-1-a1-fa1217",
+          "11f4aa6a-probe-order-1-a1-bad3f4"
+        ]
+      },
+      "probe-order-2": {
+        "runs": 2,
+        "passes": 0,
+        "valid": 2,
+        "outcomes": [
+          "failed",
+          "failed"
+        ],
+        "run_ids": [
+          "11f4aa6a-probe-order-2-a1-fd74d7",
+          "11f4aa6a-probe-order-2-a1-9d06e7"
+        ]
+      }
+    }
+  },
+  "control_tasks": {
+    "pro-max": {
+      "probe-ctl-a": {
+        "runs": 2,
+        "passes": 2,
+        "valid": 2,
+        "outcomes": [
+          "passed",
+          "passed"
+        ],
+        "run_ids": [
+          "1e4085ea-probe-ctl-a-a1-37eb30",
+          "1e4085ea-probe-ctl-a-a1-e45e03"
+        ]
+      },
+      "probe-ctl-b": {
+        "runs": 2,
+        "passes": 2,
+        "valid": 2,
+        "outcomes": [
+          "passed",
+          "passed"
+        ],
+        "run_ids": [
+          "1e4085ea-probe-ctl-b-a1-034aaf",
+          "1e4085ea-probe-ctl-b-a1-ad0402"
+        ]
+      }
+    },
+    "pro-high": {
+      "probe-ctl-a": {
+        "runs": 2,
+        "passes": 2,
+        "valid": 2,
+        "outcomes": [
+          "passed",
+          "passed"
+        ],
+        "run_ids": [
+          "79664de1-probe-ctl-a-a1-a965c3",
+          "79664de1-probe-ctl-a-a1-ed7e15"
+        ]
+      },
+      "probe-ctl-b": {
+        "runs": 2,
+        "passes": 2,
+        "valid": 2,
+        "outcomes": [
+          "passed",
+          "passed"
+        ],
+        "run_ids": [
+          "79664de1-probe-ctl-b-a1-6b008c",
+          "79664de1-probe-ctl-b-a1-93f94f"
+        ]
+      }
+    },
+    "flash-max": {
+      "probe-ctl-a": {
+        "runs": 2,
+        "passes": 2,
+        "valid": 2,
+        "outcomes": [
+          "passed",
+          "passed"
+        ],
+        "run_ids": [
+          "6e7e5a98-probe-ctl-a-a1-19ec04",
+          "6e7e5a98-probe-ctl-a-a1-a77d07"
+        ]
+      },
+      "probe-ctl-b": {
+        "runs": 2,
+        "passes": 2,
+        "valid": 2,
+        "outcomes": [
+          "passed",
+          "passed"
+        ],
+        "run_ids": [
+          "6e7e5a98-probe-ctl-b-a1-4ce8d7",
+          "6e7e5a98-probe-ctl-b-a1-a1b391"
+        ]
+      }
+    },
+    "flash-high": {
+      "probe-ctl-a": {
+        "runs": 2,
+        "passes": 2,
+        "valid": 2,
+        "outcomes": [
+          "passed",
+          "passed"
+        ],
+        "run_ids": [
+          "11f4aa6a-probe-ctl-a-a1-84e95a",
+          "11f4aa6a-probe-ctl-a-a1-cde019"
+        ]
+      },
+      "probe-ctl-b": {
+        "runs": 2,
+        "passes": 2,
+        "valid": 2,
+        "outcomes": [
+          "passed",
+          "passed"
+        ],
+        "run_ids": [
+          "11f4aa6a-probe-ctl-b-a1-3043a5",
+          "11f4aa6a-probe-ctl-b-a1-a1a014"
+        ]
+      }
+    }
+  },
+  "oracle_tasks": {
+    "probe-order-1": {
+      "runs": 2,
+      "passes": 2,
+      "valid": 2,
+      "outcomes": [
+        "passed",
+        "passed"
+      ],
+      "run_ids": [
+        "4492f522-probe-order-1-a1-3d186c",
+        "4492f522-probe-order-1-a1-49478e"
+      ]
+    },
+    "probe-order-2": {
+      "runs": 2,
+      "passes": 1,
+      "valid": 2,
+      "outcomes": [
+        "failed",
+        "passed"
+      ],
+      "run_ids": [
+        "4492f522-probe-order-2-a1-8c833e",
+        "4492f522-probe-order-2-a1-987d5c"
+      ]
+    }
+  },
+  "oracle_solved": 2,
+  "cost_total": 1.37784319,
+  "table_sha256": "6adee4dea3b59f0e0bb2dbf3455a93d0e142cf2fc494b36ef0bf1e7509fe84d6",
+  "table_ok": true,
+  "budget_stopped": false,
+  "missing_runs": 0,
+  "expected_runs": 36,
+  "cost_note": [],
+  "memory_trigger_recorded_only": true,
+  "runs": [
+    {
+      "cell": "oracle",
+      "task_id": "probe-order-1",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/oracle/probe-order-1-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/oracle.json",
+        "--state",
+        "/tmp/molt-probe/matrix/oracle/probe-order-1-r1",
+        "--task",
+        "probe-order-1"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-4492f522 solved=1",
+      "stderr": "",
+      "run_id": "4492f522-probe-order-1-a1-3d186c",
+      "outcome": "passed",
+      "cost_usd": 0.0246972,
+      "wall_ms": 64830,
+      "turns": 5,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "oracle",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": true
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "oracle",
+      "task_id": "probe-order-1",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/oracle/probe-order-1-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/oracle.json",
+        "--state",
+        "/tmp/molt-probe/matrix/oracle/probe-order-1-r2",
+        "--task",
+        "probe-order-1"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-4492f522 solved=1",
+      "stderr": "",
+      "run_id": "4492f522-probe-order-1-a1-49478e",
+      "outcome": "passed",
+      "cost_usd": 0.0075291,
+      "wall_ms": 16724,
+      "turns": 5,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "oracle",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": true
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "oracle",
+      "task_id": "probe-order-2",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/oracle/probe-order-2-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/oracle.json",
+        "--state",
+        "/tmp/molt-probe/matrix/oracle/probe-order-2-r1",
+        "--task",
+        "probe-order-2"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-4492f522 solved=0",
+      "stderr": "",
+      "run_id": "4492f522-probe-order-2-a1-8c833e",
+      "outcome": "failed",
+      "cost_usd": 0.09628678,
+      "wall_ms": 172756,
+      "turns": 11,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "oracle",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": true
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "oracle",
+      "task_id": "probe-order-2",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/oracle/probe-order-2-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/oracle.json",
+        "--state",
+        "/tmp/molt-probe/matrix/oracle/probe-order-2-r2",
+        "--task",
+        "probe-order-2"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-4492f522 solved=1",
+      "stderr": "",
+      "run_id": "4492f522-probe-order-2-a1-987d5c",
+      "outcome": "passed",
+      "cost_usd": 0.13253583,
+      "wall_ms": 258733,
+      "turns": 12,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "oracle",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": true
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-ctl-a",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/pro-max/probe-ctl-a-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-max/probe-ctl-a-r1",
+        "--task",
+        "probe-ctl-a"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-1e4085ea solved=1",
+      "stderr": "",
+      "run_id": "1e4085ea-probe-ctl-a-a1-37eb30",
+      "outcome": "passed",
+      "cost_usd": 0.04328412,
+      "wall_ms": 22285,
+      "turns": 7,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-ctl-a",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/pro-max/probe-ctl-a-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-max/probe-ctl-a-r2",
+        "--task",
+        "probe-ctl-a"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-1e4085ea solved=1",
+      "stderr": "",
+      "run_id": "1e4085ea-probe-ctl-a-a1-e45e03",
+      "outcome": "passed",
+      "cost_usd": 0.04348714,
+      "wall_ms": 30288,
+      "turns": 7,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-ctl-b",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/pro-max/probe-ctl-b-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-max/probe-ctl-b-r1",
+        "--task",
+        "probe-ctl-b"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-1e4085ea solved=1",
+      "stderr": "",
+      "run_id": "1e4085ea-probe-ctl-b-a1-034aaf",
+      "outcome": "passed",
+      "cost_usd": 0.00797509,
+      "wall_ms": 15838,
+      "turns": 6,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-ctl-b",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/pro-max/probe-ctl-b-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-max/probe-ctl-b-r2",
+        "--task",
+        "probe-ctl-b"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-1e4085ea solved=1",
+      "stderr": "",
+      "run_id": "1e4085ea-probe-ctl-b-a1-ad0402",
+      "outcome": "passed",
+      "cost_usd": 0.02043281,
+      "wall_ms": 15823,
+      "turns": 5,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-ctl-a",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/pro-high/probe-ctl-a-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-high/probe-ctl-a-r1",
+        "--task",
+        "probe-ctl-a"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-79664de1 solved=1",
+      "stderr": "",
+      "run_id": "79664de1-probe-ctl-a-a1-a965c3",
+      "outcome": "passed",
+      "cost_usd": 0.0617525,
+      "wall_ms": 29297,
+      "turns": 9,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-ctl-a",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/pro-high/probe-ctl-a-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-high/probe-ctl-a-r2",
+        "--task",
+        "probe-ctl-a"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-79664de1 solved=1",
+      "stderr": "",
+      "run_id": "79664de1-probe-ctl-a-a1-ed7e15",
+      "outcome": "passed",
+      "cost_usd": 0.04541636,
+      "wall_ms": 28514,
+      "turns": 8,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-ctl-b",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/pro-high/probe-ctl-b-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-high/probe-ctl-b-r1",
+        "--task",
+        "probe-ctl-b"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-79664de1 solved=1",
+      "stderr": "",
+      "run_id": "79664de1-probe-ctl-b-a1-6b008c",
+      "outcome": "passed",
+      "cost_usd": 0.04553974,
+      "wall_ms": 32942,
+      "turns": 9,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-ctl-b",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/pro-high/probe-ctl-b-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-high/probe-ctl-b-r2",
+        "--task",
+        "probe-ctl-b"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-79664de1 solved=1",
+      "stderr": "",
+      "run_id": "79664de1-probe-ctl-b-a1-93f94f",
+      "outcome": "passed",
+      "cost_usd": 0.02779533,
+      "wall_ms": 16148,
+      "turns": 6,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-ctl-a",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/flash-max/probe-ctl-a-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-max/probe-ctl-a-r1",
+        "--task",
+        "probe-ctl-a"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-6e7e5a98 solved=1",
+      "stderr": "",
+      "run_id": "6e7e5a98-probe-ctl-a-a1-19ec04",
+      "outcome": "passed",
+      "cost_usd": 0.00212778,
+      "wall_ms": 10674,
+      "turns": 5,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-ctl-a",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/flash-max/probe-ctl-a-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-max/probe-ctl-a-r2",
+        "--task",
+        "probe-ctl-a"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-6e7e5a98 solved=1",
+      "stderr": "",
+      "run_id": "6e7e5a98-probe-ctl-a-a1-a77d07",
+      "outcome": "passed",
+      "cost_usd": 0.00303312,
+      "wall_ms": 10042,
+      "turns": 5,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-ctl-b",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/flash-max/probe-ctl-b-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-max/probe-ctl-b-r1",
+        "--task",
+        "probe-ctl-b"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-6e7e5a98 solved=1",
+      "stderr": "",
+      "run_id": "6e7e5a98-probe-ctl-b-a1-4ce8d7",
+      "outcome": "passed",
+      "cost_usd": 0.00388212,
+      "wall_ms": 17818,
+      "turns": 7,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-ctl-b",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/flash-max/probe-ctl-b-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-max/probe-ctl-b-r2",
+        "--task",
+        "probe-ctl-b"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-6e7e5a98 solved=1",
+      "stderr": "",
+      "run_id": "6e7e5a98-probe-ctl-b-a1-a1b391",
+      "outcome": "passed",
+      "cost_usd": 0.00315992,
+      "wall_ms": 11749,
+      "turns": 5,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-ctl-a",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/flash-high/probe-ctl-a-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-high/probe-ctl-a-r1",
+        "--task",
+        "probe-ctl-a"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-11f4aa6a solved=1",
+      "stderr": "",
+      "run_id": "11f4aa6a-probe-ctl-a-a1-84e95a",
+      "outcome": "passed",
+      "cost_usd": 0.00217706,
+      "wall_ms": 9666,
+      "turns": 5,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-ctl-a",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/flash-high/probe-ctl-a-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-high/probe-ctl-a-r2",
+        "--task",
+        "probe-ctl-a"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-11f4aa6a solved=1",
+      "stderr": "",
+      "run_id": "11f4aa6a-probe-ctl-a-a1-cde019",
+      "outcome": "passed",
+      "cost_usd": 0.00781594,
+      "wall_ms": 16155,
+      "turns": 5,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-ctl-b",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/flash-high/probe-ctl-b-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-high/probe-ctl-b-r1",
+        "--task",
+        "probe-ctl-b"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-11f4aa6a solved=1",
+      "stderr": "",
+      "run_id": "11f4aa6a-probe-ctl-b-a1-3043a5",
+      "outcome": "passed",
+      "cost_usd": 0.00098412,
+      "wall_ms": 8094,
+      "turns": 4,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-ctl-b",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/flash-high/probe-ctl-b-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-high/probe-ctl-b-r2",
+        "--task",
+        "probe-ctl-b"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-11f4aa6a solved=1",
+      "stderr": "",
+      "run_id": "11f4aa6a-probe-ctl-b-a1-a1a014",
+      "outcome": "passed",
+      "cost_usd": 0.00097879,
+      "wall_ms": 8149,
+      "turns": 4,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 1,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-order-1",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/pro-max/probe-order-1-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-max/probe-order-1-r1",
+        "--task",
+        "probe-order-1"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-1e4085ea solved=0",
+      "stderr": "",
+      "run_id": "1e4085ea-probe-order-1-a1-6e2396",
+      "outcome": "failed",
+      "cost_usd": 0.06570027,
+      "wall_ms": 129508,
+      "turns": 8,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-order-1",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/pro-max/probe-order-1-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-max/probe-order-1-r2",
+        "--task",
+        "probe-order-1"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-1e4085ea solved=0",
+      "stderr": "",
+      "run_id": "1e4085ea-probe-order-1-a1-6a2614",
+      "outcome": "failed",
+      "cost_usd": 0.10703326,
+      "wall_ms": 282346,
+      "turns": 12,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-order-2",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/pro-max/probe-order-2-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-max/probe-order-2-r1",
+        "--task",
+        "probe-order-2"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-1e4085ea solved=0",
+      "stderr": "",
+      "run_id": "1e4085ea-probe-order-2-a1-b06aac",
+      "outcome": "failed",
+      "cost_usd": 0.04208653,
+      "wall_ms": 48630,
+      "turns": 7,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-max",
+      "task_id": "probe-order-2",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/pro-max/probe-order-2-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-max/probe-order-2-r2",
+        "--task",
+        "probe-order-2"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-1e4085ea solved=0",
+      "stderr": "",
+      "run_id": "1e4085ea-probe-order-2-a1-fb6b15",
+      "outcome": "failed",
+      "cost_usd": 0.05952725,
+      "wall_ms": 140812,
+      "turns": 10,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-order-1",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/pro-high/probe-order-1-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-high/probe-order-1-r1",
+        "--task",
+        "probe-order-1"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-79664de1 solved=0",
+      "stderr": "",
+      "run_id": "79664de1-probe-order-1-a1-f8b404",
+      "outcome": "failed",
+      "cost_usd": 0.1542317,
+      "wall_ms": 387504,
+      "turns": 15,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-order-1",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/pro-high/probe-order-1-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-high/probe-order-1-r2",
+        "--task",
+        "probe-order-1"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-79664de1 solved=0",
+      "stderr": "",
+      "run_id": "79664de1-probe-order-1-a1-af9083",
+      "outcome": "failed",
+      "cost_usd": 0.12109038,
+      "wall_ms": 255237,
+      "turns": 13,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-order-2",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/pro-high/probe-order-2-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-high/probe-order-2-r1",
+        "--task",
+        "probe-order-2"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-79664de1 solved=0",
+      "stderr": "",
+      "run_id": "79664de1-probe-order-2-a1-0a1775",
+      "outcome": "failed",
+      "cost_usd": 0.08881497,
+      "wall_ms": 116041,
+      "turns": 9,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "pro-high",
+      "task_id": "probe-order-2",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/pro-high/probe-order-2-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-pro-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/pro-high/probe-order-2-r2",
+        "--task",
+        "probe-order-2"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-79664de1 solved=0",
+      "stderr": "",
+      "run_id": "79664de1-probe-order-2-a1-85a087",
+      "outcome": "failed",
+      "cost_usd": 0.06303616,
+      "wall_ms": 66010,
+      "turns": 8,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "pro-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-order-1",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/flash-max/probe-order-1-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-max/probe-order-1-r1",
+        "--task",
+        "probe-order-1"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-6e7e5a98 solved=0",
+      "stderr": "",
+      "run_id": "6e7e5a98-probe-order-1-a1-1e3fe6",
+      "outcome": "failed",
+      "cost_usd": 0.00615425,
+      "wall_ms": 14038,
+      "turns": 5,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-order-1",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/flash-max/probe-order-1-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-max/probe-order-1-r2",
+        "--task",
+        "probe-order-1"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-6e7e5a98 solved=0",
+      "stderr": "",
+      "run_id": "6e7e5a98-probe-order-1-a1-1069f8",
+      "outcome": "failed",
+      "cost_usd": 0.03653986,
+      "wall_ms": 166355,
+      "turns": 20,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-order-2",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/flash-max/probe-order-2-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-max/probe-order-2-r1",
+        "--task",
+        "probe-order-2"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-6e7e5a98 solved=0",
+      "stderr": "",
+      "run_id": "6e7e5a98-probe-order-2-a1-1dffb8",
+      "outcome": "failed",
+      "cost_usd": 0.00586957,
+      "wall_ms": 12253,
+      "turns": 5,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-max",
+      "task_id": "probe-order-2",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/flash-max/probe-order-2-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-max.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-max/probe-order-2-r2",
+        "--task",
+        "probe-order-2"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-6e7e5a98 solved=0",
+      "stderr": "",
+      "run_id": "6e7e5a98-probe-order-2-a1-089296",
+      "outcome": "failed",
+      "cost_usd": 0.00289716,
+      "wall_ms": 13988,
+      "turns": 7,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-max",
+        "convention_id": "C1",
+        "mode": "max",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-order-1",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/flash-high/probe-order-1-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-high/probe-order-1-r1",
+        "--task",
+        "probe-order-1"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-11f4aa6a solved=0",
+      "stderr": "",
+      "run_id": "11f4aa6a-probe-order-1-a1-fa1217",
+      "outcome": "failed",
+      "cost_usd": 0.01825838,
+      "wall_ms": 73069,
+      "turns": 9,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-order-1",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/flash-high/probe-order-1-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-high/probe-order-1-r2",
+        "--task",
+        "probe-order-1"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-11f4aa6a solved=0",
+      "stderr": "",
+      "run_id": "11f4aa6a-probe-order-1-a1-bad3f4",
+      "outcome": "failed",
+      "cost_usd": 0.01814963,
+      "wall_ms": 77577,
+      "turns": 9,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-order-2",
+      "rep": 1,
+      "state": "/tmp/molt-probe/matrix/flash-high/probe-order-2-r1",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-high/probe-order-2-r1",
+        "--task",
+        "probe-order-2"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-11f4aa6a solved=0",
+      "stderr": "",
+      "run_id": "11f4aa6a-probe-order-2-a1-fd74d7",
+      "outcome": "failed",
+      "cost_usd": 0.00293132,
+      "wall_ms": 10530,
+      "turns": 4,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    },
+    {
+      "cell": "flash-high",
+      "task_id": "probe-order-2",
+      "rep": 2,
+      "state": "/tmp/molt-probe/matrix/flash-high/probe-order-2-r2",
+      "command": [
+        "/home/feisama/dev/molt/.venv/bin/python",
+        "-m",
+        "molt",
+        "search",
+        "--scenario",
+        "probe",
+        "--runtime",
+        "pi",
+        "--genome",
+        "shells/probe/genomes/v0-flash-high.json",
+        "--state",
+        "/tmp/molt-probe/matrix/flash-high/probe-order-2-r2",
+        "--task",
+        "probe-order-2"
+      ],
+      "exit": 0,
+      "stdout": "search ok runs=1 result=result-search-11f4aa6a solved=0",
+      "stderr": "",
+      "run_id": "11f4aa6a-probe-order-2-a1-9d06e7",
+      "outcome": "failed",
+      "cost_usd": 0.00463165,
+      "wall_ms": 15219,
+      "turns": 5,
+      "pi_version": "1.5.2",
+      "probe": {
+        "cell": "flash-high",
+        "convention_id": "C1",
+        "mode": "high_only",
+        "oracle": false
+      },
+      "solved": 0,
+      "cost_source": "estimate"
+    }
+  ],
+  "oracle_passes": 3,
+  "oracle_runs": 4,
+  "oracle_note": "T1 2/2, T2 1/2；oracle_solved 按题级 best-of-2 计。若前置条件要求 oracle 4/4，则应判 probe_invalid。",
+  "invalid_reason": "probe prompt hardcoded top_k; T2 runs invalid"
+}

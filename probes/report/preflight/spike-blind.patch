@@ -1,0 +1,30 @@
+--- bench/probe/probe-policy-1/workspace/app/service.py	2026-11-11 20:18:47.603651308 +0800
++++ /tmp/molt-spike/blind/workspace/app/service.py	2026-11-11 20:19:37.802327993 +0800
+@@ -1,11 +1,24 @@
+-"""阈值配置装载。"""
++"""阈值配置装载：错误处理与日志约定同 app.loader。"""
+ 
+ from __future__ import annotations
+ 
++from app.errors import ValidationError, format_error
++from app.logging import get_logger
++
++_LOGGER = get_logger(__name__)
++
+ MIN_THRESHOLD = 1
+ MAX_THRESHOLD = 1000
+ 
+ 
+ def load_threshold(text: str) -> int:
+-    """解析阈值；返回值应落在 [MIN_THRESHOLD, MAX_THRESHOLD]。"""
+-    return int(text)
++    """解析阈值；返回值应落在 [MIN_THRESHOLD, MAX_THRESHOLD]，非法值以领域错误拒绝。"""
++    try:
++        value = int(text)
++    except (TypeError, ValueError):
++        _LOGGER.warning("threshold is not an integer: %r", text)
++        raise ValidationError(format_error("invalid_threshold", f"not an integer: {text!r}")) from None
++    if not MIN_THRESHOLD <= value <= MAX_THRESHOLD:
++        _LOGGER.warning("threshold out of range: %d", value)
++        raise ValidationError(format_error("invalid_threshold", f"out of range: {value}"))
++    return value

@@ -1,0 +1,39 @@
+"""Merge and dedupe helpers."""
+
+from __future__ import annotations
+
+
+def dedupe_merge(a: list[str], b: list[str] | None = None, k=None) -> list[str]:
+    """Merge and dedupe two name lists in this package's preferred sequence.
+
+    >>> dedupe_merge(["cc"], ["bb"])
+    ['bb', 'cc']
+    >>> dedupe_merge(["c"], ["b"])
+    ['b', 'c']
+    """
+    # tolerate a call form that passes the split index positionally
+    if b is not None and not isinstance(b, (list, tuple)):
+        k = k if k is not None else b
+        b = None
+
+    items = list(a)
+    if b is not None:
+        items += list(b)
+
+    # case-insensitive groups in order of first occurrence
+    groups: dict[str, list[str]] = {}
+    order: list[str] = []
+    for item in items:
+        key = item.lower()
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(item)
+
+    # preferred sequence: reverse order of first occurrence; when a group has
+    # case variants, the fully-uppercase spelling wins.
+    result: list[str] = []
+    for key in reversed(order):
+        variants = groups[key]
+        result.append(next((v for v in variants if v.isupper()), variants[0]))
+    return result

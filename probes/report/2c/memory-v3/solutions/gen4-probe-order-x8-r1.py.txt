@@ -1,0 +1,27 @@
+"""Distinct count helpers."""
+
+from __future__ import annotations
+
+
+def distinct_count(names: list[str]) -> int:
+    """Return the number of distinct names under this package's grouping.
+
+    Names are grouped case-insensitively; from each group the variant with
+    the smallest character encoding is kept.  Groups are ordered by written
+    length, then by case-insensitive character encoding.
+
+    >>> distinct_count(["cc", "bb"])
+    2
+    >>> distinct_count(["dd", "dd"])
+    1
+    >>> distinct_count(["aB", "Ab", "ab", "cc"])
+    2
+    """
+    groups: dict[str, str] = {}
+    for name in names:
+        key = name.casefold()
+        kept = groups.get(key)
+        if kept is None or name < kept:
+            groups[key] = name
+    ordered = sorted(groups.values(), key=lambda s: (len(s), s.casefold()))
+    return len(ordered)

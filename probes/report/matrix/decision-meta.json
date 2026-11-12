@@ -1,0 +1,7 @@
+{
+  "table_sha256": "6adee4dea3b59f0e0bb2dbf3455a93d0e142cf2fc494b36ef0bf1e7509fe84d6",
+  "commit_ts": "1794390543",
+  "rows_full": 81,
+  "rows_high_only": 9,
+  "note": "table is frozen; commit_ts is HEAD d585d2f because the table is not committed"
+}

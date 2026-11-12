@@ -1,0 +1,29 @@
+"""Merge and dedupe helpers."""
+
+from __future__ import annotations
+
+
+def dedupe_merge(*lists, **kwargs):
+    """Merge and dedupe name lists in this package's preferred sequence.
+
+    Names that differ only in case are treated as duplicates; among them the
+    preferred variant (smallest byte string) is kept. The result is ordered
+    shortest name first, with ties broken case-insensitively.
+
+    >>> dedupe_merge(["cc"], ["bb"])
+    ['bb', 'cc']
+    >>> dedupe_merge(["c"], ["b"])
+    ['b', 'c']
+    """
+    names: list[str] = []
+    for part in lists:
+        if isinstance(part, str):
+            names.append(part)
+        elif isinstance(part, (list, tuple, set, frozenset)):
+            names.extend(part)
+    kept: dict[str, str] = {}
+    for name in names:
+        key = name.casefold()
+        if key not in kept or name < kept[key]:
+            kept[key] = name
+    return sorted(kept.values(), key=lambda name: (len(name), name.casefold()))

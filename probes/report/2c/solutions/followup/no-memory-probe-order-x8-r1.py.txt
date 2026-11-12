@@ -1,0 +1,14 @@
+"""Distinct count helpers."""
+
+from __future__ import annotations
+
+
+def distinct_count(names: list[str]) -> int:
+    """Return the number of distinct names under this package's grouping.
+
+    >>> distinct_count(["cc", "bb"])
+    2
+    >>> distinct_count(["dd", "dd"])
+    1
+    """
+    return len(set(names))
