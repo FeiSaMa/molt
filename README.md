@@ -8,7 +8,7 @@ B2a 增加 LLM proposer；B2b 增加 Pi 1.5.0 adapter、bwrap bash sandbox、tru
 session 账本与预算执行；B2c 增加第二个 shell `svc-config` 与确定性 runtime
 （零 LLM / 零网络 / 零成本），并把 demo 题集扩到 **10 search + 5 holdout**（`demo-6`）；
 B2d 增加 `molt demo`（1 live 候选 + 1 replay 基线 + 10 题扫描回放）与协作六件套。
-仓库只交付数据面 `web/data` 与编排证据，**不包含 HTML 页面**（页面由队友 C 消费数据面）。
+仓库交付 `web/data` 数据面、`web/page/` 零构建展示页（现场 `file://` 直开）与编排证据；导出流程本身仍只产数据面。
 
 ## claim
 
@@ -31,7 +31,7 @@ B2d 增加 `molt demo`（1 live 候选 + 1 replay 基线 + 10 题扫描回放）
 系统分为**承重墙**与**简单题冗余**：外部 pytest + 全 `bench/**` 哈希、holdout 隔离、
 原子快照/回退、audit 重算/脱敏/secret scan、七端口与协议边界、bash-only bwrap + trust +
 Pi 账本不可砍；6 开关/SoL-Pi、compaction、双模型、memory/RAG、skill evolving、
-multi-agent、模型维度、escalation、git tag 回滚、HTML 页面等**现在不实现，按需**。
+multi-agent、模型维度、escalation、git tag 回滚等**现在不实现，按需**；HTML 页面指导出产物，汇报页面已以 `web/page/` 落地（消费方零构建页，导出流程仍不产 HTML）。
 真实 Pi 基线 10/10 已饱和，简单题上这些机制没有输入；未来只在现有端口 / adapter / shell
 边界内扩展，改 core 必须先写 ADR 并按新 major 走。冗余项不写进 claim。
 详见 [ADR-0009](docs/decisions/0009-scope-and-redundancy.md)。
@@ -139,7 +139,8 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
   LLM/grid proposer、Pi 1.5.0 runtime（bash-only sandbox / trust / 账本 / 预算）、
   第二 shell `svc-config` + deterministic runtime（零成本、manifest 驱动装载）、
   `demo-6` 的 10 search + 5 holdout 题集、`calibrate` 基线校准、
-  `export` 的 `web/data` 数据导出（无页面代码）、
+  `export` 的 `web/data` 数据导出（只产数据面，不生成页面）、
   `demo` 现场闭环（1 live + 1 replay + 10 题扫描回放，180s 硬上限；选定高→低起点，
   gate `adopt`，真实数字与负结果见 ADR-0008，证据在 `web/data`）。
-- 未实现：HTML 报告页面。
+- 已实现：`web/page/` 零构建展示页（白底 8 屏、scroll-snap 逐屏、`file://` 直开、
+  只读 `web/data`、`node web/page/check.mjs` 验收 462 条）；导出流程不产页面。

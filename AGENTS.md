@@ -38,8 +38,10 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 - 不跨 `scenario_version` 比较（当前 `demo-6`）。跨版本数字不可比，也不得放进同一张表。
 - 不声称成功率提升或搜索空间最优：10 题已饱和（真实基线 10/10），demo 只是选定的
   high→low 高成本起点；也没有候选比 low/full 更便宜。
-- 不声称仓库包含 HTML 页面：本仓库只交付 `web/data` 数据面，页面由队友 C 消费，
-  必须按 `demo_group` + `provenance` 展示 1 live + 1 replay + 10 replay。
+- 不声称 `web/page/` 是 molt 的产物或新增证据：它是零构建静态展示页（`file://` 直开、
+  只读 `web/data`），`molt export` 仍只产出数据面；页面必须按 `demo_group` + `provenance`
+  分开标注（closure 的 1 live + 1 replay，scan10 的 10 条 replay），不得把 replay/fixture
+  说成 live。
 - 不把 `demo` 的证据表述成「两次 live 运行」：现场闭环只有 1 条 live 候选 + 1 条 replay 基线，
   10 题扫描是回放（`demo_group=scan10`），页面必须按 `runs[].provenance` 与
   `runs[].demo_group` 分开标注。
@@ -52,14 +54,14 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 - `molt demo`：1 live + 1 replay 闭环、10 题扫描回放、180s 硬上限（ADR-0008）；
   选定 `high/full → low/full` 的真实高→低起点，gate `adopt`（10/10；
   扫描级 cost −72% / wall −61%，gate 级 cps −70.0%，holdout 5/5 → 5/5）。
-  仓库只交付 `web/data`，不含 HTML 页面。
+  仓库交付 `web/data` 数据面；`web/page/` 为零构建展示页，不是导出产物。
 - `molt doctor --repo-policy`：只读检查协作文件、冻结面与契约域。
 
 **范围与冗余（ADR-0009）**
 
 - not claimed 包含所有**未实现 / 按需**的冗余项：6 开关 / SoL-Pi、compaction 维度、
   本地 9B/双模型、LLM proposer 主路径、memory/RAG、skill evolving、multi-agent、
-  模型维度、escalation/routing、git tag 回滚、HTML 页面。
+  模型维度、escalation/routing、git tag 回滚、HTML 页面（指导出产物；`web/page/` 已落地为消费方页面，不是导出产物）。
 - 实现原则：只在现有**端口 / adapter / shell** 边界内扩展；不改 core 协议。
   确需改 core 时先写 ADR，并按新 major 走（`schemas/vN/`）。
 - 详见 [ADR-0009](docs/decisions/0009-scope-and-redundancy.md)。
