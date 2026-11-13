@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://molt.local/schemas/session.schema.json",
+  "title": "agent session",
+  "description": "POST /api/sessions、GET /api/sessions/{id} 与 GET /api/sessions 的会话对象。进程内存储，重启即丢。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "session_id",
+    "status",
+    "provider",
+    "created_at",
+    "messages",
+    "last_event_id"
+  ],
+  "properties": {
+    "session_id": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["idle", "in_progress"] },
+    "provider": { "type": "string", "enum": ["mock", "openai-compatible"] },
+    "created_at": { "type": "string", "minLength": 1 },
+    "last_event_id": { "type": "integer", "minimum": 0 },
+    "messages": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["message_id", "role", "content", "created_at", "turn_id"],
+        "properties": {
+          "message_id": { "type": "string", "minLength": 1 },
+          "role": { "type": "string", "enum": ["user", "assistant"] },
+          "content": { "type": "string" },
+          "created_at": { "type": "string", "minLength": 1 },
+          "turn_id": { "type": "string", "minLength": 1 },
+          "experiment_refs": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

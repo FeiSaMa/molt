@@ -1,0 +1,81 @@
+{
+  "caveats": [
+    "cost_includes_control",
+    "budget_stopped",
+    "function_check_violations"
+  ],
+  "comparability_key": null,
+  "comparison": {
+    "baseline": {
+      "runs": 8,
+      "runs_solved": 2,
+      "tasks": 4,
+      "tasks_solved": 1
+    },
+    "control": {
+      "runs": 4,
+      "runs_solved": 4,
+      "tasks": 2,
+      "tasks_solved": 2
+    },
+    "oracle": null
+  },
+  "evidence": {
+    "completeness": {
+      "reflection": "absent",
+      "rows": "present",
+      "traces": "absent",
+      "verdict": "present"
+    },
+    "files": [
+      "probes/report/2c/rows.json",
+      "probes/report/2c/control-rows.json",
+      "probes/report/2c/verdict.json",
+      "probes/report/2c/gate.json",
+      "probes/report/2c/function-check.json"
+    ],
+    "rows_count": 20,
+    "verdict_runs_count": null
+  },
+  "experiment_id": "2c-main",
+  "metrics": {
+    "cost": {
+      "estimated": true,
+      "includes_control": true,
+      "includes_reflection": false,
+      "includes_retries": false,
+      "scope": "main_plus_control",
+      "usd": 2.30024424
+    },
+    "pass_rate": 0.75,
+    "passed": 3,
+    "recorded_runs": 20,
+    "score_scope": "task",
+    "total": 4,
+    "wall_ms": {
+      "includes_reflection": false,
+      "scope": "sum_main_plus_control_rows",
+      "value": 4693178
+    }
+  },
+  "provenance": {
+    "basis": "runtime_record",
+    "coverage": {
+      "records_total": 20,
+      "records_with_evidence": 20
+    },
+    "kind": "live"
+  },
+  "scenario_version": "probe-4",
+  "shell_version": "0.2.0",
+  "stage": "gate",
+  "status": "completed",
+  "study_kind": "memory_transfer",
+  "task_scope": {
+    "cells": 1,
+    "count": 4,
+    "reps": 2
+  },
+  "title": "2c 主实验",
+  "verifier_hash": "b194ce321b416674ada40f5b00980cc489b7deeff8a59c0ff6e1d3573e809521"
+}

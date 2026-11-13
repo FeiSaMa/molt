@@ -1,0 +1,4 @@
+实验：现场 fast rehearsal run2（scenario probe-6 / shell 0.3.0）
+来源：run.json、state.json；live=true。
+结果：Run1 probe-order-2 失败；Run2 x5/x6 通过 2/2；phase=done，verdict=v3_stable_headroom；cost=$0.072286，wall=88773 ms。
+结论边界：第二次流程彩排，不是新增独立题集证据；仅覆盖 fast 的 x5/x6，不代表 full profile。

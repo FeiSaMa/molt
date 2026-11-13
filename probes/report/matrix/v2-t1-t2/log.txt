@@ -1,0 +1,4 @@
+实验：C1 matrix v2（T1/T2）
+来源：上级目录 runs-v2-t1-t2.json、verdict-v2-t1-t2.json、function-check-v2-t1-t2.json。
+结果：36 runs，verdict=max_degradation；F 向量 pro-max=0、pro-high=1、flash-max=0、flash-high=0；K 向量均为 2。cost=$0.83013787，wall=2034799 ms。
+结论：该版本观察到 pro-high 相对 pro-max 的退化，按冻结决策表不触发 memory 主实验；与主 matrix 版本分开记录。

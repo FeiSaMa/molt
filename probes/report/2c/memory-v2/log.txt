@@ -1,0 +1,7 @@
+实验：Memory v2 / gen3 反思迁移
+实验目的：检验普通反思生成的规则在 x5–x8 是否优于 gen2 memory。
+
+汇总 verdict=reflection_better，cost_total=$0.53273915，其中 reflection=$0.03685308；budget_stopped=false，missing_runs=0。按 verdict：x5 2/2、x6 4/4、x7 4/4、x8 0/2；x8 仍负迁移。x5 包含不同批次/续跑，比较口径见 verdict.json 的 comparison。
+rows.json 有 12 行，但只有 6 行具备可核实的 `--runtime pi` command 记录；其余不能据此假定 live provenance。逐题代码签名发生变化，不能只看通过数。
+来源：verdict.json、rows.json、reflection.json、solutions/。
+结论边界：局部记录显示 x5–x7 通过、x8 仍失败；运行记录覆盖不完整，不与 v3 或其它版本拼成无条件等量比较。

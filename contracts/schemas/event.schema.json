@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://molt.local/schemas/event.schema.json",
+  "title": "SSE event envelope",
+  "description": "GET /api/sessions/{id}/events 的每一帧：id 对应 SSE id 字段，event 对应 SSE event 字段，data 是 JSON 对象。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "event", "data"],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "event": {
+      "type": "string",
+      "enum": [
+        "turn.started",
+        "status",
+        "tool.call",
+        "tool.result",
+        "message.delta",
+        "message.completed",
+        "turn.completed",
+        "error",
+        "done"
+      ]
+    },
+    "data": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "event": { "const": "done" } }, "required": ["event"] },
+      "then": { "properties": { "data": { "maxProperties": 0 } } },
+      "else": {
+        "properties": {
+          "data": { "required": ["turn_id"] }
+        }
+      }
+    }
+  ]
+}

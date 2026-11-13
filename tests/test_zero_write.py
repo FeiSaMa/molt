@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -79,6 +80,41 @@ def test_commands_do_not_write_repository() -> None:
                 timeout=240,
             )
             assert completed.returncode == 0, (command, completed.stdout, completed.stderr)
+
+        # serve 是长驻进程：启动 → 读 stdout 的一行 listen → terminate；
+        # token/state 都指向临时目录，仓库树不得变化。
+        serve = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "molt",
+                "serve",
+                "--port",
+                "0",
+                "--state",
+                str(Path(propose_state) / "serve-state"),
+                "--token-file",
+                str(Path(propose_state) / "serve-state" / "token"),
+            ],
+            cwd=ROOT,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        try:
+            line = serve.stdout.readline() if serve.stdout else ""
+            assert line.startswith("{"), (line, serve.stderr.read() if serve.stderr else "")
+            startup = json.loads(line)
+            assert startup["listen"].startswith("http://127.0.0.1:")
+            assert Path(startup["token_file"]).is_file()
+        finally:
+            serve.terminate()
+            try:
+                serve.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                serve.kill()
+                serve.wait()
     after = tree_snapshot(ROOT)
     added = sorted(set(after) - set(before))
     removed = sorted(set(before) - set(after))

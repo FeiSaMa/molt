@@ -1,0 +1,7 @@
+实验：现场 fast profile 两次 rehearsal（scenario probe-6 / shell 0.3.0；按各 run 文件记录）
+实验目的：排练 Run1 → reflection/memory → Run2 的现场交互闭环。
+
+Run1：done，Run1 1 题失败，Run2 x5/x6 2/2；verdict=v3_stable_headroom；cost=$0.050723，wall=98219 ms。
+Run2：done，Run1 1 题失败，Run2 x5/x6 2/2；verdict=v3_stable_headroom；cost=$0.072286，wall=88773 ms。
+来源：run1/run.json、run2/run.json、对应 state.json。两次都标 live=true；旧 replay state 单独存放，不与 live 彩排混合。
+结论边界：两次短彩排证明流程可运行，不是独立随机重复的统计稳定性证据；fast 不含 x7/x8，不能推广为 full 结果。每次的完整 memory 字节以各自 state 外部归档为准。
