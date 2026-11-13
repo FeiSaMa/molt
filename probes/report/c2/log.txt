@@ -1,0 +1,7 @@
+实验：C2 两位数值格式化/舍入有效性实验（scenario c2-1）
+实验目的：检查第二个欠定约定族能否制造 baseline 失败，同时控制和 oracle 正常。
+
+结果：16/16 runs，missing=0、invalid=0；族题 c2-percent 4/4、c2-ratio 4/4；控制 4/4，oracle 4/4；cost=$0.73449113，wall=1552069 ms；verdict=c2_invalid。
+解释：族题被 baseline 全部解出，未形成可失败的 memory 输入，因此该有效性门判 invalid；不能把 16/16 描述为 memory 带来的提升。
+来源：probes/report/c2/verdict.json、rows.json。
+结论边界：C2 与 C1 的题族、scenario_version 和判定目标不同；不能跨域比较。

@@ -1,0 +1,4 @@
+实验：C1 matrix v1 prompt 版本（作废）
+来源：上级目录 runs-v1-invalid.json、verdict-v1-invalid.json。
+结果：记录 36 runs，verdict 文件写 memory_trigger；但该 prompt 版本存在硬编码 top_k 的设计问题，按项目记录整体标记 invalid，不作为有效实验结果。
+处理：不得纳入主 matrix 汇总或与后续结果比较；仅作为实验设计失败的历史记录。

@@ -1,0 +1,26 @@
+{
+  "session_id": "sess-0d6b8a2c4f7e4911",
+  "status": "idle",
+  "provider": "mock",
+  "created_at": "2026-11-13T08:00:00Z",
+  "messages": [
+    {
+      "message_id": "msg-31a4",
+      "role": "user",
+      "content": "看一下 memory v3 的迁移结果",
+      "created_at": "2026-11-13T08:00:05Z",
+      "turn_id": "turn-5f1c2a7b9d3e4a10"
+    },
+    {
+      "message_id": "msg-77b2",
+      "role": "assistant",
+      "content": "已读取 2c-memory-v3：4/4（task 级，x7 的 1/2 计通过）；版本字段缺失、覆盖 10/18，不可跨实验比较。",
+      "created_at": "2026-11-13T08:00:05Z",
+      "turn_id": "turn-5f1c2a7b9d3e4a10",
+      "experiment_refs": [
+        "2c-memory-v3"
+      ]
+    }
+  ],
+  "last_event_id": 16
+}

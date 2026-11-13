@@ -1,0 +1,8 @@
+实验：Memory v3 / gen4 约束反思迁移（历史主证据 scenario probe-4）
+实验目的：用约束反思规则测试四个 C1b 迁移任务，并单独保留 gen3 x5 续跑对照。
+
+核心结果：gen4 四任务各 4 次共 16/16；x5/x6/x7 headroom 为 12/12。baseline headroom 三题 0/10；x8 baseline 2/2，因此 x8 gen4 4/4 不算新增 headroom。verdict=v3_stable_all（该 verdict 是迁移批内部标签，不推翻 2c 主 verdict=partial_transfer）。
+rows.json 共 18 行：16 条 gen4 + 2 条 gen3 x5 extension。cost_total=$0.45894340，reflection=$0.02970132；verdict 顶层 runs 只记录 10 条，rows 才有累计 18 条明细。历史 runtime command 可核实覆盖 10/18 行，provenance coverage 不满。
+签名漂移：gen4 5/16，见 probes/report/SUMMARY.md 的逐题说明。
+来源：verdict.json、rows.json、reflection.json、solutions/。
+结论边界：仅是固定题族、固定版本和有限重复的描述性实验；不得称统计显著或通用自进化。

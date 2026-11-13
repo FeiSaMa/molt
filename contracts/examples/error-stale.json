@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "stale_event_id",
+    "message": "事件游标已过期，需要重新同步",
+    "details": {
+      "reset_required": true
+    }
+  }
+}

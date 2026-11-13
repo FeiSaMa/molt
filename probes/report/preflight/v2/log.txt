@@ -1,0 +1,4 @@
+实验：配置修复 preflight spike v2
+证据：上级目录 spike-v2.json、spike-v2-stub-trace.txt、spike-blind-v2.patch。
+结果：reference 4/4；stub 1/4（3 项策略失败）；blind DeepSeek v4 Pro 4/4，cost=$0.032899、wall=77s、6 turns。verdict=spike_not_green。
+结论：相对 v1 调整了 spike 设计后，blind 仍完成该配置修复；这是独立 spike 迭代，不与 v1 合并成重复实验结论，也不证明自进化。

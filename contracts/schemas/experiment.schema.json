@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://molt.local/schemas/experiment.schema.json",
+  "title": "probe experiment projection",
+  "description": "GET /api/experiments 的 experiments[] 元素，也是 GET /api/experiments/{id} 的响应体。版本字段扁平，指标嵌套在 metrics，evidence 只含白名单字段。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "experiment_id",
+    "title",
+    "study_kind",
+    "stage",
+    "status",
+    "provenance",
+    "scenario_version",
+    "shell_version",
+    "verifier_hash",
+    "task_scope",
+    "metrics",
+    "comparison",
+    "evidence",
+    "comparability_key",
+    "caveats"
+  ],
+  "properties": {
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "study_kind": {
+      "type": "string",
+      "enum": [
+        "configuration_matrix",
+        "validity_check",
+        "memory_transfer",
+        "rehearsal",
+        "verifier_validation"
+      ]
+    },
+    "stage": {
+      "type": "string",
+      "enum": ["scan", "validation", "gate", "reflection", "rehearsal"]
+    },
+    "status": { "type": "string", "enum": ["completed", "partial", "failed"] },
+    "provenance": { "$ref": "https://molt.local/schemas/experiment.schema.json#/$defs/provenance" },
+    "scenario_version": { "type": ["string", "null"] },
+    "shell_version": { "type": ["string", "null"] },
+    "verifier_hash": { "type": ["string", "null"] },
+    "task_scope": { "$ref": "https://molt.local/schemas/experiment.schema.json#/$defs/task_scope" },
+    "metrics": { "$ref": "https://molt.local/schemas/experiment.schema.json#/$defs/metrics" },
+    "comparison": { "$ref": "https://molt.local/schemas/experiment.schema.json#/$defs/comparison" },
+    "evidence": { "$ref": "https://molt.local/schemas/experiment.schema.json#/$defs/evidence" },
+    "comparability_key": { "type": "null" },
+    "caveats": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "missing_scenario_version",
+          "missing_shell_version",
+          "missing_verifier_hash",
+          "partial_provenance",
+          "function_check_violations",
+          "budget_stopped",
+          "cost_estimated",
+          "cost_includes_control",
+          "cost_includes_reflection",
+          "cost_includes_retries",
+          "wall_excludes_reflection",
+          "wall_includes_reflection",
+          "wall_final_rows_only",
+          "rows_verdict_count_differs",
+          "validation_not_capability",
+          "mixed_provenance"
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "basis", "coverage"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["fixture", "live", "replay", "mixed"] },
+        "basis": { "type": "string", "minLength": 1 },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["records_with_evidence", "records_total"],
+          "properties": {
+            "records_with_evidence": { "type": "integer", "minimum": 0 },
+            "records_total": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "task_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "reps", "cells"],
+      "properties": {
+        "count": { "type": "integer", "minimum": 1 },
+        "reps": { "type": ["integer", "null"], "minimum": 1 },
+        "cells": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recorded_runs", "passed", "total", "pass_rate", "score_scope", "cost", "wall_ms"],
+      "properties": {
+        "recorded_runs": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "total": { "type": "integer", "minimum": 1 },
+        "pass_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "score_scope": { "type": "string", "enum": ["run", "task", "cell"] },
+        "cost": { "$ref": "https://molt.local/schemas/experiment.schema.json#/$defs/cost" },
+        "wall_ms": { "$ref": "https://molt.local/schemas/experiment.schema.json#/$defs/wall" }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "usd",
+        "scope",
+        "includes_control",
+        "includes_reflection",
+        "includes_retries",
+        "estimated"
+      ],
+      "properties": {
+        "usd": { "type": "number", "minimum": 0 },
+        "scope": { "type": "string", "minLength": 1 },
+        "includes_control": { "type": "boolean" },
+        "includes_reflection": { "type": "boolean" },
+        "includes_retries": { "type": "boolean" },
+        "estimated": { "type": "boolean" }
+      }
+    },
+    "wall": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "scope", "includes_reflection"],
+      "properties": {
+        "value": { "type": "integer", "minimum": 0 },
+        "scope": { "type": "string", "minLength": 1 },
+        "includes_reflection": { "type": "boolean" }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "control", "oracle"],
+      "properties": {
+        "baseline": { "oneOf": [{ "type": "null" }, { "$ref": "https://molt.local/schemas/experiment.schema.json#/$defs/comparison_group" }] },
+        "control": { "oneOf": [{ "type": "null" }, { "$ref": "https://molt.local/schemas/experiment.schema.json#/$defs/comparison_group" }] },
+        "oracle": { "oneOf": [{ "type": "null" }, { "$ref": "https://molt.local/schemas/experiment.schema.json#/$defs/comparison_group" }] }
+      }
+    },
+    "comparison_group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runs", "runs_solved", "tasks", "tasks_solved"],
+      "properties": {
+        "runs": { "type": "integer", "minimum": 0 },
+        "runs_solved": { "type": "integer", "minimum": 0 },
+        "tasks": { "type": "integer", "minimum": 0 },
+        "tasks_solved": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files", "rows_count", "verdict_runs_count", "completeness"],
+      "properties": {
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rows_count": { "type": "integer", "minimum": 0 },
+        "verdict_runs_count": { "type": ["integer", "null"], "minimum": 0 },
+        "completeness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rows", "verdict", "reflection", "traces"],
+          "properties": {
+            "rows": { "type": "string", "enum": ["present", "absent", "partial", "not_applicable"] },
+            "verdict": { "type": "string", "enum": ["present", "absent", "partial", "not_applicable"] },
+            "reflection": { "type": "string", "enum": ["present", "absent", "partial", "not_applicable"] },
+            "traces": { "type": "string", "enum": ["present", "absent", "partial", "not_applicable"] }
+          }
+        }
+      }
+    }
+  }
+}

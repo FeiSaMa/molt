@@ -1,0 +1,8 @@
+实验：2b C1 模型/推理档位矩阵（主矩阵 scenario probe-2；以证据元数据为准）
+实验目的：在四个配置格测约定族失败向量 F 与控制向量 K，决定是否进入 memory 主实验。
+
+主矩阵：36/36 runs，cost $0.99972634，wall 2240986 ms；四格 F 均为 0，K 均为 2；oracle 2 个题均通过，oracle runs 4/4。verdict=memory_trigger。pro-high 有一个 invalid run；总体 expected_runs=36、missing_runs=0。
+已知质量限制：function-check.json 标记存在 pro-high / probe-order-x3 run 未改目标函数，不能只凭 pass 数声称目标函数迁移。
+历史变体：runs-v1-invalid 与 verdict-v1-invalid 是作废 prompt 版本；runs-v2-t1-t2 与 verdict-v2-t1-t2 的 verdict=max_degradation。它们是独立设计迭代，不应并入主矩阵总数。
+来源：runs.json、verdict.json、decision-meta.json、function-check*.json。
+结论边界：只支持冻结决策表下的配置筛选；不是不同 scenario/version 的总榜或普遍模型排名。

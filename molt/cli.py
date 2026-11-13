@@ -5,7 +5,8 @@
 ``search`` / ``propose`` / ``audit`` / ``export`` / ``demo`` 的 ``--scenario`` 接受任意
 ``scenarios/<id>/scenario.json``（``--shell`` 为同一参数的别名，可按 shell_id 反查）；
 ``--runtime`` 支持 ``fixture`` / ``pi`` / ``deterministic``。
-``export`` 只导出 ``web/data`` 数据，不含页面；``demo`` 是 B2-D7 的现场闭环。
+``export`` 只导出 ``web/data`` 数据，不含页面；``demo`` 是 B2-D7 的现场闭环；
+``serve`` 是 loopback-only 的本地 agent API（默认 mock provider，端口 0）。
 """
 
 from __future__ import annotations
@@ -46,7 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--root", type=Path, default=None, help="仓库根，默认自动向上查找")
     sub = parser.add_subparsers(
         dest="command",
-        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,calibrate,doctor,export,demo}",
+        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,calibrate,doctor,export,demo,serve}",
     )
 
     p_schema = sub.add_parser("schema", help="schema 校验与文档生成")
@@ -200,6 +201,34 @@ def build_parser() -> argparse.ArgumentParser:
     p_demo.add_argument("--out", type=Path, default=Path("web/data"))
     p_demo.add_argument("--model", default="deepseek/deepseek-flash", help="live 候选的 Pi 模型")
     p_demo.add_argument("--pi-executable", default="pi")
+
+    p_serve = sub.add_parser(
+        "serve",
+        help="本地 agent API（loopback only；默认 mock provider，端口 0）",
+    )
+    p_serve.add_argument("--host", default="127.0.0.1", help="只允许 127.0.0.1 / localhost")
+    p_serve.add_argument("--port", type=int, default=0, help="监听端口；默认 0（临时端口）")
+    p_serve.add_argument("--state", type=Path, default=Path("state"), help="state 根（token 默认落这里）")
+    p_serve.add_argument("--token-file", type=Path, default=None, help="token 输出路径；默认 <state>/token")
+    p_serve.add_argument(
+        "--allow-origin",
+        action="append",
+        default=[],
+        metavar="ORIGIN",
+        help="精确追加允许的 Origin（可重复；禁止 *）",
+    )
+    p_serve.add_argument(
+        "--provider",
+        choices=("mock", "openai-compatible"),
+        default="mock",
+        help="chat provider；openai-compatible 需要 MOLT_CHAT_MODEL",
+    )
+    p_serve.add_argument(
+        "--probe-index",
+        type=Path,
+        default=None,
+        help="只读加载已导出的 probe index；缺省从 manifest 现场构建",
+    )
 
     return parser
 
@@ -1238,6 +1267,21 @@ def cmd_demo(args: argparse.Namespace) -> int:
 # main
 # ---------------------------------------------------------------------------
 
+def cmd_serve(args: argparse.Namespace) -> int:
+    from molt.agent.server import run_server
+
+    return run_server(
+        root=_repo_root(args),
+        host=args.host,
+        port=args.port,
+        state=args.state,
+        token_file=args.token_file,
+        allowed_origins=args.allow_origin,
+        provider=args.provider,
+        probe_index=args.probe_index,
+    )
+
+
 HANDLERS = {
     "schema": cmd_schema,
     "genome": cmd_genome,
@@ -1252,6 +1296,7 @@ HANDLERS = {
     "doctor": cmd_doctor,
     "export": cmd_export,
     "demo": cmd_demo,
+    "serve": cmd_serve,
 }
 
 

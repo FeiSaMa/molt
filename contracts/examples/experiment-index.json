@@ -1,0 +1,629 @@
+{
+  "excluded": [
+    {
+      "experiment_id": "probe-4-followup",
+      "reason": "followup 行与 2c main 行重叠，不单独投影"
+    },
+    {
+      "experiment_id": "c2",
+      "reason": "H2 对照实验，口径与本批 8 条不同"
+    },
+    {
+      "experiment_id": "stability",
+      "reason": "稳定性复跑，未纳入本批比较域"
+    },
+    {
+      "experiment_id": "preflight",
+      "reason": "预检记录，不是实验结果"
+    },
+    {
+      "experiment_id": "matrix-v1-invalid",
+      "reason": "function check 失败的重跑批次"
+    },
+    {
+      "experiment_id": "matrix-v2-t1-t2",
+      "reason": "t1/t2 选择性复跑，不是完整矩阵"
+    }
+  ],
+  "experiments": [
+    {
+      "caveats": [
+        "missing_scenario_version",
+        "missing_shell_version",
+        "missing_verifier_hash",
+        "cost_estimated",
+        "function_check_violations"
+      ],
+      "comparability_key": null,
+      "comparison": {
+        "baseline": null,
+        "control": {
+          "runs": 16,
+          "runs_solved": 16,
+          "tasks": 8,
+          "tasks_solved": 8
+        },
+        "oracle": {
+          "runs": 4,
+          "runs_solved": 4,
+          "tasks": 2,
+          "tasks_solved": 2
+        }
+      },
+      "evidence": {
+        "completeness": {
+          "reflection": "absent",
+          "rows": "present",
+          "traces": "absent",
+          "verdict": "present"
+        },
+        "files": [
+          "probes/report/matrix/runs.json",
+          "probes/report/matrix/verdict.json"
+        ],
+        "rows_count": 36,
+        "verdict_runs_count": null
+      },
+      "experiment_id": "matrix-core-v3",
+      "metrics": {
+        "cost": {
+          "estimated": true,
+          "includes_control": true,
+          "includes_reflection": false,
+          "includes_retries": false,
+          "scope": "all_records",
+          "usd": 0.99972634
+        },
+        "pass_rate": 0.0,
+        "passed": 0,
+        "recorded_runs": 36,
+        "score_scope": "run",
+        "total": 16,
+        "wall_ms": {
+          "includes_reflection": false,
+          "scope": "sum_rows",
+          "value": 2240986
+        }
+      },
+      "provenance": {
+        "basis": "runtime_record",
+        "coverage": {
+          "records_total": 36,
+          "records_with_evidence": 36
+        },
+        "kind": "live"
+      },
+      "scenario_version": null,
+      "shell_version": null,
+      "stage": "scan",
+      "status": "completed",
+      "study_kind": "configuration_matrix",
+      "task_scope": {
+        "cells": 4,
+        "count": 2,
+        "reps": 2
+      },
+      "title": "模型与推理档位矩阵",
+      "verifier_hash": null
+    },
+    {
+      "caveats": [
+        "missing_shell_version",
+        "missing_verifier_hash"
+      ],
+      "comparability_key": null,
+      "comparison": {
+        "baseline": null,
+        "control": {
+          "runs": 4,
+          "runs_solved": 4,
+          "tasks": 2,
+          "tasks_solved": 2
+        },
+        "oracle": {
+          "runs": 4,
+          "runs_solved": 4,
+          "tasks": 2,
+          "tasks_solved": 2
+        }
+      },
+      "evidence": {
+        "completeness": {
+          "reflection": "absent",
+          "rows": "present",
+          "traces": "absent",
+          "verdict": "present"
+        },
+        "files": [
+          "probes/report/validity/runs.json",
+          "probes/report/validity/verdict.json"
+        ],
+        "rows_count": 16,
+        "verdict_runs_count": null
+      },
+      "experiment_id": "validity-green",
+      "metrics": {
+        "cost": {
+          "estimated": true,
+          "includes_control": true,
+          "includes_reflection": false,
+          "includes_retries": false,
+          "scope": "all_records",
+          "usd": 0.79813552
+        },
+        "pass_rate": 0.0,
+        "passed": 0,
+        "recorded_runs": 16,
+        "score_scope": "run",
+        "total": 8,
+        "wall_ms": {
+          "includes_reflection": false,
+          "scope": "sum_rows",
+          "value": 1694232
+        }
+      },
+      "provenance": {
+        "basis": "runtime_record",
+        "coverage": {
+          "records_total": 16,
+          "records_with_evidence": 16
+        },
+        "kind": "live"
+      },
+      "scenario_version": "probe-1",
+      "shell_version": null,
+      "stage": "validation",
+      "status": "completed",
+      "study_kind": "validity_check",
+      "task_scope": {
+        "cells": 1,
+        "count": 2,
+        "reps": 4
+      },
+      "title": "初始题族有效性检查",
+      "verifier_hash": null
+    },
+    {
+      "caveats": [
+        "cost_includes_control",
+        "budget_stopped",
+        "function_check_violations"
+      ],
+      "comparability_key": null,
+      "comparison": {
+        "baseline": {
+          "runs": 8,
+          "runs_solved": 2,
+          "tasks": 4,
+          "tasks_solved": 1
+        },
+        "control": {
+          "runs": 4,
+          "runs_solved": 4,
+          "tasks": 2,
+          "tasks_solved": 2
+        },
+        "oracle": null
+      },
+      "evidence": {
+        "completeness": {
+          "reflection": "absent",
+          "rows": "present",
+          "traces": "absent",
+          "verdict": "present"
+        },
+        "files": [
+          "probes/report/2c/rows.json",
+          "probes/report/2c/control-rows.json",
+          "probes/report/2c/verdict.json",
+          "probes/report/2c/gate.json",
+          "probes/report/2c/function-check.json"
+        ],
+        "rows_count": 20,
+        "verdict_runs_count": null
+      },
+      "experiment_id": "2c-main",
+      "metrics": {
+        "cost": {
+          "estimated": true,
+          "includes_control": true,
+          "includes_reflection": false,
+          "includes_retries": false,
+          "scope": "main_plus_control",
+          "usd": 2.30024424
+        },
+        "pass_rate": 0.75,
+        "passed": 3,
+        "recorded_runs": 20,
+        "score_scope": "task",
+        "total": 4,
+        "wall_ms": {
+          "includes_reflection": false,
+          "scope": "sum_main_plus_control_rows",
+          "value": 4693178
+        }
+      },
+      "provenance": {
+        "basis": "runtime_record",
+        "coverage": {
+          "records_total": 20,
+          "records_with_evidence": 20
+        },
+        "kind": "live"
+      },
+      "scenario_version": "probe-4",
+      "shell_version": "0.2.0",
+      "stage": "gate",
+      "status": "completed",
+      "study_kind": "memory_transfer",
+      "task_scope": {
+        "cells": 1,
+        "count": 4,
+        "reps": 2
+      },
+      "title": "2c 主实验",
+      "verifier_hash": "b194ce321b416674ada40f5b00980cc489b7deeff8a59c0ff6e1d3573e809521"
+    },
+    {
+      "caveats": [
+        "missing_scenario_version",
+        "missing_shell_version",
+        "missing_verifier_hash",
+        "partial_provenance",
+        "cost_includes_reflection",
+        "wall_excludes_reflection",
+        "rows_verdict_count_differs"
+      ],
+      "comparability_key": null,
+      "comparison": {
+        "baseline": null,
+        "control": null,
+        "oracle": null
+      },
+      "evidence": {
+        "completeness": {
+          "reflection": "present",
+          "rows": "partial",
+          "traces": "absent",
+          "verdict": "present"
+        },
+        "files": [
+          "probes/report/2c/memory-v2/rows.json",
+          "probes/report/2c/memory-v2/verdict.json"
+        ],
+        "rows_count": 12,
+        "verdict_runs_count": 6
+      },
+      "experiment_id": "2c-memory-v2",
+      "metrics": {
+        "cost": {
+          "estimated": false,
+          "includes_control": false,
+          "includes_reflection": true,
+          "includes_retries": false,
+          "scope": "main",
+          "usd": 0.53273915
+        },
+        "pass_rate": 0.75,
+        "passed": 3,
+        "recorded_runs": 12,
+        "score_scope": "task",
+        "total": 4,
+        "wall_ms": {
+          "includes_reflection": false,
+          "scope": "sum_rows",
+          "value": 678622
+        }
+      },
+      "provenance": {
+        "basis": "runtime_record",
+        "coverage": {
+          "records_total": 12,
+          "records_with_evidence": 6
+        },
+        "kind": "live"
+      },
+      "scenario_version": null,
+      "shell_version": null,
+      "stage": "reflection",
+      "status": "completed",
+      "study_kind": "memory_transfer",
+      "task_scope": {
+        "cells": 1,
+        "count": 4,
+        "reps": null
+      },
+      "title": "Memory v2 反思迁移",
+      "verifier_hash": null
+    },
+    {
+      "caveats": [
+        "missing_scenario_version",
+        "missing_shell_version",
+        "missing_verifier_hash",
+        "partial_provenance",
+        "cost_includes_reflection",
+        "wall_excludes_reflection",
+        "rows_verdict_count_differs"
+      ],
+      "comparability_key": null,
+      "comparison": {
+        "baseline": null,
+        "control": null,
+        "oracle": null
+      },
+      "evidence": {
+        "completeness": {
+          "reflection": "present",
+          "rows": "partial",
+          "traces": "absent",
+          "verdict": "present"
+        },
+        "files": [
+          "probes/report/2c/memory-v3/rows.json",
+          "probes/report/2c/memory-v3/verdict.json"
+        ],
+        "rows_count": 18,
+        "verdict_runs_count": 10
+      },
+      "experiment_id": "2c-memory-v3",
+      "metrics": {
+        "cost": {
+          "estimated": false,
+          "includes_control": false,
+          "includes_reflection": true,
+          "includes_retries": false,
+          "scope": "main",
+          "usd": 0.4589434
+        },
+        "pass_rate": 1.0,
+        "passed": 4,
+        "recorded_runs": 18,
+        "score_scope": "task",
+        "total": 4,
+        "wall_ms": {
+          "includes_reflection": false,
+          "scope": "sum_rows",
+          "value": 560946
+        }
+      },
+      "provenance": {
+        "basis": "runtime_record",
+        "coverage": {
+          "records_total": 18,
+          "records_with_evidence": 10
+        },
+        "kind": "live"
+      },
+      "scenario_version": null,
+      "shell_version": null,
+      "stage": "reflection",
+      "status": "completed",
+      "study_kind": "memory_transfer",
+      "task_scope": {
+        "cells": 1,
+        "count": 4,
+        "reps": 4
+      },
+      "title": "Memory v3 约束反思迁移",
+      "verifier_hash": null
+    },
+    {
+      "caveats": [
+        "missing_scenario_version",
+        "missing_shell_version",
+        "missing_verifier_hash",
+        "cost_includes_reflection",
+        "wall_includes_reflection"
+      ],
+      "comparability_key": null,
+      "comparison": {
+        "baseline": null,
+        "control": null,
+        "oracle": null
+      },
+      "evidence": {
+        "completeness": {
+          "reflection": "present",
+          "rows": "present",
+          "traces": "absent",
+          "verdict": "present"
+        },
+        "files": [
+          "probes/report/rehearsal/run1/run.json",
+          "probes/report/rehearsal/run1/state.json"
+        ],
+        "rows_count": 3,
+        "verdict_runs_count": null
+      },
+      "experiment_id": "rehearsal-run1",
+      "metrics": {
+        "cost": {
+          "estimated": false,
+          "includes_control": false,
+          "includes_reflection": true,
+          "includes_retries": false,
+          "scope": "run_json_total",
+          "usd": 0.050723
+        },
+        "pass_rate": 0.6667,
+        "passed": 2,
+        "recorded_runs": 3,
+        "score_scope": "run",
+        "total": 3,
+        "wall_ms": {
+          "includes_reflection": true,
+          "scope": "run_json_total",
+          "value": 98219
+        }
+      },
+      "provenance": {
+        "basis": "explicit_flag",
+        "coverage": {
+          "records_total": 1,
+          "records_with_evidence": 1
+        },
+        "kind": "live"
+      },
+      "scenario_version": null,
+      "shell_version": null,
+      "stage": "rehearsal",
+      "status": "completed",
+      "study_kind": "rehearsal",
+      "task_scope": {
+        "cells": 1,
+        "count": 3,
+        "reps": 1
+      },
+      "title": "现场彩排 run1",
+      "verifier_hash": null
+    },
+    {
+      "caveats": [
+        "missing_scenario_version",
+        "missing_shell_version",
+        "missing_verifier_hash",
+        "cost_includes_reflection",
+        "wall_includes_reflection"
+      ],
+      "comparability_key": null,
+      "comparison": {
+        "baseline": null,
+        "control": null,
+        "oracle": null
+      },
+      "evidence": {
+        "completeness": {
+          "reflection": "present",
+          "rows": "present",
+          "traces": "absent",
+          "verdict": "present"
+        },
+        "files": [
+          "probes/report/rehearsal/run2/run.json",
+          "probes/report/rehearsal/run2/state.json"
+        ],
+        "rows_count": 3,
+        "verdict_runs_count": null
+      },
+      "experiment_id": "rehearsal-run2",
+      "metrics": {
+        "cost": {
+          "estimated": false,
+          "includes_control": false,
+          "includes_reflection": true,
+          "includes_retries": false,
+          "scope": "run_json_total",
+          "usd": 0.072286
+        },
+        "pass_rate": 0.6667,
+        "passed": 2,
+        "recorded_runs": 3,
+        "score_scope": "run",
+        "total": 3,
+        "wall_ms": {
+          "includes_reflection": true,
+          "scope": "run_json_total",
+          "value": 88773
+        }
+      },
+      "provenance": {
+        "basis": "explicit_flag",
+        "coverage": {
+          "records_total": 1,
+          "records_with_evidence": 1
+        },
+        "kind": "live"
+      },
+      "scenario_version": null,
+      "shell_version": null,
+      "stage": "rehearsal",
+      "status": "completed",
+      "study_kind": "rehearsal",
+      "task_scope": {
+        "cells": 1,
+        "count": 3,
+        "reps": 1
+      },
+      "title": "现场彩排 run2",
+      "verifier_hash": null
+    },
+    {
+      "caveats": [
+        "missing_scenario_version",
+        "missing_shell_version",
+        "missing_verifier_hash",
+        "mixed_provenance",
+        "validation_not_capability",
+        "cost_includes_retries",
+        "wall_final_rows_only"
+      ],
+      "comparability_key": null,
+      "comparison": {
+        "baseline": null,
+        "control": null,
+        "oracle": null
+      },
+      "evidence": {
+        "completeness": {
+          "reflection": "absent",
+          "rows": "present",
+          "traces": "present",
+          "verdict": "present"
+        },
+        "files": [
+          "probes/report/batch1/rows.json",
+          "probes/report/batch1/oracle-trace.json",
+          "probes/report/batch1/blind-trace.json",
+          "probes/report/batch1/stub-trace.json"
+        ],
+        "rows_count": 3,
+        "verdict_runs_count": null
+      },
+      "experiment_id": "batch1",
+      "metrics": {
+        "cost": {
+          "estimated": true,
+          "includes_control": false,
+          "includes_reflection": false,
+          "includes_retries": true,
+          "scope": "all_attempts",
+          "usd": 0.43275734
+        },
+        "pass_rate": 0.3333,
+        "passed": 1,
+        "recorded_runs": 3,
+        "score_scope": "cell",
+        "total": 3,
+        "wall_ms": {
+          "includes_reflection": false,
+          "scope": "final_rows_only",
+          "value": 547678
+        }
+      },
+      "provenance": {
+        "basis": "runtime_record",
+        "coverage": {
+          "records_total": 3,
+          "records_with_evidence": 3
+        },
+        "kind": "mixed"
+      },
+      "scenario_version": null,
+      "shell_version": null,
+      "stage": "validation",
+      "status": "completed",
+      "study_kind": "verifier_validation",
+      "task_scope": {
+        "cells": 3,
+        "count": 1,
+        "reps": 1
+      },
+      "title": "判分器 cell 判别验证",
+      "verifier_hash": null
+    }
+  ],
+  "generated_at": "2026-11-13T00:00:00Z",
+  "revision": "f981c8c241a781c8f35ca2f114623fcb6520d248d7072f18dfa102e995a98e96",
+  "schema_version": "1.0.0"
+}
