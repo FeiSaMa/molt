@@ -1,5 +1,5 @@
 /* ==========================================================================
-   molt · 路演页 · 白底 / 衬线标题 / 一屏一项 / 滚动翻页
+   molt · 路演页 · 白底 / 衬线标题 / 一屏一项 / 叠层翻页
    纯静态：零外链资源、零 webfont、零图片；所有装饰由 CSS 绘制。
    不使用 :has 选择器、CSS 嵌套、容器查询、新式颜色混合函数，保证 file:// 直开可用。
    动效只做增强：初始隐藏状态一律写在 .js-ready 下，无 JS 时全部可见。
@@ -21,12 +21,17 @@
   --red: #C0392B;
   --indigo: #1B4D8F;
   --gold: #B98A2F;
+  /* 合计的颜色语义：基线 > 候选 → 红，否则绿（需求指定，不是「红=坏」的常规用法） */
+  --good: #1E7A46;
 
   /* 字体三档 */
   --font-display: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
   --font-body: -apple-system, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei",
     "Noto Sans CJK SC", sans-serif;
   --font-num: "SF Mono", ui-monospace, "JetBrains Mono", Consolas, monospace;
+  /* 品牌角标专用：微软雅黑 Light（Windows 上是一个独立字族名，所以写全） */
+  --font-brand: "Microsoft YaHei Light", "Microsoft YaHei UI Light", "Microsoft YaHei",
+    "PingFang SC", sans-serif;
 
   /* 字号阶梯 */
   --fs-display: clamp(2.6rem, 6.2vw, 7rem);
@@ -69,9 +74,8 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* 投影上不要系统滚动条的灰色凹槽：只把滚动条本身画成 0 宽，
-   滚动能力保留（滚轮 / 键盘 / 圆点导航都照常）。不用 overflow:hidden ——
-   那会连带禁掉键盘与滚轮翻页。 */
+/* 投影上不要系统滚动条的灰色凹槽。JS 起来后舞台本来就不滚（.js-ready .deck 锁死），
+   这里管的是无 JS 的降级阅读：内容仍可滚动，只是不画滚动条。 */
 html,
 body {
   scrollbar-width: none;
@@ -169,9 +173,9 @@ summary:focus,
   left: var(--pad-x);
   z-index: 20;
   color: var(--ink);
-  font-family: var(--font-display);
+  font-family: var(--font-brand);
   font-size: clamp(0.95rem, 1.1vw, 1.15rem);
-  font-weight: 700;
+  font-weight: 300;
   letter-spacing: 0.28em;
   line-height: 1;
   text-transform: lowercase;
@@ -218,14 +222,13 @@ summary:focus,
   background: var(--red);
 }
 
-/* ---------- 5. 滚动容器与屏 ---------- */
+/* ---------- 5. 舞台与屏（不滚动：8 屏叠一层，交叉换场） ---------- */
 .deck {
+  position: relative;
   height: 100vh;
   height: 100dvh;
   overflow-x: hidden;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
+  overflow-y: auto;   /* 无 JS 时可滚动阅读；JS 起来后 .js-ready 把它锁死成固定舞台 */
   -webkit-overflow-scrolling: touch;
   /* 滚动条隐藏但滚动保留：file:// 直开时系统滚动条是一条灰槽，投影上很显眼 */
   scrollbar-width: none;
@@ -247,10 +250,35 @@ summary:focus,
   min-height: 100dvh;
   padding: clamp(56px, 9vh, 110px) var(--pad-x);
   overflow: hidden;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
-  /* 布局 / 绘制隔离：一屏的 reflow 与重绘不外溢到相邻屏（8 屏同时参与排版是翻页卡顿的根因之一） */
+  /* 布局 / 绘制隔离：一屏的 reflow 与重绘不外溢到相邻屏 */
   contain: layout paint;
+}
+
+/* JS 起来后舞台不再滚动：屏全部叠在同一层，只有当前屏可见。
+   z-index 让「正在淡出的那一屏」压在下面，避免挡住新屏的内容。 */
+.js-ready .deck {
+  overflow: hidden;
+}
+
+.js-ready .slide {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.js-ready .slide.is-active {
+  z-index: 2;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.js-ready .slide.is-leaving {
+  z-index: 1;
+  opacity: 1;
 }
 
 .slide-inner {
@@ -325,6 +353,57 @@ h1 em {
   font-style: normal;
 }
 
+/* ---------- 6.1 封面打字机 ----------
+   静态兜底（.tagline-fallback）在无 JS / prefers-reduced-motion 时显示；
+   JS 起来后（.js-ready）换成 .tagline-live，由 app.js 的 TAGLINES 循环打字。
+   光标用 transform 闪烁，不用 opacity —— 关键帧里只允许换场与晕染出现 opacity:0。 */
+.tagline-live {
+  display: none;
+  /* h1 的 1.06 是给单行大标题的；打字机固定两行，留出降部（y / g）空间 */
+  line-height: 1.3;
+}
+
+.tagline-fallback {
+  line-height: 1.3;
+}
+
+.js-ready .tagline-live {
+  /* block + 预留两行高度：文案二有两行，打字/回删的过程中版面不会上下跳 */
+  display: block;
+  min-height: 2.6em;
+}
+
+.js-ready .tagline-fallback {
+  display: none;
+}
+
+.tagline-text .hot {
+  color: var(--red);
+}
+
+.tagline-caret {
+  display: inline-block;
+  width: 0.05em;
+  height: 0.88em;
+  margin-left: 0.06em;
+  background: var(--ink);
+  vertical-align: -0.02em;
+  transform-origin: center bottom;
+  animation: caret-blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes caret-blink {
+  0%,
+  49% {
+    transform: scaleY(1);
+  }
+
+  50%,
+  100% {
+    transform: scaleY(0);
+  }
+}
+
 .lede {
   max-width: min(78ch, 1180px);
   margin: clamp(1.1rem, 2.6vh, 2rem) 0 0;
@@ -392,6 +471,7 @@ h1 em {
   z-index: 1;
   overflow: hidden;
   pointer-events: none;
+  /* 舞台不再滚动后 --p 恒为 0（视差随滚动模型一起下线），位移项保留为 0 位移 */
   transform: translate3d(0, calc(var(--p, 0) * -48px), 0);
   /* 装饰层自成孤岛：样式 / 布局 / 绘制都不与正文互相触发 */
   contain: strict;
@@ -533,7 +613,7 @@ h1 em {
 .chips--hero .chip-line {
   padding: 0.46rem 0.9rem;
   color: var(--ink-2);
-  font-size: clamp(14px, 0.95vw, 15px);
+  font-size: clamp(14px, 0.95vw, 20px);
 }
 
 .chip-line b {
@@ -632,195 +712,265 @@ h1 em {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- 10. S4 配对表 ---------- */
-/* 表格屏比其它屏宽：1080p 下给到 1440px，其余屏仍走 --measure */
+/* ---------- 10. S6 实时面板：左折线图 / 右滚动列表 ---------- */
+/* 面板吃满版心：列表从屏幕中线起，落在右半边，纵向也拉到接近满高 */
 .slide--table .slide-inner--wide {
-  max-width: min(92vw, 1440px);
+  max-width: min(94vw, 1800px);
 }
 
-/* 表格屏的导语与口径说明吃满版心，避免在宽屏上缩成窄栏 */
-.slide--table .lede,
-.slide--table .footnote {
-  max-width: none;
+.live {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  column-gap: clamp(1.4rem, 3vw, 3.4rem);
+  row-gap: clamp(0.5rem, 1.2vh, 0.9rem);
+  height: clamp(340px, 62vh, 700px);
+  margin-top: clamp(0.8rem, 2vh, 1.6rem);
 }
 
-.table-wrap {
-  margin-top: clamp(0.7rem, 1.6vh, 1.2rem);
-  overflow-x: auto;
-  border-top: 2px solid var(--ink);
-  border-bottom: 1px solid var(--line);
-}
-
-.pairs {
-  width: 100%;
-  min-width: 720px;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: clamp(15px, 1.32vw, 19px);
-}
-
-.pairs caption {
-  text-align: left;
-}
-
-.pairs thead th {
-  padding: 0.55rem 0.8rem;
-  border-bottom: 1px solid var(--line);
-  color: var(--ink-3);
-  font-family: var(--font-body);
-  font-size: clamp(13px, 0.9vw, 14px);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.pairs th.num,
-.pairs td.num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.col-idx {
-  width: 4.2rem;
-}
-
-.col-bar {
-  width: 24%;
-}
-
-.pairs td.idx,
-.pairs th.col-idx {
-  text-align: left;
-}
-
-.pairs tbody td {
-  height: clamp(2.6rem, 4.4vh, 3.4rem);
-  padding: 0 0.8rem;
-  border-bottom: 1px solid var(--line);
-  color: var(--ink-2);
-  vertical-align: middle;
-  line-height: 1.35;
-}
-
-/* 斑马纹：极轻，只用来帮眼睛横向追踪，不参与语义 */
-.pairs tbody tr:nth-child(even) td {
-  background: rgba(20, 22, 26, 0.018);
-}
-
-.pairs tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.pairs tbody tr:hover td {
-  background: var(--paper-2);
-}
-
-/* 通过差列：门禁不变量，退到脚注级灰 */
-.pairs tbody td:nth-child(6) {
-  color: var(--ink-3);
-}
-
-.pair-id-cell {
-  color: var(--ink);
-  font-family: var(--font-num);
-  font-size: 0.86em;
-}
-
-.tag-live {
-  margin-left: 0.45rem;
-  padding: 0 0.34rem;
-  border: 1px solid var(--line);
-  border-radius: 2px;
-  color: var(--ink-3);
-  font-family: var(--font-num);
-  font-size: 0.66rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.delta {
-  color: var(--ink-2);
-}
-
-/* 成本差：负数统一朱红，和结论同色 */
-.pairs .delta.is-better {
-  color: var(--red);
-  font-weight: 700;
-}
-
-.is-better {
-  color: var(--indigo);
-  font-weight: 600;
-}
-
-.pairs tfoot td {
-  padding: 0.7rem 0.8rem;
-  border-top: 2px solid var(--line);
-  border-bottom: 2px solid var(--line);
-  background: var(--paper-2);
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-.pairs tfoot .total-label {
-  color: var(--ink);
-  font-weight: 700;
-}
-
-.pairs tfoot .total-note {
-  color: var(--ink-3);
-  font-size: 0.76rem;
-  white-space: normal;
-}
-
-.tf-label {
-  margin-right: 0.3rem;
-  color: var(--ink-3);
-  font-size: 0.72rem;
-}
-
-.tf-delta b {
-  color: var(--red);
-}
-
-/* 对比条：宽度 = 候选 / 基线（由 render.js 写成 --w） */
-.bar-wrap {
+/* ---- 左：折线图（画布吃掉整栏高度，与右侧列表齐平） ---- */
+.live-chart {
   display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.live-legend {
+  flex: none;
+  display: flex;
+  gap: 1.2rem;
+  color: var(--ink-3);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+
+.lg {
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
-.bar {
-  display: block;
-  flex: 1 1 auto;
-  width: 100%;
-  min-width: 72px;
+/* 色标是纯装饰，用 ::before 画一小块柱；不额外占 <i>（<i> 只属于 .ink 的三团色斑） */
+.lg::before {
+  content: "";
+  width: 10px;
   height: 10px;
-  border-radius: 999px;
-  background: var(--line);
-  overflow: hidden;
-}
-
-.bar-fill {
-  display: block;
-  width: var(--w, 0%);
-  height: 100%;
-  border-radius: inherit;
+  border-radius: 2px;
   background: var(--indigo);
 }
 
-.bar-fill.is-worse {
+.lg--cand::before {
   background: var(--red);
 }
 
-.bar-over {
-  flex: none;
+.live-canvas {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  margin-top: 0.45rem;
+}
+
+/* 合计：字号与全片脚注一致（--fs-foot），横跨两栏居中收口 */
+.live-sum {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--fs-foot);
+  font-variant-numeric: tabular-nums;
+}
+
+.live-sum b {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+/* 成本差 / 通过差：基线 > 候选 → 红，否则绿；没有可配对的行时保持墨色 */
+.live-sum b.is-bad {
   color: var(--red);
-  font-size: 0.7rem;
-  line-height: 1;
+}
+
+.live-sum b.is-good {
+  color: var(--good);
+}
+
+.live-sum b.is-idle {
+  color: var(--ink-2);
+}
+
+/* ---- 右：滚动列表（题号 / 题目 / 第一次 / 第二次） ---- */
+.live-list-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.live-list-head,
+.live-row {
+  display: grid;
+  grid-template-columns: 2.8rem minmax(0, 1fr) 10rem 10rem;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+
+.live-list-head {
+  flex: none;
+  padding: 0 0.55rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.live-list-head span:nth-child(3),
+.live-list-head span:nth-child(4) {
+  text-align: right;
+}
+
+/* 数据源失败时的提示（file:// 读不到本地 JSON / 401 / 路径不对）：只在出错时出现 */
+.live-note {
+  flex: none;
+  margin: 0.55rem 0.55rem 0;
+  color: var(--ink-3);
+  font-size: var(--fs-foot);
+}
+
+.live-note.is-bad {
+  color: var(--red);
+}
+
+.live-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.live-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.live-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.live-row {
+  padding: 0.5rem 0.55rem;
+  border-bottom: 1px solid var(--line);
+  transition: background-color 260ms var(--ease);
+}
+
+.lr-idx {
+  color: var(--indigo);
+  font-family: var(--font-num);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.lr-name {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.lr-task {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lr-cost {
+  font-weight: 500;
+}
+
+.lr-c {
+  color: var(--ink-2);
+  font-family: var(--font-num);
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lr-flag {
+  margin-right: 0.28rem;
+  font-style: normal;
+  font-size: 0.82em;
+  /* emoji 走系统彩色字体：Windows 用 Segoe UI Emoji，Linux / macOS 各有回退 */
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji",
+    "Segoe UI Symbol", sans-serif;
+}
+
+/* 刚更新的那一行淡底一闪：列表在滚，视线能立刻落到新数据上 */
+.live-row.is-fresh {
+  background: rgba(27, 77, 143, 0.07);
+}
+
+/* 逐条点亮：.is-live 藏行（S6 默认空载），数据到了再加 .is-in 显示；
+   index.html 的列表默认就带 is-live，所以无 JS 时也是空面板，不冒预置数据 */
+.live-list.is-live .live-row {
+  display: none;
+}
+
+.live-list.is-live .live-row.is-in {
+  display: grid;
+  animation: live-row-in 320ms var(--ease) both;
+}
+
+@keyframes live-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 1280–1500 宽：成本列收窄，题名不被截断（search-missing-return 要整条可见） */
+@media (max-width: 1500px) {
+  .live-list-head,
+  .live-row {
+    grid-template-columns: 2.4rem minmax(0, 1fr) 8.2rem 8.2rem;
+  }
+
+  .lr-c {
+    font-size: 0.8rem;
+  }
+}
+
+/* 窄屏：图在上、列表在下，各自限高可滚 */
+@media (max-width: 1100px) {
+  .live {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    height: auto;
+    gap: clamp(0.9rem, 2vh, 1.4rem);
+  }
+
+  .live-canvas {
+    flex: none;
+    height: clamp(200px, 26vh, 280px);
+  }
+
+  .live-list {
+    flex: none;
+    height: clamp(200px, 26vh, 280px);
+  }
 }
 
 /* ---------- 11. S5 门禁链 ---------- */
@@ -1431,16 +1581,56 @@ h1 em {
   top: auto;
 }
 
-/* ---------- 16. 动效（只在 .js-ready 下启用，全部只动 transform / opacity） ----------
+/* ---------- 16. 动效（只在 .js-ready 下启用，全部只动 transform / opacity / filter） ----------
    性能契约（对应 W-22 §4.2）：
-   ① 不再给 .slide 写 opacity / transform 过渡 —— 8 屏齐动是卡顿元凶；
-      换场视觉交给 .ink 晕染（一次性 keyframes）+ .slide-inner 的内容入场。
+   ① 换场用 animation（一次性 keyframes），不用 transition —— 8 屏齐动仍是卡顿元凶；
+      整屏显影见下方「换场：整屏淡入淡出 + 模糊晕开」，与 .ink 晕染并存。
    ② .is-revealed 记住「这屏已经播过」，离开当前屏时状态不回退，
       避免整屏元素一起倒放 900ms（这是第二个卡顿来源）。
    ③ 晕染挂在 .is-active 上：每次进入某一屏（下翻 / 上翻 / 圆点 / Home / End）
       都重播一次；app.js 的 restartInk 在激活后显式重启，保证同屏二次进入也重播。
       will-change 只挂当前屏。
    ---------------------------------------------------------------------------- */
+
+/* 换场：整屏淡入淡出 + 模糊晕开（移植自 Diamond-UI-V 的 view-swap / auth-swap）
+   分工：.ink 是画面内的泼墨，这里是整屏显影（透明度 + 微缩放 + 模糊）。
+   时序：进入 400ms 模糊→清晰；离开 400ms 清晰→模糊。
+   scroll-behavior: smooth 期间两屏同框，所以「淡出」是真的看得见，不是白写。 */
+@keyframes slide-bloom-in {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+    filter: blur(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes slide-bloom-out {
+  from {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: blur(8px);
+  }
+}
+
+.js-ready .slide.is-active {
+  animation: slide-bloom-in 400ms var(--ease) both;
+}
+
+.js-ready .slide.is-leaving {
+  animation: slide-bloom-out 400ms var(--ease) both;
+}
 
 /* 内容整块入场：10px → 0，与晕染同时开始 */
 .js-ready .slide-inner {
@@ -1475,21 +1665,6 @@ h1 em {
 .js-ready .slide.is-revealed [data-reveal] {
   opacity: 1;
   transform: none;
-  transition: none;
-}
-
-/* 条形生长：0 → --w，900ms，行间延迟 50ms（render.js 写 inline transition-delay） */
-.js-ready .bar-fill {
-  width: 0;
-}
-
-.js-ready .slide.is-active .bar-fill {
-  width: var(--w, 0%);
-  transition: width 900ms var(--ease);
-}
-
-.js-ready .slide.is-revealed .bar-fill {
-  width: var(--w, 0%);
   transition: none;
 }
 
@@ -1578,14 +1753,14 @@ h1 em {
   100% { transform: scale(2.4); opacity: 0; }
 }
 
-/* 封面滚动提示的轻微浮动 */
+/* 封面翻页提示的轻微浮动（箭头指向右：翻页不再是往下滚） */
 .js-ready .slide.is-active .hint-arrow {
   animation: hint-bob 1.6s ease-in-out infinite;
 }
 
 @keyframes hint-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(4px); }
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
 }
 
 /* ---------- 17. 减少动态效果：全部关闭 ---------- */
@@ -1599,7 +1774,7 @@ h1 em {
   }
 
   .deck {
-    scroll-behavior: auto;
+    overflow-y: auto;
   }
 
   .slide,
@@ -1633,10 +1808,10 @@ h1 em {
     transform: none !important;
   }
 
-  .bar-fill,
-  .js-ready .bar-fill,
-  .js-ready .slide.is-active .bar-fill {
-    width: var(--w, 0%) !important;
+  /* 减少动效：列表不再逐条点亮，全部直接可见 */
+  .live-list.is-live .live-row {
+    display: grid !important;
+    animation: none !important;
   }
 
   .gate-chain li,
@@ -1724,10 +1899,119 @@ h1 em {
   }
 }
 
-/* 720p 投影：表格行高按视口收紧（1080p 仍走 clamp(2.6rem, 4.4vh, 3.4rem)），
-   保证 10 行 + 合计 + 人话句仍在同一屏内。 */
+/* 720p 投影：面板与列表一起压矮，保证图 + 列表 + 口径说明仍在同一屏内 */
 @media (max-height: 780px) {
-  .slide--table .pairs tbody td {
-    height: clamp(1.9rem, 3.7vh, 3.4rem);
+  .live {
+    height: clamp(300px, 56vh, 460px);
+  }
+}
+
+/* ---------- 19. 星空背景（默认显示；减少动效时不启用） ----------
+   按 Diamond API 的 #startrack 原逻辑复刻：
+     离屏缓存画满星点 → 每帧整张 drawImage 叠上来 → 每 8 帧擦 4%（原版擦黑，这里擦透明度）
+     → 每帧 ctx.rotate(0.025°)。叠 + 擦 + 转三件事合起来才是拖尾（长曝光星轨）。
+   白纸版只改了两处：星点是墨色而不是彩色，擦除走 destination-out 以保留纸底和格子。
+   画布与舞台同尺寸（旋转在 ctx 里做，元素本身不转，所以不需要 150% 溢出）。 */
+.startrack {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: none;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* app.js 初始化成功才给 <html> 加 .js-star（减少动效 / 无 JS 时不显示） */
+.js-star .startrack {
+  display: block;
+}
+
+/* 白纱蒙版：盖在星空之上、当前屏（z-index 2）之下。
+   流星本身是清晰的，朦胧感全靠这一层 —— 换 alpha 就能整体调浓淡。 */
+.js-star .deck::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: rgba(252, 252, 253, 0.80);   /* = --paper，改 alpha 即改浓淡 */
+}
+
+/* ---------- 20. 新增两屏：背景（三步）/ 概念（四行） ---------- */
+.slide--why .slide-inner {
+  max-width: min(88vw, 1180px);
+}
+
+/* 三段式：靠顶部一条细线分隔，不用卡片、不用底色，保持纸面感 */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.2rem, 2.6vw, 2.6rem);
+  margin: clamp(1.3rem, 3.2vh, 2.4rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps li {
+  min-width: 0;
+  border-top: 2px solid var(--line);
+  padding-top: clamp(0.7rem, 1.7vh, 1.1rem);
+}
+
+.step-no {
+  display: block;
+  color: var(--indigo);
+  font-family: var(--font-num);
+  font-size: 0.76rem;
+  letter-spacing: 0.16em;
+}
+
+.step-title {
+  display: block;
+  margin: 0.55em 0 0.45em;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 1.35vw, 1.35rem);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.steps p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+/* 概念屏：四行诗，末行落在朱红上；大字靠行高撑住气口，不加任何盒子 */
+.slide--concept .slide-inner {
+  max-width: min(88vw, 1000px);
+}
+
+.poem {
+  margin: clamp(1.2rem, 3.4vh, 2.6rem) 0 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3.1vw, 3rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.62;
+}
+
+.poem span {
+  display: block;
+}
+
+.poem em {
+  color: var(--red);
+  font-style: normal;
+}
+
+/* 窄屏：三步叠成一列，诗缩一号 */
+@media (max-width: 900px) {
+  .steps {
+    grid-template-columns: 1fr;
   }
 }
