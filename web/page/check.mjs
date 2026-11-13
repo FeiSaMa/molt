@@ -104,13 +104,19 @@ function readJson(file) {
 }
 
 /* 页面文件（被测静态资产） */
-const STATIC_NAMES = ["index.html", "app.css", "model.js", "render.js", "app.js"];
+const STATIC_NAMES = ["index.html", "app.css", "model.js", "render.js", "live-source.js", "mock-source.js", "app.js"];
+/* 生产可整块删除的模拟模块：缺了就不测那部分，不让验收脚本跟着挂 */
+const OPTIONAL_NAMES = ["mock-source.js"];
 const SRC = {};
 for (const name of STATIC_NAMES) {
   const file = path.join(PAGE_DIR, name);
-  if (!fs.existsSync(file)) die("页面文件缺失：" + file);
+  if (!fs.existsSync(file)) {
+    if (OPTIONAL_NAMES.indexOf(name) !== -1) continue;
+    die("页面文件缺失：" + file);
+  }
   SRC[name] = fs.readFileSync(file, "utf8");
 }
+const HAS_MOCK = !!SRC["mock-source.js"];
 
 /* 数据面（12 键 view；events 无 .json 文件，model 不消费，传空对象） */
 const DATA_FILES = {
@@ -549,6 +555,7 @@ function chainBadges(doc) {
 {
   const g = group("A1", "页面文件零外链字面量");
   for (const name of STATIC_NAMES) {
+    if (!SRC[name]) continue;
     const n = countRe(SRC[name], /https?:\/\//g);
     g.eq(n, 0, name + ": https?:// 命中数");
   }
@@ -1291,23 +1298,61 @@ function durationsMs(body, prop) {
   const deck = doc.querySelector("main.deck");
 
   g.ok(!!deck, '存在 <main class="deck"> 滚动容器', true, !!deck);
-  g.eq(slides.length, 8, "section.slide 数量");
-  g.eqJson(slides.map((s) => s.id), ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"],
-    "屏 id 依次为 s1..s8");
+  g.eq(slides.length, 9, "section.slide 数量");
+  g.eqJson(slides.map((s) => s.id),
+    ["s1", "s2", "s3", "s6", "s5", "s7", "s8", "s9", "s10"],
+    "屏顺序：封面 / 宗旨 / 背景 / 实时 / 成本 / 门禁 / 回退 / 证据 / 收尾");
   g.ok(slides.every((s) => !!deck && s.parentNode === deck),
     "8 屏都是 main.deck 的直接子节点", true,
     slides.map((s) => s.parentNode ? s.parentNode.className : null));
 
-  /* 1) 滚动吸附：从 app.css 的 .deck / .slide 规则断言（DOM 桩无样式引擎） */
+  /* 1) 舞台不滚动：屏叠在同一层，靠 .is-active / .is-leaving 交叉换场
+        （从 app.css 的 .deck / .slide 规则断言；DOM 桩没有样式引擎） */
   const deckRules = CSS_RULES.filter((r) => r.sel === ".deck");
   g.ok(deckRules.length >= 1, "app.css 有 .deck 规则", ">= 1", deckRules.length);
-  g.ok(deckRules.some((r) => /scroll-snap-type\s*:\s*y\s+mandatory/.test(r.body)),
-    "滚动容器 scroll-snap-type: y mandatory", "y mandatory",
-    deckRules.map((r) => r.body.replace(/\s+/g, " ").slice(0, 80)));
-  g.ok(CSS_RULES.some((r) => r.sel === ".slide" && /scroll-snap-align\s*:\s*start/.test(r.body)),
-    "每屏 scroll-snap-align: start", "start", null);
+  g.eqJson(CSS_RULES.filter((r) => /scroll-snap-type/.test(r.body)).map((r) => r.sel), [],
+    "没有任何 scroll-snap-type（不再上下滑动切屏）");
+  g.ok(CSS_RULES.some((r) => r.sel === ".js-ready .deck" && /overflow\s*:\s*hidden/.test(r.body)),
+    "JS 起来后舞台锁死（.js-ready .deck overflow: hidden）", "overflow: hidden", null);
+  const stacked = CSS_RULES.filter((r) =>
+    r.sel === ".js-ready .slide" && /position\s*:\s*absolute/.test(r.body));
+  g.eq(stacked.length, 1,
+    "8 屏叠在同一层（.js-ready .slide position: absolute）");
+  g.ok(CSS_RULES.some((r) => r.sel === ".js-ready .slide" &&
+    /(?:^|[;{\s])opacity\s*:\s*0(?:\.0+)?\s*;/.test(r.body)),
+    "非当前屏静态隐藏（.js-ready .slide opacity: 0）", "opacity: 0", null);
   g.ok(CSS_RULES.some((r) => r.sel === ".slide" && /min-height\s*:\s*100d?vh/.test(r.body)),
-    "每屏至少一屏高（min-height: 100vh / 100dvh）", "存在", null);
+    "无 JS 时每屏至少一屏高（仍可滚动阅读）", "存在", null);
+
+  /* 封面提示必须跟翻页方式一致：舞台不滚了，就不能再写「滚动 ↓」 */
+  const hint = doc.querySelector(".scroll-hint");
+  const hintText = hint ? hint.textContent.replace(/\s+/g, "") : "";
+  g.ok(hintText.length > 0 && hintText.indexOf("滚动") === -1,
+    "封面提示不再写「滚动」（页面已不滚动，提示要跟翻页方式一致）", "不含「滚动」", hintText);
+
+  /* 星空背景：默认显示（不再需要 URL 参数）；减少动效时关闭 */
+  const star = doc.getElementById("startrack");
+  g.ok(!!star, "存在 #startrack 画布（星空背景容器）", true, !!star);
+  g.ok(!!star && star.getAttribute("aria-hidden") === "true",
+    "星空画布 aria-hidden（纯装饰，不进无障碍树）", "true",
+    star && star.getAttribute("aria-hidden"));
+  const starRule = CSS_RULES.filter((r) => r.sel === ".startrack");
+  g.ok(starRule.some((r) => /display\s*:\s*none/.test(r.body)),
+    "星空初始 display: none（等 app.js 初始化后再显示）", "display: none",
+    starRule.map((r) => r.body.replace(/\s+/g, " ").slice(0, 60)));
+  g.ok(CSS_RULES.some((r) => r.sel === ".js-star .startrack" &&
+      /display\s*:\s*block/.test(r.body)),
+    "只有 .js-star 下才显示星空（开关类由 app.js 加）", "display: block", null);
+  {
+    const starSrc = SRC["app.js"].slice(SRC["app.js"].indexOf("function starFieldOn"),
+      SRC["app.js"].indexOf("function initStarField"));
+    g.ok(/function\s+starFieldOn\(/.test(starSrc) && /return true;/.test(starSrc),
+      "app.js：星空默认开启（starFieldOn 恒 true）", "return true", starSrc.slice(0, 80));
+    g.eq(SRC["app.js"].indexOf("bg=star"), -1,
+      "app.js：不再依赖 ?bg=star");
+    g.ok(/if\s*\(reduce\s*\|\|\s*!starFieldOn\(\)\)\s*return;/.test(SRC["app.js"]),
+      "app.js：reduce（减少动效）时仍不启用星空", "reduce 卫语句", null);
+  }
 
   /* 2) 每屏恰好一个 h1 或 h2；S1 为 h1，其余 h2；aria-labelledby 自指 */
   const headCount = [];
@@ -1325,7 +1370,7 @@ function durationsMs(body, prop) {
       headBad.push(s.id + " 的 aria-labelledby 未指向自己的标题 id");
     }
   }
-  g.eqJson(headCount, [1, 1, 1, 1, 1, 1, 1, 1], "每屏标题数（恰好 1 个）");
+  g.eqJson(headCount, [1, 1, 1, 1, 1, 1, 1, 1, 1], "每屏标题数（恰好 1 个）");
   g.eqJson(headBad, [], "标题层级 / aria-labelledby 与屏一一对应");
 
   /* 3) 白底黑字：--paper 浅、--ink 深（从 :root 令牌算相对亮度） */
@@ -1381,10 +1426,11 @@ function durationsMs(body, prop) {
   const footTotal = footPerSlide.reduce((a, x) => a + x.foot + x.aside, 0);
   g.eqJson(footBad, [], "每屏同类脚注元素不超过 1 个");
   g.ok(footTotal >= 1, "全页脚注元素数（非空，否则上一条空转）", ">= 1", footTotal);
-  g.ok(footTotal <= 8, "全页脚注元素总数", "<= 8", footTotal);
-  g.eqJson(footPerSlide.filter((x) => x.foot + x.aside === 0).map((x) => x.id), ["s1", "s8"],
+  g.ok(footTotal <= 10, "全页脚注元素总数", "<= 10", footTotal);
+  g.eqJson(footPerSlide.filter((x) => x.foot + x.aside === 0).map((x) => x.id),
+    ["s1", "s6", "s10"],
     "S1（封面）与 S8（收尾）不挂脚注");
-  g.eqJson(footPerSlide.filter((x) => x.aside > 0).map((x) => x.id), ["s7"],
+  g.eqJson(footPerSlide.filter((x) => x.aside > 0).map((x) => x.id), ["s9"],
     "只有 S7 用 .aside（留出集「仅聚合」标注）");
 
   /* 6) 动效钩子：入场元素 35 个，且全部挂在某一屏内 */
@@ -1418,9 +1464,9 @@ function durationsMs(body, prop) {
     "每屏都有实质内容（文本 >= 20 字）");
 }
 
-/* ---- A14：BINDINGS 44 键逐条可解析 + 渲染后零 — ---- */
+/* ---- A14：BINDINGS 33 键逐条可解析 + 渲染后零 — ---- */
 {
-  const g = group("A14", "BINDINGS 44 键全部可解析（DOM 桩真渲染）");
+  const g = group("A14", "BINDINGS 33 键全部可解析（DOM 桩真渲染）");
   const doc = PAGE_DOC;
   const out = ROUT;
   const keys = Object.keys(MOLT_RENDER.BINDINGS);
@@ -1443,9 +1489,8 @@ function durationsMs(body, prop) {
   g.eq(out.counts.archives, M.b5.archives.length, "out.counts.archives === model.b5.archives.length");
   g.eq(out.counts.snapshots, M.b5.snapshots.length, "out.counts.snapshots === model.b5.snapshots.length");
 
-  /* W-22 新增 5 个槽位：人话句的倍数 / 逐题极值（s1.costMultiplier、
-     s2.bestTask / bestKeepPct / worstTask / worstKeepPct），39 + 5 = 44 */
-  g.eq(keys.length, 44, "BINDINGS 唯一键数");
+  /* 44 − 5（S6 实时面板）− 3（通过题数整屏）− 3（封面 scenario / shell / 条数徽章）= 33 */
+  g.eq(keys.length, 33, "BINDINGS 唯一键数");
 
   const EXPECTED_DASH = { "meta.revision": true };
   const unresolved = [];
@@ -1470,15 +1515,15 @@ function durationsMs(body, prop) {
       }
     }
   }
-  g.eqJson(unresolved, [], "44 个键全部解析出非空、非 — 的文本（meta.revision 除外）");
+  g.eqJson(unresolved, [], "33 个键全部解析出非空、非 — 的文本（meta.revision 除外）");
   g.eqJson(keys.filter((k) => bindingText(k, M).text === DASH), ["meta.revision"],
-    "全 44 键中只有 meta.revision 允许是 —");
+    "全 33 键中只有 meta.revision 允许是 —");
   g.eqJson(mismatched, [], "每个键在 DOM 中的文本 === 用 spec 复算的文本");
   g.eqJson(nodeCountBad, [], "每个键在 DOM 中的节点数 === HTML 里的出现次数（无丢槽 / 无凭空多槽）");
 
   const slotSet = [...new Set(SLOTS)].sort();
   g.eqJson(slotSet, keys.slice().sort(), "index.html 槽位集合 === BINDINGS 键集合（双向，无死键无未知）");
-  g.eq(slotSet.length, 44, "唯一槽位数");
+  g.eq(slotSet.length, 33, "唯一槽位数");
 
   /* 计数动效：属性值 = 文本数字（去千分位后），且必须是整数 */
   const counters = doc.querySelectorAll("[data-count]");
@@ -1721,33 +1766,6 @@ function durationsMs(body, prop) {
   g.eq(allFlat, true, "前提：配对表 passed_delta 全 0");
   g.eq(allCheaper, true, "前提：配对表 cost_delta 全 < 0");
 
-  const lede = MOLT_RENDER.BINDINGS["s2.ledeNote"].get(M);
-  g.ok(allFlat && lede.indexOf("一道没掉") !== -1, "passed_delta 全 0 → 导语含「一道没掉」", "含 一道没掉", lede);
-  g.ok(
-    allCheaper && lede.indexOf("成本差：见下表") === -1,
-    "cost_delta 全 < 0 → 导语不含「成本差：见下表」",
-    "不含 成本差：见下表",
-    lede
-  );
-  g.eq(
-    textOf(PAGE_DOC.querySelectorAll('[data-bind="s2.ledeNote"]')[0]),
-    lede,
-    "DOM 里的导语 === 用同一 getter 复算的文案"
-  );
-
-  /* 反向对照：有一题掉分时同一 getter 必须改口径（证明上面两条不是空转） */
-  const broken = Object.assign({}, M, {
-    s2: Object.assign({}, M.s2, {
-      pairs: M.s2.pairs.map((p, i) => (i === 0 ? Object.assign({}, p, { passedDelta: -1 }) : p))
-    })
-  });
-  const ledeBroken = MOLT_RENDER.BINDINGS["s2.ledeNote"].get(broken);
-  g.ok(
-    ledeBroken.indexOf("成本差：见下表") !== -1,
-    "对照：有一题掉分时导语改为「成本差：见下表」",
-    "含 成本差：见下表",
-    ledeBroken
-  );
 }
 
 /* ---- A18：静态文案不硬编码 claim 数字 + 装配顺序 + ES 语法面 ---- */
@@ -1767,7 +1785,11 @@ function durationsMs(body, prop) {
     const m = /\bsrc\s*=\s*"([^"]*)"/i.exec(a);
     return m ? m[1] : null;
   });
-  g.eqJson(scriptSrcs, ["../data/bundle.js", "model.js", "render.js", "app.js"], "4 个 script 的装配顺序");
+  const expectedScripts = ["../data/bundle.js"];
+  if (HAS_MOCK) expectedScripts.push("mock-source.js");
+  expectedScripts.push("model.js", "render.js", "live-source.js", "app.js");
+  g.eqJson(scriptSrcs, expectedScripts,
+    "script 装配顺序（数据 → [模拟样例] → 模型 → 渲染 → 实时源 → 装配）");
   g.eq(
     scriptAttrs.filter((a) => /\bdefer\b/i.test(a)).length,
     scriptAttrs.length,
@@ -1780,7 +1802,8 @@ function durationsMs(body, prop) {
   );
 
   const BANNED_SYNTAX = ["=>", "?.", "??", "`", ".at(", "Object.fromEntries", "class ", "let ", "const "];
-  for (const name of ["model.js", "render.js", "app.js"]) {
+  for (const name of ["model.js", "render.js", "live-source.js", "mock-source.js", "app.js"]) {
+    if (!SRC[name]) continue;
     const found = BANNED_SYNTAX.filter((tok) => SRC[name].indexOf(tok) !== -1);
     g.eqJson(found, [], name + " 不得含 ES2015+ 语法（箭头 / 可选链 / 空值合并 / 模板串 / .at / fromEntries / class / let / const）");
   }
@@ -1813,7 +1836,7 @@ function durationsMs(body, prop) {
   const gateIds = gateScreens.map((c) => c.id);
   g.eqJson(scanIds.filter((id) => gateIds.indexOf(id) !== -1), [],
     "屏面正文里扫描级数字与 gate 级数字不落在同一屏");
-  g.eqJson(scanIds, ["s3"], "屏面正文里的扫描级数字只在 S3（单题成本 · 扫描级脚注）");
+  g.eqJson(scanIds, ["s5"], "屏面正文里的扫描级数字只在 S5（单题成本 · 扫描级脚注）");
   g.eqJson(gateScreens.filter((c) => c.text.indexOf("gate 级") === -1).map((c) => c.id), [],
     "每个屏面含 0.010684 / 42.6 的屏都写明「gate 级」");
   g.eqJson(scanScreens.filter((c) => c.text.indexOf("扫描级") === -1).map((c) => c.id), [],
@@ -1830,7 +1853,7 @@ function durationsMs(body, prop) {
   g.ok(!!scopeBox && scopeBox.tagName !== "DETAILS",
     "口径说明块不是 <details>（是常显的 section）", "非 DETAILS",
     scopeBox ? scopeBox.tagName : null);
-  const s8Slide = SLIDES.filter((s) => s.id === "s8")[0] || null;
+  const s8Slide = SLIDES.filter((s) => s.id === "s10")[0] || null;
   g.eq(!!scopeBox && !!s8Slide && isDescendantOf(scopeBox, s8Slide), true,
     "口径说明块常显在 S8（作为正文，而不是附录）", true,
     scopeBox ? (scopeBox.parentNode ? scopeBox.parentNode.className : null) : null);
@@ -1875,36 +1898,29 @@ function durationsMs(body, prop) {
     "#verify-note 指明候选侧是引用值 / 两侧来自 search_results",
     IS_ADR_SCAN ? "含 引用值" : "含 search_results", noteText);
 
-  /* 14) 口径说明在表格之前（同屏可读） */
-  const order = docOrder(doc);
-  const scopeNode = doc.getElementById("pair-scope-note");
-  const tableNode = doc.querySelector("table.pairs");
-  g.ok(
-    !!scopeNode && !!tableNode &&
-      order.indexOf(scopeNode) !== -1 && order.indexOf(tableNode) !== -1 &&
-      order.indexOf(scopeNode) < order.indexOf(tableNode),
-    "#pair-scope-note 在 DOM 中位于 table.pairs 之前",
-    "scope < table",
-    { scope: order.indexOf(scopeNode), table: order.indexOf(tableNode) }
-  );
-  g.ok(!!scopeNode && hasAncestorClass(scopeNode, "slide"),
-    "#pair-scope-note 与表格在同一屏内（S4）", true,
-    scopeNode ? scopeNode.parentNode.className : null);
+  /* 14) S6 只留「合计」一行：三条说明文案连同其槽位 / getter 一起删除 */
+  const REMOVED_COPY = ["结论： 全过，但成本更低", "最省的一题", "逐题配对含 "];
+  g.eqJson(REMOVED_COPY.filter((t) => SRC["index.html"].indexOf(t) !== -1), [],
+    "index.html 不再出现被删的三条说明文案");
+  g.eqJson(REMOVED_COPY.filter((t) => SRC["render.js"].indexOf(t) !== -1), [],
+    "render.js 不再生成被删的三条说明文案");
+  g.eqJson(["getElementById(\"pair-scope-note\")", "s2LedeNote", "pairScopeNote"].filter((t) =>
+    SRC["index.html"].indexOf(t) !== -1 || SRC["render.js"].indexOf(t) !== -1), [],
+    "口径说明的容器 / getter 已从 HTML 与渲染层彻底删除");
+  const panelNode = doc.getElementById("live");
+  g.ok(!!panelNode && hasAncestorClass(panelNode, "slide"),
+    "#live 实时面板在某一屏内", true, panelNode ? panelNode.parentNode.className : null);
 
   /* 15) app.js：IntersectionObserver + prefers-reduced-motion + IO 缺失时的降级分支 */
   const app = SRC["app.js"];
-  g.ok(app.indexOf("IntersectionObserver") !== -1, "app.js 使用 IntersectionObserver", true, null);
+  g.ok(app.indexOf("onWheel") !== -1 && /addEventListener\("wheel"/.test(app),
+    "滚轮翻页：onWheel + wheel 监听", true, null);
+  g.ok(/passive\s*:\s*false/.test(app),
+    "滚轮监听 passive: false（才能 preventDefault 吞掉页面滚动）", true, null);
   g.ok(/prefers-reduced-motion/.test(app) && /matchMedia/.test(app),
     "app.js 用 matchMedia 读 prefers-reduced-motion", true, null);
-  g.ok(/!\s*root\.IntersectionObserver|typeof\s+IntersectionObserver/.test(app),
-    "app.js 有 IntersectionObserver 不可用的降级分支", true, null);
-
-  const fbStart = app.indexOf("if (!root.IntersectionObserver)");
-  const fbEnd = fbStart === -1 ? -1 : app.indexOf("return;", fbStart);
-  const fbBlock = fbStart === -1 || fbEnd === -1 ? "" : app.slice(fbStart, fbEnd);
-  g.ok(fbBlock.indexOf("is-active") !== -1,
-    "降级分支把全部屏标为 is-active（无 IO 也静态可读）", "含 is-active",
-    fbBlock.replace(/\s+/g, " ").slice(0, 90));
+  g.ok(!/new\s+IntersectionObserver/.test(app),
+    "不再用 IntersectionObserver（屏是叠着的，当前屏就是 active）", true, null);
 
   g.ok(/if\s*\(!reduce\)\s*\{[\s\S]{0,160}?js-ready/.test(app),
     "只有非 reduce 时才加 .js-ready（减少动效时不隐藏内容）", true, null);
@@ -1930,13 +1946,14 @@ function durationsMs(body, prop) {
   g.eqJson(allHidden.filter((r) => !/^\.js-ready\b/.test(r.sel)).map((r) => r.sel), [],
     "排除 @keyframes 后，app.css 里所有 opacity:0 静态声明都限定在 .js-ready 内");
 
-  /* 关键帧里允许 opacity:0，但只允许 ink-bloom 一个 keyframes 名下（写入动画，不是初态） */
+  /* 关键帧里允许 opacity:0，但限定在换场显影（slide-bloom-in/out）与晕染（ink-bloom）
+     三个 keyframes 名下（写入动画，不是初态） */
   const kfOpacityZero = kfList.filter((b) => /opacity\s*:\s*0(?:\.0+)?\s*[;}]/.test(b.body))
     .map((b) => b.name);
-  g.eqJson(kfOpacityZero, ["ink-bloom"],
-    "@keyframes 内出现 opacity:0 的只有 ink-bloom（动画首尾帧，不是静态隐藏）");
-  g.eq(kfList.filter((b) => /opacity\s*:\s*0(?:\.0+)?\s*[;}]/.test(b.body)).length, 1,
-    "含 opacity:0 的 keyframes 块数（恰好 1 个，允许名单没有放水）");
+  g.eqJson(kfOpacityZero, ["live-row-in", "slide-bloom-in", "slide-bloom-out", "ink-bloom"],
+    "@keyframes 内出现 opacity:0 的只有换场显影 2 个 + ink-bloom + 列表行入场（动画首尾帧，不是静态隐藏）");
+  g.eq(kfList.filter((b) => /opacity\s*:\s*0(?:\.0+)?\s*[;}]/.test(b.body)).length, 4,
+    "含 opacity:0 的 keyframes 块数（恰好 4 个，允许名单没有放水）");
 
   /* 17) 减少动效：媒体查询块要真的把动效关掉（至少 2 个相关属性） */
   const rm = CSS_RULES.filter((r) => /prefers-reduced-motion/.test(r.sel) && /reduce/.test(r.sel));
@@ -1979,45 +1996,56 @@ function durationsMs(body, prop) {
   g.near(M.s2.totals.delta, M.s2.totals.cand - M.s2.totals.base, 1e-5,
     "s2.totals.delta ≈ cand − base（逐题差按 1e-6 取整，累计误差放 1e-5）");
 
-  /* 3. 口径说明在表格之前（防 N2 回退） */
-  const order = docOrder(PAGE_DOC);
-  const scopeNode = PAGE_DOC.getElementById("pair-scope-note");
-  const tableNode = PAGE_DOC.querySelector("table.pairs");
-  g.ok(
-    !!scopeNode && !!tableNode && order.indexOf(scopeNode) < order.indexOf(tableNode),
-    "#pair-scope-note 在 DOM 中位于 table.pairs 之前（口径与数字同屏）",
-    "scope < table",
-    { scope: order.indexOf(scopeNode), table: order.indexOf(tableNode) }
-  );
+  /* 3. 合计摘要必须长在面板里（数字与图表同一块，不挂到别的屏） */
+  const sumNode = PAGE_DOC.querySelectorAll(".live-sum")[0];
+  g.ok(!!sumNode && !!PAGE_DOC.getElementById("live") && hasAncestorClass(sumNode, "live"),
+    ".live-sum 位于 #live 面板内（合计与图表同屏）", true,
+    sumNode ? sumNode.className : null);
 }
 
 /* ---- A21：渲染后的口径与文案（旧 A13 的语义断言按 8 屏重锚） ---- */
 {
-  const g = group("A21", "渲染后的口径与文案（8 屏）");
+  const g = group("A21", "渲染后的口径与文案（9 屏）");
   const doc = PAGE_DOC;
   const F = M.fmt;
   const slideText = {};
   for (const s of SLIDES) slideText[s.id] = textOf(s);
   const pageText = textOf(doc.documentElement);
+  /* 第 4 屏（通过题数）已删；实时面板排在成本前面，但 id 仍是内容锚点：
+     s5 = 单题成本、s6 = 实时评测、s7 = 门禁、s8 = 回退、s9 = 留出集。 */
   const s1 = slideText.s1 || "";
-  const s2 = slideText.s2 || "";
-  const s3 = slideText.s3 || "";
-  const s4 = slideText.s4 || "";
-  const s5 = slideText.s5 || "";
-  const s6 = slideText.s6 || "";
-  const s7 = slideText.s7 || "";
+  const s3 = slideText.s5 || "";
+  const s4 = slideText.s6 || "";
+  const s5 = slideText.s7 || "";
+  const s6 = slideText.s8 || "";
+  const s7 = slideText.s9 || "";
   /* S8 的 claim 只看屏面正文：口径说明块（常显）单独在 A22 里验，不借它的字凑 claim */
   const s8 = SLIDES.length > 0 ? surfaceTextOf(SLIDES[SLIDES.length - 1]) : "";
   const dsp = M.s1 && M.s1.scan ? M.s1.scan.display : {};
 
-  /* ---- 封面：只写题数，不写成本 / 降幅（数字后移到 S3） ---- */
-  g.ok(s1.indexOf(String(M.meta.searchTaskCount)) !== -1 && s1.indexOf("道题") !== -1,
-    "S1 封面写明题数（N 道题，N 来自 meta.searchTaskCount）", "含 N 道题",
+  /* ---- 封面：主文案 + 题数（打字机两句，第二句在 app.js 的 TAGLINES 里） ---- */
+  g.ok(s1.indexOf("Molt") !== -1 && s1.indexOf("迭元") !== -1 && s1.indexOf("进化") !== -1,
+    "S1 封面主文案「Molt 迭元，让智能学会进化」（无 JS 时的静态兜底）", "含 Molt 迭元 / 进化",
     s1.slice(0, 80));
+  /* 文案是可自由改的内容，这里只锁结构：两句、且两个数字都标红。
+     具体措辞（「题测试」→「题评测」之类）不该让验收挂掉。 */
+  const tagAt = SRC["app.js"].indexOf("var TAGLINES");
+  const tagEnd = tagAt === -1 ? -1 : SRC["app.js"].indexOf("];", tagAt);
+  const tagSrc = tagAt === -1 || tagEnd === -1 ? "" : SRC["app.js"].slice(tagAt, tagEnd);
+  g.ok(tagSrc.indexOf("Molt") !== -1 && tagSrc.indexOf("进化") !== -1,
+    "TAGLINES 第一句含封面主文案（Molt 迭元 … 进化）", "含 Molt / 进化", tagSrc.slice(0, 60));
+  /* 只锁结构，不锁具体措辞：两句各固定两行（各一个 \\n），每句至少一个红色关键词 */
+  {
+    const breaks = countRe(tagSrc, /\\n/g);
+    const hots = countRe(tagSrc, /hot:\s*true/g);
+    g.eq(breaks, 2, "TAGLINES 两句各有一个 \\n（标题固定两行）");
+    g.ok(hots >= 2, "TAGLINES 每句都有标红关键词", ">= 2", hots);
+    const segs = tagSrc.split(/\]\s*,\s*\[/);   /* 两句之间只隔一个 "], [" */
+    g.ok(segs.length === 2 && segs.every((x) => /hot:\s*true/.test(x)),
+      "TAGLINES 两句都有 hot 片段（每句都有红色关键词）", 2, segs.length);
+  }
   g.eqJson(["0.035560", "0.009978", "−72", "70.0"].filter((l) => s1.indexOf(l) !== -1), [],
     "S1 封面不出现成本 / 降幅数字");
-  g.ok(s1.indexOf("high/full") !== -1 && s1.indexOf("low/full") !== -1,
-    "S1 写明两次的开关（high/full → low/full）", "含两个开关组合", s1.slice(0, 120));
 
   /* ---- 扫描级 vs gate 级：按屏断言（核心口径纪律） ---- */
   if (IS_ADR_SCAN) {
@@ -2036,17 +2064,6 @@ function durationsMs(body, prop) {
     g.eqJson(["−72", "0.009978", "41.7"].filter((l) => s4.indexOf(l) !== -1), [],
       "S4 不含扫描级数字（−72 / 0.009978 / 41.7）");
 
-    const scope = textOf(doc.getElementById("pair-scope-note"));
-    g.ok(scope.indexOf("9 条 replay") !== -1, "#pair-scope-note 含「9 条 replay」", "含 9 条 replay", scope);
-    g.ok(scope.indexOf("smoke-add") !== -1, "#pair-scope-note 点名 live 题 smoke-add", "含 smoke-add", scope);
-    g.ok(scope.indexOf("0.010684") !== -1, "#pair-scope-note 含 gate 级配对成本 0.010684", "含 0.010684", scope);
-    g.ok(scope.indexOf("gate 级") !== -1, "#pair-scope-note 标明这是 gate 级口径", "含 gate 级", scope);
-    g.ok(scope.indexOf("不等于扫描级") !== -1, "#pair-scope-note 声明不等于扫描级", "含 不等于扫描级", scope);
-    g.ok(scope.indexOf("不要对逐 run 成本求和") !== -1, "#pair-scope-note 保留「不对逐 run 求和」的告诫",
-      "含 不要对逐 run 成本求和", scope);
-    g.ok(scope.indexOf("同一道题在多条扫描里各有一条 run") !== -1,
-      "#pair-scope-note 给出「不要求和」的理由（同题在多条扫描里重复）",
-      "含 同一道题在多条扫描里各有一条 run", scope);
   } else {
     const baseUsd = "$" + F.usd(dsp.baseCostUsd);
     const candUsd = "$" + F.usd(dsp.candCostUsd);
@@ -2060,12 +2077,6 @@ function durationsMs(body, prop) {
     g.eq(textOf(doc.getElementById("scan-note-basis")), "两侧由 search_results 复算",
       "S3 写明扫描级口径来源「两侧由 search_results 复算」");
 
-    const scope = textOf(doc.getElementById("pair-scope-note"));
-    g.ok(scope.indexOf("两次扫描都是 live 运行") !== -1,
-      "#pair-scope-note 改为「两次扫描都是 live 运行」", "含 两次扫描都是 live 运行", scope);
-    g.ok(scope.indexOf("没有 replay/fixture 混合") !== -1,
-      "#pair-scope-note 声明没有 replay/fixture 混合", "含 没有 replay/fixture 混合", scope);
-    g.eq(scope.indexOf("9 条 replay"), -1, "data 形态不再声称「9 条 replay」");
     g.eq(countLit(pageText, "0.009978"), 0, "data 形态整页不出现 ADR 候选常量 0.009978");
   }
 
@@ -2095,18 +2106,8 @@ function durationsMs(body, prop) {
     );
   }
 
-  /* ---- S2 通过题数：静态文案必须与数据一致 ---- */
-  g.eq(M.s1.solvedDelta, 0,
-    "数据前提：s1.solvedDelta === 0（S2 静态文案「成功率没有变化」必须为真）");
-  g.ok(s2.indexOf("成功率没有变化") !== -1, "S2 文案写明「成功率没有变化」", "含 成功率没有变化", s2);
-  g.ok(s2.indexOf("这是门禁的前提，不是结论") !== -1,
-    "S2 把成功率不变定位为门禁前提、不是结论", "含 这是门禁的前提，不是结论", s2);
-  g.ok(s2.indexOf(String(M.s1.solvedBase)) !== -1 && s2.indexOf(String(M.s1.solvedCand)) !== -1,
-    "S2 两侧通过题数 === model（solvedBase / solvedCand）",
-    M.s1.solvedBase + " / " + M.s1.solvedCand, s2);
-  g.ok(s2.indexOf("3/10") !== -1 && s2.indexOf("calibrate") !== -1 && s2.indexOf("不是真实难度") !== -1,
-    "S2 脚注把 fixture 3/10 限定为 calibrate 校准口径（不当真实基线）",
-    "含 3/10 + calibrate + 不是真实难度", s2);
+  /* 通过题数整屏已删除：solvedDelta 仍是数据前提，但不再有页面文案要锁 */
+  g.eq(M.s1.solvedDelta, 0, "数据前提：s1.solvedDelta === 0");
 
   /* ---- S3 KPI：gate 级 cps 两侧与降幅文案 ---- */
   g.eq(textOf(doc.querySelectorAll('[data-bind="s1.cpsBase"]')[0]),
@@ -2120,27 +2121,45 @@ function durationsMs(body, prop) {
     "index.html 不再把负号硬编码在 binding 前面", "不含 −<b data-bind=", null);
   g.ok(s3.indexOf("gate 级") !== -1, "S3 标题 / 脚注标明 gate 级口径", "含 gate 级", s3.slice(0, 60));
 
-  /* ---- S4 配对表：10 行 × 7 列逐项复算 ---- */
-  const body = doc.getElementById("pairs-body");
-  const rows = body ? body.children.filter((c) => typeof c !== "string") : [];
-  g.eq(rows.length, M.s2.pairs.length, "配对表行数 === model.s2.pairs.length");
+  /* ---- S6 实时面板：10 行 × 4 格 + 折线图数据源 ---- */
+  const list = doc.getElementById("live-list");
+  const rows = list ? list.children.filter((c) => typeof c !== "string") : [];
+  g.eq(rows.length, M.s2.pairs.length, "实时列表行数 === model.s2.pairs.length");
+  g.eqJson(rows.filter((r) => !r.classList.contains("live-row")).map((r) => r.tagName), [],
+    "列表里每行都是 li.live-row");
+
   const rowBad = [];
-  rows.forEach((tr, i) => {
+  rows.forEach((li, i) => {
     const p = M.s2.pairs[i] || {};
-    const tds = tr.children.filter((c) => typeof c !== "string");
-    if (tds.length !== 7) { rowBad.push("第 " + (i + 1) + " 行：" + tds.length + " 列"); return; }
-    const t = tds.map(textOf);
-    if (t[0] !== String(p.index)) rowBad.push("第 " + (i + 1) + " 行 index：" + t[0]);
-    if (t[1].indexOf(String(p.taskId)) === -1) rowBad.push("第 " + (i + 1) + " 行 taskId：" + t[1]);
-    if (t[2] !== "$" + F.usd(p.baseCost)) rowBad.push("第 " + (i + 1) + " 行基线成本：" + t[2]);
-    if (t[3] !== "$" + F.usd(p.candCost)) rowBad.push("第 " + (i + 1) + " 行候选成本：" + t[3]);
-    const sign = p.costDelta < 0 ? "−" : (p.costDelta > 0 ? "+" : "");
-    if (t[4] !== sign + F.usd(Math.abs(p.costDelta))) rowBad.push("第 " + (i + 1) + " 行成本差：" + t[4]);
-    const pd = Math.round(p.passedDelta);
-    const pdText = pd < 0 ? "−" + Math.abs(pd) : (pd > 0 ? "+" + pd : "0");
-    if (t[5] !== pdText) rowBad.push("第 " + (i + 1) + " 行通过差：" + t[5]);
+    const cells = li.children.filter((c) => typeof c !== "string");
+    if (cells.length !== 4) { rowBad.push("第 " + (i + 1) + " 行：" + cells.length + " 格"); return; }
+    const t = cells.map(textOf);
+    const flagB = p.basePassed === true ? "✅" : "❌";
+    const flagC = p.candPassed === true ? "✅" : "❌";
+    if (t[0] !== String(p.index)) rowBad.push("第 " + (i + 1) + " 行题号：" + t[0]);
+    if (t[1].indexOf(String(p.taskId)) === -1) rowBad.push("第 " + (i + 1) + " 行题名：" + t[1]);
+    if (t[2].indexOf(flagB) !== 0 || t[2].indexOf("$" + F.usd(p.baseCost)) === -1) {
+      rowBad.push("第 " + (i + 1) + " 行第一次：" + t[2]);
+    }
+    if (t[3].indexOf(flagC) !== 0 || t[3].indexOf("$" + F.usd(p.candCost)) === -1) {
+      rowBad.push("第 " + (i + 1) + " 行第二次：" + t[3]);
+    }
+    /* 折线图只认行上的 data-*，两边不许各存一份数 */
+    if (li.getAttribute("data-base") !== String(p.baseCost)) rowBad.push("第 " + (i + 1) + " 行 data-base");
+    if (li.getAttribute("data-cand") !== String(p.candCost)) rowBad.push("第 " + (i + 1) + " 行 data-cand");
   });
-  g.eqJson(rowBad, [], "10 行 × 7 列的文本与 model.s2.pairs 逐项一致");
+  g.eqJson(rowBad, [], "10 行 × 4 格的题号 / 题名 / ✅❌ + 金额 / data-* 与 model.s2.pairs 逐项一致");
+
+  /* 判定 emoji 必须是真的按 basePassed / candPassed 给的，不是装饰 */
+  const emojiBad = rows.filter((li, i) => {
+    const p = M.s2.pairs[i] || {};
+    const cells = li.children.filter((c) => typeof c !== "string");
+    const want = [p.basePassed === true ? "✅" : "❌", p.candPassed === true ? "✅" : "❌"];
+    return cells.length !== 4 ||
+      textOf(cells[2]).indexOf(want[0]) !== 0 || textOf(cells[3]).indexOf(want[1]) !== 0;
+  });
+  g.eq(emojiBad.length, 0, "两次成本前的 ✅ / ❌ 与 baseline_passed / candidate_passed 一致");
+
   const liveRows = rows.filter((r) =>
     doc._findAll(r, (n) => n.classList.contains("tag-live")).length > 0);
   g.eq(liveRows.length, M.s2.pairs.filter((p) => p.live === true).length,
@@ -2152,31 +2171,270 @@ function durationsMs(body, prop) {
     .map((r) => r.task_id));
   const expectedLiveTasks = M.s2.pairs.map((p) => p.taskId).filter((t) => liveRunTasks.has(t));
   const liveRowTasks = liveRows.map((r) => {
-    const tds = r.children.filter((c) => typeof c !== "string");
-    const cell = tds[1] ? textOf(tds[1]) : "";
+    const cells = r.children.filter((c) => typeof c !== "string");
+    const cell = cells[1] ? textOf(cells[1]) : "";
     const hit = expectedLiveTasks.filter((t) => cell.indexOf(t) !== -1);
     return hit.length === 1 ? hit[0] : null;
   });
   g.eqJson(liveRowTasks.slice().sort(), expectedLiveTasks.slice().sort(),
     "带 .tag-live 的行指向的题目 === 数据面 kind=live 的题（不多不少）");
 
-  const totalRow = doc.querySelector("tr.pairs-total");
-  g.ok(!!totalRow, "配对表有合计行 tr.pairs-total", true, !!totalRow);
-  g.ok(!!totalRow && hasAncestorClass(totalRow, "pairs"),
-    "合计行在 table.pairs 内（tfoot）", true,
-    totalRow && totalRow.parentNode ? totalRow.parentNode.tagName : null);
-  const totalText = textOf(totalRow);
-  g.ok(totalText.indexOf("gate 级配对合计") !== -1,
-    "合计行写明「gate 级配对合计」", "含 gate 级配对合计", totalText);
-  g.ok(totalText.indexOf("不等于扫描级") !== -1,
-    "合计行写明「不等于扫描级」", "含 不等于扫描级", totalText);
-  g.ok(typeof M.s2.totals.base === "number" && totalText.indexOf("$" + F.usd(M.s2.totals.base)) !== -1,
-    "合计行基线合计 === s2.totals.base", "$" + F.usd(M.s2.totals.base), totalText);
-  g.ok(typeof M.s2.totals.cand === "number" && totalText.indexOf("$" + F.usd(M.s2.totals.cand)) !== -1,
-    "合计行候选合计 === s2.totals.cand", "$" + F.usd(M.s2.totals.cand), totalText);
-  const deltaText = "−" + F.usd(Math.abs(M.s2.totals.delta));
-  g.ok(totalText.indexOf(deltaText) !== -1,
-    "合计行成本差 === s2.totals.delta（带符号）", deltaText, totalText);
+  /* 图 + 列表两栏 + 合计摘要 */
+  const panel = doc.getElementById("live");
+  g.ok(!!panel && doc._findAll(panel, (n) => n.classList.contains("live-chart")).length === 1 &&
+    doc._findAll(panel, (n) => n.classList.contains("live-list-wrap")).length === 1,
+    "实时面板 = 左折线图 + 右滚动列表两栏", true,
+    panel ? "ok" : "缺 #live");
+  const canvas = doc.getElementById("live-chart");
+  g.ok(!!canvas && String(canvas.tagName).toUpperCase() === "CANVAS",
+    "面板里有 <canvas id=\"live-chart\">", "CANVAS", canvas ? canvas.tagName : null);
+  g.ok(!!list && list.classList.contains("live-list"),
+    "#live-list 是列表容器（不是表格）", true, list ? list.className : null);
+
+  /* 合计：文案定为「合计: 基线成本 … · 候选成本 … · 成本差 … · 通过差 …」，
+     字号与已删除的「逐题配对含 …」脚注一致（--fs-foot） */
+  const sumText = textOf(doc.querySelectorAll(".live-sum")[0]);
+  g.ok(sumText.indexOf("合计:") !== -1 && sumText.indexOf("基线成本") !== -1 &&
+    sumText.indexOf("候选成本") !== -1 && sumText.indexOf("成本差") !== -1 &&
+    sumText.indexOf("通过差") !== -1,
+    "合计摘要用「合计: 基线成本 / 候选成本 / 成本差 / 通过差」的全新文案",
+    "四个标签都在", sumText);
+  g.eq(sumText.indexOf("gate 级配对合计"), -1,
+    "旧文案「gate 级配对合计」已从可见文本删除");
+  g.ok(typeof M.s2.totals.base === "number" &&
+    sumText.indexOf("基线成本 $" + F.usd(M.s2.totals.base)) !== -1,
+    "合计摘要「基线成本」=== s2.totals.base", "基线成本 $" + F.usd(M.s2.totals.base), sumText);
+  g.ok(typeof M.s2.totals.cand === "number" &&
+    sumText.indexOf("候选成本 $" + F.usd(M.s2.totals.cand)) !== -1,
+    "合计摘要「候选成本」=== s2.totals.cand", "候选成本 $" + F.usd(M.s2.totals.cand), sumText);
+  /* 成本差必须带 $：−$0.024876，不能只剩数字 */
+  const deltaText = "−$" + F.usd(Math.abs(M.s2.totals.delta));
+  g.ok(sumText.indexOf("成本差 " + deltaText) !== -1,
+    "合计摘要「成本差」=== s2.totals.delta（带符号 + $ 单位）", "成本差 " + deltaText, sumText);
+  const passText = MOLT_RENDER.BINDINGS["s2.totalPassDelta"].get(M);
+  g.ok(sumText.indexOf("通过差 " + passText) !== -1,
+    "合计摘要「通过差」=== s2.totalPassDelta", "通过差 " + passText, sumText);
+
+  const sumRule = CSS_RULES.filter((r) => r.sel === ".live-sum")[0];
+  g.ok(!!sumRule && /font-size\s*:\s*var\(--fs-foot\)/.test(sumRule.body),
+    "app.css：合计字号 === --fs-foot（与被删的「逐题配对含 …」脚注同级）",
+    "var(--fs-foot)", sumRule ? sumRule.body : null);
+
+  /* ---- 新功能：实时面板的动效契约 + 位置记忆 ---- */
+  const appSrc = SRC["app.js"];
+  g.ok(appSrc.indexOf("liveInit") !== -1 && appSrc.indexOf("liveEnsureVisible") !== -1,
+    "app.js：实时面板装配 + 更新点不可见时自动滚动", true,
+    appSrc.indexOf("liveInit") !== -1 && appSrc.indexOf("liveEnsureVisible") !== -1);
+  g.ok(appSrc.indexOf("liveTweenX") !== -1 && /L\.xShown\s*=\s*L\.xFrom/.test(appSrc),
+    "app.js：横轴 domain 缓动（题数增长时向左压缩）", true, null);
+  g.ok(/is-live/.test(appSrc) && /is-fresh/.test(appSrc),
+    "app.js：逐条点亮 + 更新行高亮（reduced-motion 时不加 .is-live）", true, null);
+  g.ok(appSrc.indexOf("localStorage") !== -1 && appSrc.indexOf("replaceState") !== -1 &&
+    appSrc.indexOf("hashchange") !== -1,
+    "app.js：位置记忆 = localStorage + URL hash + hashchange 回跳", true, null);
+
+  /* 并发完成（先完成的先出现、行仍按题号升序）+ 两轮制（第一轮第二次标 —） */
+  const mockSrc = SRC["mock-source.js"] || "";
+  if (HAS_MOCK) {
+    g.ok(mockSrc.indexOf("completionOrder") !== -1 &&
+      /SEED1/.test(mockSrc) && /SEED2/.test(mockSrc) && /GAP_MS/.test(mockSrc),
+      "mock-source.js：两轮完成顺序按固定种子洗牌（模拟可复现）", true, null);
+  }
+  g.ok(appSrc.indexOf("completionOrder") === -1 && !/LIVE_SEED/.test(appSrc),
+    "app.js：不含演示用的完成顺序 / 种子（模拟已整块移到 mock-source.js）", true, null);
+  g.ok(appSrc.indexOf("liveCandPending") !== -1 && appSrc.indexOf("liveCandDone") !== -1,
+    "app.js：第一轮第二次成本标「—」且收起 ✅❌", true, null);
+  if (HAS_MOCK) {
+    g.eq(mockSrc.indexOf("Math.random"), -1,
+      "mock-source.js：模拟顺序不依赖 Math.random");
+  }
+  /* 星空那段用 Math.random 画星点，不算数：只查实时面板这一段 */
+  const liveSrc = appSrc.slice(appSrc.indexOf("S6 实时面板"), appSrc.indexOf("星空背景（"));
+  g.eq(liveSrc.indexOf("Math.random"), -1,
+    "app.js：实时面板回放不依赖 Math.random（否则每次演示顺序都变）");
+
+  const cssSrc = SRC["app.css"];
+  g.ok(/\.live-list\.is-live \.live-row/.test(cssSrc) && /\.live-row\.is-in/.test(cssSrc),
+    "app.css：.is-live 藏行、.is-in 才显示（S6 默认空载，无 JS 也不冒预置数据）",
+    true, null);
+  g.ok(/\.lg--cand/.test(cssSrc), "app.css：两次成本用两种颜色（图例分色）", true, null);
+
+  const liveRule = CSS_RULES.filter((r) => r.sel === ".live")[0];
+  g.ok(!!liveRule &&
+    /grid-template-columns\s*:\s*minmax\(0,\s*1fr\)\s*minmax\(0,\s*1fr\)/.test(liveRule.body),
+    "app.css：面板左右各半（列表落在屏幕右半边）", "1fr 1fr", liveRule ? liveRule.body : null);
+  g.ok(!!liveRule && /height\s*:\s*clamp\(/.test(liveRule.body),
+    "app.css：面板有固定的整块高度（列表可拉长）", "height: clamp(...)",
+    liveRule ? liveRule.body : null);
+
+  /* ---- 本轮新增：两列柱状图 / 实时合计 / 实时数据源框架 ---- */
+  g.ok(/function liveFrame\(/.test(appSrc) && /LIVE_BAR_MS/.test(appSrc) &&
+    /fillRect/.test(appSrc) && /gBase/.test(appSrc) && /gCand/.test(appSrc),
+    "app.js：两次成本改成两列柱状图，每根柱子从 0 长到目标高度", true, null);
+  g.eq(appSrc.indexOf("drawSeries"), -1, "app.js：折线绘制已下线（不残留死代码）");
+
+  g.ok(/function liveSum\(/.test(appSrc) && /pBase/.test(appSrc) && /pCand/.test(appSrc),
+    "app.js：合计只累加已经出现的行，成本差只算两次都有数的配对行", true, null);
+  g.ok(appSrc.indexOf('"is-bad"') !== -1 && appSrc.indexOf('"is-good"') !== -1 &&
+    /pBase\s*>\s*pCand/.test(appSrc),
+    "app.js：基线 > 候选 → is-bad，否则 is-good（通过差同理）", true, null);
+  const badRule = CSS_RULES.filter((r) => r.sel === ".live-sum b.is-bad")[0];
+  const goodRule = CSS_RULES.filter((r) => r.sel === ".live-sum b.is-good")[0];
+  g.ok(!!badRule && /var\(--red\)/.test(badRule.body),
+    "app.css：成本差 / 通过差为红时用 --red", "var(--red)", badRule ? badRule.body : null);
+  g.ok(!!goodRule && /var\(--good\)/.test(goodRule.body),
+    "app.css：为绿时用 --good", "var(--good)", goodRule ? goodRule.body : null);
+  g.ok(/--good\s*:\s*#[0-9A-Fa-f]{6}/.test(cssSrc), "app.css：定义了 --good 绿色令牌", true, null);
+
+  /* 数据接口：默认空载；?port= 才轮询真实接口；?path= 走本地模拟 */
+  const vm = await import("node:vm");
+  const sandbox = {
+    location: { search: "" },
+    setTimeout: setTimeout,
+    clearTimeout: clearTimeout,
+    matchMedia: function () { return { matches: false }; },
+    MOLT_AGENT_BASE: "",
+    MOLT_AGENT_PATH: "",
+    MOLT_AGENT_TOKEN: ""
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(SRC["live-source.js"], sandbox);
+  const LIVE = sandbox.MOLT_LIVE;
+  g.ok(!!LIVE && typeof LIVE.start === "function" && typeof LIVE.resolve === "function" &&
+    typeof LIVE.normalize === "function" && typeof LIVE.check === "function",
+    "live-source.js：暴露 MOLT_LIVE（resolve / start / stop / normalize / check）", true, null);
+  g.eq(LIVE.isOn(), false, "数据接口：默认未启动");
+
+  const cfg0 = LIVE.resolve();
+  g.ok(!!cfg0 && cfg0.mode === "idle" && cfg0.base === "" && cfg0.path === "",
+    "数据接口：没有 ?port= 时 resolve() 为 idle（默认空载，不发请求）", "idle", cfg0);
+  g.eq(LIVE.start({}), false, "数据接口：idle 模式下 start() 返回 false");
+
+  sandbox.location.search = "?port=8791";
+  const cfgr = LIVE.resolve();
+  g.ok(!!cfgr && cfgr.mode === "live" && /:8791$/.test(cfgr.base) &&
+    cfgr.path === "/api/tasks",
+    "数据接口：?port=8791 → 127.0.0.1:8791/api/tasks（真实端点）", ":8791/api/tasks", cfgr);
+  g.ok(!!cfgr && cfgr.base.indexOf("//") !== -1,
+    "数据接口：base 由「协议 + 冒号 + 双斜杠」拼出（文件里不写 http 字面量）", true,
+    cfgr ? cfgr.base : null);
+  g.eq(cfgr && cfgr.interval, 500, "数据接口：实时轮询间隔 0.5s");
+
+  sandbox.location.search = "?port=8791&token=tok-abc";
+  const cfgt = LIVE.resolve();
+  g.ok(!!cfgt && cfgt.token === "tok-abc",
+    "数据接口：?token= 解析 Bearer token", "tok-abc", cfgt && cfgt.token);
+  g.ok(!!cfgt && cfgt.base.indexOf("token") === -1 && cfgt.path.indexOf("token") === -1,
+    "数据接口：token 不进 URL（只放 Authorization 请求头）", true, cfgt);
+
+  sandbox.location.search = "?port=8791";
+  sandbox.MOLT_AGENT_TOKEN = "tok-global";
+  g.eq(LIVE.resolve().token, "tok-global",
+    "数据接口：window.MOLT_AGENT_TOKEN 可注入 token（避免写在地址栏）");
+  sandbox.MOLT_AGENT_TOKEN = "";
+
+  /* 契约样本：内联 fixture（仓库不再附带本地假数据文件） */
+  const sample = {
+    results: [
+      { id: "smoke-add", cost_first: 0.0023281, passed_first: false,
+        cost_second: 0.00221287, passed_second: true },
+      { id: "smoke-even", cost_first: 0.00586628, passed_first: true,
+        cost_second: 0.00080566, passed_second: true }
+    ]
+  };
+  {
+    const chk = LIVE.check(sample);
+    g.eq(chk.ok, true, "数据接口：与 /api/tasks 同形状的响应通过契约校验");
+    g.eq(chk.reason, "results", "数据接口：契约识别为 results 数组");
+
+    const norm = LIVE.normalize(sample);
+    g.eq(norm.pairs.length, sample.results.length,
+      "数据接口：normalize 的逐题条数 === results 条数");
+    g.eqJson(norm.pairs.map((p) => p.taskId), sample.results.map((r) => r.id),
+      "数据接口：逐题 id 原样保留（id → taskId）");
+    g.eqJson(
+      [norm.pairs[0].taskId, norm.pairs[0].baseCost, norm.pairs[0].candCost,
+        norm.pairs[0].basePassed, norm.pairs[0].candPassed],
+      ["smoke-add", 0.0023281, 0.00221287, false, true],
+      "数据接口：cost_first / cost_second / passed_first / passed_second 正确映射");
+    g.eq(norm.pairs.filter((p) => p.basePassed === false).length, 1,
+      "数据接口：passed_first=false 保留为 false（会显示 ❌）");
+  }
+
+  g.eq(LIVE.check({ results: [] }).ok, true,
+    "数据接口：空 results 合法（还没跑完，不触发回调）");
+  g.eq(LIVE.check({ nope: 1 }).ok, false, "数据接口：形状不符时 check() 返回 false");
+  g.eq(LIVE.check({ results: [{ foo: 1 }] }).ok, false,
+    "数据接口：results 里的记录缺字段时判为契约不符");
+  g.eq(LIVE.check({ results: [{ id: "t1", cost_first: 1, passed_first: true,
+    cost_second: 1, passed_second: true, extra: 1 }] }).ok, true,
+    "数据接口：真实五字段齐全即通过（额外字段不参与映射）");
+  g.eq(LIVE.check({ pairs: [{ task_id: "t1", baseline_cost_usd: 2,
+    candidate_cost_usd: 1, passed: true }] }).ok, false,
+    "数据接口：旧的 pairs 信封已删除（只认 /api/tasks 的 results）");
+  g.eq(LIVE.normalize({ pairs: [{ task_id: "t1", baseline_cost_usd: 2 }] }).pairs.length, 0,
+    "数据接口：normalize 不再兼容旧字段名");
+
+  /* 本地模拟：必须显式 ?path=<file>；仓库不附带任何默认样例 */
+  if (HAS_MOCK) {
+    vm.runInContext(SRC["mock-source.js"], sandbox);
+    const MOCK = sandbox.MOLT_MOCK;
+    g.ok(!!MOCK && typeof MOCK.start === "function" && typeof MOCK.enabled === "function" &&
+      typeof MOCK.stop === "function",
+      "mock-source.js：暴露 MOLT_MOCK（enabled / path / start / stop）", true, null);
+    sandbox.location.search = "";
+    g.eq(MOCK.enabled(), false, "mock-source.js：默认不启用（页面空载）");
+    g.eq(MOCK.start({}), false, "mock-source.js：默认不启动、不读文件");
+    sandbox.location.search = "?path";
+    g.eq(MOCK.enabled(), false,
+      "mock-source.js：空 ?path 不启用（没有默认样例可读）");
+    sandbox.location.search = "?path=./other.json";
+    g.eq(MOCK.enabled(), true, "mock-source.js：?path=<file> 启用本地模拟");
+    g.eq(MOCK.path(), "./other.json", "mock-source.js：路径原样传给 XHR");
+    MOCK.stop();
+    g.eq(MOCK.isOn(), false, "mock-source.js：stop() 后不再跑");
+  }
+
+  /* 仓库不再附带本地假数据：?path 由使用者自己给文件 */
+  g.ok(!fs.existsSync(path.join(SCRIPT_DIR, "api-example.js")) &&
+    !fs.existsSync(path.join(SCRIPT_DIR, "..", "api_example.json")),
+    "web 不附带本地假数据（api-example.js / api_example.json 已删除）", true, null);
+  if (HAS_MOCK) {
+    g.eq(mockSrc.indexOf("api_example"), -1,
+      "mock-source.js：不引用任何内置样例文件");
+    g.eq(mockSrc.indexOf("MOLT_API_EXAMPLE"), -1,
+      "mock-source.js：不引用镜像全局变量");
+  }
+  g.eq(SRC["live-source.js"].indexOf("api_example"), -1,
+    "live-source.js：不读本地样例（生产只依赖 /api/tasks）");
+
+  g.ok(SRC["live-source.js"].indexOf("setRequestHeader") !== -1 &&
+    SRC["live-source.js"].indexOf('"Bearer "') !== -1,
+    "live-source.js：实时请求带 Authorization: Bearer <token>", true, null);
+  {
+    const src = SRC["live-source.js"];
+    const openLine = /xhr\.open\([\s\S]*?\);/.exec(src)[0];
+    g.eq(openLine.indexOf("token"), -1,
+      "live-source.js：请求 URL 不拼 token（只走 Authorization 头）");
+    g.ok(/xhr\.open\("GET", S\.base \+ S\.path, true\)/.test(openLine),
+      "live-source.js：请求 <base><path>，不带查询串", true, openLine);
+  }
+  g.eq(countLit(SRC["live-source.js"], "fetch("), 0,
+    "live-source.js：不用 fetch（XHR + ES5，file:// 下也可用）");
+  g.ok(appSrc.indexOf("liveSourceStart") !== -1 &&
+    appSrc.indexOf("liveSourceStop") !== -1 &&
+    appSrc.indexOf("liveReset") !== -1 &&
+    appSrc.indexOf("liveApplySource") !== -1,
+    "app.js：进屏清空 + 连数据源、离屏停；收到快照落回行", true, null);
+  g.eq(appSrc.indexOf("liveSourceBoot") + appSrc.indexOf("liveHydrate"), -2,
+    "app.js：删掉开机读样例 / hydrate 的旧路径（默认空载）");
+  g.ok(/function liveReset\(/.test(appSrc) && /addClass\(L\.list, "is-live"\)/.test(appSrc),
+    "app.js：liveReset 把行藏起来并清空合计（默认不显示预置数据）", true, null);
+  g.ok(/id="live-note"/.test(SRC["index.html"]) && appSrc.indexOf("function liveNote") !== -1 &&
+    appSrc.indexOf("file:// 不能读取本地 JSON") !== -1,
+    "数据源出错时在面板里显示提示（不只控制台）", true, null);
+  g.ok(/\.live-note\s*\{/.test(cssSrc) && /\.live-note\.is-bad\s*\{/.test(cssSrc),
+    "app.css：.live-note 有正常 / 报错两种样式", true, null);
 
   /* ---- S5 门禁结论行 ---- */
   g.ok(s5.indexOf(String(M.s3.verdict)) !== -1 && s5.indexOf(String(M.s3.reason)) !== -1,
@@ -2343,7 +2601,6 @@ function durationsMs(body, prop) {
   };
   const decisions = DATA.gate && Array.isArray(DATA.gate.decisions) ? DATA.gate.decisions : [];
   const dec = decisions.length > 0 ? decisions[0] : null;
-  const rawPairs = dec && Array.isArray(dec.pairs) ? dec.pairs : [];
 
   const reportRows = DATA.report_results && Array.isArray(DATA.report_results.results)
     ? DATA.report_results.results
@@ -2376,16 +2633,6 @@ function durationsMs(body, prop) {
   const multCalc = (typeof baseCps === "number" && typeof candCps === "number" && candCps > 0)
     ? round1(baseCps / candCps) : null;
 
-  const ratioOf = (p) => p.candidate_cost_usd / p.baseline_cost_usd;
-  const scored = rawPairs
-    .filter((p) => p && p.baseline_cost_usd > 0 && typeof p.candidate_cost_usd === "number")
-    .slice()
-    .sort((a, b) => ratioOf(a) - ratioOf(b));
-  const bestP = scored.length > 0 ? scored[0] : null;
-  const worstP = scored.length > 0 ? scored[scored.length - 1] : null;
-  const bestKeepCalc = bestP ? round1(ratioOf(bestP) * 100) : null;
-  const worstKeepCalc = worstP ? round1(ratioOf(worstP) * 100) : null;
-
   const holdBase = baseRow && baseRow.scores && baseRow.scores.holdout
     ? baseRow.scores.holdout : null;
   const holdCand = candRow && candRow.scores && candRow.scores.holdout
@@ -2407,8 +2654,8 @@ function durationsMs(body, prop) {
   g.eq(M.s1.costMultiplier, multCalc,
     "s1.costMultiplier === round1(基线 cps / 候选 cps)（独立复算）");
 
-  const s3Text = surfaceTextOf(SLIDES[2]);
-  const s3PlainNode = doc._findAll(SLIDES[2], (n) => n.classList.contains("plain-talk"))[0];
+  const s3Text = surfaceTextOf(SLIDES[4]);
+  const s3PlainNode = doc._findAll(SLIDES[4], (n) => n.classList.contains("plain-talk"))[0];
   const s3Plain = s3PlainNode ? textOf(s3PlainNode) : "";
   g.ok(s3Text.indexOf("倍的题") !== -1, "S3 屏面正文含「倍的题」（人话句存在）",
     "含 倍的题", s3Text.slice(0, 120));
@@ -2424,39 +2671,10 @@ function durationsMs(body, prop) {
   g.eqJson(numbersIn(s3Plain), [multCalc],
     "S3 人话句里的数字有且只有这个倍数（没有夹带别的口径数）");
 
-  const s4Text = surfaceTextOf(SLIDES[3]);
-  const s4PlainNode = doc._findAll(SLIDES[3], (n) => n.classList.contains("plain-talk"))[0];
-  const s4Plain = s4PlainNode ? textOf(s4PlainNode) : "";
-  g.ok(s4Text.indexOf("最省的一题") !== -1 && s4Text.indexOf("最少的一题") !== -1,
-    "S4 屏面正文同时含「最省的一题」与「最少的一题」", "两个都在", s4Text.slice(0, 120));
+  /* S6 删掉「最省 / 最少」两句后，这两条复算不再有页面锚点，断言随文案一起删除。
+     s2.bestDrop / worstDrop / allDropped 仍留在 model 层（数据契约不变）。 */
 
-  g.eq(M.s2.bestTask, bestP ? bestP.task_id : null,
-    "s2.bestTask === 逐题 cand/base 最小者（按 gate.pairs 复算）");
-  g.eq(M.s2.bestKeepPct, bestKeepCalc,
-    "s2.bestKeepPct === round1(该题 cand/base × 100)（独立复算）");
-  g.eq(M.s2.worstTask, worstP ? worstP.task_id : null,
-    "s2.worstTask === 逐题 cand/base 最大者（按 gate.pairs 复算）");
-  g.eq(M.s2.worstKeepPct, worstKeepCalc,
-    "s2.worstKeepPct === round1(该题 cand/base × 100)（独立复算）");
-
-  const bestPhrase = /最省的一题（([^）]+)）成本降到原来的\s*([\d.]+)%/.exec(s4Text);
-  g.ok(!!bestPhrase && bestP &&
-      bestPhrase[1] === bestP.task_id && bestPhrase[2] === fixed1(bestKeepCalc),
-    "S4「最省的一题（X）…原来的 Y%」的 X / Y 都能按 pairs 复算",
-    bestP ? bestP.task_id + " / " + fixed1(bestKeepCalc) : null,
-    bestPhrase ? bestPhrase[1] + " / " + bestPhrase[2] : null);
-
-  const worstPhrase = /最少的一题（([^）]+)）也降到\s*([\d.]+)%/.exec(s4Text);
-  g.ok(!!worstPhrase && worstP &&
-      worstPhrase[1] === worstP.task_id && worstPhrase[2] === fixed1(worstKeepCalc),
-    "S4「最少的一题（X）也降到 Y%」的 X / Y 都能按 pairs 复算",
-    worstP ? worstP.task_id + " / " + fixed1(worstKeepCalc) : null,
-    worstPhrase ? worstPhrase[1] + " / " + worstPhrase[2] : null);
-
-  g.eqJson(numbersIn(s4Plain), [bestKeepCalc, worstKeepCalc],
-    "S4 人话句里的数字 === 两个复算出的保留率（顺序一致，无夹带）");
-
-  const s7Slide = SLIDES.filter((s) => s.id === "s7")[0] || null;
+  const s7Slide = SLIDES.filter((s) => s.id === "s9")[0] || null;
   const plainOk = doc.getElementById("holdout-plain-ok");
   const plainDrop = doc.getElementById("holdout-plain-drop");
   const s7Visible = s7Slide ? visibleTextOf(s7Slide) : "";
@@ -2490,7 +2708,7 @@ function durationsMs(body, prop) {
     "报告侧配对走推断时，口径说明必须写明「与门禁 genome 未对齐 + 按成本推断」（不静默推断）");
 
   /* ---- 2. 口径说明常显（不是折叠附录，也不许被藏起来） ---- */
-  const s8Slide = SLIDES.filter((s) => s.id === "s8")[0] || null;
+  const s8Slide = SLIDES.filter((s) => s.id === "s10")[0] || null;
   const scope = scopeBlockOf(doc);
   const hiddenAncestors = [];
   for (let n = scope; n; n = n.parentNode) {
@@ -2523,7 +2741,7 @@ function durationsMs(body, prop) {
     const sels = String(node.className || "").split(/\s+/).filter(Boolean).map((t) => "." + t);
     return sels.length === 0 ? null : fontSizeDecl(sels, CSS_RULES);
   };
-  const s6Slide = SLIDES.filter((s) => s.id === "s6")[0] || null;
+  const s6Slide = SLIDES.filter((s) => s.id === "s8")[0] || null;
   const s6Decl = s6Slide ? h2Decl(s6Slide) : null;
   const s6Max = s6Decl ? maxFontRem(s6Decl.decl, rootBody) : null;
   const s8Decl = s8Slide ? h2Decl(s8Slide) : null;
@@ -2533,10 +2751,10 @@ function durationsMs(body, prop) {
     ".slide-h-lead ≠ var(--fs-title)",
     s6Decl ? s6Decl.sel + " " + s6Decl.decl : null);
   g.eqJson(
-    SLIDES.filter((s) => ["s2", "s3", "s4", "s5", "s7"].indexOf(s.id) !== -1)
+    SLIDES.filter((s) => ["s5", "s6", "s7", "s9"].indexOf(s.id) !== -1)
       .filter((s) => h2Decl(s) !== null).map((s) => s.id),
     [],
-    "S2 / S3 / S4 / S5 / S7 的 h2 没有独立字号（只有 S6 放大，其余走基线）"
+    "S5 / S6 / S7 / S9 的 h2 没有独立字号（只有 S8 放大，其余走基线）"
   );
   g.ok(typeof s6Max === "number" && typeof h2BaseMax === "number" && s6Max >= h2BaseMax &&
       s6Max > h2BaseMax,
@@ -2549,13 +2767,13 @@ function durationsMs(body, prop) {
   /* ---- 4. 墨水晕染（每屏一层三团；只动 transform / opacity；可被 reduce 关掉） ---- */
   const inkLayerPerSlide = SLIDES.map((s) =>
     doc._findAll(s, (n) => n.classList.contains("ink")).length);
-  g.eqJson(inkLayerPerSlide, [1, 1, 1, 1, 1, 1, 1, 1], "每屏恰好 1 个 .ink 晕染层");
-  g.eq(doc.querySelectorAll(".ink").length, 8, ".ink 总数（= 屏数）");
+  g.eqJson(inkLayerPerSlide, [1, 1, 1, 1, 1, 1, 1, 1, 1], "每屏恰好 1 个 .ink 晕染层");
+  g.eq(doc.querySelectorAll(".ink").length, 9, ".ink 总数（= 屏数）");
   const inkDots = doc.querySelectorAll(".ink").map((n) =>
     doc._findAll(n, (c) => c.tagName === "I").length);
-  g.eqJson(inkDots, [3, 3, 3, 3, 3, 3, 3, 3], "每个 .ink 恰好 3 个 <i>（三团色斑）");
-  g.eq(doc._findAll(doc.documentElement, (c) => c.tagName === "I").length, 24,
-    "整页 <i> 总数 === 8 屏 × 3 团");
+  g.eqJson(inkDots, [3, 3, 3, 3, 3, 3, 3, 3, 3], "每个 .ink 恰好 3 个 <i>（三团色斑）");
+  g.eq(doc._findAll(doc.documentElement, (c) => c.tagName === "I").length, 27,
+    "整页 <i> 总数 === 9 屏 × 3 团");
 
   const kfs = keyframesBlocks(cssSrc);
   const inkKf = kfs.filter((b) => b.name === "ink-bloom")[0] || null;
@@ -2609,21 +2827,28 @@ function durationsMs(body, prop) {
     ".slide 规则不含 transition: … opacity（8 屏不再一起淡入）");
   const innerTrans = CSS_RULES.filter((r) => r.sel.indexOf(".slide-inner") !== -1 &&
     /transition\s*:/.test(r.body));
-  g.ok(innerTrans.length >= 1, "内容入场改由 .slide-inner 承担（.slide 本身不动）",
+  g.ok(innerTrans.length >= 1, "内容入场由 .slide-inner 承担（.slide 本身不做 transition）",
     ">= 1", innerTrans.map((r) => r.sel));
 
-  const onScrollBody = fnBodyOf(appSrc, "function onScroll(");
-  g.ok(onScrollBody.length > 0, "能取出 onScroll 的函数体（否则下面两条空转）",
-    "> 0 字符", onScrollBody.length);
-  g.eqJson([".style.", "setProperty", "classList", "className"].filter((t) =>
-    onScrollBody.indexOf(t) !== -1), [],
-    "滚动回调体内不写样式 / 不摸 class（只排一次静止判定）");
-  const parallaxBody = fnBodyOf(appSrc, "function applyParallax(");
-  g.ok(parallaxBody.indexOf(".style.setProperty") !== -1,
-    "样式写入集中在 applyParallax（经 rAF 调用）", "含 .style.setProperty", null);
-  const settleBody = fnBodyOf(appSrc, "function settle(");
-  g.ok(/\braf\(/.test(settleBody), "settle 通过 rAF 调度写入（不在 scroll 回调里同步写）",
-    "含 raf(", settleBody.replace(/\s+/g, " ").slice(0, 80));
+  /* 滚动模型下线：没有 scroll 回调、没有视差写入 */
+  g.eqJson(["function onScroll(", "function settle(", "function applyParallax("]
+    .filter((h) => fnBodyOf(appSrc, h).length > 0).map((h) => h.replace(/^function |\($/g, "")), [],
+    "滚动模型已下线（onScroll / settle / applyParallax 都不存在）");
+
+  const wheelBody = fnBodyOf(appSrc, "function onWheel(");
+  g.ok(wheelBody.length > 0, "存在 onWheel（滚轮翻页的唯一入口）", "> 0 字符", wheelBody.length);
+  g.ok(/preventDefault\(\)/.test(wheelBody),
+    "onWheel 吞掉默认滚动（舞台不再被浏览器 / 触控板拽走）", "含 preventDefault()", null);
+  const wheelLock = /var\s+WHEEL_LOCK_MS\s*=\s*(\d+)\s*;/.exec(appSrc);
+  g.ok(!!wheelLock && Number(wheelLock[1]) >= 400 && Number(wheelLock[1]) <= 900,
+    "滚轮上锁窗口 WHEEL_LOCK_MS 落在 400–900ms（一次手势只翻一屏）",
+    "400–900", wheelLock ? Number(wheelLock[1]) : null);
+  g.ok(/now\s*<\s*wheelLock/.test(wheelBody),
+    "上锁窗口内直接返回（不连翻）", "now < wheelLock", null);
+  g.ok(/Math\.abs\(d\)\s*<\s*8/.test(wheelBody),
+    "触控板细碎像素不翻页（|delta| < 8 忽略）", "Math.abs(d) < 8", null);
+  g.ok(/if\s*\(\s*reduce\s*\)\s*return;/.test(wheelBody),
+    "减少动效时不接管滚轮（页面保持可滚动阅读）", "reduce 卫语句", null);
 }
 
 /* ---- A23：W-26 晕染每次激活都重播（上翻 / 下翻 / 圆点 / Home / End） ----
@@ -2698,9 +2923,9 @@ function durationsMs(body, prop) {
   g.eq(countRe(appSrc, /function goTo\s*\(/g), 1, "goTo 只定义 1 次（单一入口）");
   g.eq(countRe(appSrc, /function setActive\s*\(/g), 1, "setActive 只定义 1 次（单一激活入口）");
   const goToBody = fnBodyOf(appSrc, "function goTo(");
-  g.ok(/scrollIntoView/.test(goToBody),
-    "goTo 只负责滚到目标屏（激活统一由 IO 回调落到 setActive）",
-    "含 scrollIntoView", null);
+  g.ok(/setActive\(i\)/.test(goToBody) && !/scrollIntoView/.test(goToBody),
+    "goTo 只做边界裁剪 + setActive（不再滚动，也没有 IO 中转）",
+    "含 setActive(i)、不含 scrollIntoView", null);
   const keyBody = fnBodyOf(appSrc, "function onKeyDown(");
   g.ok(/goTo\(/.test(keyBody), "键盘（↑↓ / PageUp / PageDown / Space）经 goTo 进入",
     "含 goTo(", null);
@@ -2710,9 +2935,8 @@ function durationsMs(body, prop) {
     ">= 4", countRe(keyBody, /goTo\(/g));
   const dotBody = fnBodyOf(appSrc, "function onDotClick(");
   g.ok(/goTo\(/.test(dotBody), "圆点点击经 goTo 进入", "含 goTo(", null);
-  g.ok(/if\s*\(best\s*>=\s*0\)\s*setActive\(best\)/.test(appSrc),
-    "IntersectionObserver 回调统一落到 setActive（滚轮 / 翻页最终都走它）",
-    "setActive(best)", null);
+  g.ok(/goTo\(/.test(fnBodyOf(appSrc, "function onWheel(")),
+    "滚轮翻页也经 goTo 进入（与键盘 / 圆点同一条路径）", "含 goTo(", null);
 
   /* 6) 「播过」标记改由 seen 数组承载，is-revealed 语义不放宽 */
   g.ok(/\bvar seen\s*=\s*\[\]/.test(appSrc) && /seen\[index\]\s*=\s*true/.test(appSrc) &&
@@ -2803,75 +3027,34 @@ function durationsMs(body, prop) {
   g.eq(startCalls.length, 1,
     "startCounts 全文件只有 1 处调用（激活函数的无条件路径）");
 
-  /* 计数不吃滚动回调：滚动期零样式写入的约束不破 */
-  g.ok(["function onScroll(", "function settle(", "function applyParallax("]
-    .every((h) => fnBodyOf(appSrc, h).indexOf("startCounts") === -1),
-    "startCounts 不在 scroll / settle / applyParallax 内（滚动途中不计数）",
-    "都不含 startCounts", null);
+  /* 计数不吃翻页入口：一律经由 setActive */
+  g.eqJson(["function onWheel(", "function onKeyDown(", "function onDotClick("]
+    .filter((h) => fnBodyOf(appSrc, h).indexOf("startCounts") !== -1), [],
+    "翻页入口（滚轮 / 键盘 / 圆点）都不直接计数，统一由 setActive 触发");
 
-  /* ---------- 二、远跳抑制：目标锁 + 途经屏早退 ---------- */
-  const goToBody = fnBodyOf(appSrc, "function goTo(");
-  g.ok(/Math\.abs\([^)]*\)\s*>\s*1/.test(goToBody),
-    "goTo 内有远跳判定（Math.abs(...) > 1 视为跨 2 屏以上）", "Math.abs(...) > 1", null);
-  g.ok(/pendingTarget = i;/.test(goToBody),
-    "远跳时给 pendingTarget 赋值（上目标锁）", "pendingTarget = i", null);
-  g.ok(/opts\s*&&\s*opts\.far === true/.test(goToBody) &&
-      /opts\s*&&\s*opts\.far === false/.test(goToBody),
-    "goTo 支持调用方覆盖 far（圆点 / Home / End 强制远跳，相邻键强制非远跳）",
-    "opts.far === true / false", null);
+  /* ---------- 二、翻页入口：三条路径都直连 goTo，且没有滚动残留 ---------- */
+  g.eqJson(["pendingTarget", "FAR_LOCK_MS", "activeIndex", "scrollIntoView"]
+    .filter((t) => appSrc.indexOf(t) !== -1), [],
+    "旧滚动机制痕迹清零（pendingTarget / FAR_LOCK_MS / activeIndex / scrollIntoView）");
 
-  const lockMs = /var\s+FAR_LOCK_MS\s*=\s*(\d+)\s*;/.exec(appSrc);
-  g.ok(!!lockMs && Number(lockMs[1]) === 1200,
-    "兜底窗口 FAR_LOCK_MS === 1200ms", 1200, lockMs ? Number(lockMs[1]) : null);
-  g.ok(/root\.setTimeout\(onFarTimeout, FAR_LOCK_MS\)/.test(goToBody),
-    "上锁同时排一次 1200ms 兜底定时器", "setTimeout(onFarTimeout, FAR_LOCK_MS)", null);
+  const goToBody2 = fnBodyOf(appSrc, "function goTo(");
+  g.ok(/if\s*\(i === active\)\s*return;/.test(goToBody2),
+    "goTo 对同一屏直接返回（不重复播换场）", "i === active → return", null);
 
-  const timeoutBody = fnBodyOf(appSrc, "function onFarTimeout(");
-  g.ok(timeoutBody.length > 0, "存在 onFarTimeout（兜底落屏）", "> 0 字符", timeoutBody.length);
-  g.ok(/clearPending\(\)/.test(timeoutBody),
-    "兜底触发时清锁（pendingTarget 归 null，不会永久挂着）", "clearPending()", null);
-  g.ok(/var near = activeIndex\(\)/.test(timeoutBody) && /setActive\(near\)/.test(timeoutBody),
-    "兜底按几何位置强制激活最近屏（中途取消滚动也不卡死）",
-    "near = activeIndex() → setActive(near)", null);  g.ok(/pendingTimer = 0;/.test(timeoutBody),
-    "兜底触发后定时器句柄归零（重复触发不叠定时器）", "pendingTimer = 0", null);
-
-  const clearBody = fnBodyOf(appSrc, "function clearPending(");
-  g.ok(/pendingTarget = null;/.test(clearBody) && /clearTimeout\(pendingTimer\)/.test(clearBody),
-    "clearPending 同时清 pendingTarget 与定时器", "pendingTarget = null + clearTimeout",
-    null);
-
-  const intersectBody = fnBodyOf(appSrc, "function onIntersect(");
-  g.ok(intersectBody.length > 0, "存在 onIntersect(best)（IO 的唯一落点）",
-    "> 0 字符", intersectBody.length);
-  g.ok(/if\s*\(pendingTarget !== null && best !== pendingTarget\)\s*return;/.test(intersectBody),
-    "IO 回调里：锁未解除且不是目标屏 → 直接 return（途经屏不激活 / 不播晕染 / 不计数）",
-    "pendingTarget !== null && best !== pendingTarget → return", null);
-  g.ok(/if\s*\(best === pendingTarget\)\s*clearPending\(\)/.test(intersectBody),
-    "到达目标屏时解锁（best === pendingTarget → clearPending）", "best === pendingTarget", null);
-  g.ok(intersectBody.indexOf("restartInk") === -1 && intersectBody.indexOf("startCounts") === -1,
-    "onIntersect 体内不直接调 restartInk / startCounts（必须经由 setActive）",
-    "都不含", null);
-  g.ok(/if\s*\(best\s*>=\s*0\)\s*onIntersect\(best\)/.test(appSrc),
-    "IntersectionObserver 回调先过 onIntersect 再激活（锁只在这一层生效）",
-    "onIntersect(best)", null);
-  g.ok(["function onScroll(", "function settle(", "function applyParallax("]
-    .every((h) => fnBodyOf(appSrc, h).indexOf("pendingTarget") === -1),
-    "远跳锁不在 scroll / settle / applyParallax 内（滚动回调仍不写样式）",
-    "都不含 pendingTarget", null);
-
-  /* 各入口的 far 标记 */
-  const dotBody = fnBodyOf(appSrc, "function onDotClick(");
-  g.ok(/goTo\(/.test(dotBody) && /far:\s*true/.test(dotBody),
-    "圆点点击一律按远跳处理（far: true）", "goTo(..., { far: true })", null);
-  const keyBody = fnBodyOf(appSrc, "function onKeyDown(");
-  g.ok(countRe(keyBody, /far:\s*true/g) >= 2,
-    "Home / End 走远跳（far: true，≥2 处）", ">= 2", countRe(keyBody, /far:\s*true/g));
-  g.ok(countRe(keyBody, /far:\s*false/g) >= 2,
-    "↑↓ / PageUp / PageDown 走相邻（far: false，≥2 处）",
-    ">= 2", countRe(keyBody, /far:\s*false/g));
-  g.ok(!/goTo\(cur \+ 1\)/.test(keyBody) && !/goTo\(cur - 1\)/.test(keyBody),
-    "逐屏键不再调用无 opts 的 goTo（far 标记必须显式）",
-    "无 goTo(cur ± 1)", null);
+  const keyBody2 = fnBodyOf(appSrc, "function onKeyDown(");
+  g.ok(/"ArrowUp"/.test(keyBody2) && /"ArrowDown"/.test(keyBody2),
+    "上下方向键可翻页（↑ 上一屏 / ↓ 下一屏）", "含 ArrowUp + ArrowDown", null);
+  g.ok(/"ArrowLeft"/.test(keyBody2) && /"ArrowRight"/.test(keyBody2),
+    "左右方向键同义翻页", "含 ArrowLeft + ArrowRight", null);
+  g.ok(/"PageUp"/.test(keyBody2) && /"PageDown"/.test(keyBody2),
+    "PageUp / PageDown 同义", "含 PageUp + PageDown", null);
+  g.ok(/" "\s*\|\|\s*key === "Spacebar"/.test(keyBody2),
+    "空格 = 下一屏", '含 " " || "Spacebar"', null);
+  g.ok(/"Home"/.test(keyBody2) && /"End"/.test(keyBody2),
+    "Home / End 跳首尾", "含 Home + End", null);
+  g.ok(countRe(keyBody2, /e\.preventDefault\(\)/g) >= 4,
+    "翻页键都 e.preventDefault()（不让浏览器顺带滚屏）", ">= 4",
+    countRe(keyBody2, /e\.preventDefault\(\)/g));
 }
 
 /* ==========================================================================

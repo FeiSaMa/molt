@@ -27,33 +27,72 @@
 ## 展示页 web/page/
 
 零构建静态页：`file://` 双击 `web/page/index.html` 即可打开，**无构建步骤、无 npm 依赖、
-无外部请求**，只读 `../data/bundle.js` 注入的 `window.MOLT_VIEW`。数据是 `molt export` 的
-产物，页面不是。
+默认不访问外部服务**，只读 `../data/bundle.js` 注入的 `window.MOLT_VIEW`。S6 实时面板
+**默认空载**：不显示任何预置数据，列表隐藏、合计为「—」，只有显式给 `?port=`
+（真实接口）或 `?path=`（本地模拟）才有内容。数据是 `molt export` 的产物，页面不是。
 
 | 文件 | 职责 |
 |---|---|
-| `index.html` | 骨架：8 屏 section（封面 / 通过题数 / 单题成本 / 逐题配对 / 门禁 / 可回退 / 留出集与证据 / 收尾）+ 徽章位 + 脚注 |
+| `index.html` | 骨架：9 屏 section（封面 / 核心宗旨 / 背景 / 实时评测 / 单题成本 / 门禁 / 可回退 / 留出集与证据 / 收尾）+ 徽章位 + 脚注 |
 | `app.css` | 全部样式；不引外部字体与 CDN |
 | `model.js` | 纯数据层：`window.MOLT_VIEW` → 展示模型（UMD，node 可直接 `require` 做验收） |
 | `render.js` | 渲染层：展示模型 → DOM，只消费 `model.js` 的输出，不碰原始 payload |
+| `live-source.js` | S6 实时源：`?port=<port>` 时轮询 `GET 127.0.0.1:<port>/api/tasks`（0.5s），带 `Authorization: Bearer <token>`；默认 idle、不发请求 |
+| `mock-source.js` | S6 本地模拟（演示用，生产可整块删）：`?path=<file>` 时读使用者指定的 JSON 并模拟两轮完成；仓库不附带默认样例 |
 | `app.js` | 装配：`boot()` 串 `MOLT_VIEW → MOLT_MODEL.build → MOLT_RENDER.render`，失败只报错、不造数字 |
-| `check.mjs` | 验收脚本（node 直跑，无依赖）：462 条断言，覆盖数据口径与页面约束 |
+| `check.mjs` | 验收脚本（node 直跑，无依赖）：518 条断言，覆盖数据口径与页面约束 |
 
 **打开方式**：`file://` 双击 `web/page/index.html`。不要为它引入构建步骤，也不要用
-`fetch` 或 ES module 读数据——`file://` 下两者都会被拦；唯一数据入口是 `data/bundle.js`。
+`fetch` 或 ES module 读数据——`file://` 下两者都会被拦；基础数据入口是 `data/bundle.js`。
+S6 实时面板默认空载。`?path=` 的本地模拟必须用 HTTP 提供页面：`file://` 下浏览器
+禁止 XHR 读本地 JSON，页面会保持空载，并在面板里显示「file:// 不能读取本地 JSON」，
+控制台也提示一次。仓库不再附带任何样例数据文件。
 
-**8 屏（一屏一项，滚动翻页）**：
+**S6 数据接口**：与真实 agent API 一致（`contracts/openapi-v1.json`）：
+
+```
+GET /api/tasks                       Authorization: Bearer <token>
+-> { "results": [{ "id", "cost_first", "passed_first",
+                    "cost_second", "passed_second" }] }
+```
+
+| 场景 | 参数 | 行为 |
+|---|---|---|
+| 默认（上线形态） | 无 | 空载：不请求、不造数；行隐藏、合计「—」、画布空 |
+| 实时接口 | `?port=45123&token=<token>` | 轮询 `127.0.0.1:45123/api/tasks`，**0.5s** 一次；内容不变不重复渲染；失败指数退避到 12s |
+| 本地模拟 | `?path=<file>` | 由 `mock-source.js` 读你指定的 JSON（与 `/api/tasks` 同形状），按两轮节奏模拟完成；路径相对页面目录，找不到再试上一级。**没有默认样例**，不写 `path` 就保持空载。题数不限：数据里有几题就建几行，题名用 `id`，行与柱子按源文件顺序（`index`）排列 |
+| 换接口路径 | `window.MOLT_AGENT_PATH` | 默认 `/api/tasks`；注意 `?path=` 现在是「本地模拟」开关，不再改接口路径 |
+| 换完整 base | `window.MOLT_AGENT_BASE` | 例如 `"http" + "://host:port"`，优先于 `?port=` |
+| 不把 token 放地址栏 | `window.MOLT_AGENT_TOKEN` | 页面启动前注入，优先级低于 `?token=` |
+
+token 只放 `Authorization` 请求头，不拼进 URL。真实服务的端口是启动时由内核分配的
+（stdout 的 `listen`），页面必须用 HTTP 提供，并且服务要用 `--allow-origin` 精确允许
+页面 Origin（`file://` 的 `Origin: null` 会被 403）：
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run python -m molt serve \
+  --state /tmp/molt-agent --allow-origin http://127.0.0.1:8769
+```
+
+服务端一旦返回逐题数据就以服务端为准：快照没覆盖的行隐藏，合计按已出现的行重算；
+401（缺 token）/ 403（Origin 未允许）只在控制台提示一次，页面保持空载，不造数字。
+
+**生产删除模拟**：删 `web/page/mock-source.js`，并删掉 `index.html` 里它的
+`<script>` 即可；`live-source.js` / `app.js` 不依赖它。
+
+**9 屏（一屏一项，滚动翻页）**：
 
 1. 封面：主张 + 三个环境徽章（scenario / shell / 运行条数）
-2. 通过题数：10 → 10（成功率不变；fixture 3/10 只用于 calibrate）
-3. 单题成本：gate 级 `$0.003556 → $0.001068`（**−70.0%**）；扫描级数字作为 ADR-0008 引用放在脚注
-4. 逐题配对：10 行 + 合计行，口径说明在表格上方
-5. 门禁：六个判定步骤（3×2 网格）+ 结论带（`adopt` / `lower_cost_per_solved`）
-6. 可回退：三代 genome 谱系 + 归档 + 快照
-7. 留出集与证据：5/5 → 5/5（仅聚合）、live/replay/fixture 三数、holdout 归属、`audit`
-8. 收尾：一句话结论 + 证据截至时间 + 数据来源
+2. 核心宗旨
+3. 背景：模型不会因运转而自新
+4. 实时评测对比：默认空载；`?port=` 实时 / `?path=` 本地模拟
+5. 单题成本：gate 级 `$0.003556 → $0.001068`（**−70.0%**）；扫描级数字作为 ADR-0008 引用放在脚注
+6. 门禁：六个判定步骤（3×2 网格）+ 结论带（`adopt` / `lower_cost_per_solved`）
+7. 可回退：三代 genome 谱系 + 归档 + 快照
+8. 留出集与证据：5/5 → 5/5（仅聚合）、live/replay/fixture 三数、holdout 归属、`audit`
+9. 收尾：一句话结论 + 证据截至时间 + 数据来源
 
-**验收**：`node web/page/check.mjs`，期望 `462 passed, 0 failed`、退出码 0。
+**验收**：`node web/page/check.mjs`，期望 `518 passed, 0 failed`、退出码 0。
 
 **版式与动效**：
 
@@ -70,7 +109,7 @@
   2. **无 JS 时所有内容默认可见**——初始隐藏态只写在 `html.js-ready` 之下，脚本跑起来才加该类。
 - **已知缺口**：
   - `window.MOLT_VIEW` 只有 12 个键、**不含 `index`**，因此页脚 `revision` 恒为空并被整体隐藏，
-    第 8 屏只显示「证据截至 …」；
+    收尾屏只显示「证据截至 …」；
   - `100dvh` / `scroll-snap-stop` 在旧版 Chrome 上降级为普通滚动（不吸附），内容仍完整可达。
 
 **口径纪律**（与下文「数据使用警告」同一套，页面已按此实现）：
