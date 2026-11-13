@@ -235,6 +235,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="只读任务结果数据目录；默认 <repo>/web/data（不写入）",
     )
+    p_serve.add_argument(
+        "--lab-root",
+        type=Path,
+        default=Path("/tmp/molt-lab"),
+        help="隔离执行 workspace 的临时根目录（默认 /tmp/molt-lab）",
+    )
 
     return parser
 
@@ -1287,6 +1293,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
         provider=args.provider,
         probe_index=args.probe_index,
         data_dir=args.data_dir or (root / "web" / "data"),
+        lab_root=args.lab_root,
     )
 
 

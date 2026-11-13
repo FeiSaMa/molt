@@ -49,6 +49,15 @@ EXPECTED_PATHS = {
     "/api/sessions/{session_id}/events",
 }
 
+EXPECTED_LAB_PATHS = {
+    "/api/lab/openapi.json",
+    "/api/lab/capabilities",
+    "/api/lab/tasks",
+    "/api/lab/runs",
+    "/api/lab/runs/{run_id}",
+    "/api/lab/runs/{run_id}/events",
+}
+
 
 def _tree_snapshot():
     spec = importlib.util.spec_from_file_location(
@@ -625,6 +634,11 @@ def test_error_code_enum_matches_contract() -> None:
 def test_openapi_paths_and_refs() -> None:
     document = json.loads((ROOT / "contracts" / "openapi-v1.json").read_text(encoding="utf-8"))
     assert set(document["paths"]) == EXPECTED_PATHS
+    lab = json.loads(
+        (ROOT / "contracts" / "openapi-lab-v1.json").read_text(encoding="utf-8")
+    )
+    assert set(lab["paths"]) == EXPECTED_LAB_PATHS
+    assert lab["openapi"].startswith("3.")
     assert document["openapi"].startswith("3.")
     refs: list[str] = []
 
@@ -642,7 +656,7 @@ def test_openapi_paths_and_refs() -> None:
     assert refs
     assert all(ref.startswith("#/") for ref in refs)
     # 服务路由集合与契约 path 集合相等（模板参数名一致）
-    assert len(ROUTES) == 11
+    assert len(ROUTES) == 18
 
 
 def test_examples_validate_against_schemas() -> None:

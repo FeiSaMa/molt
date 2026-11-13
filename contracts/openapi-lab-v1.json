@@ -1,0 +1,251 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "molt chat lab API",
+    "version": "1.0.0",
+    "description": "隔离执行工作台：capabilities、fixture 任务、两轮 coding run、SSE 与取消。所有执行端点要求 Bearer；隔离不可用时 fail closed（503 isolation_unavailable）。"
+  },
+  "servers": [{ "url": "/" }],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/api/lab/openapi.json": {
+      "get": {
+        "summary": "本契约（免鉴权）",
+        "security": [],
+        "responses": { "200": { "description": "OpenAPI 文档" } }
+      }
+    },
+    "/api/lab/capabilities": {
+      "get": {
+        "summary": "provider / isolation / evolution 能力与预算",
+        "responses": {
+          "200": {
+            "description": "能力状态",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Capabilities" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/lab/tasks": {
+      "get": {
+        "summary": "可用 coding fixture",
+        "responses": {
+          "200": {
+            "description": "任务列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["tasks"],
+                  "properties": {
+                    "tasks": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/LabTask" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/lab/runs": {
+      "post": {
+        "summary": "创建一个两轮 coding run",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["task_id"],
+                "properties": { "task_id": { "type": "string", "minLength": 1 } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "已受理",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["run_id", "status", "event_cursor"],
+                  "properties": {
+                    "run_id": { "type": "string" },
+                    "status": { "type": "string" },
+                    "event_cursor": { "type": ["integer", "null"] }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/lab/runs/{run_id}": {
+      "get": {
+        "summary": "run 状态与结果",
+        "parameters": [{ "$ref": "#/components/parameters/RunId" }],
+        "responses": {
+          "200": {
+            "description": "run",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LabRun" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "summary": "取消 run",
+        "parameters": [{ "$ref": "#/components/parameters/RunId" }],
+        "responses": {
+          "204": { "description": "已请求取消" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/lab/runs/{run_id}/events": {
+      "get": {
+        "summary": "run SSE（15s ping；done 后关闭）",
+        "parameters": [
+          { "$ref": "#/components/parameters/RunId" },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 0 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "text/event-stream",
+            "content": { "text/event-stream": { "schema": { "type": "string" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "410": { "$ref": "#/components/responses/Stale" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer" }
+    },
+    "parameters": {
+      "RunId": {
+        "name": "run_id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string" }
+      }
+    },
+    "responses": {
+      "Unauthorized": { "description": "缺少或错误的 Bearer token" },
+      "NotFound": { "description": "run 或任务不存在" },
+      "Conflict": { "description": "已有执行任务在进行（lab_busy）" },
+      "Unavailable": { "description": "隔离不可用或 provider 失败" },
+      "Stale": { "description": "since 早于最旧保留事件" }
+    },
+    "schemas": {
+      "Capabilities": {
+        "type": "object",
+        "required": ["execution", "provider", "evolution"],
+        "properties": {
+          "execution": {
+            "type": "object",
+            "required": ["available", "backend", "limits"],
+            "properties": {
+              "available": { "type": "boolean" },
+              "backend": { "type": "string" },
+              "reason": { "type": "string" },
+              "detail": { "type": "string" },
+              "limits": { "type": "object" }
+            }
+          },
+          "provider": {
+            "type": "object",
+            "required": ["name", "model", "real_model", "ready"],
+            "properties": {
+              "name": { "type": "string" },
+              "model": { "type": "string" },
+              "real_model": { "type": "boolean" },
+              "ready": { "type": "boolean" },
+              "error": { "type": ["string", "null"] }
+            }
+          },
+          "evolution": {
+            "type": "object",
+            "required": ["available", "mode", "real_model"],
+            "properties": {
+              "available": { "type": "boolean" },
+              "mode": { "type": "string", "enum": ["mock", "live"] },
+              "real_model": { "type": "boolean" },
+              "reason": { "type": ["string", "null"] },
+              "note": { "type": "string" }
+            }
+          }
+        }
+      },
+      "LabTask": {
+        "type": "object",
+        "required": ["task_id", "title", "description", "files", "test_file", "rounds"],
+        "properties": {
+          "task_id": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "files": { "type": "array", "items": { "type": "string" } },
+          "test_file": { "type": "string" },
+          "rounds": { "type": "integer", "const": 2 }
+        }
+      },
+      "LabRun": {
+        "type": "object",
+        "required": [
+          "run_id",
+          "task_id",
+          "status",
+          "provider",
+          "model",
+          "real_model",
+          "created_at",
+          "last_event_id"
+        ],
+        "properties": {
+          "run_id": { "type": "string" },
+          "task_id": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["queued", "running", "completed", "failed", "cancelled"]
+          },
+          "provider": { "type": "string" },
+          "model": { "type": "string" },
+          "real_model": { "type": "boolean" },
+          "created_at": { "type": "string" },
+          "last_event_id": { "type": "integer" },
+          "result": { "type": ["object", "null"] },
+          "error": { "type": ["object", "null"] }
+        }
+      }
+    }
+  }
+}

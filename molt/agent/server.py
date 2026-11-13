@@ -31,6 +31,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 from molt.agent.chat import adapter_health, build_adapter
 from molt.agent.errors import ApiError, ErrorCode
+from molt.agent.lab import LabBusy, LabError, LabManager, LabTaskNotFound, LabUnavailable
 from molt.agent.probe import (
     ProbeIndexError,
     build_index,
@@ -46,6 +47,7 @@ MAX_BODY_BYTES = 64 * 1024
 MAX_CONTENT_BYTES = 16384
 PING_INTERVAL = 15.0
 ALLOWED_HOSTS = ("127.0.0.1", "localhost")
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 # ---------------------------------------------------------------------------
@@ -59,10 +61,16 @@ class AgentApp:
     allowed_origins: tuple[str, ...]
     openapi: dict[str, Any]
     data_dir: Path
+    root: Path | None = None
+    lab_root: Path | None = None
+    lab: LabManager | None = None
+    lab_openapi: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         self.store = SessionStore(provider=self.adapter.name)
         self.runner = TurnRunner(self.store, self.index, self.adapter)
+        if self.lab is None:
+            self.lab = LabManager(self.adapter, lab_root=self.lab_root)
 
     def health(self) -> dict[str, Any]:
         return adapter_health(self.adapter)
@@ -79,6 +87,13 @@ ROUTES: tuple[Route, ...] = (
     ("GET", re.compile(r"^/api/experiments$"), "experiments_list"),
     ("GET", re.compile(r"^/api/experiments/(?P<experiment_id>[^/]+)$"), "experiment_detail"),
     ("GET", re.compile(r"^/api/tasks$"), "tasks"),
+    ("GET", re.compile(r"^/api/lab/openapi\.json$"), "lab_openapi"),
+    ("GET", re.compile(r"^/api/lab/capabilities$"), "lab_capabilities"),
+    ("GET", re.compile(r"^/api/lab/tasks$"), "lab_tasks"),
+    ("POST", re.compile(r"^/api/lab/runs$"), "lab_runs_create"),
+    ("GET", re.compile(r"^/api/lab/runs/(?P<run_id>[^/]+)$"), "lab_run_detail"),
+    ("DELETE", re.compile(r"^/api/lab/runs/(?P<run_id>[^/]+)$"), "lab_run_cancel"),
+    ("GET", re.compile(r"^/api/lab/runs/(?P<run_id>[^/]+)/events$"), "lab_run_events"),
     ("POST", re.compile(r"^/api/sessions$"), "sessions_create"),
     ("GET", re.compile(r"^/api/sessions$"), "sessions_list"),
     ("GET", re.compile(r"^/api/sessions/(?P<session_id>[^/]+)$"), "session_detail"),
@@ -87,7 +102,7 @@ ROUTES: tuple[Route, ...] = (
     ("GET", re.compile(r"^/api/sessions/(?P<session_id>[^/]+)/events$"), "events"),
 )
 
-PUBLIC_HANDLERS = frozenset({"health", "openapi"})
+PUBLIC_HANDLERS = frozenset({"health", "openapi", "lab_openapi"})
 
 
 # ---------------------------------------------------------------------------
@@ -343,6 +358,99 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             ) from None
         self._send_json(200, payload)
 
+    # ---- lab -------------------------------------------------------------
+    def _lab_run(self, match: re.Match[str]) -> Any:
+        run_id = unquote(match.group("run_id"))
+        lab = self.server.app.lab
+        run = lab.get(run_id) if lab is not None else None
+        if run is None:
+            raise ApiError(ErrorCode.NOT_FOUND, "run 不存在")
+        return run
+
+    def _handle_lab_openapi(self, match: re.Match[str]) -> None:
+        del match
+        app = self.server.app
+        if app.lab_openapi is None:
+            app.lab_openapi = load_lab_openapi(app.root or REPO_ROOT)
+        self._send_json(200, app.lab_openapi)
+
+    def _handle_lab_capabilities(self, match: re.Match[str]) -> None:
+        del match
+        lab = self.server.app.lab
+        if lab is None:  # pragma: no cover - __post_init__ 创建
+            raise ApiError(ErrorCode.ADAPTER_UNAVAILABLE, "执行工作台未初始化")
+        self._send_json(200, lab.capabilities())
+
+    def _handle_lab_tasks(self, match: re.Match[str]) -> None:
+        del match
+        lab = self.server.app.lab
+        if lab is None:  # pragma: no cover
+            raise ApiError(ErrorCode.ADAPTER_UNAVAILABLE, "执行工作台未初始化")
+        self._send_json(200, {"tasks": lab.tasks()})
+
+    def _handle_lab_runs_create(self, match: re.Match[str]) -> None:
+        del match
+        lab = self.server.app.lab
+        if lab is None:  # pragma: no cover
+            raise ApiError(ErrorCode.ADAPTER_UNAVAILABLE, "执行工作台未初始化")
+        payload = self._read_json_body()
+        unknown = sorted(set(payload) - {"task_id"})
+        if unknown:
+            raise ApiError(
+                ErrorCode.BAD_REQUEST,
+                "只接受 task_id 字段",
+                {"unknown_fields": unknown},
+            )
+        task_id = payload.get("task_id")
+        if not isinstance(task_id, str) or not task_id.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "task_id 必须是非空字符串")
+        try:
+            run = lab.create(task_id.strip())
+        except LabUnavailable as exc:
+            raise ApiError(
+                ErrorCode.ADAPTER_UNAVAILABLE,
+                str(exc),
+                {"reason": "isolation_unavailable", "detail": exc.detail},
+            ) from None
+        except LabBusy:
+            raise ApiError(
+                ErrorCode.CONFLICT,
+                "已有执行任务在进行",
+                {"reason": "lab_busy"},
+            ) from None
+        except LabTaskNotFound:
+            raise ApiError(ErrorCode.NOT_FOUND, "未知任务") from None
+        except LabError as exc:
+            raise ApiError(
+                ErrorCode.ADAPTER_UNAVAILABLE,
+                str(exc),
+                {"reason": exc.code},
+            ) from None
+        self._send_json(
+            202,
+            {"run_id": run.run_id, "status": run.status, "event_cursor": None},
+        )
+
+    def _handle_lab_run_detail(self, match: re.Match[str]) -> None:
+        self._send_json(200, self._lab_run(match).public())
+
+    def _handle_lab_run_cancel(self, match: re.Match[str]) -> None:
+        run = self._lab_run(match)
+        lab = self.server.app.lab
+        if lab is not None:
+            lab.cancel(run.run_id)
+        self.send_response(204)
+        self.send_header("Content-Length", "0")
+        self.send_header("Connection", "close")
+        for key, value in self._cors_headers().items():
+            self.send_header(key, value)
+        self.end_headers()
+        self.close_connection = True
+
+    def _handle_lab_run_events(self, match: re.Match[str]) -> None:
+        run = self._lab_run(match)
+        self._stream_events(run, self._parse_since())
+
     def _handle_sessions_create(self, match: re.Match[str]) -> None:
         del match
         payload = self._read_json_body(allow_empty=True)
@@ -424,9 +532,11 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_events(self, match: re.Match[str]) -> None:
         session = self._session(match)
-        since = self._parse_since()
-        with session.condition:
-            minimum = session.min_event_id()
+        self._stream_events(session, self._parse_since())
+
+    def _stream_events(self, source: Any, since: int | None) -> None:
+        with source.condition:
+            minimum = source.min_event_id()
             if since is not None and since > 0 and (minimum is None or since < minimum):
                 raise ApiError(
                     ErrorCode.STALE_EVENT_ID,
@@ -446,19 +556,19 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
 
         cursor = since if since else 0
         while True:
-            with session.condition:
-                if session.closed:
+            with source.condition:
+                if source.closed:
                     return
-                pending = session.events_since(cursor if cursor else None)
+                pending = source.events_since(cursor if cursor else None)
                 ping = False
                 if not pending:
-                    woken = session.wait_for_events(cursor, PING_INTERVAL)
-                    if session.closed:
+                    woken = source.wait_for_events(cursor, PING_INTERVAL)
+                    if source.closed:
                         return
                     if not woken:
                         ping = True
                     else:
-                        pending = session.events_since(cursor if cursor else None)
+                        pending = source.events_since(cursor if cursor else None)
             if ping:
                 if not self._write_stream(": ping\n\n"):
                     return
@@ -542,6 +652,17 @@ def load_openapi(root: Path) -> dict[str, Any]:
     return payload
 
 
+def load_lab_openapi(root: Path) -> dict[str, Any]:
+    path = root / "contracts" / "openapi-lab-v1.json"
+    try:
+        payload = json.loads(path.read_bytes().decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise StartupError("contracts_invalid", f"无法加载 lab OpenAPI 契约: {exc}") from None
+    if not isinstance(payload, dict):
+        raise StartupError("contracts_invalid", "lab OpenAPI 契约必须是对象")
+    return payload
+
+
 def prepare_token(token_file: Path) -> str:
     token = secrets.token_urlsafe(32)
     try:
@@ -585,6 +706,7 @@ def run_server(
     provider: str = "mock",
     probe_index: Path | None = None,
     data_dir: Path | None = None,
+    lab_root: Path | None = None,
 ) -> int:
     """启动服务；成功时阻塞在 ``serve_forever``，返回进程退出码。"""
 
@@ -636,6 +758,8 @@ def run_server(
         allowed_origins=origins,
         openapi=openapi,
         data_dir=(data_dir or (root / "web" / "data")).resolve(),
+        root=root,
+        lab_root=(lab_root or Path("/tmp/molt-lab")),
     )
     try:
         server = create_server(app, host, port)
@@ -670,6 +794,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--provider", choices=("mock", "openai-compatible"), default="mock")
     parser.add_argument("--probe-index", type=Path, default=None)
     parser.add_argument("--data-dir", type=Path, default=None)
+    parser.add_argument("--lab-root", type=Path, default=Path("/tmp/molt-lab"))
     return parser
 
 
@@ -685,6 +810,7 @@ def main(argv: list[str] | None = None) -> int:
         provider=args.provider,
         probe_index=args.probe_index,
         data_dir=args.data_dir,
+        lab_root=args.lab_root,
     )
 
 
