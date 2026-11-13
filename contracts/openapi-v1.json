@@ -208,6 +208,59 @@
         }
       }
     },
+    "/api/tasks": {
+      "get": {
+        "operationId": "listTaskResults",
+        "summary": "搜索集逐题 first/second 成本与通过（顺序同 scenario）",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "任务结果；first=scan10（缺失用 closure replay），second=candidate-scan（缺失用 closure live）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "缺少/错误 Bearer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin 不允许",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "数据文件缺失或 JSON 非法（data_unavailable）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sessions": {
       "post": {
         "operationId": "createSession",
@@ -637,6 +690,7 @@
                   "unsupported_media_type",
                   "internal",
                   "adapter_unavailable",
+                  "data_unavailable",
                   "upstream_timeout",
                   "upstream_unavailable",
                   "upstream_auth_failed",
@@ -760,6 +814,50 @@
             "type": "array",
             "items": {
               "type": "object"
+            }
+          }
+        }
+      },
+      "TaskResults": {
+        "type": "object",
+        "description": "字段级契约见 contracts/schemas/task-results.schema.json",
+        "additionalProperties": false,
+        "required": [
+          "results"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "cost_first",
+                "passed_first",
+                "cost_second",
+                "passed_second"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cost_first": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "passed_first": {
+                  "type": "boolean"
+                },
+                "cost_second": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "passed_second": {
+                  "type": "boolean"
+                }
+              }
             }
           }
         }

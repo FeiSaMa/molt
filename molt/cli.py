@@ -229,6 +229,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="只读加载已导出的 probe index；缺省从 manifest 现场构建",
     )
+    p_serve.add_argument(
+        "--data-dir",
+        type=Path,
+        default=None,
+        help="只读任务结果数据目录；默认 <repo>/web/data（不写入）",
+    )
 
     return parser
 
@@ -1270,8 +1276,9 @@ def cmd_demo(args: argparse.Namespace) -> int:
 def cmd_serve(args: argparse.Namespace) -> int:
     from molt.agent.server import run_server
 
+    root = _repo_root(args)
     return run_server(
-        root=_repo_root(args),
+        root=root,
         host=args.host,
         port=args.port,
         state=args.state,
@@ -1279,6 +1286,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
         allowed_origins=args.allow_origin,
         provider=args.provider,
         probe_index=args.probe_index,
+        data_dir=args.data_dir or (root / "web" / "data"),
     )
 
 

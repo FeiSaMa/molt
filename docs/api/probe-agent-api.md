@@ -31,6 +31,7 @@ stderr 打印人读的 `listening on ...` 与 `token file: ...`。任何日志�
 | `--allow-origin` | 无 | 精确追加允许的 Origin，可重复；`*` 直接拒绝 |
 | `--provider` | `mock` | `mock` / `openai-compatible` |
 | `--probe-index` | 无 | 只读加载已导出索引；缺省从 manifest 现场构建 |
+| `--data-dir` | `<repo>/web/data` | 只读任务结果数据目录（`scenario.json` + `runs.json`），服务不写入 |
 
 退出码：`probe_index_invalid` → 2；`token_file_error` / `invalid_host` / `invalid_origin` /
 `listen_failed` → 2；`provider_not_configured`（缺 `MOLT_CHAT_MODEL`）→ 1。失败一律**不监听**。
@@ -47,6 +48,7 @@ stderr 打印人读的 `listening on ...` 与 `token file: ...`。任何日志�
 | GET | `/api/openapi.json` | 免 | 本契约 |
 | GET | `/api/experiments` | Bearer | `{schema_version, generated_at, revision, experiments}` |
 | GET | `/api/experiments/{id}` | Bearer | 单条实验投影；未知 id → 404 |
+| GET | `/api/tasks` | Bearer | 搜索集逐题 `{id, cost_first, passed_first, cost_second, passed_second}`，顺序同 scenario |
 | POST | `/api/sessions` | Bearer | 只接受 `{}`；201 返回 session |
 | GET | `/api/sessions` | Bearer | `{"sessions":[SessionSummary]}`；摘要 6 键，不含 messages |
 | GET | `/api/sessions/{id}` | Bearer | session 详情（含 messages / last_event_id） |
@@ -74,6 +76,23 @@ stderr 打印人读的 `listening on ...` 与 `token file: ...`。任何日志�
 
 端点不返回 `excluded`；`excluded` 只出现在构建器文档与
 `contracts/examples/experiment-index.json`。
+
+## 任务结果形状
+
+`GET /api/tasks` 只读 `<data-dir>/scenario.json` 与 `<data-dir>/runs.json`（默认
+`<repo>/web/data`，只读不写）。返回 `{"results":[TaskResult...]}`，顺序与
+`scenario.json` 的 `task_sets.search` 完全一致：
+
+- `first`：优先 `demo_group="scan10"`；缺失时用 `demo_group="closure"` 且
+  `provenance.kind="replay"`。
+- `second`：优先 `demo_group="candidate-scan"`；缺失时用 `demo_group="closure"` 且
+  `provenance.live=true`。
+- 同组多条按 `run_id` 字典序取第一条。
+- `cost_*` = run 的 `cost_usd`，`passed_*` = run 的 `solved`；无 run 时 `cost=0.0`、
+  `passed=false`。
+
+响应只含 `id` 与四项指标，不含 prompt / stdout / 逐题明细。数据文件缺失或 JSON 非法 →
+503 `data_unavailable`。字段级契约见 `contracts/schemas/task-results.schema.json`。
 
 ## 鉴权
 
@@ -114,6 +133,7 @@ stderr 打印人读的 `listening on ...` 与 `token file: ...`。任何日志�
 | 415 | `unsupported_media_type` | 有请求体但 `Content-Type` 不是 `application/json` |
 | 500 | `internal` | 未预期内部错误（不泄漏细节） |
 | 503 | `adapter_unavailable` | provider 不可用（保留码；本 MVP 启动即校验） |
+| 503 | `data_unavailable` | `/api/tasks` 的数据文件缺失或 JSON 非法 |
 
 以下**只作 SSE `error` 事件的 code，永不作为 HTTP 响应**（HTTP 不会出现 502/504）：
 

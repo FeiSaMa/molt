@@ -29,6 +29,7 @@ class ErrorCode(StrEnum):
     UNSUPPORTED_MEDIA_TYPE = "unsupported_media_type"
     INTERNAL = "internal"
     ADAPTER_UNAVAILABLE = "adapter_unavailable"
+    DATA_UNAVAILABLE = "data_unavailable"
 
     # 仅 SSE error 事件使用；不得作为 HTTP 响应状态。
     UPSTREAM_TIMEOUT = "upstream_timeout"
@@ -52,6 +53,7 @@ HTTP_STATUS: dict[ErrorCode, int] = {
     ErrorCode.UNSUPPORTED_MEDIA_TYPE: 415,
     ErrorCode.INTERNAL: 500,
     ErrorCode.ADAPTER_UNAVAILABLE: 503,
+    ErrorCode.DATA_UNAVAILABLE: 503,
 }
 
 SSE_ONLY: frozenset[ErrorCode] = frozenset(

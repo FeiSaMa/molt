@@ -39,6 +39,7 @@ from molt.agent.probe import (
     load_index,
 )
 from molt.agent.store import MAX_MESSAGES, TERMINAL_EVENTS, Session, SessionStore, new_id
+from molt.agent.tasks import TaskResultsError, load_task_results
 from molt.agent.turn import TurnRunner
 
 MAX_BODY_BYTES = 64 * 1024
@@ -57,6 +58,7 @@ class AgentApp:
     token: str
     allowed_origins: tuple[str, ...]
     openapi: dict[str, Any]
+    data_dir: Path
 
     def __post_init__(self) -> None:
         self.store = SessionStore(provider=self.adapter.name)
@@ -76,6 +78,7 @@ ROUTES: tuple[Route, ...] = (
     ("GET", re.compile(r"^/api/openapi\.json$"), "openapi"),
     ("GET", re.compile(r"^/api/experiments$"), "experiments_list"),
     ("GET", re.compile(r"^/api/experiments/(?P<experiment_id>[^/]+)$"), "experiment_detail"),
+    ("GET", re.compile(r"^/api/tasks$"), "tasks"),
     ("POST", re.compile(r"^/api/sessions$"), "sessions_create"),
     ("GET", re.compile(r"^/api/sessions$"), "sessions_list"),
     ("GET", re.compile(r"^/api/sessions/(?P<session_id>[^/]+)$"), "session_detail"),
@@ -330,6 +333,16 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             raise ApiError(ErrorCode.NOT_FOUND, "experiment 不存在")
         self._send_json(200, experiment)
 
+    def _handle_tasks(self, match: re.Match[str]) -> None:
+        del match
+        try:
+            payload = load_task_results(self.server.app.data_dir)
+        except TaskResultsError:
+            raise ApiError(
+                ErrorCode.DATA_UNAVAILABLE, "任务结果数据不可用"
+            ) from None
+        self._send_json(200, payload)
+
     def _handle_sessions_create(self, match: re.Match[str]) -> None:
         del match
         payload = self._read_json_body(allow_empty=True)
@@ -571,6 +584,7 @@ def run_server(
     allowed_origins: list[str] | None = None,
     provider: str = "mock",
     probe_index: Path | None = None,
+    data_dir: Path | None = None,
 ) -> int:
     """启动服务；成功时阻塞在 ``serve_forever``，返回进程退出码。"""
 
@@ -621,6 +635,7 @@ def run_server(
         token=token,
         allowed_origins=origins,
         openapi=openapi,
+        data_dir=(data_dir or (root / "web" / "data")).resolve(),
     )
     try:
         server = create_server(app, host, port)
@@ -654,6 +669,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--allow-origin", action="append", default=[])
     parser.add_argument("--provider", choices=("mock", "openai-compatible"), default="mock")
     parser.add_argument("--probe-index", type=Path, default=None)
+    parser.add_argument("--data-dir", type=Path, default=None)
     return parser
 
 
@@ -668,6 +684,7 @@ def main(argv: list[str] | None = None) -> int:
         allowed_origins=args.allow_origin,
         provider=args.provider,
         probe_index=args.probe_index,
+        data_dir=args.data_dir,
     )
 
 

@@ -42,6 +42,7 @@ EXPECTED_PATHS = {
     "/api/openapi.json",
     "/api/experiments",
     "/api/experiments/{experiment_id}",
+    "/api/tasks",
     "/api/sessions",
     "/api/sessions/{session_id}",
     "/api/sessions/{session_id}/messages",
@@ -78,15 +79,17 @@ class BlockingAdapter:
 
 
 class Harness:
-    def __init__(self, adapter=None, allowed_origins=()):  # noqa: ANN001
+    def __init__(self, adapter=None, allowed_origins=(), data_dir=None):  # noqa: ANN001
         self.adapter = adapter or MockAdapter()
         self.index = build_index(ROOT)
+        self.data_dir = Path(data_dir) if data_dir is not None else ROOT / "web" / "data"
         self.app = AgentApp(
             index=self.index,
             adapter=self.adapter,
             token=TOKEN,
             allowed_origins=tuple(allowed_origins),
             openapi=load_openapi(ROOT),
+            data_dir=self.data_dir,
         )
         self.server = create_server(self.app, "127.0.0.1", 0)
         self.port = self.server.server_address[1]
@@ -639,7 +642,7 @@ def test_openapi_paths_and_refs() -> None:
     assert refs
     assert all(ref.startswith("#/") for ref in refs)
     # 服务路由集合与契约 path 集合相等（模板参数名一致）
-    assert len(ROUTES) == 10
+    assert len(ROUTES) == 11
 
 
 def test_examples_validate_against_schemas() -> None:
@@ -652,6 +655,10 @@ def test_examples_validate_against_schemas() -> None:
     _validate(session, "session.schema.json")
     for name in ("error.json", "error-stale.json"):
         _validate(json.loads((EXAMPLES / name).read_text(encoding="utf-8")), "error.schema.json")
+    _validate(
+        json.loads((EXAMPLES / "task-results.json").read_text(encoding="utf-8")),
+        "task-results.schema.json",
+    )
 
     tool_call_schema = json.loads((SCHEMAS / "tool-call.schema.json").read_text(encoding="utf-8"))
     tool_result_schema = json.loads(
@@ -770,6 +777,7 @@ def test_serving_requests_does_not_write_repository() -> None:
     try:
         assert instance.request("GET", "/api/health", token=None)[0] == 200
         assert instance.request("GET", "/api/experiments")[0] == 200
+        assert instance.request("GET", "/api/tasks")[0] == 200
         _, _, body = instance.request("POST", "/api/sessions", body={})
         session_id = _json(body)["session_id"]
         instance.request(
@@ -800,3 +808,107 @@ def test_experiment_detail_matches_index(harness: Harness) -> None:
     _, _, detail = harness.request("GET", f"/api/experiments/{experiment['experiment_id']}")
     assert _json(detail) == experiment
     assert harness.request("GET", "/api/experiments/nope")[0] == 404
+
+
+# ---------------------------------------------------------------------------
+# 任务结果
+# ---------------------------------------------------------------------------
+def _data_json(name: str) -> dict:
+    return json.loads((ROOT / "web" / "data" / name).read_text(encoding="utf-8"))
+
+
+def test_tasks_requires_bearer_and_follows_scenario_order(harness: Harness) -> None:
+    status, headers, body = harness.request("GET", "/api/tasks", token=None)
+    assert status == 401
+    assert headers["WWW-Authenticate"] == "Bearer"
+    assert _json(body)["error"]["code"] == "unauthorized"
+
+    status, _, body = harness.request("GET", "/api/tasks")
+    assert status == 200
+    payload = _json(body)
+    assert set(payload) == {"results"}
+    scenario = _data_json("scenario.json")
+    assert [item["id"] for item in payload["results"]] == scenario["task_sets"]["search"]
+    assert len(payload["results"]) == 10
+    _validate(payload, "task-results.schema.json")
+
+
+def test_tasks_values_match_exported_runs(harness: Harness) -> None:
+    _, _, body = harness.request("GET", "/api/tasks")
+    item = next(result for result in _json(body)["results"] if result["id"] == "smoke-add")
+    runs = _data_json("runs.json")["runs"]
+    first = next(
+        run for run in runs if run["task_id"] == "smoke-add" and run["demo_group"] == "scan10"
+    )
+    second = next(
+        run
+        for run in runs
+        if run["task_id"] == "smoke-add"
+        and run["demo_group"] == "closure"
+        and run["provenance"]["live"] is True
+    )
+    assert item["cost_first"] == first["cost_usd"]
+    assert item["cost_second"] == second["cost_usd"]
+    assert item["passed_first"] is first["solved"]
+    assert item["passed_second"] is second["solved"]
+
+
+def test_tasks_missing_or_invalid_data_returns_503(tmp_path: Path) -> None:
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    instance = Harness(data_dir=empty)
+    try:
+        status, _, body = instance.request("GET", "/api/tasks")
+        assert status == 503
+        assert _json(body)["error"]["code"] == "data_unavailable"
+    finally:
+        instance.close()
+
+    broken = tmp_path / "broken"
+    broken.mkdir()
+    (broken / "scenario.json").write_text("{not json", encoding="utf-8")
+    instance = Harness(data_dir=broken)
+    try:
+        status, _, body = instance.request("GET", "/api/tasks")
+        assert status == 503
+        assert _json(body)["error"]["code"] == "data_unavailable"
+    finally:
+        instance.close()
+
+
+def _walk_keys(value) -> set:  # noqa: ANN001
+    keys: set = set()
+    if isinstance(value, dict):
+        keys.update(value)
+        for item in value.values():
+            keys.update(_walk_keys(item))
+    elif isinstance(value, list):
+        for item in value:
+            keys.update(_walk_keys(item))
+    return keys
+
+
+def test_tasks_response_has_no_sensitive_keys(harness: Harness) -> None:
+    _, _, body = harness.request("GET", "/api/tasks")
+    keys = _walk_keys(_json(body))
+    assert keys == {
+        "results",
+        "id",
+        "cost_first",
+        "passed_first",
+        "cost_second",
+        "passed_second",
+    }
+    sensitive = {
+        "prompt",
+        "stdout",
+        "stderr",
+        "memory",
+        "cases",
+        "task_id",
+        "run_id",
+        "response",
+        "thinking",
+        "solution_snapshot",
+    }
+    assert keys.isdisjoint(sensitive)

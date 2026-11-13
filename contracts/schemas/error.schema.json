@@ -26,6 +26,7 @@
             "unsupported_media_type",
             "internal",
             "adapter_unavailable",
+            "data_unavailable",
             "upstream_timeout",
             "upstream_unavailable",
             "upstream_auth_failed",

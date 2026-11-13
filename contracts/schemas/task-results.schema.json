@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://molt.local/schemas/task-results.schema.json",
+  "title": "task results",
+  "description": "GET /api/tasks 的响应体：搜索集逐题 first/second 成本与通过；顺序与 web/data/scenario.json 的 task_sets.search 一致。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["results"],
+  "properties": {
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "cost_first",
+          "passed_first",
+          "cost_second",
+          "passed_second"
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "cost_first": { "type": "number", "minimum": 0 },
+          "passed_first": { "type": "boolean" },
+          "cost_second": { "type": "number", "minimum": 0 },
+          "passed_second": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

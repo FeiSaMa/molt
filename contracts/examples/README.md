@@ -14,6 +14,7 @@
 | `message-accepted.json` | `POST /messages` 的 202 响应；首轮 `event_cursor=null` | OpenAPI `createMessage` |
 | `error.json` | 普通 404 错误体 | `error.schema.json` |
 | `error-stale.json` | 410 `stale_event_id`，带 `details.reset_required=true` | `error.schema.json` |
+| `task-results.json` | `GET /api/tasks` 的 10 题真实数据（smoke-add 的 second 走 closure live 回退） | `task-results.schema.json` |
 | `startup.txt` | `molt serve` 的 stdout（一行 JSON）与 stderr（人读两行） | — |
 
 ## 读取 SSE（fetch + ReadableStream）
