@@ -161,7 +161,7 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
   gate `adopt`，真实数字与负结果见 ADR-0008，证据在 `web/data`）。
 - 已实现：`web/page/` 零构建展示页（白底 8 屏、scroll-snap 逐屏、`file://` 直开、
   只读 `web/data`、`node web/page/check.mjs` 验收 462 条）；导出流程不产页面。
-- 已知缺口：`docs/research/core-known-gaps.md`（K1–K4；K5/K6 已在本轮修复，剩余边界见该文档）。
+- 已知缺口：`docs/research/core-known-gaps.md`（K1–K4；K4 startup 面已加固、in-process 残余未隔离；K5/K6 已修复）。
 
 ## 研究实验（probe）
 
@@ -181,4 +181,4 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
 - 反思稳定性 **6/6**（pro 3/3、flash 3/3）选择同一排序规则。
 - 现场 fast 彩排 **98s / 89s**，两次均为 `v3_stable_headroom`。
 - 已知边界：单约定（C1b）、单模型对、2–4 reps；C2 舍入族因 half-up 是领域常识而无 headroom；
-  verifier 的 `sitecustomize` 逃逸（K4）本轮未修，见 `docs/research/core-known-gaps.md`。
+  verifier 的 `sitecustomize` 启动面绕过已加固（5/7 攻击真实阻断，2/7 原版不可达）；solution 与 judge 同进程的 in-process 能力仍未隔离，见 `docs/decisions/0011-verifier-startup-hardening.md` 与 `docs/research/core-known-gaps.md`。

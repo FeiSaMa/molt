@@ -2,7 +2,7 @@
 
 编号用 K 前缀，避免与门禁夹具 G1–G8 混淆。
 
-状态：K1–K4 已知、暂缓；K5/K6 已在本轮修复（仅 `molt/core/audit.py`，不动协议、不重跑证据）。
+状态：K1–K3 已知、暂缓；K4 startup 面已加固（in-process 残余未隔离）；K5/K6 已修复（仅 `molt/core/audit.py`，不动协议、不重跑证据）。
 BoHack 2026（11/13–15）前冻结 core，赛后按 ADR 统一处理。
 范围：`molt/core/**` 与承重的 shell verifier；不包含 probe 实验的已知局限（见 `headroom-probe.md`）。
 
@@ -28,13 +28,13 @@ BoHack 2026（11/13–15）前冻结 core，赛后按 ADR 统一处理。
 - 建议：把该句改为"k=0 一票否决；重复判定未实现"，其余保留为取舍记录。
 - 时机：现在（纯文档）。
 
-## K4 verifier 的 `sitecustomize` 逃逸（shell 层，承重）
+## K4 verifier 启动面绕过（2026-11-13 部分修复）
 
-- 位置：`shells/code-repair/verifier.py`（`PYTHONPATH=str(workdir)` + `cwd=workdir` 跑 pytest）。probe shell 已脱敏，但同样没挡住这个入口。
-- 机理：Python 启动时自动 import `sitecustomize`；agent 在 workdir 放一个 `sitecustomize.py` 即可在 pytest 之前执行任意代码，改断言或改结果。`bench_tree_hash` 只覆盖 `bench/**`，workdir 不在哈希内，所以 `matches=True` 仍会成立。
-- 影响：agent 可以改裁判，而不是改被测代码。
-- 建议：verify 前检查 `sitecustomize.py` / `usercustomize.py` / `conftest.py` / `pytest.ini` 并判废；加 `PYTHONNOUSERSITE=1`；考虑 `-c` 指向空配置。
-- 时机：赛后；若赛前要动 `shells/code-repair/**`，需按冻结面升 `scenario_version` 并重跑基线。
+- 位置：`shells/code-repair/verifier.py`、`shells/probe/verifier.py`、`shells/probe-c2/verifier.py`。
+- 已修复：三 verifier 改为仓库外私有 staging，只复制 `solution.py`；`cwd=staging`、七键 env、`-P`、受控 pytest 配置、非法解 fail closed。真实攻击回归 5/7 复现并阻断；`pytest.ini` / `conftest.py` 2/7 在原启动方式下不可达。
+- 残余：solution 与 pytest/checker 同进程，仍可 monkeypatch、主动读文件或发现原 workdir；staging 不是完整 sandbox。真正边界是独立 judge 进程/容器。
+- 版本：`demo-7` / `probe-7` / `c2-2`（shell `1.0.1` / `0.3.1`）；旧 `probe-4` / `probe-6` / `c2-1` 证据属旧比较域，不可比较。
+- 详见 `docs/decisions/0011-verifier-startup-hardening.md`。
 
 ## K5 配对表曾被当作可信输入（本轮修复）
 
@@ -72,7 +72,8 @@ BoHack 2026（11/13–15）前冻结 core，赛后按 ADR 统一处理。
 ## 为什么其余项现在不修
 
 - K1/K2 动 core 协议语义，会让现有 run/result/gate 证据链失效；
-- K4 动冻结面，触发 `scenario_version` 升版与基线重跑；
+- K4 startup 面已在本批加固并迁移到新比较域；in-process 残余需要独立 judge 进程/容器，另批处理；
 - K3 是纯文档措辞，可与文档批次一起改；
 - K5/K6 已在本轮修复，只改审计读取路径，不升版本、不重跑证据。
-  K1–K4 都不影响 BoHack 的"现场两次运行"演示。
+
+K1–K3 与 K4 的 in-process 残余不影响 BoHack 的现场两次运行演示。

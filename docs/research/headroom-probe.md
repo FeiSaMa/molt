@@ -218,9 +218,7 @@ probe-5 的 `case_04` 用 `["bb", "bb", "aaa"]`，但它被 baseline 的 `dict.f
 - probe shell 是独立 shell；probe 结果不进入 demo 的 `bench_hash`，也不进入对外 claim。
 - 2c 的 gate 使用 $2.5 execution cap，`scenario.policy` 仍是 $1.0；两者不同层，报告只把 gate 作为附加信号。
 - oracle 的约定文本来自 probes/design.json，不在 oracle genome 的 artifacts 中；该文件已冻结并记录 sha256（见 probes/ARCHITECTURE.md），修改需重跑 oracle。
-- **K4 verifier 逃逸未修**：`shells/code-repair/verifier.py` 用 `PYTHONPATH` + `cwd=workdir` 跑 pytest，
-  agent 可用 `sitecustomize.py` 在测试前执行代码；probe shell 已脱敏，但同样没挡住这个入口。
-  本轮只修审计（K5/K6），K4 的现状与建议见 `docs/research/core-known-gaps.md`。
+- **K4 verifier 启动面已加固（in-process 残余未隔离）**：三 verifier 已改为仓库外私有 staging，只复制 `solution.py`；`sitecustomize` / `json` / `pytest` 遮蔽等 5/7 攻击真实阻断，2/7 原版不可达。solution 与 judge 同进程，仍可 monkeypatch 或主动读文件，staging 不是完整 sandbox。旧 `probe-4` / `probe-6` 证据属旧比较域，不可比较。详见 `docs/decisions/0011-verifier-startup-hardening.md` 与 `docs/research/core-known-gaps.md`。
 
 ## 9. 复算命令
 

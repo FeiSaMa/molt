@@ -36,7 +36,7 @@ v1 回放 → v2 反思 → v3 约束反思；签名漂移 10/12 → 5/16；x8 �
 
 ## 已知局限
 
-单约定 C1b、单模型对、2–4 reps、x8 不算提升、签名漂移 5/16、页面由前端实现；verifier `sitecustomize` 逃逸（K4）本轮未修，见 `docs/research/core-known-gaps.md`。
+单约定 C1b、单模型对、2–4 reps、x8 不算提升、签名漂移 5/16、页面由前端实现；verifier 启动面已加固（K4 的 5/7 攻击阻断，in-process 残余未隔离，见 ADR-0011），旧 probe-4/probe-6 证据属旧比较域。
 
 ## 文件地图
 

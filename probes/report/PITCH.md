@@ -104,7 +104,7 @@
 
 **【说】**
 
-> 局限说清楚：单一约定 C1b、单一模型对（pro/flash × high/max）、每题 2–4 reps。x8 不算提升，主 2c 口径仍是 `partial_transfer`。还有一条承重局限没修：verifier 的 `sitecustomize` 逃逸（K4）——agent 仍可能改裁判而不是改被测代码（`docs/research/core-known-gaps.md`）。我们不声称通用自进化。
+> 局限说清楚：单一约定 C1b、单一模型对（pro/flash × high/max）、每题 2–4 reps。x8 不算提升，主 2c 口径仍是 `partial_transfer`。还有一条承重局限（K4）：verifier 启动面已加固（5/7 攻击阻断），但 solution 与 judge 同进程的 in-process 能力仍未隔离——不能声称任意恶意 Python 已被完全隔离（ADR-0011）。我们不声称通用自进化。
 >
 > 我们交付的不是一个会自进化的 agent，是一套能证明它有没有进化的仪器：题集、反例接口、决策表、oracle、accept/audit 重算。
 
