@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "task_id": "search-off-by-one",
-  "scenario_version": "demo-6",
+  "scenario_version": "demo-7",
   "shell_id": "code-repair",
   "scope": "search",
   "title": "循环边界差一",

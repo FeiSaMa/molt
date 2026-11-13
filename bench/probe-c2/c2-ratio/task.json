@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "task_id": "c2-ratio",
-  "scenario_version": "c2-1",
+  "scenario_version": "c2-2",
   "shell_id": "probe-c2",
   "scope": "search",
   "title": "比率两位舍入",

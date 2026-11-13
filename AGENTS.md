@@ -12,17 +12,24 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 
 **claim（只允许这样说）**
 
-> 模型能力已经碾压这 10 道题；molt 证明的是：在成功率不降的约束下，进化可以发生在成本与墙钟上——high/full → low/full，cost −72%、wall −61%，gate adopt，1 live + 1 replay，证据可复算。
+> 模型能力已经碾压这 10 道题；molt 证明的是：在成功率不降的约束下，进化可以发生在成本与墙钟上——high/full → low/full，cost −72%、wall −61%，gate adopt，1 live + 1 replay；tracked 证据（run/result/gate 与 `web/data` 数据面）可复算，历史候选扫描的原始 run 未随仓库导出（见下三层）。
 
 - **题目饱和**：真实 Pi 基线 **10/10**，成功率维度没有 headroom。fixture `3/10`
   只是 `molt calibrate` 的校准口径，**不代表真实难度**，不得写成真实基线。
 - 在固定的 10 题搜索集上，**未观察到通过题数下降**（n=10，描述性结论，seed 不可控），
   且**单题执行成本不升**；搜索开销单列报告，不与执行成本互相抵消。
   原文见 [ADR-0003 §claim 措辞](docs/decisions/0003-scoring.md)。
-- 真实 Pi demo（demo-6，2026-11-11）：起点 `high/full`（v0-pi）**10/10、$0.035560、
-  106.9s**；proposal 派生候选 `low/full`（v0）**10/10、$0.009978、41.7s**。口径分开：
-  **扫描级** cost **−72%**、wall **−61%**（10 题扫描 vs 10 题扫描）；
-  **gate 级** cps **−70.0%**（`$0.003556 → $0.001068`，9 条 replay + 1 条 live）。
+- 真实 Pi demo（demo-6，2026-11-11）：起点 `high/full`（v0-pi）**10/10、$0.035560、106.9s**。
+  三层数字分开写，不得混用：
+  1. **历史扫描级 claim（[ADR-0008](docs/decisions/0008-demo.md)）**：proposal 派生候选
+     `low/full`（v0）**10/10、$0.009978、41.7s**；扫描级 cost **−72%**、wall **−61%**。
+     候选侧第 10 条扫描 run 未随仓库导出（被 closure live 顶替，只剩 9 条 replay），
+     不能表述为当前 tracked 数据已完整复算。
+  2. **当前 tracked 扫描级复算**：`$0.010684 / 42.6s`，**−70.0% / −60.1%**
+     （`web/data/search_results.json` + `web/data/runs.json` 的逐 run 墙钟）；
+     页面对候选 cost/wall 与历史 claim 的一致性标 `verified=false`。
+  3. **gate 级**：cps `$0.003556022… → $0.001068401`（**−70.0%**，`web/data/gate.json`）。
+     扫描总成本与墙钟不是 gate 级复算。
   holdout `5/5 → 5/5`，gate `adopt / lower_cost_per_solved`。
   这是**选定的高→低起点**，不是搜索空间最优性声称。
 - 负结果（同批 6 组）：**没有候选比 low/full 更便宜**（最接近的 `off/minimal` 仍 +19.2%）；
@@ -114,8 +121,8 @@ run → result → gate_decision → archive → snapshot → event → redactio
 ```bash
 uv sync --extra dev                                  # 装 dev 依赖（pytest / ruff / jsonschema）
 uv run ruff check .                                  # lint（line-length 100）
-uv run pytest -q                                     # 311 passed / 2 skipped；pi 标记默认 skip
-uv run python -m molt schema validate --all          # 36 条记录通过
+uv run pytest -q                                     # 516 passed / 2 skipped；pi 标记默认 skip
+uv run python -m molt schema validate --all          # 68 条记录通过
 uv run python -m molt scenario validate --scenario scenarios/demo/scenario.json  # validate 的 --scenario 是路径
 # 注意：scenario validate 的 --scenario 是 scenario.json 路径；
 # search/propose/audit/export/demo 的 --scenario 是 id（或 shell_id 别名）。

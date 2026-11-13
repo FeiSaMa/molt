@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "demo-6",
+  "scenario_version": "demo-7",
   "scenario_id": "demo",
   "title": "B2c demo：10 题搜索集 + 5 题留出集",
   "shell_id": "code-repair",
-  "shell_version": "1.0.0",
-  "bench_hash": "9d73c02090cfdf21f13e64020bc46b388a6ae8d373b2eae1f656e7c63ba41d81",
+  "shell_version": "1.0.1",
+  "bench_hash": "390c2d9dc7bc65709a9f6e51213c19c3f4ab6993aafbf8f133e814ce8de95845",
   "task_sets": {
     "search": [
       "smoke-add",

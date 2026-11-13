@@ -12,7 +12,7 @@ uv run python -m probes.run_demo --profile fast
 
 - 彩排两次：98.2s / $0.0507、88.8s / $0.0723（`probes/report/rehearsal/run{1,2}/run.json`，均 `v3_stable_headroom`）
 - 写 `web/data/probe/state.json`；页面轮询 `revision`（契约见 `probes/report/probe_state_schema.json`，展示规则见 `probes/report/VISUAL_SPEC.md`）
-- 降级：抽到 `partial_transfer` 切预录，页面标 `REPLAY`（`probes/report/VISUAL_SPEC.md`）
+- 降级：现场中断或超时（运行器写 `phase=partial` / `timeout`）时切预录，页面按 `VISUAL_SPEC.md` 显示 `REPLAY` / `PARTIAL` / `TIMEOUT`。随仓库的 `probes/report/rehearsal/run1/state-replay.json` 实际是 `v3_stable_headroom`、`live=false`，**不是** `partial_transfer` 示例；回放切换也不以 `partial_transfer` 为唯一触发。
 
 ## 关键数字（各带出处）
 
@@ -36,7 +36,7 @@ v1 回放 → v2 反思 → v3 约束反思；签名漂移 10/12 → 5/16；x8 �
 
 ## 已知局限
 
-单约定 C1b、单模型对、2–4 reps、x8 不算提升、签名漂移 5/16、页面由前端实现。
+单约定 C1b、单模型对、2–4 reps、x8 不算提升、签名漂移 5/16、页面由前端实现；verifier 启动面已加固（K4 的 5/7 攻击阻断，in-process 残余未隔离，见 ADR-0011），旧 probe-4/probe-6 证据属旧比较域。
 
 ## 文件地图
 

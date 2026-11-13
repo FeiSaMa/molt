@@ -29,7 +29,7 @@ def _scenario() -> Scenario:
 
 def test_task_sets_are_ten_search_and_five_holdout() -> None:
     scenario = _scenario()
-    assert scenario.scenario_version == "demo-6"
+    assert scenario.scenario_version == "demo-7"
     search = scenario.task_sets["search"]
     report = scenario.task_sets["report"]
     assert len(search) == SEARCH_COUNT
