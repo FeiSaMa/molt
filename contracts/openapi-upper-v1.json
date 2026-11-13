@@ -1,0 +1,610 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "molt upper-layer context graph API",
+    "version": "1.0.0",
+    "description": "B2 upper-layer graph, assets, REPLAY evaluation and CAS branch operations. Independent from the lab v1 and agent v1 contracts. All routes require Bearer except OPTIONS; Host/Origin follow the existing loopback rules. No route accepts a scenario, command, or filesystem path. Lower ids are references only; no lower verdict is merged into upper_decision."
+  },
+  "servers": [{ "url": "/" }],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/api/upper/graph": {
+      "get": {
+        "summary": "Read the current upper graph projection",
+        "description": "Read-only. Returns branches, the active pointer and immutable node summaries. Raw asset text, manifests, absolute paths and secrets are not returned.",
+        "responses": {
+          "200": {
+            "description": "Graph projection",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Graph" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "503": { "$ref": "#/components/responses/UpperUnavailable" }
+        }
+      }
+    },
+    "/api/upper/assets": {
+      "get": {
+        "summary": "Read redacted upper assets",
+        "description": "Read-only. Returns policy_memory, skill and mcp_profile metadata. source_path and raw content are never returned; seed identity and record hashes are returned separately.",
+        "responses": {
+          "200": {
+            "description": "Redacted asset cards",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Assets" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "503": { "$ref": "#/components/responses/UpperUnavailable" }
+        }
+      }
+    },
+    "/api/upper/replay": {
+      "post": {
+        "summary": "Run the fixed C1b REPLAY evaluation",
+        "description": "Fixed scenario c1b-memory-v1. No scenario, path or command parameter is accepted. Only one REPLAY may run at a time; a second request returns 409 upper_busy. The response carries its own upper decisions and lower_* references; it never copies a lower gate verdict.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "maxProperties": 0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "REPLAY summary",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ReplaySummary" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "503": { "$ref": "#/components/responses/UpperUnavailable" }
+        }
+      }
+    },
+    "/api/upper/evaluations/{evaluation_id}": {
+      "get": {
+        "summary": "Read one persisted upper evaluation",
+        "description": "Read-only. Includes task-level transfer/regression rows, reference counts, retrieval provenance, cost=0, latency and error buckets. The companion decision is nested when available.",
+        "parameters": [
+          {
+            "name": "evaluation_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "minLength": 1, "maxLength": 160 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Evaluation record",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Evaluation" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "503": { "$ref": "#/components/responses/UpperUnavailable" }
+        }
+      }
+    },
+    "/api/upper/branches/{branch_id}/switch": {
+      "post": {
+        "summary": "Atomically activate a branch (CAS)",
+        "description": "Moves the active pointer and the whole context snapshot to the branch tip. expected_revision and expected_tip are required compare-and-swap guards. Stale revision returns 409 stale_revision; approval or hash validation failure returns 422 approval_required or 422 graph_validation and leaves pointer unchanged.",
+        "parameters": [
+          {
+            "name": "branch_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "minLength": 1, "maxLength": 160 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SwitchRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New active pointer",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SwitchResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "503": { "$ref": "#/components/responses/UpperUnavailable" }
+        }
+      }
+    },
+    "/api/upper/rollback": {
+      "post": {
+        "summary": "Move a branch head back to a historical node",
+        "description": "Move-head-only: the branch tip and active pointer move to target_node_id, while nodes and evidence are retained. target_node_id must be an ancestor of the current branch tip. Stale revision returns 409 stale_revision; approval/hash/ancestry failures return 422 and leave pointer unchanged.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RollbackRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rollback result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RollbackResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "503": { "$ref": "#/components/responses/UpperUnavailable" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "opaque"
+      }
+    },
+    "schemas": {
+      "ActivePointer": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["branch_id", "context_node_id", "context_hash"],
+        "properties": {
+          "branch_id": { "type": "string" },
+          "context_node_id": { "type": "string" },
+          "context_hash": { "type": "string" }
+        }
+      },
+      "Branch": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["branch_id", "label", "permission_scope", "tip_node_id", "tip_hash"],
+        "properties": {
+          "branch_id": { "type": "string" },
+          "label": { "type": "string" },
+          "permission_scope": { "type": ["string", "null"] },
+          "tip_node_id": { "type": "string" },
+          "tip_hash": { "type": "string" }
+        }
+      },
+      "Node": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "node_id",
+          "parents",
+          "kind",
+          "origin",
+          "eval_state",
+          "context_hash",
+          "hash_short",
+          "created_at"
+        ],
+        "properties": {
+          "node_id": { "type": "string" },
+          "parents": { "type": "array", "items": { "type": "string" } },
+          "kind": { "type": "string", "enum": ["root", "context", "evaluation", "decision", "rollback"] },
+          "origin": { "type": "string", "enum": ["seed_import", "synthetic", "real_run"] },
+          "eval_state": { "type": "string", "enum": ["not_evaluated", "replayed", "evaluated"] },
+          "context_hash": { "type": "string" },
+          "hash_short": { "type": "string" },
+          "created_at": { "type": "string" }
+        }
+      },
+      "Graph": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["revision", "active", "branches", "nodes"],
+        "properties": {
+          "revision": { "type": "integer", "minimum": 0 },
+          "active": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/ActivePointer" },
+              { "type": "null" }
+            ]
+          },
+          "branches": { "type": "array", "items": { "$ref": "#/components/schemas/Branch" } },
+          "nodes": { "type": "array", "items": { "$ref": "#/components/schemas/Node" } }
+        }
+      },
+      "Asset": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "asset_id",
+          "kind",
+          "name",
+          "version",
+          "source_category",
+          "classification",
+          "summary",
+          "seed_identity_hash",
+          "record_hash",
+          "status",
+          "origin",
+          "eval_state"
+        ],
+        "properties": {
+          "asset_id": { "type": "string" },
+          "kind": { "type": "string", "enum": ["policy_memory", "skill", "mcp_profile"] },
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "source_category": { "type": ["string", "null"] },
+          "classification": { "type": ["string", "null"] },
+          "summary": { "type": ["string", "null"] },
+          "seed_identity_hash": { "type": ["string", "null"] },
+          "record_hash": { "type": ["string", "null"] },
+          "hash_short": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "evaluated", "approved", "rejected", "active", "rolled_back"]
+          },
+          "origin": { "type": "string", "enum": ["seed_import", "synthetic", "real_run"] },
+          "eval_state": { "type": "string", "enum": ["not_evaluated", "replayed", "evaluated"] },
+          "permission_scope": { "type": ["string", "null"] },
+          "approval_level": { "type": ["string", "null"], "enum": ["standard", "strict", null] },
+          "pending_permission": { "type": ["object", "null"], "additionalProperties": true },
+          "implementation_status": { "type": "string", "enum": ["stub", "implemented"] },
+          "verified_lineage": { "type": "boolean" }
+        }
+      },
+      "Assets": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scenario", "counts", "assets"],
+        "properties": {
+          "scenario": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["upper_scenario_id", "upper_scenario_version", "family"],
+                "properties": {
+                  "upper_scenario_id": { "type": "string" },
+                  "upper_scenario_version": { "type": "string" },
+                  "family": { "type": "string" }
+                }
+              },
+              { "type": "null" }
+            ]
+          },
+          "counts": {
+            "type": "object",
+            "additionalProperties": { "type": "integer", "minimum": 0 }
+          },
+          "assets": { "type": "array", "items": { "$ref": "#/components/schemas/Asset" } }
+        }
+      },
+      "TaskRate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["attempts", "passed", "pass_rate"],
+        "properties": {
+          "attempts": { "type": "integer", "minimum": 0 },
+          "passed": { "type": "integer", "minimum": 0 },
+          "pass_rate": { "type": "number" }
+        }
+      },
+      "ReplayPhaseItem": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "asset_id",
+          "asset_version",
+          "evaluation_id",
+          "decision_id",
+          "upper_decision",
+          "reason",
+          "candidate",
+          "baseline",
+          "reference_counts",
+          "retrieval"
+        ],
+        "properties": {
+          "asset_id": { "type": "string" },
+          "asset_version": { "type": "string" },
+          "evaluation_id": { "type": "string" },
+          "decision_id": { "type": "string" },
+          "upper_decision": { "type": "string", "enum": ["keep", "reject", "rollback"] },
+          "reason": { "type": "string" },
+          "candidate": { "$ref": "#/components/schemas/TaskRate" },
+          "baseline": { "$ref": "#/components/schemas/TaskRate" },
+          "reference_counts": { "type": "object", "additionalProperties": true },
+          "retrieval": { "type": "object", "additionalProperties": true },
+          "telemetry": { "type": "object", "additionalProperties": true },
+          "lower_refs": { "type": "object", "additionalProperties": true },
+          "context_node_id": { "type": ["string", "null"] },
+          "branch_id": { "type": ["string", "null"] },
+          "context_hash": { "type": ["string", "null"] },
+          "context_status": { "type": "string" }
+        }
+      },
+      "ReplaySummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "replay_id",
+          "mode",
+          "mode_label",
+          "calls_model",
+          "upper_scenario_id",
+          "upper_scenario_version",
+          "generated_at",
+          "phases",
+          "decisions",
+          "graph",
+          "graph_rollback",
+          "asset_status"
+        ],
+        "properties": {
+          "schema_version": { "type": "string" },
+          "replay_id": { "type": "string" },
+          "mode": { "type": "string", "enum": ["replay"] },
+          "mode_label": { "type": "string", "enum": ["REPLAY"] },
+          "calls_model": { "type": "boolean", "enum": [false] },
+          "upper_scenario_id": { "type": "string" },
+          "upper_scenario_version": { "type": "string" },
+          "scenario_ref": { "type": "string" },
+          "state_scope": { "type": "string", "enum": ["external"] },
+          "generated_at": { "type": "string" },
+          "phases": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["transfer", "regression"],
+            "properties": {
+              "transfer": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/ReplayPhaseItem" }
+              },
+              "regression": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/ReplayPhaseItem" }
+              }
+            }
+          },
+          "decisions": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "baseline_evaluations": { "type": "object", "additionalProperties": true },
+          "graph": { "$ref": "#/components/schemas/Graph" },
+          "graph_rollback": {
+            "oneOf": [
+              { "type": "object", "additionalProperties": true },
+              { "type": "null" }
+            ]
+          },
+          "asset_status": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["active", "rolled_back"],
+            "properties": {
+              "active": { "type": "array", "items": { "type": "string" } },
+              "rolled_back": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "pending_permissions": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "notes": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Evaluation": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "evaluation_id",
+          "upper_scenario_id",
+          "upper_scenario_version",
+          "asset_id",
+          "asset_version",
+          "family",
+          "task_set",
+          "mode",
+          "status",
+          "tasks",
+          "metrics",
+          "reference_counts",
+          "lower_refs"
+        ],
+        "properties": {
+          "evaluation_id": { "type": "string" },
+          "upper_scenario_id": { "type": "string" },
+          "upper_scenario_version": { "type": "string" },
+          "asset_id": { "type": "string" },
+          "asset_version": { "type": "string" },
+          "family": { "type": "string" },
+          "task_set": { "type": "string", "enum": ["transfer", "regression"] },
+          "mode": { "type": "string", "enum": ["replay", "live"] },
+          "mode_label": { "type": "string", "enum": ["REPLAY", "LIVE"] },
+          "status": { "type": "string", "enum": ["pending", "passed", "failed"] },
+          "cost_usd": { "type": "number", "minimum": 0 },
+          "cost_source": { "type": "string" },
+          "tasks": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "metrics": { "type": "object", "additionalProperties": true },
+          "telemetry": { "type": "object", "additionalProperties": true },
+          "reference_counts": { "type": "object", "additionalProperties": true },
+          "lower_refs": { "type": "object", "additionalProperties": true },
+          "context_node_id": { "type": ["string", "null"] },
+          "branch_id": { "type": ["string", "null"] },
+          "context_hash": { "type": ["string", "null"] },
+          "context_status": { "type": "string" },
+          "decision_id": { "type": ["string", "null"] },
+          "decision": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "SwitchRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expected_revision", "expected_tip"],
+        "properties": {
+          "expected_revision": { "type": "integer", "minimum": 0 },
+          "expected_tip": { "type": "string", "minLength": 1, "maxLength": 160 }
+        }
+      },
+      "SwitchResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["changed", "revision", "active"],
+        "properties": {
+          "changed": { "type": "boolean" },
+          "revision": { "type": "integer", "minimum": 0 },
+          "active": { "$ref": "#/components/schemas/ActivePointer" },
+          "branch": { "$ref": "#/components/schemas/Branch" }
+        }
+      },
+      "RollbackRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["branch_id", "target_node_id", "expected_revision"],
+        "properties": {
+          "branch_id": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "target_node_id": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "expected_revision": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "RollbackResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "changed",
+          "branch_id",
+          "target_node_id",
+          "revision",
+          "active",
+          "history_retained"
+        ],
+        "properties": {
+          "changed": { "type": "boolean" },
+          "branch_id": { "type": "string" },
+          "target_node_id": { "type": "string" },
+          "revision": { "type": "integer", "minimum": 0 },
+          "active": { "$ref": "#/components/schemas/ActivePointer" },
+          "history_retained": { "type": "boolean", "enum": [true] }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "bad_request",
+                  "unauthorized",
+                  "forbidden_origin",
+                  "not_found",
+                  "method_not_allowed",
+                  "stale_revision",
+                  "stale_tip",
+                  "conflict",
+                  "upper_busy",
+                  "payload_too_large",
+                  "unsupported_media_type",
+                  "approval_required",
+                  "graph_validation",
+                  "upper_unavailable",
+                  "upper_eval_unavailable",
+                  "internal"
+                ]
+              },
+              "message": { "type": "string" },
+              "details": { "type": "object", "additionalProperties": true }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Malformed request",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid Bearer token",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "ForbiddenOrigin": {
+        "description": "Origin not allowed",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "Unknown branch, node or evaluation",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Conflict": {
+        "description": "CAS conflict, stale tip, or busy REPLAY",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "PayloadTooLarge": {
+        "description": "Body exceeds 64 KiB",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "UnsupportedMediaType": {
+        "description": "Non-empty body whose Content-Type is not application/json (shared pre-check)",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unprocessable": {
+        "description": "Approval, hash or graph-validity failure; pointer unchanged",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "UpperUnavailable": {
+        "description": "Upper state/evaluator unavailable",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    }
+  }
+}

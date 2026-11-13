@@ -209,6 +209,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_serve.add_argument("--host", default="127.0.0.1", help="只允许 127.0.0.1 / localhost")
     p_serve.add_argument("--port", type=int, default=0, help="监听端口；默认 0（临时端口）")
     p_serve.add_argument("--state", type=Path, default=Path("state"), help="state 根（token 默认落这里）")
+    p_serve.add_argument(
+        "--upper-state",
+        type=Path,
+        default=None,
+        help="上层图谱 state（必须在仓库外）；缺省沿用 --state，仓库内则禁用 /api/upper",
+    )
     p_serve.add_argument("--token-file", type=Path, default=None, help="token 输出路径；默认 <state>/token")
     p_serve.add_argument(
         "--allow-origin",
@@ -1288,6 +1294,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
         host=args.host,
         port=args.port,
         state=args.state,
+        upper_state=args.upper_state,
         token_file=args.token_file,
         allowed_origins=args.allow_origin,
         provider=args.provider,

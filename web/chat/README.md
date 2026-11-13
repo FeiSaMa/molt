@@ -60,3 +60,25 @@ API 默认 mock provider，连通后可以立即进行本地对话；提到实�
 - `DELETE /api/lab/runs/{id}`：取消
 
 除 `/api/lab/openapi.json` 外均要求 Bearer。服务器没有 `bwrap` 时执行端点不会上线。
+
+## 上层上下文图谱（B2）
+
+左侧新增“上层上下文图谱”区（桌面左栏，移动端单列）：
+
+- 分支 tab：label、permission_scope、ACTIVE 标记、tip 短 hash；
+- 节点路径：synthetic / seed_import / real_run 用不同边框与文字徽章区分；未评估节点标
+  “未评估”，不会显示成成功；
+- 资产卡片：脱敏 summary、kind、seed identity / record 短 hash、origin/status 徽章；
+  MCP profile 显示 permission_scope 与待审批权限；
+- REPLAY 评估：x5–x7 transfer、x8 regression、gen2 rollback / gen4 keep；REPLAY 徽章
+  明显，数字全部来自 API；
+- 按钮：运行 REPLAY、切换分支、回退。冲突/审批失败直接显示 API 的 `details.reason`，
+  不会伪造成功；失败也是结果。
+
+API 详见 [`docs/api/upper-api.md`](../../docs/api/upper-api.md) 与
+`contracts/openapi-upper-v1.json`。上层 state（`--upper-state`，缺省取 `--state`）必须在
+仓库外；仓库内部署时用 `--upper-state` 指到仓库外目录，否则 `/api/upper/**` 返回 503，
+页面显示未启用。该区不读取 `web/data`，不修改 `web/page/**`。
+
+页面重新加载后，REPLAY 卡片不会自动恢复（浏览器状态只在当前标签页内存）；资产状态与
+评估记录仍在服务端。再次点击“运行 REPLAY”会重新执行固定 C1b 评估（数秒，零模型成本）。

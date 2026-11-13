@@ -2,7 +2,7 @@
  * Bearer token can be sent; native EventSource cannot set Authorization. */
 (function () {
   "use strict";
-  var state = { base: "", token: "", session: null, cursor: 0, busy: false, abort: null, lab: { caps: null, runId: null, busy: false, abort: null } };
+  var state = { base: "", token: "", session: null, cursor: 0, busy: false, abort: null, lab: { caps: null, runId: null, busy: false, abort: null }, upper: { graph: null, assets: null, replay: null, selected: null, busy: false, loading: false } };
   var $ = function (id) { return document.getElementById(id); };
   var messages = $("messages"), input = $("message-input"), send = $("send-button");
   var dialog = $("settings-dialog"), error = $("settings-error");
@@ -13,7 +13,12 @@
     return fetch(state.base.replace(/\/$/, "") + path, opts).then(function (res) {
       return res.text().then(function (text) {
         var body = text ? JSON.parse(text) : null;
-        if (!res.ok) { var e = new Error(body && body.error ? body.error.message : "请求失败（" + res.status + "）"); e.status = res.status; throw e; }
+        if (!res.ok) {
+          var e = new Error(body && body.error ? body.error.message : "请求失败（" + res.status + "）");
+          e.status = res.status;
+          if (body && body.error) { e.code = body.error.code; e.details = body.error.details; }
+          throw e;
+        }
         return body;
       });
     });
@@ -222,9 +227,314 @@
     api("/api/lab/runs/" + encodeURIComponent(lab.runId), { method: "DELETE" }).catch(function (err) { setLabError("取消失败：" + err.message); });
   }
 
+  function upperSetStatus(text) { var node = $("upper-status"); if (node) node.textContent = text; }
+  function upperSetError(text) { var node = $("upper-error"); if (!node) return; node.textContent = text || ""; node.hidden = !text; }
+  function upperDescribe(err) {
+    var details = (err && err.details) || {}, reason = details.reason || (err && err.code) || "";
+    var extra = "";
+    if (details.current_revision !== undefined) extra = "；当前 revision " + details.current_revision;
+    else if (details.current_tip) extra = "；当前 tip " + String(details.current_tip).slice(0, 12);
+    return (err && err.message ? err.message : "请求失败") + (reason ? " [" + reason + "]" : "") + extra;
+  }
+  function shortHash(value) { return value ? String(value).slice(0, 12) : "—"; }
+  function upperConflictRefresh(err, label) {
+    if (!err || (err.status !== 409 && err.status !== 422)) return;
+    var message = label + "失败：" + upperDescribe(err);
+    upperSetError(message);
+    loadUpper().then(function () {
+      upperSetError(message + "；已刷新 active/revision");
+      upperSetStatus(label + "失败 · 已刷新");
+    }).catch(function () { upperSetError(message); });
+  }
+  function upperBranchList() { return (state.upper.graph && state.upper.graph.branches) || []; }
+  function upperSelectedBranch() {
+    var branches = upperBranchList(), wanted = state.upper.selected;
+    for (var i = 0; i < branches.length; i++) if (branches[i].branch_id === wanted) return branches[i];
+    var ops = branches.filter(function (item) { return item.label === "ops"; })[0];
+    var branch = ops || branches[0] || null;
+    state.upper.selected = branch ? branch.branch_id : null;
+    return branch;
+  }
+  function upperChain(branch) {
+    var nodes = (state.upper.graph && state.upper.graph.nodes) || [], byId = {}, chain = [], seen = {};
+    nodes.forEach(function (node) { byId[node.node_id] = node; });
+    var current = branch ? branch.tip_node_id : null;
+    while (current && byId[current] && !seen[current]) {
+      seen[current] = true; chain.push(byId[current]);
+      var parents = byId[current].parents || []; current = parents.length ? parents[0] : null;
+    }
+    return chain.reverse();
+  }
+  function upperOriginText(origin) { return origin === "real_run" ? "REAL RUN" : origin === "seed_import" ? "SEED" : "SYNTHETIC"; }
+  function upperEvalText(stateName) {
+    if (stateName === "not_evaluated") return "未评估";
+    if (stateName === "replayed") return "REPLAY 已复算";
+    return "已评估";
+  }
+  function upperBadge(text, cls) { var node = element("span", "upper-badge " + (cls || ""), text); return node; }
+  function renderUpperNode(node, compact) {
+    var row = element("article", "upper-node " + (compact ? "is-compact " : "") + "origin-" + (node.origin || "synthetic") + (node.eval_state === "not_evaluated" ? " is-unevaluated" : ""));
+    var head = element("div", "upper-node-head");
+    head.appendChild(upperBadge(upperOriginText(node.origin), "badge-" + (node.origin || "synthetic")));
+    head.appendChild(upperBadge(node.kind, "badge-kind"));
+    head.appendChild(upperBadge(upperEvalText(node.eval_state), node.eval_state === "not_evaluated" ? "badge-pending" : "badge-done"));
+    row.appendChild(head);
+    row.appendChild(element("p", "upper-node-id", "节点 " + shortHash(node.hash_short || node.node_id) + " · context " + shortHash(node.context_hash)));
+    if (!compact) row.appendChild(element("p", "upper-node-date", node.created_at || ""));
+    return row;
+  }
+  function renderUpper() {
+    var graph = state.upper.graph;
+    if (!graph) return;
+    var branchesRoot = $("upper-branches"), activeRoot = $("upper-active"), pathRoot = $("upper-path");
+    empty(branchesRoot); empty(activeRoot); empty(pathRoot);
+    var selected = upperSelectedBranch();
+    upperBranchList().forEach(function (branch) {
+      var isActive = graph.active && graph.active.branch_id === branch.branch_id;
+      var button = element("button", "upper-branch" + (isActive ? " is-active" : "") + (selected && selected.branch_id === branch.branch_id ? " is-selected" : ""));
+      button.type = "button";
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-pressed", String(!!(selected && selected.branch_id === branch.branch_id)));
+      button.appendChild(element("b", "", branch.label));
+      button.appendChild(element("small", "", (branch.permission_scope || "scope —") + " · tip " + shortHash(branch.tip_hash)));
+      if (isActive) button.appendChild(upperBadge("ACTIVE", "badge-active"));
+      button.addEventListener("click", function () { state.upper.selected = branch.branch_id; renderUpper(); });
+      branchesRoot.appendChild(button);
+    });
+    if (graph.active) {
+      activeRoot.appendChild(upperBadge("ACTIVE POINTER", "badge-active"));
+      activeRoot.appendChild(element("span", "", "revision " + graph.revision + " · 分支 " + (graph.active.branch_id || "—") + " · context " + shortHash(graph.active.context_node_id) + " · hash " + shortHash(graph.active.context_hash)));
+    } else {
+      activeRoot.appendChild(element("span", "upper-muted", "没有 active pointer"));
+    }
+    if (!selected) { updateUpperButtons(); return; }
+    var chain = upperChain(selected);
+    if (!chain.length) pathRoot.appendChild(element("p", "upper-muted", "该分支没有可展示的提交节点。"));
+    chain.forEach(function (node, index) {
+      if (index) pathRoot.appendChild(element("span", "upper-edge", "↓"));
+      pathRoot.appendChild(renderUpperNode(node, false));
+    });
+    var onChain = {};
+    chain.forEach(function (node) { onChain[node.node_id] = true; });
+    var others = graph.nodes.filter(function (node) { return !onChain[node.node_id]; });
+    if (others.length) {
+      var more = element("details", "upper-other-nodes");
+      more.appendChild(element("summary", "", "其它节点（未成为 tip）· " + others.length));
+      others.forEach(function (node) { more.appendChild(renderUpperNode(node, true)); });
+      pathRoot.appendChild(more);
+    }
+    renderUpperAssets();
+    updateUpperButtons();
+  }
+  function renderUpperAssets() {
+    var root = $("upper-assets");
+    if (!root) return;
+    empty(root);
+    var payload = state.upper.assets;
+    if (!payload || !payload.assets) { root.appendChild(element("p", "upper-muted", "未读取到资产。")); return; }
+    var head = element("div", "upper-section-head");
+    head.appendChild(element("span", "", "资产卡片"));
+    var counts = payload.counts || {};
+    head.appendChild(element("small", "", Object.keys(counts).map(function (kind) { return kind + " " + counts[kind]; }).join(" · ")));
+    root.appendChild(head);
+    payload.assets.forEach(function (asset) {
+      var card = element("article", "upper-asset kind-" + asset.kind);
+      var title = element("div", "upper-asset-head");
+      title.appendChild(element("b", "", asset.name || asset.asset_id));
+      title.appendChild(upperBadge(asset.kind, "badge-kind"));
+      card.appendChild(title);
+      card.appendChild(element("p", "upper-asset-summary", asset.summary || "（无摘要）"));
+      var meta = element("div", "upper-asset-meta");
+      meta.appendChild(element("span", "", "v" + (asset.version || "—")));
+      meta.appendChild(upperBadge(asset.status || "draft", asset.status === "active" ? "badge-active" : asset.status === "rolled_back" ? "badge-rollback" : "badge-kind"));
+      meta.appendChild(upperBadge(upperOriginText(asset.origin), "badge-" + (asset.origin || "synthetic")));
+      if (asset.eval_state === "not_evaluated") meta.appendChild(upperBadge("未评估", "badge-pending"));
+      else if (asset.eval_state === "replayed") meta.appendChild(upperBadge("REPLAY", "badge-replay"));
+      else meta.appendChild(upperBadge("已评估", "badge-done"));
+      card.appendChild(meta);
+      var identity = asset.seed_identity_hash ? "seed identity " + shortHash(asset.seed_identity_hash) : "record " + shortHash(asset.record_hash || asset.hash_short);
+      card.appendChild(element("p", "upper-asset-hash", identity + (asset.classification ? " · " + asset.classification : "")));
+      if (asset.kind === "mcp_profile") {
+        card.appendChild(element("p", "upper-asset-scope", "权限 " + (asset.permission_scope || "—") + " · 审批 " + (asset.approval_level || "—")));
+        if (asset.pending_permission) card.appendChild(element("p", "upper-warning", "权限变更待审批：" + (asset.pending_permission.requested_scope || "—")));
+      }
+      if (asset.status_reason) card.appendChild(element("p", "upper-muted", asset.status_reason));
+      root.appendChild(card);
+    });
+  }
+  function decisionBadge(decision) {
+    return upperBadge(String(decision || "—").toUpperCase(), decision === "keep" ? "badge-keep" : decision === "rollback" ? "badge-rollback" : "badge-reject");
+  }
+  function renderUpperEval() {
+    var root = $("upper-eval");
+    if (!root) return;
+    empty(root);
+    var replay = state.upper.replay;
+    if (!replay) {
+      root.appendChild(element("p", "upper-muted", "尚未运行 REPLAY。点击下方按钮运行固定 C1b 评估；不会调用模型。"));
+      return;
+    }
+    var head = element("div", "upper-eval-head");
+    head.appendChild(element("span", "replay-badge", "REPLAY"));
+    head.appendChild(element("b", "", "C1b 记忆迁移 / 回退"));
+    head.appendChild(element("small", "", (replay.upper_scenario_version || "") + " · " + (replay.replay_id || "")));
+    root.appendChild(head);
+    root.appendChild(element("p", "upper-muted", "mode=" + replay.mode + " · calls_model=" + String(replay.calls_model) + " · 成本 0（重新判分记录解法）"));
+    ["transfer", "regression"].forEach(function (phase) {
+      (replay.phases[phase] || []).forEach(function (item) {
+        var card = element("article", "upper-eval-row decision-" + (item.upper_decision || ""));
+        var rowHead = element("div", "upper-eval-row-head");
+        rowHead.appendChild(upperBadge(phase === "transfer" ? "TRANSFER" : "REGRESSION", "badge-kind"));
+        rowHead.appendChild(element("b", "", item.asset_id + " · " + item.asset_version));
+        rowHead.appendChild(decisionBadge(item.upper_decision));
+        card.appendChild(rowHead);
+        var candidate = item.candidate || {}, baseline = item.baseline || {};
+        card.appendChild(element("p", "upper-eval-numbers", "候选 " + (candidate.passed || 0) + "/" + (candidate.attempts || 0) + " · 基线 " + (baseline.passed || 0) + "/" + (baseline.attempts || 0)));
+        card.appendChild(element("p", "upper-muted", item.reason || ""));
+        var taskIds = phase === "transfer" ? "x5–x7" : "x8";
+        card.appendChild(element("p", "upper-muted", "任务 " + taskIds + " · eval " + (item.evaluation_id || "—")));
+        var evidence = element("button", "text-button", "查看逐题证据");
+        evidence.type = "button";
+        evidence.addEventListener("click", function () { showUpperEvaluation(item.evaluation_id); });
+        card.appendChild(evidence);
+        root.appendChild(card);
+      });
+    });
+    if (replay.graph_rollback) {
+      root.appendChild(element("p", "upper-rollback-note", "负迁移 -> 回退：gen2 在 x8 回归后 rollback 到 " + shortHash(replay.graph_rollback.target_node_id) + "；历史节点与证据保留。"));
+    }
+    if (replay.graph && replay.graph.nodes) {
+      var strip = element("details", "upper-replay-path");
+      strip.appendChild(element("summary", "", "REPLAY 路径节点 · " + replay.graph.nodes.length));
+      var nodes = replay.graph.nodes;
+      nodes.forEach(function (node) { strip.appendChild(renderUpperNode(node, true)); });
+      root.appendChild(strip);
+    }
+  }
+  function renderUpperEvidence() {
+    var root = $("upper-evidence");
+    if (!root) return;
+    empty(root);
+    var replay = state.upper.replay;
+    root.appendChild(element("p", "", "图谱 revision 与 active pointer 来自 /api/upper/graph；资产来自 /api/upper/assets。切换/回退在服务端做 CAS 与审批校验，失败时不改 pointer。"));
+    root.appendChild(element("p", "", "REPLAY 在独立状态目录运行，不改当前 synthetic 图谱的 active pointer；资产状态来自上层 registry，与 synthetic 路径分开标注。"));
+    root.appendChild(element("p", "", "REPLAY 只重新判分记录解法；synthetic/seed 节点不产生 upper decision，页面标“未评估”。"));
+    if (!replay) { root.appendChild(element("p", "upper-muted", "运行 REPLAY 后可展开评估 ID 与 lower_refs。")); return; }
+    (replay.decisions || []).forEach(function (decision) {
+      var refs = decision.lower_refs || {};
+      var line = element("p", "upper-evidence-line");
+      line.appendChild(element("b", "", decision.asset_id + " · " + decision.upper_decision + " "));
+      line.appendChild(element("span", "", "lower_refs: scenario " + (refs.lower_scenario_id || "—") + "/" + (refs.lower_scenario_version || "—") + " · genome " + shortHash(refs.lower_genome_id) + " · runs " + ((refs.lower_run_ids || []).length)));
+      var button = element("button", "text-button", "打开评估");
+      button.type = "button";
+      button.addEventListener("click", function () { showUpperEvaluation(decision.evaluation_ids && decision.evaluation_ids[0]); });
+      line.appendChild(button);
+      root.appendChild(line);
+    });
+    if (replay.pending_permissions && replay.pending_permissions.length) {
+      replay.pending_permissions.forEach(function (item) {
+        root.appendChild(element("p", "upper-warning", "待审批权限：" + item.asset_id + " -> " + (item.requested_scope || "—") + "（strict）"));
+      });
+    }
+  }
+  function showUpperEvaluation(evaluationId) {
+    if (!evaluationId) return;
+    var root = $("upper-evidence");
+    upperSetError("");
+    api("/api/upper/evaluations/" + encodeURIComponent(evaluationId)).then(function (record) {
+      empty(root);
+      root.appendChild(element("h3", "", evaluationId + " · " + record.task_set + " · " + record.status));
+      root.appendChild(element("p", "upper-muted", "mode=" + record.mode + " · policy=" + record.asset_id + " v" + record.asset_version));
+      (record.tasks || []).forEach(function (task) {
+        var recorded = task.recorded || {}, replayed = task.replayed || {}, retrieval = task.retrieval || {};
+        var recordedSolved = recorded.solved;
+        var recordedText = recordedSolved === true ? "solved" : recordedSolved === false ? "unsolved" : "—";
+        var row = element("p", "upper-task-row");
+        row.appendChild(element("span", "upper-task-label", task.task_id + " · 变体 " + (recorded.group || "—") + " · r" + task.rep));
+        row.appendChild(element("span", "upper-task-source", "source_run " + shortHash(task.source_run_id)));
+        row.appendChild(element("span", "upper-task-result", (replayed.passed ? "REPLAY 通过" : "REPLAY 未通过") + " · recorded " + recordedText + " · " + (task.latency_ms || 0) + "ms · cost $" + (task.cost_usd || 0) + " · retrieval " + ((retrieval.hits || []).length) + " hit"));
+        root.appendChild(row);
+      });
+      var counts = record.reference_counts || {};
+      root.appendChild(element("p", "upper-muted", "reference_counts: " + JSON.stringify(counts)));
+      var telemetry = record.telemetry || {};
+      if (telemetry.errors) root.appendChild(element("p", "upper-muted", "errors: " + JSON.stringify(telemetry.errors)));
+      if (telemetry.latency_ms) root.appendChild(element("p", "upper-muted", "latency: total " + telemetry.latency_ms.total + "ms · max " + telemetry.latency_ms.max + "ms"));
+      if (record.decision) root.appendChild(element("p", "upper-muted", "upper_decision: " + record.decision.upper_decision + " · " + record.decision.reason));
+    }).catch(function (err) { upperSetError("读取评估失败：" + upperDescribe(err)); });
+  }
+  function updateUpperButtons() {
+    var graph = state.upper.graph, branch = upperSelectedBranch();
+    var busy = state.upper.busy || state.upper.loading;
+    var replayButton = $("upper-replay"), switchButton = $("upper-switch"), rollbackButton = $("upper-rollback");
+    if (!replayButton || !switchButton || !rollbackButton) return;
+    replayButton.disabled = !graph || busy;
+    var activeId = graph && graph.active ? graph.active.branch_id : null;
+    switchButton.disabled = !graph || !branch || busy || activeId === branch.branch_id;
+    rollbackButton.disabled = !graph || !branch || busy || upperChain(branch).length < 2;
+  }
+  function loadUpper() {
+    state.upper.loading = true; updateUpperButtons(); upperSetStatus("读取中…"); upperSetError("");
+    return Promise.all([api("/api/upper/graph"), api("/api/upper/assets")]).then(function (results) {
+      state.upper.graph = results[0]; state.upper.assets = results[1];
+      var branch = upperSelectedBranch();
+      upperSetStatus(state.upper.replay ? "REPLAY 已加载" : "就绪");
+      $("upper-scope").textContent = "只读图谱 · " + (state.upper.graph.branches || []).length + " 条分支 · " + (state.upper.graph.nodes || []).length + " 个节点；切换与回退需要 CAS 与审批。";
+      renderUpper(); renderUpperEval(); renderUpperEvidence(); updateUpperButtons();
+      return branch;
+    }).catch(function (err) {
+      if (err && err.status === 503) {
+        upperSetStatus("未启用");
+        $("upper-scope").textContent = "上层状态未启用：服务端 --state 必须在仓库外，且上层 evaluator 可用。";
+        upperSetError("上层 API 503：" + upperDescribe(err));
+      } else {
+        upperSetStatus("读取失败");
+        upperSetError("读取上层图谱失败：" + upperDescribe(err));
+      }
+      updateUpperButtons();
+    }).finally(function () { state.upper.loading = false; updateUpperButtons(); });
+  }
+  function startUpperReplay() {
+    if (state.upper.busy) return;
+    state.upper.busy = true; updateUpperButtons(); upperSetStatus("REPLAY 运行中…"); upperSetError("");
+    api("/api/upper/replay", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }).then(function (payload) {
+      state.upper.replay = payload;
+      return loadUpper().then(function () { upperSetStatus("REPLAY 完成"); renderUpperEval(); renderUpperEvidence(); });
+    }).catch(function (err) {
+      upperSetStatus("REPLAY 失败");
+      upperSetError("运行 REPLAY 失败：" + upperDescribe(err));
+    }).finally(function () { state.upper.busy = false; updateUpperButtons(); });
+  }
+  function switchUpperBranch() {
+    var graph = state.upper.graph, branch = upperSelectedBranch();
+    if (!graph || !branch || state.upper.busy) return;
+    state.upper.busy = true; updateUpperButtons(); upperSetStatus("切换中…"); upperSetError("");
+    api("/api/upper/branches/" + encodeURIComponent(branch.branch_id) + "/switch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expected_revision: graph.revision, expected_tip: branch.tip_node_id }) }).then(function () {
+      return loadUpper().then(function () { upperSetStatus("已切换到 " + branch.label); });
+    }).catch(function (err) {
+      upperSetStatus("切换失败");
+      upperSetError("切换分支失败：" + upperDescribe(err));
+      upperConflictRefresh(err, "切换分支");
+    }).finally(function () { state.upper.busy = false; updateUpperButtons(); });
+  }
+  function rollbackUpper() {
+    var graph = state.upper.graph, branch = upperSelectedBranch();
+    if (!graph || !branch || state.upper.busy) return;
+    var chain = upperChain(branch), target = chain.length > 1 ? chain[chain.length - 2] : null;
+    if (!target) { upperSetError("回退失败：该分支没有历史父节点。"); return; }
+    state.upper.busy = true; updateUpperButtons(); upperSetStatus("回退中…"); upperSetError("");
+    api("/api/upper/rollback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ branch_id: branch.branch_id, target_node_id: target.node_id, expected_revision: graph.revision }) }).then(function () {
+      return loadUpper().then(function () { upperSetStatus("已回退到 " + shortHash(target.node_id)); });
+    }).catch(function (err) {
+      upperSetStatus("回退失败");
+      upperSetError("回退失败：" + upperDescribe(err));
+      upperConflictRefresh(err, "回退");
+    }).finally(function () { state.upper.busy = false; updateUpperButtons(); });
+  }
+
   function createSession() {
     return api("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }).then(function (session) {
-      state.session = session; state.cursor = session.last_event_id || 0; setConnected(true); setEnabled(true); setStatus("已连接，可以提问"); loadExperiments(); loadTaskComparison(); return session;
+      state.session = session; state.cursor = session.last_event_id || 0; setConnected(true); setEnabled(true); setStatus("已连接，可以提问"); loadExperiments(); loadTaskComparison(); loadUpper(); return session;
     });
   }
   function connect(base, token) {
@@ -310,6 +620,9 @@
   document.querySelectorAll(".prompt-chip").forEach(function (button) { button.addEventListener("click", function () { input.value = button.getAttribute("data-prompt") || ""; input.focus(); }); });
   $("lab-run").addEventListener("click", startLab);
   $("lab-cancel").addEventListener("click", cancelLab);
+  $("upper-replay").addEventListener("click", startUpperReplay);
+  $("upper-switch").addEventListener("click", switchUpperBranch);
+  $("upper-rollback").addEventListener("click", rollbackUpper);
 
   (function animateEvidenceFlow() {
     var canvas = $("evidence-canvas"), count = $("trace-count");

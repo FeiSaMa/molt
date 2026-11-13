@@ -57,6 +57,26 @@
           <p class="settings-error" id="lab-error" role="alert" hidden></p>
         </section>
 
+        <section class="upper-panel" id="upper-panel" aria-labelledby="upper-title">
+          <div class="evolution-heading">
+            <div><p class="eyebrow">UPPER / CONTEXT GRAPH</p><h2 id="upper-title">上层上下文图谱</h2></div>
+            <span class="lab-status" id="upper-status">未连接</span>
+          </div>
+          <p class="evolution-note" id="upper-scope">只读图谱；切换与回退需要 CAS 与审批。REPLAY 只复算记录解法，不调用模型。</p>
+          <div class="upper-branches" id="upper-branches" role="tablist" aria-label="上层分支"></div>
+          <div class="upper-active" id="upper-active"></div>
+          <div class="upper-path" id="upper-path"></div>
+          <div class="upper-assets" id="upper-assets"></div>
+          <div class="upper-eval" id="upper-eval"></div>
+          <div class="upper-actions">
+            <button type="button" class="primary-button" id="upper-replay" disabled>运行 REPLAY</button>
+            <button type="button" class="secondary-button" id="upper-switch" disabled>切换分支</button>
+            <button type="button" class="text-button" id="upper-rollback" disabled>回退</button>
+          </div>
+          <p class="settings-error" id="upper-error" role="alert" hidden></p>
+          <details class="upper-evidence"><summary>查看证据与边界</summary><div id="upper-evidence"></div></details>
+        </section>
+
         <div class="context-links">
           <span>可以试试</span>
           <button type="button" class="prompt-chip" data-prompt="memory v3 的迁移实验说明了什么？有哪些限制？">memory v3 的迁移实验说明了什么？</button>

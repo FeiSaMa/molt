@@ -42,6 +42,7 @@ from molt.agent.probe import (
 from molt.agent.store import MAX_MESSAGES, TERMINAL_EVENTS, Session, SessionStore, new_id
 from molt.agent.tasks import TaskResultsError, load_task_results
 from molt.agent.turn import TurnRunner
+from molt.agent.upper import UpperApiError, UpperService, parse_strict_body
 
 MAX_BODY_BYTES = 64 * 1024
 MAX_CONTENT_BYTES = 16384
@@ -65,6 +66,7 @@ class AgentApp:
     lab_root: Path | None = None
     lab: LabManager | None = None
     lab_openapi: dict[str, Any] | None = None
+    upper: UpperService | None = None
 
     def __post_init__(self) -> None:
         self.store = SessionStore(provider=self.adapter.name)
@@ -94,6 +96,20 @@ ROUTES: tuple[Route, ...] = (
     ("GET", re.compile(r"^/api/lab/runs/(?P<run_id>[^/]+)$"), "lab_run_detail"),
     ("DELETE", re.compile(r"^/api/lab/runs/(?P<run_id>[^/]+)$"), "lab_run_cancel"),
     ("GET", re.compile(r"^/api/lab/runs/(?P<run_id>[^/]+)/events$"), "lab_run_events"),
+    ("GET", re.compile(r"^/api/upper/graph$"), "upper_graph"),
+    ("GET", re.compile(r"^/api/upper/assets$"), "upper_assets"),
+    ("POST", re.compile(r"^/api/upper/replay$"), "upper_replay"),
+    (
+        "GET",
+        re.compile(r"^/api/upper/evaluations/(?P<evaluation_id>[^/]+)$"),
+        "upper_evaluation",
+    ),
+    (
+        "POST",
+        re.compile(r"^/api/upper/branches/(?P<branch_id>[^/]+)/switch$"),
+        "upper_branch_switch",
+    ),
+    ("POST", re.compile(r"^/api/upper/rollback$"), "upper_rollback"),
     ("POST", re.compile(r"^/api/sessions$"), "sessions_create"),
     ("GET", re.compile(r"^/api/sessions$"), "sessions_list"),
     ("GET", re.compile(r"^/api/sessions/(?P<session_id>[^/]+)$"), "session_detail"),
@@ -196,6 +212,8 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         handler: Callable[[re.Match[str]], None] = getattr(self, f"_handle_{handler_name}")
         try:
             handler(match)
+        except UpperApiError as exc:
+            self._send_json(exc.status, exc.to_payload())
         except ApiError as exc:
             self._send_error(exc)
         except (BrokenPipeError, ConnectionResetError):
@@ -451,6 +469,84 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         run = self._lab_run(match)
         self._stream_events(run, self._parse_since())
 
+    # ---- upper -----------------------------------------------------------
+    def _upper(self) -> UpperService:
+        service = self.server.app.upper
+        if service is None:
+            raise UpperApiError(
+                503,
+                "upper_unavailable",
+                "上层图谱未启用",
+                {"reason": "upper_unavailable"},
+            )
+        return service
+
+    def _handle_upper_graph(self, match: re.Match[str]) -> None:
+        del match
+        self._send_json(200, self._upper().graph_public())
+
+    def _handle_upper_assets(self, match: re.Match[str]) -> None:
+        del match
+        self._send_json(200, self._upper().assets_public())
+
+    def _handle_upper_replay(self, match: re.Match[str]) -> None:
+        del match
+        payload = self._read_json_body(allow_empty=True)
+        if payload:
+            raise UpperApiError(
+                400,
+                "bad_request",
+                "REPLAY 不接受参数",
+                {"unknown_fields": sorted(payload)},
+            )
+        self._send_json(200, self._upper().run_replay())
+
+    def _handle_upper_evaluation(self, match: re.Match[str]) -> None:
+        evaluation_id = unquote(match.group("evaluation_id"))
+        self._send_json(200, self._upper().evaluation_public(evaluation_id))
+
+    def _handle_upper_branch_switch(self, match: re.Match[str]) -> None:
+        branch_id = unquote(match.group("branch_id"))
+        body = parse_strict_body(
+            self._read_json_body(),
+            required=("expected_revision", "expected_tip"),
+        )
+        expected_revision = body["expected_revision"]
+        expected_tip = body["expected_tip"]
+        if isinstance(expected_revision, bool) or not isinstance(expected_revision, int):
+            raise UpperApiError(400, "bad_request", "expected_revision 必须是整数")
+        if not isinstance(expected_tip, str):
+            raise UpperApiError(400, "bad_request", "expected_tip 必须是字符串")
+        self._send_json(
+            200,
+            self._upper().switch_branch(
+                branch_id,
+                expected_revision=expected_revision,
+                expected_tip=expected_tip,
+            ),
+        )
+
+    def _handle_upper_rollback(self, match: re.Match[str]) -> None:
+        del match
+        body = parse_strict_body(
+            self._read_json_body(),
+            required=("branch_id", "target_node_id", "expected_revision"),
+        )
+        expected_revision = body["expected_revision"]
+        if isinstance(expected_revision, bool) or not isinstance(expected_revision, int):
+            raise UpperApiError(400, "bad_request", "expected_revision 必须是整数")
+        for key in ("branch_id", "target_node_id"):
+            if not isinstance(body[key], str) or not body[key].strip():
+                raise UpperApiError(400, "bad_request", f"{key} 必须是非空字符串")
+        self._send_json(
+            200,
+            self._upper().rollback(
+                branch_id=body["branch_id"],
+                target_node_id=body["target_node_id"],
+                expected_revision=expected_revision,
+            ),
+        )
+
     def _handle_sessions_create(self, match: re.Match[str]) -> None:
         del match
         payload = self._read_json_body(allow_empty=True)
@@ -701,6 +797,7 @@ def run_server(
     host: str = "127.0.0.1",
     port: int = 0,
     state: Path | None = None,
+    upper_state: Path | None = None,
     token_file: Path | None = None,
     allowed_origins: list[str] | None = None,
     provider: str = "mock",
@@ -751,6 +848,19 @@ def run_server(
         print(f"{exc.code}: {exc}", file=sys.stderr)
         return 2
 
+    upper: UpperService | None
+    try:
+        upper = UpperService(upper_state or state_root, repo_root=root)
+    except (OSError, ValueError):
+        # The upper state must live outside the repository tree. A repo-local
+        # --state keeps the old agent API available and disables only /api/upper;
+        # deployments inside the repo must pass an external --upper-state.
+        print(
+            "upper_disabled: upper state 必须在仓库外（用 --upper-state 指定仓库外目录）",
+            file=sys.stderr,
+        )
+        upper = None
+
     app = AgentApp(
         index=index,
         adapter=adapter,
@@ -760,6 +870,7 @@ def run_server(
         data_dir=(data_dir or (root / "web" / "data")).resolve(),
         root=root,
         lab_root=(lab_root or Path("/tmp/molt-lab")),
+        upper=upper,
     )
     try:
         server = create_server(app, host, port)
@@ -789,6 +900,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--state", type=Path, default=Path("state"))
+    parser.add_argument("--upper-state", type=Path, default=None)
     parser.add_argument("--token-file", type=Path, default=None)
     parser.add_argument("--allow-origin", action="append", default=[])
     parser.add_argument("--provider", choices=("mock", "openai-compatible"), default="mock")
@@ -805,6 +917,7 @@ def main(argv: list[str] | None = None) -> int:
         host=args.host,
         port=args.port,
         state=args.state,
+        upper_state=args.upper_state,
         token_file=args.token_file,
         allowed_origins=args.allow_origin,
         provider=args.provider,
