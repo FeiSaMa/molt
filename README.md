@@ -12,13 +12,23 @@ B2d 增加 `molt demo`（1 live 候选 + 1 replay 基线 + 10 题扫描回放）
 
 ## claim
 
-> 模型能力已经碾压这 10 道题；molt 证明的是：在成功率不降的约束下，进化可以发生在成本与墙钟上——high/full → low/full，cost −72%、wall −61%，gate adopt，1 live + 1 replay，证据可复算。
+> 模型能力已经碾压这 10 道题；molt 证明的是：在成功率不降的约束下，进化可以发生在成本与墙钟上——high/full → low/full，cost −72%、wall −61%，gate adopt，1 live + 1 replay；tracked 证据（run/result/gate 与 `web/data` 数据面）可复算，历史候选扫描的原始 run 未随仓库导出（见下「三层数字」）。
 
 - **题目饱和**：真实 Pi 基线 **10/10**，成功率维度没有 headroom。fixture `3/10`
   只是 `molt calibrate` 的校准口径，**不代表真实难度**，不得写成真实基线。
-- **效率（同一 10 题扫描）**：cost `$0.035560 → $0.009978`（**−72%**），
-  wall `106.9s → 41.7s`（**−61%**）；gate 级 cps `$0.003556 → $0.001068`（**−70.0%**）；
-  holdout `5/5 → 5/5`；结论 `adopt / lower_cost_per_solved`。
+- **三层数字，口径分开（不得混用）**：
+  - **历史扫描级 claim（ADR-0008）**：cost `$0.035560 → $0.009978`（**−72%**），
+    wall `106.9s → 41.7s`（**−61%**）。来源：[ADR-0008](docs/decisions/0008-demo.md)。
+    候选侧第 10 条扫描 run 未随仓库导出（被 closure live 顶替，只剩 9 条 replay），
+    不能表述为当前 tracked 数据已完整复算。
+  - **当前 tracked 扫描级复算**：cost `$0.035560 → $0.010684`（**−70.0%**），
+    wall `106.9s → 42.6s`（**−60.1%**）。来源：`web/data/search_results.json` 的两条
+    search result 与 `web/data/runs.json` 的逐 run 墙钟。页面对候选 cost/wall 与历史
+    claim 的一致性标 `verified=false`（`web/page/model.js` 的 `verified.candCost` /
+    `verified.candWall`）。
+  - **gate 级**：cps `$0.003556022… → $0.001068401`（**−70.0%**），来源
+    `web/data/gate.json`；holdout `5/5 → 5/5`，结论 `adopt / lower_cost_per_solved`。
+    扫描总成本与墙钟不是 gate 级复算，不得写成 gate 数字。
 - **边界**：6 组真实扫描全部 **10/10**；`low/full` 是最便宜配置，**没有候选比它更便宜**。
   demo 的 `high/full → low/full` 是**选定的起点**，不是搜索发现新最优；
   不声称成功率提升，也不声称搜索空间最优。
@@ -107,7 +117,9 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
 
 ### 真实 Pi 基线（demo-6，2026-11-11）
 
-10 道 search 的实测（并发 1，费用为 run 记录实际值；详见 [ADR-0008](docs/decisions/0008-demo.md)）：
+10 道 search 的实测（并发 1，费用为 run 记录实际值；详见 [ADR-0008](docs/decisions/0008-demo.md)）。
+**下表 high/low 两行是 ADR-0008 的历史扫描级 claim**；候选行 `$0.009978 / 41.7s` 的原始第
+10 条扫描 run 未随仓库导出，当前 tracked 数据只能复算到 `$0.010684 / 42.6s`（见下）。
 
 | config | solved | cost | cost_per_solved | wall（同批 10 题） |
 |---|---|---|---|---|
@@ -119,12 +131,17 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
 | high/minimal | 10/10 | $0.021113 | $0.002111 | 91.8s |
 
 - 现场 demo 的叙事是**选定的高成本起点 → 低成本候选**：`high/full`（v0-pi）
-  → proposal 派生 `low/full`（v0）。两个数字口径分开写：
-  - **扫描级**：起点 10 题扫描 `$0.035560` → 候选 10 题扫描 `$0.009978`，
-    成功率不变（10/10），执行成本 **−72%**，墙钟 `106.9s → 41.7s`（**−61%**）；
+  → proposal 派生 `low/full`（v0）。三层口径分开写：
+  - **历史扫描级 claim（ADR-0008）**：起点 10 题扫描 `$0.035560` → 候选 10 题扫描
+    `$0.009978`，成功率不变（10/10），执行成本 **−72%**，墙钟 `106.9s → 41.7s`
+    （**−61%**）。候选侧第 10 条扫描 run 未随仓库导出（被 closure live 顶替），
+    不能表述为当前 tracked 数据已完整复算。
+  - **当前 tracked 扫描级复算**：`$0.035560 → $0.010684`（**−70.0%**），
+    `106.9s → 42.6s`（**−60.1%**）；页面对候选 cost/wall 与历史 claim 的一致性标
+    `verified=false`（`web/page/model.js` 的 `verified.candCost` / `verified.candWall`）。
   - **gate 级**：门禁配对用 9 条候选 replay + 1 条 live closure，
-    cps `$0.003556 → $0.001068`，执行成本 **−70.0%**。
-  gate 据此 `adopt`；两者口径不同，不得混用。
+    cps `$0.003556022… → $0.001068401`（**−70.0%**）；扫描总成本与墙钟不是 gate 级复算。
+  gate 据此 `adopt`；三者口径不同，不得混用。
 - **同时保留负结果**：6 组候选中**没有一组比 low/full 更便宜**。demo 不是搜索空间最优性
   的声称，也不是「baseline v0 被改进」的声称——它只展示门禁能接受一个真实的
   「成功率不变、成本更低」的候选。
@@ -144,7 +161,7 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
   gate `adopt`，真实数字与负结果见 ADR-0008，证据在 `web/data`）。
 - 已实现：`web/page/` 零构建展示页（白底 8 屏、scroll-snap 逐屏、`file://` 直开、
   只读 `web/data`、`node web/page/check.mjs` 验收 462 条）；导出流程不产页面。
-- 已知缺口：`docs/research/core-known-gaps.md`（成本浮点、`non_inferior` 语义、`k` 文档、verifier 逃逸）。
+- 已知缺口：`docs/research/core-known-gaps.md`（K1–K4；K5/K6 已在本轮修复，剩余边界见该文档）。
 
 ## 研究实验（probe）
 
@@ -163,4 +180,5 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m molt demo --max-wall 180
 - 记忆 v3 在 4 道迁移题 × 4 次重复上 **16/16**；有 headroom 的三题 **12/12 vs 基线 0/10**。
 - 反思稳定性 **6/6**（pro 3/3、flash 3/3）选择同一排序规则。
 - 现场 fast 彩排 **98s / 89s**，两次均为 `v3_stable_headroom`。
-- 已知边界：单约定（C1b）、单模型对、2–4 reps；C2 舍入族因 half-up 是领域常识而无 headroom。
+- 已知边界：单约定（C1b）、单模型对、2–4 reps；C2 舍入族因 half-up 是领域常识而无 headroom；
+  verifier 的 `sitecustomize` 逃逸（K4）本轮未修，见 `docs/research/core-known-gaps.md`。

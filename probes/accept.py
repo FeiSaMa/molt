@@ -130,14 +130,18 @@ def stage_freeze() -> tuple[bool, str, int]:
     actual = compute_bench_hash(ROOT, task_ids)
     if actual != scenario["bench_hash"]:
         return _fail(f"demo bench_hash {actual} != {scenario['bench_hash']}")
-    for rel in ("scenarios/demo/scenario.json", "scenarios/probe/scenario.json"):
+    for rel in (
+        "scenarios/demo/scenario.json",
+        "scenarios/probe/scenario.json",
+        "scenarios/probe-c2/scenario.json",
+    ):
         result = _run(
             [sys.executable, "-m", "molt", "scenario", "validate", "--scenario", rel],
             timeout=120,
         )
         if result.returncode != 0:
             return _fail(f"scenario validate failed: {rel}")
-    return _ok(f"bench_hash={actual[:12]}… validate=2")
+    return _ok(f"bench_hash={actual[:12]}… validate=3")
 
 
 def _probe_cell(ext: Any) -> Any:
@@ -428,6 +432,11 @@ def stage_c2() -> tuple[bool, str, int]:
     }:
         return _fail(f"design.C2.tasks={sorted(tasks) if isinstance(tasks, dict) else tasks}")
 
+    c2_scenario = _load_json(ROOT / "scenarios/probe-c2/scenario.json")
+    expected_c2_version = c2_scenario.get("scenario_version")
+    if not isinstance(expected_c2_version, str) or not expected_c2_version:
+        return _fail("scenarios/probe-c2/scenario.json: scenario_version missing")
+
     rule_words = (
         "half",
         "half-up",
@@ -452,8 +461,10 @@ def stage_c2() -> tuple[bool, str, int]:
                 if not required.is_file():
                     return _fail(f"{task_id}: missing {required.relative_to(ROOT)}")
             task_data = _load_json(task_path)
-            if task_data.get("scenario_version") != "c2-1":
-                return _fail(f"{task_id}: scenario_version != c2-1")
+            if task_data.get("scenario_version") != expected_c2_version:
+                return _fail(
+                    f"{task_id}: scenario_version != {expected_c2_version}"
+                )
             if task_data.get("shell_id") != "probe-c2":
                 return _fail(f"{task_id}: shell_id != probe-c2")
             if task_data.get("scope") != "search":

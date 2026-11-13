@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "task_id": "holdout-factorial",
-  "scenario_version": "demo-6",
+  "scenario_version": "demo-7",
   "shell_id": "code-repair",
   "scope": "report",
   "title": "留出题：阶乘基例",

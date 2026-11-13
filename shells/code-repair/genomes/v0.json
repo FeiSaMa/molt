@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "demo-6",
-  "genome_id": "sha256:6b492ef0e60c51888ebecce7e0b7d28f21dfe6d81074da543a51d86b9dc0a55c",
+  "scenario_version": "demo-7",
+  "genome_id": "sha256:1b383c808e9ce54fd181d1cfe6959b3e77546a754e3a266cb7055c7058fe7906",
   "parent_id": null,
   "shell_id": "code-repair",
-  "shell_version": "1.0.0",
+  "shell_version": "1.0.1",
   "switches": {
     "thinking": "low",
     "context": "full",
@@ -24,9 +24,9 @@
     "attempts": 1
   },
   "artifacts": {
-    "shells/code-repair/manifest.json": "aff86e875cf1dcc4d2f49120e3fbf178d23bf7e6b224f3732cb28b94afb41b76",
+    "shells/code-repair/manifest.json": "8d8832068a9f6f9852d5fe250a460de9897d7df603b4a57e1639a5700527204a",
     "shells/code-repair/harness.py": "cdf3606f71915fa9343c2a2e50c852bb517d6b15651eec84543d9999e10e3b03",
-    "shells/code-repair/verifier.py": "783e74e35368cdac75a8c1728d9cfb9fb85a4395438cd68992de03deeec0d583",
+    "shells/code-repair/verifier.py": "554be66fdd86428808001bf02466a8da5f11759f38e58324ce41e5f16afeadfa",
     "shells/code-repair/task_provider.py": "965f74cc0885363f03a6e5a14dbc7a5a128ca4749eae143247665d606e438cb2",
     "shells/code-repair/switches.schema.json": "467e12e7eb8f185e9a1ac59c4150cbeff7216478cf8a4103864f6333d871aec7",
     "shells/code-repair/prompts/code-repair.md": "f047dcbb54e381daab8bb401e2a4ded1d74f1e6b1951e6f84f30d39b45c8da60",

@@ -33,7 +33,12 @@
 - ``state.json`` 严格符合 ``probes/report/probe_state_schema.json``，写入前自校验；
 - 现场产出（``web/data/probe/state.json``、``run.json``、``shells/probe/memory/live.md``）
   均在 ``.gitignore`` 内，不污染 ``git status``；
-- ``--state`` 必须在仓库之外，避免 ``molt search`` 把证据写进仓库。
+- ``--state`` 必须在仓库之外，避免 ``molt search`` 把证据写进仓库；
+- memory 快照按内容寻址发布到 ``<state_dir>/memory/run2-memory-<sha256>.md``：
+  只绑定本轮完成发布（或确认字节一致）的最终文件，遗留 ``.tmp`` / 半写文件不参与发现；
+- state/out 仍是单写者（不支持并发写同一 state）；快照保留不依赖锁，正常复用已有 state；
+- **前置条件**：``run.json`` 每轮归档由调用方负责；复用同一 state/out 时后一轮会覆盖
+  ``run.json``，本脚本不自动归档；快照文件按内容寻址保留，不会被本轮删除。
 """
 
 from __future__ import annotations
@@ -41,10 +46,12 @@ from __future__ import annotations
 import argparse
 import ast
 import difflib
+import hashlib
 import json
 import os
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
@@ -58,6 +65,8 @@ SCENARIO = "probe"
 STATE_SCHEMA = "probes/report/probe_state_schema.json"
 BASE_GENOME = "shells/probe/genomes/v0-pro-max.json"
 MEMORY_REF = "shells/probe/memory/live.md"
+PROTECTED_PROBE_ROOT = "web/data/probe"
+MEMORY_SNAPSHOT_DIR = "memory"
 RUN1_TASKS = ("probe-order-2", "probe-order-x3")
 RUN2_TASKS = ("probe-order-x5", "probe-order-x6", "probe-order-x7", "probe-order-x8")
 HEADROOM_TASKS = RUN2_TASKS[:3]
@@ -493,15 +502,52 @@ def _prepare_run1_genome(model: str, path: Path):
     return genome
 
 
-def _prepare_run2_genome(run1_genome, model: str, path: Path):
+def _prepare_run2_genome(
+    run1_genome,
+    model: str,
+    path: Path,
+    *,
+    memory_snapshot: Path | None,
+    memory_sha256: str | None,
+):
+    """生成 run2 genome；只接受本轮已绑定的快照 hash。
+
+    进入 genome 生成前必须确认：hash 非空、快照存在且 hash 匹配、共享 memory hash
+    也匹配。``verify_genome`` 仍会对共享 artifact 做二次校验（hash 漂移即失败）。
+    """
+    if not memory_sha256:
+        raise DemoStop("partial", "run2 memory 未绑定（memory_sha256 为空）")
+    if memory_snapshot is None:
+        raise DemoStop("partial", "run2 memory 快照路径缺失（memory_sha256 已绑定）")
+    from molt.core.errors import MoltError
     from molt.core.genome import child_genome, compute_genome_id, verify_genome
     from molt.core.hash import sha256_file
     from molt.core.types import Genome
 
+    state_root = path.parent.parent
+    try:
+        snapshot_ref = memory_snapshot.relative_to(state_root).as_posix()
+    except ValueError as exc:
+        raise DemoStop(
+            "partial", f"run2 memory 快照必须位于 state 根目录内: {memory_snapshot}"
+        ) from exc
+    if not memory_snapshot.is_file():
+        raise DemoStop("partial", f"run2 memory 快照不存在: {memory_snapshot}")
+    snapshot_hash = sha256_file(memory_snapshot)
+    if snapshot_hash != memory_sha256:
+        raise DemoStop(
+            "partial",
+            f"run2 memory 快照 hash 不匹配: {snapshot_hash} != {memory_sha256}",
+        )
     memory_path = ROOT / MEMORY_REF
     if not memory_path.is_file():
         raise DemoStop("partial", f"memory 文件不存在: {MEMORY_REF}")
-    artifacts = {**run1_genome.artifacts, MEMORY_REF: sha256_file(memory_path)}
+    shared_hash = sha256_file(memory_path)
+    if shared_hash != memory_sha256:
+        raise DemoStop(
+            "partial", f"共享 memory hash 不匹配: {shared_hash} != {memory_sha256}"
+        )
+    artifacts = {**run1_genome.artifacts, MEMORY_REF: memory_sha256}
     child = child_genome(
         run1_genome, run1_genome.switches, repo_root=ROOT, artifacts=artifacts
     )
@@ -509,12 +555,17 @@ def _prepare_run2_genome(run1_genome, model: str, path: Path):
     ext = dict(payload.get("ext") or {})
     ext["pi"] = {**(ext.get("pi") or {}), "model": model}
     ext["memory_ref"] = MEMORY_REF
+    ext["memory_snapshot"] = snapshot_ref
+    ext["memory_sha256"] = memory_sha256
     ext["probe"] = {**(ext.get("probe") or {}), "cell": "live-memory"}
     ext["note"] = "live demo run2: rule-only memory from run1 failures"
     payload["ext"] = ext
     payload["genome_id"] = compute_genome_id(payload)
     genome = Genome.from_dict(payload)
-    errors = verify_genome(genome, ROOT)
+    try:
+        errors = verify_genome(genome, ROOT)
+    except MoltError as exc:
+        raise DemoStop("partial", f"run2 genome 校验失败: {exc}") from exc
     if errors:
         raise DemoStop("partial", f"run2 genome 校验失败: {'; '.join(errors)}")
     _write_json(path, genome.to_dict())
@@ -760,11 +811,151 @@ def _reflect(
     return lines, total_cost, attempts, hits
 
 
-def _write_memory(lines: list[str]) -> Path:
+def _memory_bytes(lines: list[str]) -> bytes:
+    """本轮 memory 的唯一字节表示；快照、共享文件与 hash 都从这一份字节派生。"""
+    return ("\n".join(lines).rstrip("\n") + "\n").encode("utf-8")
+
+
+def _snapshot_ref(digest: str) -> str:
+    return f"{MEMORY_SNAPSHOT_DIR}/run2-memory-{digest}.md"
+
+
+def _read_regular_file(path: Path, label: str) -> bytes:
+    """读取已发布的普通文件；symlink / 目录 / 硬链接一律 fail closed。"""
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        raise DemoStop("partial", f"{label} 不存在: {path}") from None
+    if stat.S_ISLNK(info.st_mode):
+        raise DemoStop("partial", f"{label} 必须是常规文件（拒绝 symlink）: {path}")
+    if not stat.S_ISREG(info.st_mode):
+        raise DemoStop("partial", f"{label} 不是常规文件: {path}")
+    if info.st_nlink != 1:
+        raise DemoStop("partial", f"{label} 存在硬链接（拒绝复用）: {path}")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(path, flags)
+    except OSError as exc:
+        raise DemoStop("partial", f"{label} 不可读: {exc}") from exc
+    try:
+        opened = os.fstat(descriptor)
+        if not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1:
+            raise DemoStop("partial", f"{label} 读取时不再是唯一的常规文件: {path}")
+        with os.fdopen(descriptor, "rb") as stream:
+            descriptor = -1
+            return stream.read()
+    finally:
+        if descriptor != -1:
+            os.close(descriptor)
+
+
+def _publish_memory_snapshot(data: bytes, state_dir: Path) -> tuple[str, str]:
+    """把本轮字节原子发布到内容寻址快照；返回 ``(相对路径, sha256)``。
+
+    同内容复用同一路径；目标已存在且字节不同即拒绝覆盖。只有最终文件（``os.replace``
+    完成或字节确认一致）才可被绑定，``.tmp`` / 半写文件不参与发现。
+    """
+    digest = hashlib.sha256(data).hexdigest()
+    ref = _snapshot_ref(digest)
+    directory = Path(state_dir) / MEMORY_SNAPSHOT_DIR
+    target = Path(state_dir) / ref
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise DemoStop("partial", f"memory 快照目录不可创建: {exc}") from exc
+    if os.path.lexists(target):
+        if _read_regular_file(target, "memory 快照目标") != data:
+            raise DemoStop(
+                "partial", f"memory 快照已存在且字节不同（拒绝覆盖）: {ref}"
+            )
+        return ref, digest
+    try:
+        handle, temporary = tempfile.mkstemp(
+            prefix=f".{target.name}.", suffix=".tmp", dir=directory
+        )
+    except OSError as exc:
+        raise DemoStop("partial", f"memory 快照临时文件创建失败: {exc}") from exc
+    try:
+        with os.fdopen(handle, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if os.path.lexists(target):
+            # 单写者假设下不应出现；若并发出现，同样只允许字节一致。
+            if _read_regular_file(target, "memory 快照目标") != data:
+                raise DemoStop(
+                    "partial", f"memory 快照并发出现且字节不同（拒绝覆盖）: {ref}"
+                )
+            os.unlink(temporary)
+            return ref, digest
+        try:
+            os.replace(temporary, target)
+        except OSError as exc:
+            raise DemoStop("partial", f"memory 快照原子发布失败: {exc}") from exc
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+    return ref, digest
+
+
+def _atomic_write_bytes(path: Path, data: bytes) -> None:
+    """唯一临时文件 + ``os.replace``；失败时清理临时文件，不留下可绑定残骸。"""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        handle, temporary = tempfile.mkstemp(
+            prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+        )
+    except OSError as exc:
+        raise DemoStop("partial", f"临时文件创建失败: {exc}") from exc
+    try:
+        with os.fdopen(handle, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+
+
+def _write_shared_memory(data: bytes) -> Path:
+    """把同一份字节写入 harness 读取的共享 memory。"""
     path = ROOT / MEMORY_REF
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(lines).rstrip("\n") + "\n", encoding="utf-8")
+    _atomic_write_bytes(path, data)
     return path
+
+
+def _publish_memory(demo: Demo, lines: list[str]) -> tuple[str, str]:
+    """发布本轮 memory：先快照并绑定，再写共享文件。
+
+    前置条件：单写者（state/out 与共享 memory 不被并发改写）。快照记录本轮**预期**
+    注入字节；harness 每题仍重读共享文件，前后检查只能发现检查点之间的漂移，
+    不证明实际读取字节必然等于快照，也不消除 TOCTOU。
+    """
+    data = _memory_bytes(lines)
+    ref, digest = _publish_memory_snapshot(data, demo.state_dir)
+    demo.bind_memory(ref, digest)
+    demo.memory["sources"] = [MEMORY_REF]
+    demo.note = _join_note(
+        demo.note,
+        "memory 快照记录本轮预期输入（单写者假设）；harness 每题重读共享文件，"
+        "边界检查只发现漂移，不证明实际读取字节等于快照",
+    )
+    try:
+        _write_shared_memory(data)
+    except DemoStop:
+        raise
+    except OSError as exc:
+        raise DemoStop(
+            "partial", f"memory 快照已发布 {ref}，但共享 memory 写入失败: {exc}"
+        ) from exc
+    return ref, digest
 
 
 def _failures(tasks: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
@@ -855,7 +1046,12 @@ class Demo:
             "attempts": 0,
             "reflection_model": "",
             "cost_usd": 0.0,
+            "snapshot": None,
+            "sha256": None,
         }
+        self.memory_snapshot: str | None = None
+        self.memory_sha256: str | None = None
+        self.expected_memory_sha256: str | None = None
         self.verdict = ""
         self.verdict_note = ""
         self.note = ""
@@ -883,6 +1079,16 @@ class Demo:
             raise DemoStop("timeout", f"{label}: 剩余墙钟不足 20s")
         if self.cost_so_far() >= self.max_cost:
             raise DemoStop("partial", f"{label}: 已达到 ${self.max_cost:.2f} 成本上限")
+
+    def bind_memory(self, snapshot: str, sha256: str) -> None:
+        """绑定本轮快照；只允许一次，不从共享文件或旧 state 自动恢复。"""
+        if self.memory_sha256 is not None:
+            raise DemoStop("partial", "memory 快照已绑定，拒绝二次绑定")
+        self.memory_snapshot = snapshot
+        self.memory_sha256 = sha256
+        self.expected_memory_sha256 = sha256
+        self.memory["snapshot"] = snapshot
+        self.memory["sha256"] = sha256
 
     # -- 文档 -----------------------------------------------------------
     @staticmethod
@@ -983,9 +1189,10 @@ class Demo:
         return rows
 
     def run_document(self, phase: str, reason: str) -> dict[str, Any]:
-        memory_path = ROOT / MEMORY_REF
-        from molt.core.hash import sha256_file
+        """构造 run.json；``memory_sha256`` 只用本轮绑定值，不回读共享文件。
 
+        前置条件：每轮 ``run.json`` 的归档由调用方负责；``write_run`` 会覆盖同一路径。
+        """
         phases = [
             {
                 "name": "run1",
@@ -1017,7 +1224,7 @@ class Demo:
             "verdict": self.verdict,
             "verdict_note": self.verdict_note,
             "memory_ref": MEMORY_REF,
-            "memory_sha256": sha256_file(memory_path) if memory_path.is_file() else None,
+            "memory_sha256": self.memory_sha256,
             "pi_version": self.pi_version,
             "genomes": self.genomes,
             "phases": phases,
@@ -1066,23 +1273,108 @@ def _append_task(demo: Demo, phase: str, entry: dict[str, Any]) -> None:
     (demo.run1_tasks if phase == "run1" else demo.run2_tasks).append(entry)
 
 
+def _memory_problem(demo: Demo) -> str | None:
+    """检查点上的 memory 一致性；``None`` 表示通过。"""
+    if demo.expected_memory_sha256 is None:
+        return "run2 memory 未绑定（memory_sha256 为空）"
+    expected = demo.expected_memory_sha256
+    candidates = [(Path(ROOT) / MEMORY_REF, "共享 memory")]
+    if demo.memory_snapshot is not None:
+        candidates.append((Path(demo.state_dir) / demo.memory_snapshot, "memory 快照"))
+    problems: list[str] = []
+    from molt.core.hash import sha256_file
+
+    for path, label in candidates:
+        if not path.is_file():
+            problems.append(f"{label} 不存在: {path}")
+            continue
+        try:
+            actual = sha256_file(path)
+        except OSError as exc:
+            problems.append(f"{label} 不可读: {exc}")
+            continue
+        if actual != expected:
+            problems.append(f"{label} hash 漂移: expected={expected} actual={actual}")
+    return "; ".join(problems) if problems else None
+
+
+def _check_memory_boundary(demo: Demo, phase: str, task_id: str, boundary: str) -> None:
+    if phase != "run2":
+        return
+    problem = _memory_problem(demo)
+    if problem is not None:
+        raise DemoStop("partial", f"{phase}/{task_id} {boundary}检查失败: {problem}")
+
+
 def _run_phase(
     demo: Demo, phase: str, task_ids: tuple[str, ...], genome_path: Path
 ) -> None:
+    """逐题执行。
+
+    完整性边界（条件式口径）：
+    - 正常证据的前提是单写者：state/out 与共享 memory 不被并发或外部改写。
+    - harness 每题执行前重读共享文件；before/after 检查只能发现检查点之间的漂移，
+      不证明 harness 实际读取的字节等于快照，也不保证「边界间改后恢复」能被发现。
+    - 并发或外部改写情况下，本检查不构成完整性证明；因此这些检查不消除 TOCTOU，
+      也不否定遵守单写者假设的正常证据；after-check 失败的题不得计为成功。
+    """
     for task_id in task_ids:
         demo.check_limits(f"{phase}/{task_id}")
+        _check_memory_boundary(demo, phase, task_id, "before")
         remaining = demo.max_wall - demo.elapsed()
         timeout_s = max(1.0, min(remaining, 660.0))
-        entry, infra = _execute(
-            run_dir=demo.state_dir / phase / task_id,
-            genome_path=genome_path,
-            task_id=task_id,
-            timeout_s=timeout_s,
-        )
+        entry: dict[str, Any] | None = None
+        error: Exception | None = None
+        drift: DemoStop | None = None
+        try:
+            entry, infra = _execute(
+                run_dir=demo.state_dir / phase / task_id,
+                genome_path=genome_path,
+                task_id=task_id,
+                timeout_s=timeout_s,
+            )
+            if infra is not None:
+                error = DemoStop("partial", infra)
+        except Exception as exc:  # noqa: BLE001 - 保留原始错误，after-check 后再判定
+            error = exc
+        finally:
+            # finally 语义：无论执行正常、抛错还是超时，都必须做 after-check。
+            try:
+                _check_memory_boundary(demo, phase, task_id, "after")
+            except DemoStop as exc:
+                drift = exc
+        if drift is not None:
+            problem = drift.message
+            if entry is not None:
+                # 保留诊断条目，但不得作为 success。
+                entry["passed"] = False
+                entry["passes"] = 0
+                entry["_outcome"] = "memory_drift"
+                entry["outcome"] = "memory_drift"
+                entry["note"] = _join_note(
+                    str(entry.get("note") or ""), f"memory_drift: {problem}"
+                )
+                _append_task(demo, phase, entry)
+                demo.write_state()
+            if error is not None:
+                phase_name = getattr(error, "phase", "partial")
+                message = f"{error}；同时 {problem}"
+                demo.note = _join_note(demo.note, f"{phase}/{task_id}: {message}")
+                demo.write_state()
+                raise DemoStop(
+                    "timeout" if phase_name == "timeout" else "partial", message
+                ) from error
+            demo.note = _join_note(demo.note, f"{phase}/{task_id}: {problem}")
+            demo.write_state()
+            raise drift
+        if error is not None:
+            if entry is not None:
+                _append_task(demo, phase, entry)
+                demo.write_state()
+            raise error
+        assert entry is not None
         _append_task(demo, phase, entry)
         demo.write_state()
-        if infra is not None:
-            raise DemoStop("partial", infra)
 
 
 def _abort(demo: Demo, error: DemoStop) -> int:
@@ -1178,24 +1470,56 @@ def _resolve_paths(args: argparse.Namespace) -> tuple[Path, Path, Path]:
     state_dir = Path(args.state).expanduser().resolve()
     out = Path(args.out).expanduser()
     if not out.is_absolute():
-        out = (ROOT / out).resolve()
+        out = ROOT / out
+    out = out.resolve()
     run_out = args.run_out
     if run_out is None:
         run_out = out.with_name("run.json")
     else:
         run_out = Path(run_out).expanduser()
         if not run_out.is_absolute():
-            run_out = (ROOT / run_out).resolve()
+            run_out = ROOT / run_out
+        run_out = run_out.resolve()
     return state_dir, out, run_out
 
 
+def _tracked_probe_files() -> set[Path] | None:
+    """``git ls-files`` 列出的 probe 数据文件（真实路径）。
+
+    返回 ``None`` 表示无法取得清单（git 不可用 / 非 git 仓库 / 命令失败），
+    调用方必须 fail closed，不得回退为空集合。
+    """
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(ROOT), "ls-files", "-z", "--", PROTECTED_PROBE_ROOT],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if completed.returncode != 0:
+        return None
+    return {(ROOT / name).resolve() for name in completed.stdout.split("\0") if name}
+
+
 def _check_paths(state_dir: Path, out: Path, run_out: Path) -> str | None:
+    state_dir = Path(state_dir).resolve()
+    out = Path(out).resolve()
+    run_out = Path(run_out).resolve()
     if state_dir == ROOT or state_dir.is_relative_to(ROOT):
         return f"--state 必须在仓库外（现在是 {state_dir}）"
     data_root = (ROOT / "web/data").resolve()
     for label, path in (("--out", out), ("--run-out", run_out)):
         if path.is_relative_to(data_root) and not path.is_relative_to(data_root / "probe"):
             return f"{label} 只能写 web/data/probe/**（现在是 {path}）"
+    protected = _tracked_probe_files()
+    if protected is None:
+        return "无法读取 tracked probe 文件清单（git ls-files 失败），拒绝写入以免覆盖受保护证据"
+    for label, path in (("--out", out), ("--run-out", run_out)):
+        if path in protected:
+            return f"{label} 不得覆盖 tracked probe 数据文件（{path}）"
     return None
 
 
@@ -1271,8 +1595,7 @@ def main(argv: list[str] | None = None) -> int:
 
         if not failures:
             demo.memory["lines"] = ["Run1 全部用例通过，没有可反思的失败。"]
-            _write_memory(demo.memory["lines"])
-            demo.memory["sources"] = [MEMORY_REF]
+            _publish_memory(demo, demo.memory["lines"])
             demo.note = _join_note(demo.note, "run1 无失败：memory 为空规则集")
         else:
             reflection_started = time.monotonic()
@@ -1302,14 +1625,20 @@ def main(argv: list[str] | None = None) -> int:
                 demo.note = _join_note(
                     demo.note, f"反思输出含可疑标识符: {', '.join(hits)}"
                 )
-            _write_memory(lines)
-            demo.memory["sources"] = [MEMORY_REF]
-            demo.write_state()
+            _publish_memory(demo, lines)
 
+        demo.write_state()
         demo.check_limits("run2")
         demo.phase = "run2"
+        snapshot_path = (
+            state_dir / demo.memory_snapshot if demo.memory_snapshot else None
+        )
         run2_genome = _prepare_run2_genome(
-            run1_genome, args.model, state_dir / "genomes/run2.json"
+            run1_genome,
+            args.model,
+            state_dir / "genomes/run2.json",
+            memory_snapshot=snapshot_path,
+            memory_sha256=demo.memory_sha256,
         )
         demo.genomes["run2"] = {
             "genome_id": run2_genome.genome_id,

@@ -104,7 +104,7 @@
 
 **【说】**
 
-> 局限说清楚：单一约定 C1b、单一模型对（pro/flash × high/max）、每题 2–4 reps。x8 不算提升，主 2c 口径仍是 `partial_transfer`。我们不声称通用自进化。
+> 局限说清楚：单一约定 C1b、单一模型对（pro/flash × high/max）、每题 2–4 reps。x8 不算提升，主 2c 口径仍是 `partial_transfer`。还有一条承重局限没修：verifier 的 `sitecustomize` 逃逸（K4）——agent 仍可能改裁判而不是改被测代码（`docs/research/core-known-gaps.md`）。我们不声称通用自进化。
 >
 > 我们交付的不是一个会自进化的 agent，是一套能证明它有没有进化的仪器：题集、反例接口、决策表、oracle、accept/audit 重算。
 
@@ -156,6 +156,6 @@
 
 # 现场降级
 
-- **网络 / 模型卡住**：把 `probes/report/rehearsal/run1/state-replay.json` 复制到 `web/data/probe/state.json`，页面应显示 `REPLAY`（该文件 `live=false`；`live=true` 但 120s 未更新也会自动标）。
+- **网络 / 模型卡住**：把 `probes/report/rehearsal/run1/state-replay.json` 复制到 `web/data/probe/state.json`，页面显示 `REPLAY`（该文件显式 `live=false`）；若是 `live=true` 但超过 120s 未更新，页面标 `REPLAY · STALE`。120s 只是展示阈值，不终止运行。
 - **页面 404**：`web/data/probe/example.json` 兜底，显示 `REPLAY · EXAMPLE`。
-- **超 360s**：页面显示 `PARTIAL · 360s cap`，保留最后数据，不补跑。
+- **总墙钟到限**：运行器写 `phase=timeout`，页面显示 `TIMEOUT`，保留最后数据，不补跑。fast 默认 360s、full 默认 420s，均可用 `--max-wall` 覆盖；单题超时或成本到限则写 `partial`。

@@ -42,7 +42,7 @@
         "partial",
         "timeout"
       ],
-      "description": "当前阶段。partial = 300s 硬上限或证据不完整；timeout = 被中止"
+      "description": "当前阶段。partial = 单题超时或成本到限（证据不完整）；timeout = 总墙钟到限或阶段边界剩余不足 20s 被中止。时限以 probes/run_demo.py 为准：fast 默认 360s、full 默认 420s，可由 --max-wall 覆盖"
     },
     "started_at": {
       "type": "string",
@@ -52,7 +52,7 @@
     "updated_at": {
       "type": "string",
       "format": "date-time",
-      "description": "最后一次写 state 的时间。live=true 且超过 120s 未更新即按 REPLAY 展示"
+      "description": "最后一次写 state 的时间。live=true 且超过 120s 未更新即按 REPLAY / REPLAY · STALE 展示；120s 只是展示阈值，不终止运行"
     },
     "revision": {
       "type": "string",

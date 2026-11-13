@@ -1,5 +1,8 @@
 # Probe 可视化规格（v1）
 
+> **实现状态**：probe 页面尚未实现，本文件只是规格。HEAD 中唯一的页面是 demo-6 的
+> `web/page/`，它只读 `web/data` 的 demo 数据，不读取 `web/data/probe/`。
+
 > **目标不是展示通过率，是让观众看见「它改了什么 / 它学到了什么 / 它会不会学坏」。**
 
 这份规格面向写 HTML 的队友：你只消费 `web/data/probe/state.json`（live）或
@@ -104,14 +107,14 @@ x8 的 baseline 本来 2/2，不构成记忆提升；签名漂移仍然存在；
 | `schema_version` | `"1.0.0"` | 版本守卫；不认识的 major 显示 `DATA VERSION` 警告，不渲染 |
 | `live` | bool | `false` → 一律 `REPLAY`；不得把样例标成 live |
 | `phase` | `idle\|run1\|reflection\|run2\|done\|partial\|timeout` | 面板骨架 / 阶段 chip |
-| `started_at` / `updated_at` | ISO 8601 | 120s / 360s 降级判定 |
+| `started_at` / `updated_at` | ISO 8601 | 120s 只是 REPLAY/STALE 展示阈值，不终止运行 |
 | `revision` | 64 位小写 hex | 刷新信号；变化时更新，不做缓存键 |
 | `lineage` | array | 顶部代际线，见 §7 |
 | `run1` / `run2` | object | 左右两栏，见 §2.2 |
 | `memory` | object | 中间栏，见 §2.3 |
 | `negative_transfer` | object，可选 | 画面 4；缺失时整块隐藏 |
 | `verdict` | `partial_transfer\|v3_stable_all\|v3_stable_headroom\|""` | 页脚主 verdict；照抄，不改写。三档含义见 §0：`partial_transfer` = 迁移只部分成立（2c 主实验 v1 口径）；`v3_stable_all` = v3 全题集稳定通过；`v3_stable_headroom` = 仅 headroom 题（x5–x7）稳定通过 |
-| `verdict_note` | string，可选 | 与 `verdict` 同排显示的小字口径注记（如「x8 基线 2/2，不计入 headroom」「主 2c 为 partial_transfer」）；**不得**只显示 verdict 关键字 |
+| `verdict_note` | string，必填（可为空串） | 与 `verdict` 同排显示的小字口径注记（如「x8 基线 2/2，不计入 headroom」「主 2c 为 partial_transfer」）；**不得**只显示 verdict 关键字 |
 | `cost_usd` / `wall_ms` | number / int | 页脚成本与墙钟 |
 | `note` | string | 页脚 tooltip |
 
@@ -569,15 +572,16 @@ else if live === false                      -> REPLAY (gray + ↺)
 else if now - updated_at > 120_000          -> REPLAY + STALE (gray/amber + ↺)
 else                                        -> LIVE (green + ●, subtle pulse)
 if phase === "done"                         -> append DONE chip (ink, no pulse)
-if live === true && now - started_at > 360_000
-   && !["done","partial","timeout"].includes(phase)
-                                            -> force PARTIAL (amber + ◐) + "360s cap"
 ```
 
-- **120s**：`live=false` **或** `updated_at` 超过 120s 未更新 → `REPLAY`。
-- **360s**：硬上限；仅对 `live=true` 且未 done 的阶段生效。到点后冻结自动轮播、
-  停止 LIVE 脉冲、显示 `PARTIAL · 360s cap`；保留最后数据，不清屏。
-  （360s 是 fast profile 的默认预算；若现场改用 full profile，以 run_demo 的 --max-wall 为准，页面按同一数字调整。）
+- **顺序固定**：先 `timeout`，再 `partial`，再判 `REPLAY` / `STALE`；页面不得把
+  `timeout` 或 `partial` 显示成 LIVE / REPLAY。
+- **120s 只是展示阈值**：`live=false` → `REPLAY`；`live=true` 且 `updated_at` 超过 120s
+  未更新 → `REPLAY + STALE`。它不终止运行、不补跑、不改写数据。
+- **时限的 owner 是运行器**（`probes/run_demo.py`）：fast 默认 360s、full 默认 420s，
+  均可用 `--max-wall` 覆盖。总墙钟到限、或阶段边界检查发现剩余不足 20s → 运行器写
+  `phase=timeout` 并退出 2；单题超时或成本到限 → 写 `phase=partial` 并退出 2。
+  页面**不自行**按 360s 强制 partial，只读取运行器写入的 `phase`。
 - `phase=done` 后即使 `live=true` 也不显示 `PARTIAL`；显示 `LIVE`/`REPLAY` + `DONE`。
 - `updated_at` 无法解析 → 当作 stale（`REPLAY`），tooltip 显示 `invalid updated_at`。
 - 客户端时钟偏差 > 60s：badge 旁加 `?`，tooltip 提示先对时；不要因此把 live 标成 replay
@@ -595,7 +599,7 @@ if live === true && now - started_at > 360_000
 
 `example.json` 的 `live=false`、`phase=done`、`started_at/updated_at` 是固定证据时间
 （不是本次时钟）。页面应显示 `REPLAY · EXAMPLE`，不要因为 `updated_at` 旧就显示
-`PARTIAL`（360s 规则只对 live 生效）。`note` 原文是
+`PARTIAL` 或 `STALE`（120s 阈值只对 `live=true` 生效）。`note` 原文是
 `example generated from 2c evidence; not a live run`。
 
 `example.json` 固定为 probe-4 的离线证据；页面轮询的现场 `state.json` 是 probe-6
@@ -673,7 +677,7 @@ if live === true && now - started_at > 360_000
       三段签名 `(names) -> int` → `(names, k) -> list[str]` → `(names) -> int`；
       文案包含「baseline 本来 2/2」。
 - [ ] 页脚 `verdict` + 同排小字 `verdict_note` / cost / wall / LIVE|REPLAY；example 显示 `REPLAY · EXAMPLE`；
-      `live=false` 或 120s stale → REPLAY；360s 未 done → PARTIAL；不允许只显示 verdict 关键字。
+      `live=false` 或 120s stale → REPLAY / REPLAY · STALE；`timeout` / `partial` 直接读运行器 `phase`；不允许只显示 verdict 关键字。
 - [ ] 颜色 + 图标 + 文本三重编码；不单靠红绿；对比度达标；键盘可达。
 - [ ] 主画面没有柱状图/饼图/通过率曲线/百分比大数字；附录也没有通过率曲线。
 - [ ] 未知键忽略；缺字段不崩溃；`prefers-reduced-motion` 生效。

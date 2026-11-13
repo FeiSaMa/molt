@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "c2-1",
+  "scenario_version": "c2-2",
   "scenario_id": "probe-c2",
   "title": "probe-c2：C2 舍入族有效性门（2 族 + 2 控制）",
   "shell_id": "probe-c2",
-  "shell_version": "0.3.0",
-  "bench_hash": "dc9353489fb2a0cbd69b929edc270769d12c57078796983a674f04c905b4f52a",
+  "shell_version": "0.3.1",
+  "bench_hash": "4f5b51ccbe194c2cdcbbfaa8fdbe249aa5cbc5e5d974614b63f8cb8b38e82371",
   "task_sets": {
     "search": [
       "c2-percent",

@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "probe-6",
+  "scenario_version": "probe-7",
   "scenario_id": "probe",
-  "title": "probe-6：C1b 稳定性重锚（T2 baseline 必败判别用例 + 8 题不变）",
+  "title": "probe-7：C1b 稳定性重锚（T2 baseline 必败判别用例 + 8 题不变）",
   "shell_id": "probe",
-  "shell_version": "0.3.0",
-  "bench_hash": "9b8de5e6c731925ba7b1e8d6b18362dce889e188c4bd047c6af98c6f79e586a9",
+  "shell_version": "0.3.1",
+  "bench_hash": "ca89095b34ec5f97d6da9295d0f81b261c13907acc9643ad96a571138e2df10a",
   "task_sets": {
     "search": [
       "probe-order-2",

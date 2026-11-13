@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0.0",
-  "scenario_version": "probe-6",
-  "genome_id": "sha256:3a16b9742ebcaf6e064a77a6dba8f621e8fa0b87e85e6e2b3f091aa718a3d69f",
-  "parent_id": "sha256:a2ce93d848bac18ba43de58b4571ca38c67740f6e6e1e18101eb1d0d864e5fb7",
+  "scenario_version": "probe-7",
+  "genome_id": "sha256:33a0e820036fb97d739811abb572d4fd1b5f327cb8e58dbb489107e36b497839",
+  "parent_id": "sha256:c5b407f6eb0f17ef1de46562c262c5b685c1e6bd6d8e0da6911f77b6a4c98594",
   "shell_id": "probe",
-  "shell_version": "0.3.0",
+  "shell_version": "0.3.1",
   "switches": {
     "thinking": "high",
     "context": "full",
@@ -24,9 +24,9 @@
     "attempts": 1
   },
   "artifacts": {
-    "shells/probe/manifest.json": "f83eea2562b58348f81ce8d60a0f06ac847589ea015b08c3758c10801f1686bf",
+    "shells/probe/manifest.json": "6a6577eb6c3139ae42f66bba0ad01b9dc98c25c9bfb65951bd6876f65a04ba57",
     "shells/probe/harness.py": "5851b3dd43129664b1af6d651b348353be527f8f19ebfc47f0ada71d5849d3a0",
-    "shells/probe/verifier.py": "b194ce321b416674ada40f5b00980cc489b7deeff8a59c0ff6e1d3573e809521",
+    "shells/probe/verifier.py": "5de991500f4c208af6295ece4f6b4ecd5a550adae4db069a9a0977345b73bb39",
     "shells/probe/task_provider.py": "66dd637729514d2f3ca296deb40d52ce67a771a021d99e86d27dd72a3d657d4d",
     "shells/probe/switches.schema.json": "f172be3e3d2cf23b2b5465abe3158e436ddd8b95b17d92f58522cb02b7dc9867",
     "shells/probe/tools/bash.json": "1965ea16840b0ad63488a05b2d5ae7a9354845df4843246eb578e3e89c0a8191",
