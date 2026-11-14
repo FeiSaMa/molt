@@ -848,7 +848,7 @@
       group.appendChild(svgNode("title", {}, snapshotNodeTitle(row, current, countByRev)));
       group.appendChild(svgNode("rect", {x: pos.x, y: pos.y, width: nodeW, height: nodeH, rx: 5}));
       group.appendChild(svgNode("text", {"class": "snapshot-node-rev", x: pos.x + nodeW / 2, y: pos.y + 11, "text-anchor": "middle"}, "r" + rev));
-      group.appendChild(svgNode("text", {"class": "snapshot-node-action", x: pos.x + nodeW / 2, y: pos.y + 21, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0) + " 条"));
+      group.appendChild(svgNode("text", {"class": "snapshot-node-action", x: pos.x + nodeW / 2, y: pos.y + 21, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0) + " 条消息"));
       function choose() {
         if (isCurrent) {
           state.runtime.snapshotSelected = null;
@@ -871,7 +871,7 @@
     });
     var box = element("div", "snapshot-graph");
     box.appendChild(svg);
-    box.appendChild(element("p", "snapshot-graph-legend", "实线 = 正常提交；虚线 = 回退产生的新分支——旧节点不会删除，只是多了一条路。点节点看「这一版改了什么」。"));
+    box.appendChild(element("p", "snapshot-graph-legend", "实线 = 正常提交；虚线 = 回退产生的新分支——旧节点不会删除，只是多了一条路。节点上的数字是这条快照保存的消息条数；点节点看「这一版改了什么」。"));
     return box;
   }
 
@@ -1163,7 +1163,7 @@
       group.appendChild(svgNode("title", {}, snapshotNodeTitle(row, current, countByRev)));
       group.appendChild(svgNode("rect", {x: pos.x, y: pos.y, width: metrics.nodeW, height: metrics.nodeH, rx: 8}));
       group.appendChild(svgNode("text", {"class": "board-node-rev", x: pos.x + metrics.nodeW / 2, y: pos.y + 21, "text-anchor": "middle"}, "r" + rev));
-      group.appendChild(svgNode("text", {"class": "board-node-action", x: pos.x + metrics.nodeW / 2, y: pos.y + 39, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0) + " 条"));
+      group.appendChild(svgNode("text", {"class": "board-node-action", x: pos.x + metrics.nodeW / 2, y: pos.y + 39, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0) + " 条消息"));
       function choose() {
         board.selected = row.snapshot_id;
         board.selectedRevision = rev;
