@@ -1264,7 +1264,7 @@
       var body = element("div", "snapshot-body");
       var title = element("div", "snapshot-title");
       title.appendChild(element("b", "", "revision " + (row.revision !== undefined ? row.revision : "—")));
-      title.appendChild(runtimeBadge(row.action || "record", row.action === "rollback" ? "is-warn" : isCurrent ? "is-ok" : "is-muted"));
+      title.appendChild(runtimeBadge(snapshotActionLabel(row.action), row.action === "rollback" ? "is-warn" : isCurrent ? "is-ok" : "is-muted"));
       if (isCurrent) title.appendChild(runtimeBadge("当前", "is-ok"));
       if (sameContent) title.appendChild(runtimeBadge("同内容", "is-muted"));
       body.appendChild(title);
