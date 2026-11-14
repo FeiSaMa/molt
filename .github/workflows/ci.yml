@@ -1,12 +1,13 @@
 name: ci
 
-# 六个必需作业：lint / schema / boundary / unit / audit / secret-scan。
+# 五个作业：lint / schema / boundary / audit / secret-scan；CI 不运行 pytest。
+# 全量 pytest 为手动 / 集中执行（见 CONTRIBUTING §五、§九）。
 # 真实 Pi 调用不在本工作流内（见 pi-smoke.yml：手动触发，只跑 1 条 live task，
 # 费用 cap 为本次单 run 的运行后验收上限）。
 #
-# 提示：unit 只跑 3.12，检查项名字为 `unit (3.12)`；
-# 分支保护的 required status checks 按这六个名字配置。
-# 3.11 暂不进 CI（浮点夹具差异，见 CONTRIBUTING §九「已知缺口」）。
+# 提示：作业名即 `lint`、`schema`、`boundary`、`audit`、`secret-scan`；
+# 当前分支保护未登记必需状态检查（见 CONTRIBUTING §九）。
+# 3.11 浮点夹具差异见 CONTRIBUTING §九「已知兼容性缺口」：手动全量 pytest 在 3.12 下执行。
 
 on:
   push:
@@ -105,29 +106,6 @@ jobs:
               sys.exit("molt/core 只允许 stdlib 与 molt.core.*")
           print("boundary ok")
           PY
-
-  unit:
-    name: unit
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        # 只跑 3.12。3.11 暂不进 CI：CPython 3.12 起内置 sum() 改用 Neumaier 补偿求和，
-        # gate 夹具里 cost_per_solved 的期望值按 3.12 的浮点结果固化
-        # （3.11: 1.222222222222222 vs 3.12: 1.2222222222222223），3.11 下 4 条断言必红。
-        # 这是仓库既有差异，与本次改动无关；修复（统一取整或重生成夹具）需单独开 PR
-        # 走冻结面流程（会碰 bench/** 或 tests/fixtures）。修复后再把 "3.11" 加回矩阵。
-        python-version: ["3.12"]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-      - run: uv sync --extra dev --locked
-      - name: pytest（pi live 默认 skip）
-        run: uv run pytest -q
 
   audit:
     name: audit

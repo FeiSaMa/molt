@@ -40,6 +40,7 @@ import hashlib
 import inspect
 import json
 import threading
+import time
 from typing import Any
 
 from molt.agent.chat import SYSTEM_PROMPT, ChatError, ChatReply, ToolCall
@@ -55,6 +56,11 @@ from molt.agent.tools import (
 )
 
 CHUNK_SIZE = 40
+MAX_RUNTIME_ROUNDS = 3
+MAX_RUNTIME_TOOL_CALLS = 5
+MAX_RUNTIME_TOOL_CALLS_PER_ROUND = 3
+RUNTIME_WALL_SECONDS = 60.0
+RUNTIME_OUTPUT_BYTES = 64 * 1024
 
 
 class TurnCancelled(Exception):

@@ -159,12 +159,16 @@ uv run python -m molt doctor --recover --state state # 事务兜底恢复（幂�
 
 可按领域调整，但调整必须同时改 `.github/CODEOWNERS` 与本表，并走一次 PR。
 
-评审矩阵：
+评审矩阵（建议，非合并门禁）：
 
-| 变更面 | 最少评审 |
+| 变更面 | 建议评审 |
 | --- | --- |
-| 契约域（`schemas/**`、`molt/core/ports.py`、`docs/protocol.md`、ADR） | **2 人** + ADR |
-| 其余（shell、bench、adapter、docs、CI） | 1 人 |
+| 契约域（`schemas/**`、`molt/core/ports.py`、`docs/protocol.md`、ADR） | 1–2 人 + ADR（建议，非合并门禁） |
+| 其余（shell、bench、adapter、docs、CI） | 1 人（建议） |
+
+`.github/CODEOWNERS` 会自动请求 reviewer，但 approval 数量不是合并条件；`main` 的两个 active ruleset
+（`main-protection` / `protect-main`）只有删除保护与禁 non-fast-forward，未登记 required approvals
+或必需状态检查。
 
 ## 六、冻结面与版本触发
 
@@ -238,8 +242,8 @@ shells/<id>/tools/*.json       # 新增工具声明候选
    `docs/protocol.md`，然后 `molt schema validate --all` +
    `molt scenario validate --scenario scenarios/demo/scenario.json`。
    （`scenario validate` 的 `--scenario` 是路径；其它命令的 `--scenario` 是 id。）
-3. PR 需要 **2 人 approve**，其中至少 1 人来自 @FeiSaMa；`main` 由分支保护挡住直推与 force push。
-   当前仓库有**两个 active ruleset**（`main-protection` 与旧的 `protect-main`），求并集、严格项为准；
+3. PR 不设 approve 数量门禁：CODEOWNERS 可能自动请求 reviewer，但 approval 数不是合并条件；
+   `main` 由分支保护挡住直推与 force push（两个 active ruleset：删除保护 + 禁 non-fast-forward）。
    旧 ruleset 是否删除由用户决定。
 4. **冻结窗口：2026-11-12 18:00（UTC+8）之后**，契约只允许 `ext` 新增或新增记录类型；
    顶层字段改名 / 删除 / 语义变更一律推迟到窗口结束后的新批次。
@@ -248,7 +252,9 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 
 一次变更合并前必须满足：
 
-- [ ] 测试：`uv run pytest -q` 全绿（新增行为有对应用例）。
+- [ ] 测试：新增行为必须带用例；全量 `uv run pytest -q` 为手动 / 集中执行，
+      不属于 CI（CI 只有 `lint`、`schema`、`boundary`、`audit`、`secret-scan` 五个作业），
+      不要求全量套件在 CI 全绿。
 - [ ] Schema：`molt schema validate --all` 与
       `molt scenario validate --scenario scenarios/demo/scenario.json` 通过；
       `docs/protocol.md` 无手改漂移。
