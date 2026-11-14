@@ -1807,7 +1807,7 @@ var PROJECT_FIXTURES = {
         button.textContent = "确认回退";
         button.classList.add("is-armed");
         status.classList.remove("is-done");
-        status.textContent = "再点一次确认；回退只新增节点，不删除历史。";
+        status.textContent = "再点一次确认（15 秒内有效）；回退只新增节点，不删除历史。";
         if (state.armTimer) clearTimeout(state.armTimer);
         state.armTimer = setTimeout(function () {
           if (state.armedNode !== node.id) return;
@@ -1817,7 +1817,7 @@ var PROJECT_FIXTURES = {
             button.classList.remove("is-armed");
           }
           if (status.isConnected && !status.classList.contains("is-done")) status.textContent = "已取消确认。";
-        }, 6000);
+        }, 15000);
         return;
       }
       performRollback(node, button, status, token);
