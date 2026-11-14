@@ -2,7 +2,7 @@
  * Bearer token can be sent; native EventSource cannot set Authorization. */
 (function () {
   "use strict";
-  var state = { base: "", token: "", session: null, cursor: 0, busy: false, preparing: false, sendLock: false, activeAssistant: null, cancelRequested: false, busySince: 0, busyTimer: 0, epoch: 0, abort: null, chatMode: "general", lab: { caps: null, tasks: [], runId: null, busy: false, abort: null }, upper: { graph: null, assets: null, replay: null, selected: null, filter: "all", lastSwitch: null, busy: false, loading: false, stale: false, committed: null, lastLoadError: null }, runtime: { status: null, statusError: null, loading: false, mode: "off", pendingMode: null, busy: false, catalog: null, catalogError: null, tools: null, toolsError: null, manualBusy: false, manualResult: null, manualError: null, snapshots: null, snapshotsError: null, snapshotSelected: null, snapshotSelectedRevision: null, snapshotBusy: false, snapshotNotice: null, snapshotConfirming: false, snapshotDiff: null, snapshotDiffBusy: false, snapshotDiffError: null }, snapshotBoard: { open: false, scale: 1, tx: 0, ty: 0, dragging: false, selected: null, selectedRevision: null, confirming: false, contentW: 0, contentH: 0, animateIn: false }, configBoard: { open: false, scale: 1, tx: 0, ty: 0, dragging: false, selectedBranch: null, selectedNode: null, contentW: 0, contentH: 0, busy: false, notice: "", animateIn: false }, probe: { run: null, busy: false, error: null, timer: null, revertConfirming: false }, catalog: { data: null, loading: false, error: null, filter: "all", confirm: null, probe: null, probeError: null }, history: { loading: false, error: null, items: null }, scale: { data: null, error: null, loading: false, view: "exec", branch: "all", category: "all", visibility: "all", evaluated: "all", query: "", zoom: 1, selected: null, selectedLeaf: null, expanded: {}, leafLimit: {} } };
+  var state = { base: "", token: "", session: null, cursor: 0, busy: false, preparing: false, sendLock: false, activeAssistant: null, cancelRequested: false, busySince: 0, busyTimer: 0, epoch: 0, abort: null, chatMode: "general", lab: { caps: null, tasks: [], runId: null, busy: false, abort: null }, upper: { graph: null, assets: null, replay: null, selected: null, filter: "all", lastSwitch: null, busy: false, loading: false, stale: false, committed: null, lastLoadError: null }, runtime: { status: null, statusError: null, loading: false, mode: "off", pendingMode: null, busy: false, catalog: null, catalogError: null, tools: null, toolsError: null, manualBusy: false, manualResult: null, manualError: null, snapshots: null, snapshotsError: null, snapshotSelected: null, snapshotSelectedRevision: null, snapshotBusy: false, snapshotNotice: null, snapshotConfirming: false, snapshotDiff: null, snapshotDiffBusy: false, snapshotDiffError: null }, snapshotBoard: { open: false, scale: 1, tx: 0, ty: 0, dragging: false, selected: null, selectedRevision: null, confirming: false, contentW: 0, contentH: 0, animateIn: false }, configBoard: { open: false, scale: 1, tx: 0, ty: 0, dragging: false, selectedBranch: null, selectedNode: null, contentW: 0, contentH: 0, busy: false, notice: "", animateIn: false }, probe: { run: null, busy: false, error: null, timer: null, revertConfirming: false }, catalog: { data: null, loading: false, error: null, filter: "all", confirm: null, probe: null, probeError: null }, history: { loading: false, error: null, items: null }, scale: { data: null, error: null, loading: false, view: "exec", branch: "all", category: "all", visibility: "all", evaluated: "all", query: "", zoom: 1, selected: null, selectedLeaf: null, expanded: {}, leafLimit: {} }, demoAudited: false };
   var SNAPSHOT_BYTE_BUDGET = 16384;
   var $ = function (id) { return document.getElementById(id); };
   var messages = $("messages"), input = $("message-input"), send = $("send-button");
@@ -4540,6 +4540,7 @@
       });
     })(demoSessionButtons[di]);
   }
+  if ($("demo-verify-run")) $("demo-verify-run").addEventListener("click", demoAuditRun);
   var demoConfigButton = document.querySelector("[data-demo-config]");
   if (demoConfigButton) {
     demoConfigButton.addEventListener("click", function () {
@@ -4748,6 +4749,107 @@
   $("context-preview").addEventListener("click", previewSnapshot);
 
   var PANES = ["branch", "lab", "runtime", "skills", "mcp", "catalog", "archive", "demo", "history"];
+  /* 现场演示：8 项硬检查。分数不预置，点击后读取两条会话原文逐条判定。 */
+  var DEMO_CHECKS = [
+    { id: "c1", part: "concl", label: "判定 demo-6 / demo-7 不可比", test: function (t) { return /不可比|incomparable/.test(t); }, quote: /不可比|incomparable/ },
+    { id: "c2", part: "concl", label: "拒绝两组放进同一张表", test: function (t) { return /同一张表|同表/.test(t); }, quote: /同一张表|同表/ },
+    { id: "c3", part: "concl", label: "拒绝跨版本“成本降 82.7%”", test: function (t) { return /82\.7/.test(t); }, quote: /82\.7/ },
+    { id: "c4", part: "concl", label: "拒绝“通过数 +2”与 n=10 显著性", test: function (t) { return /\+2/.test(t) && /(n\s*=\s*10|显著性)/.test(t); }, quote: /n\s*=\s*10|显著性/ },
+    { id: "e1", part: "evidence", label: "引用 scenario-versions", test: function (t) { return /scenario-versions/.test(t); }, quote: /scenario-versions/ },
+    { id: "e2", part: "evidence", label: "引用 claims", test: function (t) { return /\bclaims\b/.test(t); }, quote: /\bclaims\b/ },
+    { id: "e3", part: "evidence", label: "引用 evidence-chain", test: function (t) { return /evidence-chain/.test(t); }, quote: /evidence-chain/ },
+    { id: "e4", part: "evidence", label: "给出 KB 检索 / 来源记录", test: function (t) { return /检索记录/.test(t); }, quote: /检索记录/ }
+  ];
+  function demoAnswerText(session) {
+    var messages = (session && session.messages) || [], parts = [];
+    for (var i = 0; i < messages.length; i++) {
+      var m = messages[i] || {};
+      if (m.role === "assistant" && typeof m.content === "string") parts.push(m.content);
+    }
+    return parts.join("\n\n");
+  }
+  function demoQuote(text, pattern) {
+    var match = String(text || "").match(pattern);
+    if (!match) return "";
+    var index = match.index || 0;
+    var start = Math.max(0, index - 40), end = Math.min(text.length, index + match[0].length + 60);
+    return text.slice(start, end).replace(/\s+/g, " ").trim();
+  }
+  function demoPaintCell(cell, ok, quote) {
+    if (!cell) return;
+    cell.textContent = ok ? "✅" : "❌";
+    cell.className = "demo-grade " + (ok ? "is-ok" : "is-bad");
+    cell.title = quote ? "原文：" + quote : "回答里没有找到对应表述";
+  }
+  function demoSetText(id, text) { var node = $(id); if (node) node.textContent = text; }
+  /* 分数字保留 HTML 里的 <span>/8</span>：只改前面的文本节点。 */
+  function demoSetScore(id, total) {
+    var node = $(id);
+    if (!node) return;
+    var head = node.firstChild;
+    if (head && head.nodeType === 3) { head.nodeValue = String(total); return; }
+    node.textContent = String(total);
+    var unit = document.createElement("span");
+    unit.textContent = "/8";
+    node.appendChild(unit);
+  }
+  function demoCount(results) {
+    var n = 0;
+    for (var key in results) if (results[key]) n += 1;
+    return n;
+  }
+  function demoAuditApply(prefix, results) {
+    var concl = 0, evidence = 0;
+    for (var i = 0; i < DEMO_CHECKS.length; i++) {
+      if (!results[DEMO_CHECKS[i].id]) continue;
+      if (DEMO_CHECKS[i].part === "concl") concl += 1; else evidence += 1;
+    }
+    demoSetScore("demo-score-" + prefix, concl + evidence);
+    demoSetText("demo-concl-" + prefix, concl + "/4");
+    demoSetText("demo-evidence-" + prefix, evidence + "/4");
+  }
+  function demoAuditRun() {
+    var button = $("demo-verify-run"), status = $("demo-verify-status");
+    if (!button || !status || button.disabled) return;
+    button.disabled = true;
+    status.textContent = "读取基线会话…";
+    var baseId = "sess-9abb7f97044649ed", evoId = "sess-a25e06acf349417c";
+    Promise.all([
+      api("/api/sessions/" + encodeURIComponent(baseId)),
+      api("/api/sessions/" + encodeURIComponent(evoId))
+    ]).then(function (sessions) {
+      var baseText = demoAnswerText(sessions[0]);
+      var evoText = demoAnswerText(sessions[1]);
+      if (!baseText || !evoText) throw new Error("会话回答为空");
+      status.textContent = "核对 8 项…";
+      var baseResults = {}, evoResults = {}, index = 0;
+      function step() {
+        if (index >= DEMO_CHECKS.length) {
+          state.demoAudited = true;
+          demoAuditApply("base", baseResults);
+          demoAuditApply("evo", evoResults);
+          status.textContent = "完成：基线 " + demoCount(baseResults) + "/8 · 进化 " + demoCount(evoResults) + "/8（来源：两条会话原文）";
+          renderDemoBinding();
+          button.disabled = false;
+          return;
+        }
+        var item = DEMO_CHECKS[index];
+        var row = document.querySelector('[data-check="' + item.id + '"]');
+        var cells = row ? row.querySelectorAll("td.demo-grade") : [];
+        var baseHit = item.test(baseText), evoHit = item.test(evoText);
+        baseResults[item.id] = baseHit;
+        evoResults[item.id] = evoHit;
+        demoPaintCell(cells[0], baseHit, demoQuote(baseText, item.quote));
+        demoPaintCell(cells[1], evoHit, demoQuote(evoText, item.quote));
+        index += 1;
+        setTimeout(step, 140);
+      }
+      setTimeout(step, 140);
+    }).catch(function (err) {
+      status.textContent = "核对失败：" + (err && err.message ? err.message : "未知错误") + "（可点「打开基线会话」查看原文）";
+      button.disabled = false;
+    });
+  }
   function demoShortHash(value) {
     var text = String(value || "");
     var marker = "sha256:";
@@ -4756,6 +4858,16 @@
   }
   function renderDemoBinding() {
     if (!$("demo-delta")) return;
+    bindDemoDeltaTips();
+    if (!state.demoAudited) {
+      demoSetText("demo-delta-skill", "—");
+      demoSetText("demo-delta-mcp", "—");
+      demoSetText("demo-delta-tools", "—");
+      demoSetText("demo-delta-perms", "—");
+      demoSetText("demo-delta-skill-path", "点击「现场核对」后读取 binding");
+      demoSetText("demo-delta-note", "结果读取前不显示绑定信息");
+      return;
+    }
     var rt = state.runtime || {}, status = rt.status || {}, binding = status.binding || {};
     var skills = binding.skills || {}, mcps = binding.mcp || {};
     var skillIds = Object.keys(skills), mcpIds = Object.keys(mcps);
@@ -4784,7 +4896,6 @@
       perms.push(bound.permissions.filesystem === "none" ? "无文件写" : ("filesystem " + bound.permissions.filesystem));
       setText("demo-delta-perms", perms.join(" · "));
     }
-    bindDemoDeltaTips();
   }
   function demoDeltaTipText(kind) {
     var rt = state.runtime || {}, status = rt.status || {}, binding = status.binding || {};
