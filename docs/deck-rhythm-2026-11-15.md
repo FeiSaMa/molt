@@ -94,7 +94,7 @@ Deck 建议改成：
 已生成 5 页 PDF：
 
 ```text
-/home/feisama/Downloads/molt-demo-insert.pdf
+docs/molt-demo-insert.pdf
 ```
 
 内容：
