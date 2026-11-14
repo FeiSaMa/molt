@@ -10,9 +10,10 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from molt.mcp.jsonrpc import McpError, McpPermissionError
 
@@ -63,7 +64,7 @@ class McpAllowlist:
     source_path: Path | None = None
 
     @classmethod
-    def load(cls, path: str | Path, *, repo_root: str | Path | None = None) -> "McpAllowlist":
+    def load(cls, path: str | Path, *, repo_root: str | Path | None = None) -> McpAllowlist:
         path = Path(path)
         root = Path(repo_root) if repo_root is not None else _guess_repo_root(path)
         try:
@@ -81,7 +82,7 @@ class McpAllowlist:
         *,
         repo_root: str | Path,
         source_path: Path | None = None,
-    ) -> "McpAllowlist":
+    ) -> McpAllowlist:
         if not isinstance(raw, dict):
             raise McpAllowlistError("allowlist_not_an_object")
         entries = raw.get("servers")

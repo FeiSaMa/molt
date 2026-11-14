@@ -29,10 +29,12 @@ binding change mid-turn cannot alter the running turn.
 from __future__ import annotations
 
 import json
+import re
 import threading
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any
 
 from molt.agent.tools import ToolOutcome
 from molt.mcp.allowlist import McpAllowlist, McpAllowlistError, McpServerSpec
@@ -58,6 +60,7 @@ from molt.mcp.profile import (
 from molt.skills.binding import BindingError, BindingStore
 from molt.skills.evaluate import run_context_check
 from molt.skills.loader import (
+    SkillIntegrityError,
     SkillPackage,
     SkillPackageError,
     load_package,
@@ -72,6 +75,7 @@ from molt.upper.types import UpperAsset, utc_now
 MAX_TOOL_OUTPUT_BYTES = 64 * 1024
 MCP_TOOL_PREFIX = "mcp__"
 MCP_TOKEN_PREFIX = "mcp:"
+_ASSET_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$")
 RUNTIME_MODES = ("off", "active")
 DEFAULT_MCP_BWRAP = True
 OPERATOR_APPROVER = "operator-config"
@@ -370,6 +374,12 @@ class AgentRuntime:
         except BindingError:
             return None, "binding_invalid"
 
+    @property
+    def binding_store(self) -> BindingStore | None:
+        """The shared BindingStore (``None`` when the state path is invalid)."""
+
+        return self._binding()
+
     def binding_public(self) -> dict[str, Any]:
         snapshot, error = self._binding_snapshot_safe()
         if snapshot is None:
@@ -381,6 +391,105 @@ class AgentRuntime:
         }
 
     # -- skill loading -----------------------------------------------------
+    def _skill_registry_asset(self, asset_id: str) -> Any | None:
+        registry_root = self.skill_state_dir / "skill-registry"
+        if not (registry_root / "registry.json").is_file():
+            return None
+        try:
+            registry = UpperRegistry(registry_root, repo_root=self.repo_root)
+            return registry.get(asset_id)
+        except (OSError, ValueError, UpperRegistryError):
+            return None
+
+    def _asset_registered(
+        self, asset_id: str, skill_id: str, version: Any, package_hash: Any
+    ) -> bool:
+        if not isinstance(asset_id, str) or not _ASSET_ID_RE.match(asset_id):
+            return False
+        asset = self._skill_registry_asset(asset_id)
+        if asset is None or asset.kind != "skill":
+            return False
+        if asset.name != skill_id or asset.version != version:
+            return False
+        return str(asset.content.get("package_hash", "")) == str(package_hash or "")
+
+    def _asset_trusted(
+        self, asset_id: str, skill_id: str, version: Any, package_hash: Any
+    ) -> bool:
+        if not self._asset_registered(asset_id, skill_id, version, package_hash):
+            return False
+        asset = self._skill_registry_asset(asset_id)
+        return asset is not None and asset.status in ("approved", "active")
+
+    def _package_for_entry(
+        self, skill_id: str, entry: Mapping[str, Any]
+    ) -> SkillPackage:
+        """Resolve a bound package with trust checks (no candidates/UUID dirs).
+
+        Order:
+        1. ``<skill-state>/skills/packages/<asset_id>/<skill_id>`` only when the
+           registry holds the same asset_id/version/hash in approved|active;
+        2. repo ``skills_root/<skill_id>`` only for a registered skill asset or
+           the explicit ``operator_baseline`` sentinel, with a matching hash.
+        """
+
+        asset_id = entry.get("asset_id")
+        version = entry.get("version")
+        package_hash = entry.get("package_hash")
+        if isinstance(asset_id, str) and asset_id and not _ASSET_ID_RE.match(asset_id):
+            raise AgentRuntimeError("skill_package_untrusted", "invalid asset_id")
+        trusted = (
+            isinstance(asset_id, str)
+            and asset_id not in ("", "operator_baseline")
+            and self._asset_trusted(asset_id, skill_id, version, package_hash)
+        )
+        registered = (
+            isinstance(asset_id, str)
+            and asset_id not in ("", "operator_baseline")
+            and self._asset_registered(asset_id, skill_id, version, package_hash)
+        )
+        if (
+            isinstance(asset_id, str)
+            and asset_id not in ("", "operator_baseline")
+            and _ASSET_ID_RE.match(asset_id)
+        ):
+            asset_root = self.skill_state_dir.joinpath("skills", "packages", asset_id)
+            if asset_root.is_dir():
+                if not trusted:
+                    raise AgentRuntimeError("skill_package_untrusted", asset_id)
+                try:
+                    package = load_package(asset_root, skill_id, version=version)
+                except SkillIntegrityError as exc:
+                    raise AgentRuntimeError(
+                        "skill_integrity_mismatch", f"{skill_id}: {exc}"
+                    ) from None
+                except SkillPackageError as exc:
+                    raise AgentRuntimeError(
+                        "skill_unavailable", f"{skill_id}: {exc}"
+                    ) from None
+                if package.content_hash != package_hash:
+                    raise AgentRuntimeError(
+                        "skill_integrity_mismatch",
+                        f"{skill_id}@{package.version}: binding and published package hashes differ",
+                    )
+                return package
+        try:
+            package = load_package(self.skills_root, skill_id, version=version)
+        except SkillIntegrityError as exc:
+            raise AgentRuntimeError(
+                "skill_integrity_mismatch", f"{skill_id}: {exc}"
+            ) from None
+        except SkillPackageError as exc:
+            raise AgentRuntimeError("skill_unavailable", f"{skill_id}: {exc}") from None
+        if package.content_hash != package_hash:
+            raise AgentRuntimeError(
+                "skill_integrity_mismatch",
+                f"{skill_id}@{package.version}: binding and repo package hashes differ",
+            )
+        if asset_id != "operator_baseline" and not registered:
+            raise AgentRuntimeError("skill_unavailable", f"{skill_id}: untrusted repo baseline")
+        return package
+
     def _load_bound_packages(
         self, snapshot: dict[str, Any] | None = None
     ) -> tuple[list[SkillPackage], int]:
@@ -392,23 +501,13 @@ class AgentRuntime:
         packages: list[SkillPackage] = []
         for skill_id in sorted(entries):
             entry = entries[skill_id]
-            try:
-                package = load_package(
-                    self.skills_root, skill_id, version=entry.get("version")
-                )
-            except SkillPackageError as exc:
-                raise AgentRuntimeError("skill_unavailable", f"{skill_id}: {exc}") from None
+            package = self._package_for_entry(skill_id, entry)
             try:
                 validate_package(package)
             except SkillPackageError as exc:
                 raise AgentRuntimeError(
                     "skill_integrity_mismatch", f"{skill_id}: {exc}"
                 ) from None
-            if package.content_hash != entry.get("package_hash"):
-                raise AgentRuntimeError(
-                    "skill_integrity_mismatch",
-                    f"{skill_id}@{package.version}: binding and package hashes differ",
-                )
             packages.append(package)
         return packages, snapshot["revision"]
 
@@ -489,10 +588,8 @@ class AgentRuntime:
                 "available": False,
             }
             try:
-                package = load_package(self.skills_root, skill_id, version=entry.get("version"))
+                package = self._package_for_entry(skill_id, entry)
                 validate_package(package)
-                if package.content_hash != entry.get("package_hash"):
-                    raise AgentRuntimeError("skill_integrity_mismatch")
             except (SkillPackageError, AgentRuntimeError) as exc:
                 item["reason"] = (
                     exc.code if isinstance(exc, AgentRuntimeError) else "skill_unavailable"

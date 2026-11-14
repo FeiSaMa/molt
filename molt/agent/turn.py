@@ -296,6 +296,19 @@ class TurnRunner:
                     f"MCP 不可用：{mcp.reason or 'unknown'}",
                     False,
                 )
+        # D4 boundary: multi-round tool use is allowed only when this turn's
+        # controlled tool set actually contains MCP tools. Otherwise the legacy
+        # single-tool + second-call path stays in force (skill context still
+        # loaded and shown in the system prompt).
+        if not any(name.startswith("mcp__") for name in turn.allowed_tools):
+            reply = self._adapter.complete(messages, TOOLS, "auto")
+            if reply.tool_calls:
+                content, experiment_refs = self._run_tool_phase(
+                    session, turn_id, messages, reply
+                )
+            else:
+                content, experiment_refs = reply.content, None
+            return content, experiment_refs
         specs = (
             build_tool_specs(runtime.tool_specs(turn))
             if mcp.available

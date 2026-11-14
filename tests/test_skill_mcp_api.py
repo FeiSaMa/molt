@@ -83,6 +83,13 @@ NEW_PATHS = {
     "/api/skills/effective",
     "/api/skills/select",
     "/api/skills/context-check",
+    "/api/skills/propose",
+    "/api/skills/evaluate",
+    "/api/skills/approve",
+    "/api/skills/activate",
+    "/api/skills/rollback",
+    "/api/skills/evaluations",
+    "/api/skills/evaluations/{evaluation_id}",
     "/api/mcp/tools",
     "/api/mcp/call",
     "/api/sessions/{session_id}/runtime",
@@ -104,7 +111,7 @@ def _bind(tmp_path: Path, *, mcp: bool = False) -> tuple[Any, Path]:
         {
             "skill_id": package.skill_id,
             "version": package.version,
-            "asset_id": f"skill-{package.skill_id}-{package.version}",
+            "asset_id": "operator_baseline",
             "package_hash": package.content_hash,
         },
         expected_revision=0,
@@ -177,7 +184,7 @@ def _binding_state(tmp_path: Path, asset: Any) -> tuple[Path, BindingStore]:
         {
             "skill_id": package.skill_id,
             "version": package.version,
-            "asset_id": f"skill-{package.skill_id}-{package.version}",
+            "asset_id": "operator_baseline",
             "package_hash": package.content_hash,
         },
         expected_revision=0,
@@ -273,7 +280,7 @@ def test_legacy_contracts_and_routes_unchanged() -> None:
         == UPPER_PATHS
     )
     assert len(ROUTES) == 24
-    assert len(SKILL_MCP_ROUTES) == 9
+    assert len(SKILL_MCP_ROUTES) == 16
 
 
 def test_new_routes_require_bearer_and_openapi_is_public(runtime: AgentRuntime) -> None:

@@ -41,6 +41,7 @@ from molt.agent.probe import (
     load_index,
 )
 from molt.agent.runtime import AgentRuntime, AgentRuntimeError
+from molt.agent.skill_admin import SkillAdmin, SkillAdminError
 from molt.agent.store import MAX_MESSAGES, TERMINAL_EVENTS, Session, SessionStore, new_id
 from molt.agent.tasks import TaskResultsError, load_task_results
 from molt.agent.turn import TurnRunner
@@ -70,6 +71,7 @@ class AgentApp:
     lab_openapi: dict[str, Any] | None = None
     upper: UpperService | None = None
     runtime: AgentRuntime | None = None
+    skill_admin: SkillAdmin | None = None
     skill_mcp_openapi: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
@@ -136,6 +138,17 @@ SKILL_MCP_ROUTES: tuple[Route, ...] = (
     ("GET", re.compile(r"^/api/skills/effective$"), "skills_effective"),
     ("POST", re.compile(r"^/api/skills/select$"), "skills_select"),
     ("POST", re.compile(r"^/api/skills/context-check$"), "skills_context_check"),
+    ("POST", re.compile(r"^/api/skills/propose$"), "skills_propose"),
+    ("POST", re.compile(r"^/api/skills/evaluate$"), "skills_evaluate"),
+    ("POST", re.compile(r"^/api/skills/approve$"), "skills_approve"),
+    ("POST", re.compile(r"^/api/skills/activate$"), "skills_activate"),
+    ("POST", re.compile(r"^/api/skills/rollback$"), "skills_rollback"),
+    ("GET", re.compile(r"^/api/skills/evaluations$"), "skills_evaluations"),
+    (
+        "GET",
+        re.compile(r"^/api/skills/evaluations/(?P<evaluation_id>[^/]+)$"),
+        "skill_evaluation_detail",
+    ),
     ("GET", re.compile(r"^/api/mcp/tools$"), "mcp_tools"),
     ("POST", re.compile(r"^/api/mcp/call$"), "mcp_call"),
     (
@@ -412,6 +425,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             "skill_binding_invalid": ErrorCode.ADAPTER_UNAVAILABLE,
             "binding_invalid": ErrorCode.ADAPTER_UNAVAILABLE,
             "skill_unavailable": ErrorCode.ADAPTER_UNAVAILABLE,
+            "skill_package_untrusted": ErrorCode.CONFLICT,
             "mcp_not_configured": ErrorCode.ADAPTER_UNAVAILABLE,
             "mcp_unavailable": ErrorCode.ADAPTER_UNAVAILABLE,
             "mcp_timeout": ErrorCode.ADAPTER_UNAVAILABLE,
@@ -431,6 +445,29 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         }
         code = mapping.get(exc.code, ErrorCode.BAD_REQUEST)
         return ApiError(code, "技能/MCP 请求失败", {"reason": exc.code})
+
+    def _skill_admin(self) -> SkillAdmin:
+        admin = self.server.app.skill_admin
+        if admin is None:
+            raise ApiError(
+                ErrorCode.ADAPTER_UNAVAILABLE,
+                "技能管理未启用",
+                {"reason": "skill_admin_unavailable"},
+            )
+        return admin
+
+    @staticmethod
+    def _skill_admin_api_error(exc: SkillAdminError) -> ApiError:
+        mapping = {
+            400: ErrorCode.BAD_REQUEST,
+            404: ErrorCode.NOT_FOUND,
+            409: ErrorCode.CONFLICT,
+            503: ErrorCode.ADAPTER_UNAVAILABLE,
+        }
+        code = mapping.get(exc.status, ErrorCode.INTERNAL)
+        details = dict(exc.details)
+        details.setdefault("reason", exc.code)
+        return ApiError(code, exc.message, details)
 
     # ---- 端点 -------------------------------------------------------------
     def _handle_health(self, match: re.Match[str]) -> None:
@@ -709,6 +746,168 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             payload = self._runtime().context_check(task_text)
         except AgentRuntimeError as exc:
             raise self._runtime_api_error(exc) from None
+        self._send_json(200, payload)
+
+    # ---- skill evolution -------------------------------------------------
+    def _handle_skills_propose(self, match: re.Match[str]) -> None:
+        del match
+        body = self._read_strict_body(
+            ("skill_id", "feedback"),
+            optional=("base_version", "manual_body", "version"),
+        )
+        skill_id = body["skill_id"]
+        feedback = body["feedback"]
+        if not isinstance(skill_id, str) or not skill_id.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "skill_id 必须是非空字符串")
+        if not isinstance(feedback, str) or not feedback.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "feedback 必须是非空字符串")
+        for name in ("base_version", "manual_body", "version"):
+            value = body.get(name)
+            if value is not None and not isinstance(value, str):
+                raise ApiError(ErrorCode.BAD_REQUEST, f"{name} 必须是字符串")
+        try:
+            payload = self._skill_admin().propose(
+                skill_id,
+                feedback,
+                base_version=body.get("base_version"),
+                manual_body=body.get("manual_body"),
+                version=body.get("version"),
+            )
+        except SkillAdminError as exc:
+            raise self._skill_admin_api_error(exc) from None
+        self._send_json(201, payload)
+
+    def _handle_skills_evaluate(self, match: re.Match[str]) -> None:
+        del match
+        body = self._read_strict_body(
+            ("asset_id",), optional=("baseline_asset_id", "manual_outputs")
+        )
+        asset_id = body["asset_id"]
+        if not isinstance(asset_id, str) or not asset_id.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "asset_id 必须是非空字符串")
+        baseline = body.get("baseline_asset_id")
+        if baseline is not None and not isinstance(baseline, str):
+            raise ApiError(ErrorCode.BAD_REQUEST, "baseline_asset_id 必须是字符串")
+        manual_outputs = body.get("manual_outputs")
+        if manual_outputs is not None:
+            if not isinstance(manual_outputs, dict) or not all(
+                isinstance(key, str) and isinstance(value, str)
+                for key, value in manual_outputs.items()
+            ):
+                raise ApiError(ErrorCode.BAD_REQUEST, "manual_outputs 必须是字符串映射")
+        try:
+            payload = self._skill_admin().evaluate(
+                asset_id,
+                baseline_asset_id=baseline,
+                manual_outputs=manual_outputs,
+            )
+        except SkillAdminError as exc:
+            raise self._skill_admin_api_error(exc) from None
+        self._send_json(200, payload)
+
+    def _handle_skills_approve(self, match: re.Match[str]) -> None:
+        del match
+        body = self._read_strict_body(
+            ("asset_id", "approved_by", "evidence_id"), optional=("note",)
+        )
+        asset_id = body["asset_id"]
+        approved_by = body["approved_by"]
+        evidence_id = body["evidence_id"]
+        note = body.get("note")
+        if not isinstance(asset_id, str) or not asset_id.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "asset_id 必须是非空字符串")
+        if not isinstance(approved_by, str) or not approved_by.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "approved_by 必须是非空字符串")
+        if not isinstance(evidence_id, str) or not evidence_id.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "evidence_id 必须是非空字符串")
+        if note is not None and not isinstance(note, str):
+            raise ApiError(ErrorCode.BAD_REQUEST, "note 必须是字符串")
+        try:
+            payload = self._skill_admin().approve(
+                asset_id, approved_by, evidence_id=evidence_id, note=note
+            )
+        except SkillAdminError as exc:
+            raise self._skill_admin_api_error(exc) from None
+        self._send_json(200, payload)
+
+    def _handle_skills_activate(self, match: re.Match[str]) -> None:
+        del match
+        body = self._read_strict_body(
+            ("asset_id", "expected_revision", "actor", "evidence_id"),
+            optional=("reason",),
+        )
+        asset_id = body["asset_id"]
+        expected_revision = body["expected_revision"]
+        actor = body["actor"]
+        evidence_id = body["evidence_id"]
+        reason = body.get("reason")
+        if not isinstance(asset_id, str) or not asset_id.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "asset_id 必须是非空字符串")
+        if isinstance(expected_revision, bool) or not isinstance(expected_revision, int):
+            raise ApiError(ErrorCode.BAD_REQUEST, "expected_revision 必须是整数")
+        if not isinstance(actor, str) or not actor.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "actor 必须是非空字符串")
+        if not isinstance(evidence_id, str) or not evidence_id.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "evidence_id 必须是非空字符串")
+        if reason is not None and not isinstance(reason, str):
+            raise ApiError(ErrorCode.BAD_REQUEST, "reason 必须是字符串")
+        try:
+            payload = self._skill_admin().activate(
+                asset_id,
+                expected_revision,
+                actor=actor,
+                evidence_id=evidence_id,
+                reason=reason,
+            )
+        except SkillAdminError as exc:
+            raise self._skill_admin_api_error(exc) from None
+        self._send_json(200, payload)
+
+    def _handle_skills_rollback(self, match: re.Match[str]) -> None:
+        del match
+        body = self._read_strict_body(
+            ("reason", "rolled_back_by", "expected_revision"),
+            optional=("evidence_id",),
+        )
+        reason = body["reason"]
+        rolled_back_by = body["rolled_back_by"]
+        expected_revision = body["expected_revision"]
+        evidence_id = body.get("evidence_id")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "reason 必须是非空字符串")
+        if not isinstance(rolled_back_by, str) or not rolled_back_by.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "rolled_back_by 必须是非空字符串")
+        if isinstance(expected_revision, bool) or not isinstance(expected_revision, int):
+            raise ApiError(ErrorCode.BAD_REQUEST, "expected_revision 必须是整数")
+        if evidence_id is not None and (
+            not isinstance(evidence_id, str) or not evidence_id.strip()
+        ):
+            raise ApiError(ErrorCode.BAD_REQUEST, "evidence_id 必须是非空字符串")
+        try:
+            payload = self._skill_admin().rollback(
+                reason=reason,
+                rolled_back_by=rolled_back_by,
+                expected_revision=expected_revision,
+                evidence_id=evidence_id,
+            )
+        except SkillAdminError as exc:
+            raise self._skill_admin_api_error(exc) from None
+        self._send_json(200, payload)
+
+    def _handle_skills_evaluations(self, match: re.Match[str]) -> None:
+        del match
+        try:
+            payload = self._skill_admin().list_evaluations()
+        except SkillAdminError as exc:
+            raise self._skill_admin_api_error(exc) from None
+        self._send_json(200, payload)
+
+    def _handle_skill_evaluation_detail(self, match: re.Match[str]) -> None:
+        evaluation_id = unquote(match.group("evaluation_id"))
+        try:
+            payload = self._skill_admin().get_evaluation(evaluation_id)
+        except SkillAdminError as exc:
+            raise self._skill_admin_api_error(exc) from None
         self._send_json(200, payload)
 
     def _handle_mcp_tools(self, match: re.Match[str]) -> None:
@@ -1117,6 +1316,32 @@ def run_server(
         )
         upper = None
 
+    skills_root_resolved = (skills_root or (root / "skills")).resolve()
+    skill_state_resolved = (skill_state or state_root).resolve()
+    runtime_obj = AgentRuntime(
+        root,
+        skills_root_resolved,
+        skill_state_resolved,
+        mcp_allowlist,
+        adapter,
+        enabled=any(item is not None for item in (skills_root, skill_state, mcp_allowlist)),
+        mcp_registry_state=(upper_state or state_root),
+    )
+    skill_admin_obj: SkillAdmin | None
+    try:
+        skill_admin_obj = SkillAdmin(
+            root,
+            skills_root_resolved,
+            skill_state_resolved,
+            skill_state_resolved / "skill-registry",
+            adapter,
+            runtime_obj.binding_store,
+        )
+    except (SkillAdminError, OSError, ValueError) as exc:
+        code = getattr(exc, "code", "skill_admin_unavailable")
+        print(f"skill_admin_disabled: {code}", file=sys.stderr)
+        skill_admin_obj = None
+
     app = AgentApp(
         index=index,
         adapter=adapter,
@@ -1127,15 +1352,8 @@ def run_server(
         root=root,
         lab_root=(lab_root or Path("/tmp/molt-lab")),
         upper=upper,
-        runtime=AgentRuntime(
-            root,
-            (skills_root or (root / "skills")).resolve(),
-            (skill_state or state_root).resolve(),
-            mcp_allowlist,
-            adapter,
-            enabled=any(item is not None for item in (skills_root, skill_state, mcp_allowlist)),
-            mcp_registry_state=(upper_state or state_root),
-        ),
+        runtime=runtime_obj,
+        skill_admin=skill_admin_obj,
     )
     try:
         server = create_server(app, host, port)

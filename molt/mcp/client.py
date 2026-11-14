@@ -35,8 +35,9 @@ import subprocess
 import tempfile
 import threading
 import time
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from molt.mcp.allowlist import McpServerSpec
 from molt.mcp.jsonrpc import (
@@ -186,7 +187,7 @@ class McpClient:
             shutil.rmtree(self.workspace, ignore_errors=True)
             self.workspace = None
 
-    def __enter__(self) -> "McpClient":
+    def __enter__(self) -> McpClient:
         self.start()
         return self
 

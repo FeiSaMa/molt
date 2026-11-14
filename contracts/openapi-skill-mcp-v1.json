@@ -3,7 +3,7 @@
   "info": {
     "title": "molt skill/MCP runtime API",
     "version": "1.0.0",
-    "description": "Read-only skill catalog/binding projections, deterministic selection evidence, manual MCP tool listing/calls, and a per-session runtime switch. Independent from the agent v1, lab v1 and upper v1 contracts. All routes require Bearer except OPTIONS and GET /api/skill-mcp/openapi.json. No route accepts a server command, environment value, URL or filesystem location; tool calls are limited to the approved allowlist. context-check proves only that a reviewed skill block entered the captured messages (calls_model=false); it never claims task improvement."
+    "description": "Skill catalog/binding projections, deterministic selection evidence, manual MCP tool listing/calls, a per-session runtime switch, and the propose/evaluate/approve/activate/rollback skill lifecycle. Independent from the agent v1, lab v1 and upper v1 contracts. All routes require Bearer except OPTIONS and GET /api/skill-mcp/openapi.json. No route accepts a server command, environment value, URL or filesystem location; MCP tool calls are limited to the approved allowlist. Evaluation evidence distinguishes manual from live; manual is always calls_model=false."
   },
   "servers": [{ "url": "/" }],
   "security": [{ "bearerAuth": [] }],
@@ -124,6 +124,213 @@
           "409": { "$ref": "#/components/responses/Conflict" },
           "413": { "$ref": "#/components/responses/PayloadTooLarge" },
           "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/skills/propose": {
+      "post": {
+        "summary": "Propose one skill candidate",
+        "description": "Writes a candidate package under the runtime state and registers a draft skill asset. manual_body wins (origin=manual); otherwise a real-model adapter is required (origin=provider). With neither, 409 provider_unavailable is returned and nothing is written.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProposeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Candidate registered as draft",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProposeResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/skills/evaluate": {
+      "post": {
+        "summary": "Evaluate one candidate against a baseline",
+        "description": "Runs the fixed transfer/regression tasks. A real-model adapter produces mode=live; otherwise manual_outputs must cover every task and the result is mode=manual with calls_model=false. The asset moves draft→evaluated only after a complete two-phase record is written.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EvaluateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Evaluation evidence",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EvaluateResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/skills/approve": {
+      "post": {
+        "summary": "Approve an evaluated skill asset",
+        "description": "Explicit operator approval. Requires an evidence_id whose asset_id and candidate hash match the asset and whose final is keep; reject/rollback evidence returns 409 skill_not_keep. No silent override exists; an explicit override_reason is not implemented.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ApproveRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approval result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApproveResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/skills/activate": {
+      "post": {
+        "summary": "Activate an approved skill asset",
+        "description": "Validates the package and evidence, checks that the skill_id@version identity has no conflicting package hash, publishes the package, then performs one CAS binding commit and writes a commit record. actor and evidence_id are required.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ActivateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New binding pointer",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ActivateResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/skills/rollback": {
+      "post": {
+        "summary": "Roll the binding back to the previous skill version",
+        "description": "Finds the previous skill entry in binding history, validates that target asset is still reusable, and performs one CAS commit back. The current binding must contain exactly one skill. evidence_id is optional audit input.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RollbackRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rolled-back pointer",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RollbackResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/skills/evaluations": {
+      "get": {
+        "summary": "List evaluation evidence",
+        "description": "Read-only index. Returns ids, versions, hashes, status, verdict, mode and binding revision; paths and rows are not returned.",
+        "responses": {
+          "200": {
+            "description": "Evaluation list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EvaluationList" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/skills/evaluations/{evaluation_id}": {
+      "get": {
+        "summary": "Read one evaluation evidence record",
+        "description": "Read-only safe projection with phase verdicts and aggregate metrics. Per-task rows, outputs and filesystem locations are not returned.",
+        "parameters": [
+          {
+            "name": "evaluation_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "minLength": 1, "maxLength": 160 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Evaluation detail",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EvaluationDetail" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "404": { "$ref": "#/components/responses/NotFound" },
           "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
@@ -263,6 +470,7 @@
               "binding_invalid",
               "skill_integrity_mismatch",
               "skill_unavailable",
+              "skill_package_untrusted",
               "allowlist_invalid",
               "mcp_binding_missing",
               "mcp_binding_incomplete",
@@ -389,7 +597,7 @@
           "available": { "type": "boolean" },
           "reason": {
             "type": "string",
-            "enum": ["skill_integrity_mismatch", "skill_unavailable"]
+            "enum": ["skill_integrity_mismatch", "skill_unavailable", "skill_package_untrusted"]
           },
           "family": { "type": "string" },
           "title": { "type": "string" },
@@ -467,6 +675,231 @@
           "contains_body": { "type": "boolean" },
           "matched_terms": { "type": "array", "items": { "type": "string" } },
           "binding_revision": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "ProposeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skill_id", "feedback"],
+        "properties": {
+          "skill_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "base_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+          "feedback": { "type": "string", "minLength": 1, "maxLength": 8192 },
+          "manual_body": { "type": "string", "minLength": 1 },
+          "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+        }
+      },
+      "ProposeResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["asset_id", "candidate_id", "package_hash", "origin", "calls_model"],
+        "properties": {
+          "asset_id": { "type": "string" },
+          "candidate_id": { "type": "string" },
+          "package_hash": { "type": "string" },
+          "origin": { "type": "string", "enum": ["manual", "provider"] },
+          "calls_model": { "type": "boolean" }
+        }
+      },
+      "EvaluateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["asset_id"],
+        "properties": {
+          "asset_id": { "type": "string", "minLength": 1 },
+          "baseline_asset_id": { "type": "string", "minLength": 1 },
+          "manual_outputs": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "ReconciledItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["intent_id", "revision"],
+        "properties": {
+          "intent_id": { "type": "string" },
+          "revision": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "PhaseMetrics": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["phase", "task_count", "candidate", "baseline", "transfer_delta", "tasks_improved", "tasks_regressed", "regression_count"],
+        "properties": {
+          "phase": { "type": "string", "enum": ["transfer", "regression"] },
+          "task_count": { "type": "integer", "minimum": 0 },
+          "candidate": { "$ref": "#/components/schemas/PhaseCounts" },
+          "baseline": { "$ref": "#/components/schemas/PhaseCounts" },
+          "transfer_delta": { "type": "number" },
+          "tasks_improved": { "type": "array", "items": { "type": "string" } },
+          "tasks_regressed": { "type": "array", "items": { "type": "string" } },
+          "regression_count": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "PhaseCounts": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["attempts", "passed", "pass_rate"],
+        "properties": {
+          "attempts": { "type": "integer", "minimum": 0 },
+          "passed": { "type": "integer", "minimum": 0 },
+          "pass_rate": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      },
+      "PhaseProjection": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["verdict", "reason", "metrics"],
+        "properties": {
+          "verdict": { "type": "string", "enum": ["keep", "reject", "rollback"] },
+          "reason": { "type": "string" },
+          "metrics": { "$ref": "#/components/schemas/PhaseMetrics" }
+        }
+      },
+      "EvaluateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "transfer", "regression", "final", "mode", "calls_model"],
+        "properties": {
+          "evidence_id": { "type": "string" },
+          "transfer": { "$ref": "#/components/schemas/PhaseProjection" },
+          "regression": { "$ref": "#/components/schemas/PhaseProjection" },
+          "final": { "type": "string", "enum": ["keep", "reject", "rollback"] },
+          "mode": { "type": "string", "enum": ["manual", "live"] },
+          "calls_model": { "type": "boolean" },
+          "reconciled": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ReconciledItem" }
+          }
+        }
+      },
+      "ApproveRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["asset_id", "approved_by", "evidence_id"],
+        "properties": {
+          "asset_id": { "type": "string", "minLength": 1 },
+          "approved_by": { "type": "string", "minLength": 1 },
+          "evidence_id": { "type": "string", "minLength": 1 },
+          "note": { "type": "string" }
+        }
+      },
+      "ApproveResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["asset_id", "status"],
+        "properties": {
+          "asset_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["approved"] }
+        }
+      },
+      "ActivateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["asset_id", "expected_revision", "actor", "evidence_id"],
+        "properties": {
+          "asset_id": { "type": "string", "minLength": 1 },
+          "expected_revision": { "type": "integer", "minimum": 0 },
+          "actor": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string" },
+          "evidence_id": { "type": "string", "minLength": 1 }
+        }
+      },
+      "ActivateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["asset_id", "skill_id", "version", "package_hash", "revision", "commit_record_id"],
+        "properties": {
+          "asset_id": { "type": "string" },
+          "skill_id": { "type": "string" },
+          "version": { "type": "string" },
+          "package_hash": { "type": "string" },
+          "revision": { "type": "integer", "minimum": 0 },
+          "commit_record_id": { "type": "string" },
+          "reconciled": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ReconciledItem" }
+          }
+        }
+      },
+      "RollbackRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reason", "rolled_back_by", "expected_revision"],
+        "properties": {
+          "reason": { "type": "string", "minLength": 1 },
+          "rolled_back_by": { "type": "string", "minLength": 1 },
+          "expected_revision": { "type": "integer", "minimum": 0 },
+          "evidence_id": { "type": "string", "minLength": 1 }
+        }
+      },
+      "RollbackResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target_asset_id", "skill_id", "version", "package_hash", "revision", "commit_record_id"],
+        "properties": {
+          "target_asset_id": { "type": "string" },
+          "skill_id": { "type": "string" },
+          "version": { "type": "string" },
+          "package_hash": { "type": "string" },
+          "revision": { "type": "integer", "minimum": 0 },
+          "commit_record_id": { "type": "string" },
+          "reconciled": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ReconciledItem" }
+          }
+        }
+      },
+      "EvaluationItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "asset_id", "skill_id", "version", "package_hash", "status", "verdict", "mode", "calls_model", "revision", "created_at"],
+        "properties": {
+          "evidence_id": { "type": "string" },
+          "asset_id": { "type": "string" },
+          "skill_id": { "type": "string" },
+          "version": { "type": "string" },
+          "package_hash": { "type": "string" },
+          "status": { "type": "string" },
+          "verdict": { "type": "string", "enum": ["keep", "reject", "rollback"] },
+          "mode": { "type": "string", "enum": ["manual", "live"] },
+          "calls_model": { "type": "boolean" },
+          "revision": { "type": "integer", "minimum": 0 },
+          "created_at": { "type": "string" }
+        }
+      },
+      "EvaluationList": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EvaluationItem" }
+          }
+        }
+      },
+      "EvaluationDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "calls_model", "mode"],
+        "properties": {
+          "evidence_id": { "type": "string" },
+          "asset_id": { "type": "string" },
+          "skill_id": { "type": "string" },
+          "version": { "type": "string" },
+          "package_hash": { "type": "string" },
+          "status": { "type": "string" },
+          "verdict": { "type": "string", "enum": ["keep", "reject", "rollback"] },
+          "mode": { "type": "string", "enum": ["manual", "live"] },
+          "calls_model": { "type": "boolean" },
+          "revision": { "type": "integer", "minimum": 0 },
+          "created_at": { "type": "string" },
+          "transfer": { "$ref": "#/components/schemas/PhaseProjection" },
+          "regression": { "$ref": "#/components/schemas/PhaseProjection" },
+          "final": { "type": "string", "enum": ["keep", "reject", "rollback"] }
         }
       },
       "McpTool": {
