@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:,">
+<title>素材页</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --ink: #14181f;
+    --ink-2: #333d4b;
+    --muted: #5c6776;
+    --line: #e1e5ec;
+    --line-strong: #cfd6e0;
+    --accent: #1f5fbf;
+    --accent-ink: #17498f;
+    --danger: #b3261e;
+    --danger-bg: #fdeeec;
+    --warn: #8a5a00;
+    --warn-bg: #fdf3de;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(20, 30, 50, .05), 0 8px 24px rgba(20, 30, 50, .06);
+    --nav-h: 96px;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  html {
+    font-size: 18px;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  [hidden] { display: none !important; }
+  ::selection { background: #cfe0fb; }
+
+  code {
+    font-family: var(--mono);
+    font-size: .95em;
+    background: #eef2f7;
+    padding: 1px 6px;
+    border-radius: 6px;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-left: clamp(16px, 4vw, 28px);
+    padding-right: clamp(16px, 4vw, 28px);
+  }
+
+  .skip-link {
+    position: absolute;
+    left: 12px;
+    top: -80px;
+    z-index: 200;
+    background: var(--ink);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+  .skip-link:focus { top: 12px; }
+
+  /* ---------- 顶部信息 ---------- */
+  .hero {
+    padding-top: clamp(28px, 5vw, 54px);
+    padding-bottom: 8px;
+  }
+
+  .hero h1 {
+    margin: 0 0 10px;
+    font-size: clamp(1.9rem, 4.2vw, 2.8rem);
+    line-height: 1.15;
+    letter-spacing: -.012em;
+  }
+
+  .subtitle {
+    margin: 0 0 16px;
+    font-size: clamp(1.02rem, 1.8vw, 1.22rem);
+    color: var(--ink-2);
+    max-width: 72ch;
+  }
+
+  .meta-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin: 0 0 14px;
+    font-size: 1rem;
+    color: var(--muted);
+  }
+
+  .meta-item { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 7px; }
+  .meta-label {
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .meta-value { font-family: var(--mono); font-size: .92rem; color: var(--ink-2); overflow-wrap: anywhere; }
+
+  .scope-note {
+    margin: 0 0 16px;
+    padding: 10px 14px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+    color: var(--ink-2);
+    font-size: 1rem;
+  }
+  .scope-note::before {
+    content: "口径";
+    display: inline-block;
+    margin-right: 8px;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    color: var(--muted);
+  }
+
+  .stats {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-ink);
+    background: #eaf1fd;
+    border: 1px solid #d3e1f9;
+    border-radius: 999px;
+    padding: 5px 14px;
+    display: inline-block;
+  }
+
+  /* ---------- 吸顶目录与筛选 ---------- */
+  .toc {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: rgba(255, 255, 255, .94);
+    backdrop-filter: saturate(1.4) blur(10px);
+    -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .toc-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+
+  .toc-links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 0 0 2px;
+    list-style: none;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .toc-item { flex: 0 0 auto; }
+
+  .toc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 320px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    color: var(--ink-2);
+    text-decoration: none;
+    font-size: .9rem;
+    line-height: 1.35;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .toc-link:hover { background: #eef3fa; border-color: #dbe5f3; color: var(--accent-ink); }
+  .toc-link:focus-visible { outline: 3px solid #9dbdf0; outline-offset: 2px; }
+  .toc-text { overflow: hidden; text-overflow: ellipsis; }
+
+  .toc-dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+  }
+
+  .filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 6px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink-2);
+    font-family: inherit;
+    font-size: .88rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .filter-btn:hover { background: #f0f4fa; }
+  .filter-btn:focus-visible { outline: 3px solid #9dbdf0; outline-offset: 2px; }
+  .filter-btn[aria-pressed="true"] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #fff;
+  }
+  .filter-count {
+    font-family: var(--mono);
+    font-size: .78rem;
+    font-weight: 500;
+    opacity: .72;
+  }
+  .filter-btn .toc-dot { width: 6px; height: 6px; }
+
+  /* ---------- 主体 ---------- */
+  main { padding-top: 22px; padding-bottom: 44px; }
+
+  .notices {
+    margin: 0 0 20px;
+    padding: 13px 16px;
+    background: var(--warn-bg);
+    border: 1px solid #ecd7a8;
+    border-left: 5px solid #d99a18;
+    border-radius: 12px;
+    color: #5a3c00;
+  }
+  .notices h2 { margin: 0 0 6px; font-size: 1rem; color: var(--warn); }
+  .notices ul { margin: 0; padding-left: 1.2em; font-size: 1rem; }
+  .notices li { margin: 3px 0; }
+
+  .fatal {
+    margin: 0 0 24px;
+    padding: clamp(18px, 3vw, 26px);
+    background: #fff;
+    border: 2px solid var(--danger);
+    border-radius: var(--radius);
+  }
+  .fatal h2 { margin: 0 0 10px; color: var(--danger); font-size: clamp(1.25rem, 2.4vw, 1.6rem); }
+  .fatal p { margin: 8px 0; font-size: 1rem; }
+  .fatal-key { font-weight: 700; color: #5d1b17; }
+
+  .cards { display: flex; flex-direction: column; gap: 24px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: clamp(18px, 3vw, 30px);
+    scroll-margin-top: calc(var(--nav-h) + 18px);
+  }
+
+  .card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .card-main { min-width: 0; flex: 1 1 auto; }
+
+  .kicker { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+
+  .id-chip {
+    font-family: var(--mono);
+    font-size: .78rem;
+    line-height: 1.5;
+    color: var(--muted);
+    background: #f1f4f8;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 1px 9px;
+  }
+
+  .badges { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: .8rem;
+    font-weight: 700;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .badge::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: .85;
+    flex: 0 0 auto;
+  }
+  .badge--none { color: #4b5568; background: #eef1f6; border-color: #d7dde7; }
+
+  .badge--c0 { color: #0d6244; background: #e4f5ed; border-color: #c5e8d8; }
+  .badge--c1 { color: #1c4f9c; background: #e8f0fd; border-color: #c9dbf7; }
+  .badge--c2 { color: #7c5200; background: #fdf2dd; border-color: #f1d9a7; }
+  .badge--c3 { color: #5f3a91; background: #f1eafa; border-color: #ddcdf0; }
+  .badge--c4 { color: #4f5a0d; background: #f1f4dc; border-color: #dde4b0; }
+  .badge--c5 { color: #0a5f66; background: #e2f4f6; border-color: #bfe3e7; }
+  .badge--c6 { color: #3c465a; background: #edf0f5; border-color: #d7dde7; }
+  .badge--c7 { color: #8c2f5e; background: #fbe9f1; border-color: #f1cada; }
+
+  .dot--c0 { background: #0d7a52; }
+  .dot--c1 { background: #2264c4; }
+  .dot--c2 { background: #b07800; }
+  .dot--c3 { background: #7a4fb3; }
+  .dot--c4 { background: #6b7a14; }
+  .dot--c5 { background: #0e7680; }
+  .dot--c6 { background: #55617a; }
+  .dot--c7 { background: #a63d70; }
+
+  .card-title {
+    margin: 8px 0 0;
+    font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+    line-height: 1.25;
+    letter-spacing: -.008em;
+  }
+
+  .one-liner {
+    margin: 12px 0 12px;
+    padding-left: 14px;
+    border-left: 4px solid var(--accent);
+    font-size: clamp(1.05rem, 1.7vw, 1.22rem);
+    font-weight: 500;
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tag {
+    font-family: var(--mono);
+    font-size: .8rem;
+    color: #3c4a5e;
+    background: #eef2f7;
+    border-radius: 6px;
+    padding: 1px 8px;
+  }
+
+  .copy-btn {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 10px 13px;
+    border: 1px solid #c9d6ea;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--accent);
+    font-family: inherit;
+    font-size: .9rem;
+    font-weight: 700;
+    line-height: 1.2;
+    cursor: pointer;
+  }
+  .copy-btn:hover { background: #eef4ff; }
+  .copy-btn:focus-visible { outline: 3px solid #9dbdf0; outline-offset: 2px; }
+  .copy-btn[data-state="ok"] { color: #0d6244; border-color: #9ed3b7; background: #eaf7f0; }
+  .copy-btn[data-state="err"] { color: #96271f; border-color: #e5b3ae; background: var(--danger-bg); }
+
+  .sub-h {
+    margin: 26px 0 8px;
+    font-size: .92rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    color: var(--muted);
+  }
+
+  /* ---------- 数字表 ---------- */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .95rem;
+    line-height: 1.55;
+  }
+  .data-table th,
+  .data-table td {
+    padding: 9px 12px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--line);
+  }
+  .data-table thead th {
+    background: #f7f9fc;
+    color: var(--muted);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .data-table tbody tr:last-child td,
+  .data-table tbody tr:last-child th { border-bottom: 0; }
+  .data-table--numbers { min-width: 560px; }
+  .data-table--chart { min-width: 520px; }
+
+  .num-label { font-weight: 600; }
+  .num-source {
+    display: block;
+    margin-top: 2px;
+    font-family: var(--mono);
+    font-size: .95rem;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+  .cell-value { font-family: var(--mono); font-weight: 700; font-size: 1.02em; overflow-wrap: anywhere; }
+  .cell-den { font-family: var(--mono); color: var(--ink-2); }
+  .cell-level { white-space: normal; }
+
+  .level {
+    display: inline-block;
+    padding: 1px 8px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: #f4f6f9;
+    color: #3c465a;
+    font-family: var(--mono);
+    font-size: 1em;
+    line-height: 1.45;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .level--live { background: #e4f5ed; border-color: #bfe3d0; color: #0d6244; }
+  .level--replay { background: #e8f0fd; border-color: #c9dbf7; color: #1c4f9c; }
+  .level--history { background: #fdf2dd; border-color: #f1d9a7; color: #7c5200; }
+  .level--offline { background: #eef1f6; border-color: #d7dde7; color: #3c465a; }
+
+  /* ---------- 图表 ---------- */
+  .chart-block { margin: 4px 0 0; }
+
+  .chart-note {
+    margin: 8px 2px 0;
+    color: var(--muted);
+    font-size: 1rem;
+  }
+
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; margin: 12px 0 0; }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 230px) minmax(0, 1fr) minmax(64px, auto);
+    align-items: center;
+    gap: 12px;
+    font-size: 1rem;
+  }
+  .bar-label { color: var(--ink-2); overflow-wrap: anywhere; }
+  .bar-track {
+    display: block;
+    height: 14px;
+    background: #eaeef4;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    display: block;
+    height: 100%;
+    min-width: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #2a6cc9, #1f9d8a);
+  }
+  .bar-value {
+    font-family: var(--mono);
+    font-size: 1rem;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* ---------- 示例 ---------- */
+  .examples { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+
+  .example {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: #fcfdff;
+  }
+
+  .example-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+
+  .kind {
+    display: inline-block;
+    padding: 2px 9px;
+    border: 1px solid;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 700;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .kind--teach { color: #7a4b00; background: #fdf1dc; border-color: #f0d7a8; }
+  .kind--actual { color: #0b5d68; background: #e2f4f6; border-color: #b9e2e7; }
+  .kind--other { color: #43506a; background: #eef1f6; border-color: #d8dfe9; }
+
+  .example-source {
+    font-family: var(--mono);
+    font-size: 1rem;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+
+  .example-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .mini-label {
+    margin-bottom: 4px;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    color: var(--muted);
+  }
+
+  .example-box {
+    padding: 10px 12px;
+    background: #f6f8fb;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 1rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-height: 280px;
+    overflow: auto;
+  }
+
+  .example-note { margin: 10px 0 0; color: var(--ink-2); font-size: 1rem; }
+
+  /* ---------- 讲解 ---------- */
+  details.explain {
+    margin-top: 20px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fcfdff;
+    overflow: hidden;
+  }
+
+  details.explain summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 11px 16px;
+    color: var(--accent);
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+  }
+  details.explain summary::-webkit-details-marker { display: none; }
+  details.explain summary::before {
+    content: "▸";
+    color: var(--muted);
+    transition: transform .15s ease;
+  }
+  details.explain[open] summary::before { transform: rotate(90deg); }
+  details.explain summary:focus-visible { outline: 3px solid #9dbdf0; outline-offset: -3px; }
+
+  details.explain .md {
+    padding: 2px 18px 18px;
+    border-top: 1px solid var(--line);
+    font-size: 1rem;
+  }
+
+  .md h3 { margin: 1.1em 0 .4em; font-size: 1.12rem; line-height: 1.35; }
+  .md h4 { margin: 1em 0 .35em; font-size: 1rem; line-height: 1.4; }
+  .md p { margin: .6em 0; }
+  .md ul { margin: .4em 0 .9em; padding-left: 1.25em; }
+  .md li { margin: .25em 0; }
+  .md strong { font-weight: 700; color: var(--ink); }
+
+  /* ---------- 不能这么说 ---------- */
+  .limits {
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: var(--danger-bg);
+    border: 1px solid #f1c9c5;
+    border-left: 5px solid var(--danger);
+    border-radius: 12px;
+  }
+  .limits h3 { margin: 0 0 8px; font-size: 1rem; color: var(--danger); }
+  .limits ul { margin: 0; padding-left: 1.2em; }
+  .limits li { margin: 5px 0; color: #5d1b17; font-size: 1rem; }
+  .limits li::marker { color: var(--danger); }
+
+  /* ---------- 现场演示 ---------- */
+  .demo {
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .demo h3 { margin: 0 0 10px; font-size: 1rem; color: var(--ink-2); }
+  .demo-list {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 8px 14px;
+    margin: 0;
+    font-size: 1rem;
+  }
+  .demo-list dt { font-weight: 700; color: var(--muted); }
+  .demo-list dd { margin: 0; color: var(--ink-2); overflow-wrap: anywhere; }
+
+  /* ---------- 来源 ---------- */
+  .sources { margin-top: 20px; border-top: 1px dashed var(--line-strong); padding-top: 12px; }
+  .sources h3 { margin: 0 0 6px; font-size: .92rem; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
+  .sources ul { margin: 0; padding: 0; list-style: none; }
+  .sources li {
+    margin: 4px 0;
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: 1rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  .empty {
+    margin: 12px 0;
+    padding: 18px;
+    background: #fff;
+    border: 1px dashed var(--line-strong);
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: 1rem;
+  }
+
+  /* ---------- 页脚 ---------- */
+  .footer {
+    padding-top: 18px;
+    padding-bottom: 46px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 1rem;
+  }
+  .footer p { margin: 6px 0; }
+  .footer-meta { overflow-wrap: anywhere; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translate(-50%, 16px);
+    z-index: 100;
+    max-width: min(90vw, 620px);
+    padding: 11px 18px;
+    background: #14181f;
+    color: #fff;
+    border-radius: 999px;
+    font-size: .92rem;
+    line-height: 1.45;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+  }
+  .toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 720px) {
+    .example-grid { grid-template-columns: 1fr; }
+    .demo-list { grid-template-columns: 1fr; gap: 2px; }
+    .demo-list dd { margin-bottom: 10px; }
+    .bar-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "label value" "track track";
+      gap: 5px 10px;
+    }
+    .bar-label { grid-area: label; }
+    .bar-value { grid-area: value; }
+    .bar-track { grid-area: track; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .toast { transition: none; }
+  }
+
+  @media print {
+    html { font-size: 11pt; scroll-behavior: auto; }
+    body { background: #fff; color: #000; }
+    .wrap { max-width: none; padding-left: 0; padding-right: 0; }
+    .toc, .filters, .copy-btn, .toast, .skip-link, .footer { display: none !important; }
+    .hero { padding-top: 0; padding-bottom: 12pt; }
+    .scope-note, .stats, .card { border: 1px solid #aaa; box-shadow: none; }
+    .cards { gap: 12pt; display: block; }
+    .card { margin-bottom: 12pt; break-inside: avoid; page-break-inside: avoid; }
+    .card[hidden] { display: block !important; }
+    .one-liner { border-left-color: #000; }
+    details.explain { border: 1px solid #aaa; }
+    details.explain summary { display: none; }
+    details.explain .md { display: block !important; border-top: 0; padding-top: 8pt; }
+    .example { break-inside: avoid; page-break-inside: avoid; }
+    .table-wrap { overflow: visible; }
+    .data-table { min-width: 0; }
+    a { color: inherit; text-decoration: none; }
+    .num-source { color: #444; }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#ui-content">跳到正文</a>
+
+<header class="hero wrap">
+  <h1 id="ui-page-title">素材页</h1>
+  <p class="subtitle" id="ui-page-subtitle" hidden></p>
+  <div class="meta-line" id="ui-meta-line" hidden></div>
+  <p class="scope-note" id="ui-scope-note" hidden></p>
+  <p class="stats" id="ui-stats"></p>
+</header>
+
+<nav class="toc" id="ui-toc" aria-label="素材目录" hidden>
+  <div class="toc-inner wrap">
+    <ol class="toc-links" id="ui-toc-links"></ol>
+    <div class="filters" id="ui-toc-filters" role="group" aria-label="按状态筛选"></div>
+  </div>
+</nav>
+
+<main class="wrap" id="ui-content" tabindex="-1">
+  <div class="notices" id="ui-notices" hidden></div>
+  <div class="fatal" id="ui-fatal" hidden></div>
+  <div class="cards" id="ui-cards"></div>
+  <p class="empty" id="ui-empty" hidden>content.json 中没有可展示的素材块，请检查 <code>order</code> 与 <code>blocks</code>。</p>
+  <p class="empty" id="ui-filter-empty" hidden>当前筛选条件下没有素材块。</p>
+</main>
+
+<footer class="footer wrap">
+  <p>本页只做渲染：所有块内容来自 <code>content.json</code>，来源条目来自 <code>sources.json</code>，页面不内置任何数字。</p>
+  <p class="footer-meta" id="ui-sources-meta"></p>
+  <p>本地预览：在 <code>web/page/materials</code> 目录运行 <code>python3 -m http.server 8123</code>，再打开该目录的 index.html。直接双击打开（file://）会被浏览器拦截数据请求。</p>
+</footer>
+
+<div class="toast" id="ui-toast" role="status" aria-live="polite"></div>
+
+<noscript>
+  <div class="wrap">
+    <div class="fatal">
+      <h2>需要 JavaScript</h2>
+      <p>本页需要 JavaScript 才能读取 content.json 并渲染素材块。</p>
+    </div>
+  </div>
+</noscript>
+
+<script>
+(function () {
+  'use strict';
+
+  const PALETTE_SIZE = 8;
+
+  const state = {
+    filter: null,
+    cards: [],
+    filterButtons: [],
+    sources: {},
+    sourcesLoaded: false
+  };
+
+  let toastTimer = null;
+
+  function asArray(value) {
+    return Array.isArray(value) ? value : [];
+  }
+
+  function objectItems(value) {
+    return asArray(value).filter(function (item) {
+      return item && typeof item === 'object' && !Array.isArray(item);
+    });
+  }
+
+  function displayText(value) {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch (err) {
+      return String(value);
+    }
+  }
+
+  function asText(value) {
+    return value === null || value === undefined ? '' : displayText(value);
+  }
+
+  function h(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = String(text);
+    return node;
+  }
+
+  function dataDir() {
+    const path = window.location.pathname;
+    if (path.endsWith('/')) return path;
+    if (/\.html?$/i.test(path)) return path.slice(0, path.lastIndexOf('/') + 1);
+    return path + '/';
+  }
+
+  function dataUrls(name) {
+    const urls = ['./' + name, dataDir() + name];
+    return urls.filter(function (url, index) { return urls.indexOf(url) === index; });
+  }
+
+  async function loadJson(name) {
+    let lastError = null;
+    for (const url of dataUrls(name)) {
+      try {
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) throw new Error(name + ' 返回 HTTP ' + response.status);
+        return await response.json();
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError || new Error(name + ' 加载失败');
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // 唯一直接写入 HTML 的位置：先整体 escape，再做白名单转换（### / ** / - ）。
+  function renderMarkdown(markdown) {
+    const lines = String(markdown).replace(/\r\n?/g, '\n').split('\n');
+    const out = [];
+    let paragraph = [];
+    let list = [];
+
+    function inline(text) {
+      return escapeHtml(text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    }
+
+    function flushParagraph() {
+      if (!paragraph.length) return;
+      out.push('<p>' + paragraph.map(inline).join('<br>') + '</p>');
+      paragraph = [];
+    }
+
+    function flushList() {
+      if (!list.length) return;
+      out.push('<ul>' + list.map(function (item) { return '<li>' + inline(item) + '</li>'; }).join('') + '</ul>');
+      list = [];
+    }
+
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) {
+        flushParagraph();
+        flushList();
+        continue;
+      }
+      const heading = /^(#{2,4})\s+(.*)$/.exec(line);
+      if (heading) {
+        flushParagraph();
+        flushList();
+        const level = heading[1].length >= 4 ? 4 : 3;
+        out.push('<h' + level + '>' + inline(heading[2]) + '</h' + level + '>');
+        continue;
+      }
+      const bullet = /^[-*+]\s+(.*)$/.exec(line);
+      if (bullet) {
+        flushParagraph();
+        list.push(bullet[1]);
+        continue;
+      }
+      paragraph.push(line);
+    }
+    flushParagraph();
+    flushList();
+    return out.join('\n');
+  }
+
+  function statusList(block) {
+    const items = [];
+    for (const raw of asArray(block && block.status)) {
+      if (typeof raw === 'string') {
+        const key = raw.trim();
+        if (key) items.push({ key: key, label: key });
+        continue;
+      }
+      if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+        const key = asText(raw.key).trim();
+        const label = asText(raw.label).trim();
+        if (key || label) items.push({ key: key || label, label: label || key });
+      }
+    }
+    return items;
+  }
+
+  function buildStatusMap(meta, ordered) {
+    const map = new Map();
+    for (const item of asArray(meta.legend)) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+      const key = asText(item.key).trim();
+      if (!key || map.has(key)) continue;
+      map.set(key, {
+        key: key,
+        label: asText(item.label).trim() || key,
+        desc: asText(item.desc).trim(),
+        className: ''
+      });
+    }
+    for (const rec of ordered) {
+      for (const status of statusList(rec.raw)) {
+        if (map.has(status.key)) continue;
+        map.set(status.key, {
+          key: status.key,
+          label: status.label || status.key,
+          desc: '',
+          className: ''
+        });
+      }
+    }
+
+    const usedKeys = new Set();
+    for (const rec of ordered) {
+      for (const status of statusList(rec.raw)) usedKeys.add(status.key);
+    }
+
+    const usedClasses = new Set();
+    let cursor = 0;
+    function takeClass() {
+      for (let step = 0; step < PALETTE_SIZE; step += 1) {
+        const index = (cursor + step) % PALETTE_SIZE;
+        const className = 'badge--c' + index;
+        if (!usedClasses.has(className)) {
+          usedClasses.add(className);
+          cursor = index + 1;
+          return className;
+        }
+      }
+      const fallback = 'badge--c' + (cursor % PALETTE_SIZE);
+      cursor += 1;
+      return fallback;
+    }
+
+    // 先给实际出现的状态分配颜色，避免未使用的 legend 项占用调色板。
+    for (const info of map.values()) {
+      if (usedKeys.has(info.key)) info.className = takeClass();
+    }
+    for (const info of map.values()) {
+      if (!info.className) info.className = takeClass();
+    }
+    return map;
+  }
+
+  function levelClass(level) {
+    const value = asText(level).trim().toLowerCase();
+    if (value === 'live') return 'level--live';
+    if (value === 'replay') return 'level--replay';
+    if (value.indexOf('历史') !== -1) return 'level--history';
+    if (value.indexOf('离线') !== -1 || value.indexOf('静态') !== -1) return 'level--offline';
+    return '';
+  }
+
+  function resolveSource(ref) {
+    if (ref && typeof ref === 'object' && !Array.isArray(ref)) {
+      const text = [asText(ref.repo), asText(ref.path), asText(ref.locator)]
+        .map(function (part) { return part.trim(); })
+        .filter(Boolean)
+        .join(' · ');
+      return { text: text || asText(ref.key).trim() || '（来源缺字段）', meta: '' };
+    }
+    const key = asText(ref).trim();
+    if (!key) return { text: '', meta: '' };
+    const entry = state.sources && Object.prototype.hasOwnProperty.call(state.sources, key)
+      ? state.sources[key]
+      : null;
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      return {
+        text: key + (state.sourcesLoaded ? '（sources.json 中无此条目）' : '（sources.json 未加载）'),
+        meta: ''
+      };
+    }
+    const text = [asText(entry.repo), asText(entry.path), asText(entry.locator)]
+      .map(function (part) { return part.trim(); })
+      .filter(Boolean)
+      .join(' · ') || key;
+    const meta = [asText(entry.kind), asText(entry.status), asText(entry.desc)]
+      .map(function (part) { return part.trim(); })
+      .filter(Boolean)
+      .join(' · ');
+    return { text: text, meta: meta };
+  }
+
+  function blockToText(rec) {
+    const block = rec.raw;
+    const lines = [];
+    const title = asText(block.title).trim() || '（未命名素材块）';
+    lines.push('#' + rec.id + ' ' + title);
+    const oneLiner = asText(block.one_liner).trim();
+    if (oneLiner) lines.push(oneLiner);
+
+    const numbers = asArray(block.numbers).filter(function (item) {
+      return item && typeof item === 'object' && !Array.isArray(item);
+    });
+    if (numbers.length) {
+      lines.push('');
+      lines.push('数字');
+      for (const item of numbers) {
+        lines.push('- ' + (asText(item.label).trim() || '—')
+          + '：' + (asText(item.value).trim() || '—')
+          + '（分母 ' + (asText(item.denominator).trim() || '—')
+          + ' · ' + (asText(item.level).trim() || '—') + '）');
+      }
+    }
+
+    const limits = asArray(block.limits)
+      .map(function (item) { return displayText(item).trim(); })
+      .filter(Boolean);
+    if (limits.length) {
+      lines.push('');
+      lines.push('不能这么说');
+      for (const item of limits) lines.push('- ' + item);
+    }
+    return lines.join('\n');
+  }
+
+  async function copyText(text) {
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function' && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (err) {
+      /* 继续走降级路径 */
+    }
+    try {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.top = '-1000px';
+      area.style.left = '-1000px';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      area.setSelectionRange(0, area.value.length);
+      const ok = document.execCommand('copy');
+      area.remove();
+      return Boolean(ok);
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById('ui-toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('is-on');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toast.classList.remove('is-on');
+    }, 2600);
+  }
+
+  function selectSectionText(rec) {
+    try {
+      const node = document.getElementById(rec.domId);
+      if (!node) return;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    } catch (err) {
+      /* 选择失败时仅保留 toast 提示 */
+    }
+  }
+
+  async function handleCopy(rec, button) {
+    const ok = await copyText(blockToText(rec));
+    const original = '复制本块';
+    if (ok) {
+      button.textContent = '已复制 ✓';
+      button.dataset.state = 'ok';
+      showToast('已复制：' + (asText(rec.raw.title).trim() || '#' + rec.id));
+      setTimeout(function () {
+        button.textContent = original;
+        delete button.dataset.state;
+      }, 1800);
+    } else {
+      button.textContent = '请手动复制';
+      button.dataset.state = 'err';
+      selectSectionText(rec);
+      showToast('复制失败：已选中本块文字，请按 Ctrl+C 或 Cmd+C');
+      setTimeout(function () {
+        button.textContent = original;
+        delete button.dataset.state;
+      }, 2600);
+    }
+  }
+
+  function renderNumbers(numbers) {
+    const wrap = h('div', 'table-wrap');
+    const table = h('table', 'data-table data-table--numbers');
+    const thead = h('thead');
+    const headRow = h('tr');
+    ['指标', '数值', '分母', '层级'].forEach(function (label) {
+      const th = h('th', null, label);
+      th.scope = 'col';
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = h('tbody');
+    for (const item of numbers) {
+      const row = h('tr');
+      const labelCell = h('td', 'cell-label');
+      labelCell.appendChild(h('span', 'num-label', asText(item.label).trim() || '—'));
+      const source = asText(item.source).trim();
+      if (source) labelCell.appendChild(h('span', 'num-source', '来源：' + source));
+      row.appendChild(labelCell);
+      row.appendChild(h('td', 'cell-value', asText(item.value).trim() || '—'));
+      row.appendChild(h('td', 'cell-den', asText(item.denominator).trim() || '—'));
+      const levelCell = h('td', 'cell-level');
+      const level = asText(item.level).trim();
+      levelCell.appendChild(h('span', 'level ' + levelClass(level), level || '—'));
+      row.appendChild(levelCell);
+      tbody.appendChild(row);
+    }
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
+  }
+
+  function toNumber(value) {
+    if (typeof value === 'number' && isFinite(value)) return value;
+    const cleaned = String(value === null || value === undefined ? '' : value)
+      .replace(/,/g, '')
+      .replace(/[^0-9.+\-eE]/g, '');
+    const parsed = Number(cleaned);
+    return isFinite(parsed) ? parsed : 0;
+  }
+
+  function renderChart(chart) {
+    const type = asText(chart.type).trim();
+    const note = asText(chart.note).trim();
+
+    if (type === 'table') {
+      const columns = asArray(chart.columns).map(function (column) { return asText(column); });
+      const rows = asArray(chart.rows).map(function (row) { return asArray(row); });
+      if (!columns.length && !rows.length) return null;
+
+      const block = h('div', 'chart-block');
+      const wrap = h('div', 'table-wrap');
+      const table = h('table', 'data-table data-table--chart');
+      if (columns.length) {
+        const thead = h('thead');
+        const headRow = h('tr');
+        for (const column of columns) {
+          const th = h('th', null, column || '—');
+          th.scope = 'col';
+          headRow.appendChild(th);
+        }
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+      }
+      const tbody = h('tbody');
+      const width = Math.max(columns.length, rows.reduce(function (max, row) { return Math.max(max, row.length); }, 0));
+      for (const row of rows) {
+        const tr = h('tr');
+        for (let i = 0; i < width; i += 1) {
+          tr.appendChild(h('td', null, asText(row[i])));
+        }
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      block.appendChild(wrap);
+      if (note) block.appendChild(h('p', 'chart-note', note));
+      return block;
+    }
+
+    if (type === 'bar') {
+      const rows = objectItems(chart.rows);
+      if (!rows.length) return null;
+      const values = rows.map(function (row) { return toNumber(row.value); });
+      const max = Math.max.apply(null, values.concat([0]));
+
+      const block = h('div', 'chart-block');
+      const list = h('div', 'bar-chart');
+      rows.forEach(function (row, index) {
+        const rowNode = h('div', 'bar-row');
+        rowNode.appendChild(h('span', 'bar-label', asText(row.label).trim() || '—'));
+        const track = h('span', 'bar-track');
+        const fill = h('span', 'bar-fill');
+        const ratio = max > 0 ? Math.max(0, values[index]) / max : 0;
+        fill.style.width = (ratio * 100).toFixed(2) + '%';
+        track.appendChild(fill);
+        rowNode.appendChild(track);
+        rowNode.appendChild(h('span', 'bar-value', asText(row.display).trim() || asText(row.value).trim() || '—'));
+        list.appendChild(rowNode);
+      });
+      block.appendChild(list);
+      if (note) block.appendChild(h('p', 'chart-note', note));
+      return block;
+    }
+
+    return null;
+  }
+
+  function exampleKind(kind) {
+    const raw = asText(kind).trim();
+    const value = raw.toLowerCase();
+    if (/teach|教学|示例|example/.test(value)) return { label: '教学示例', className: 'kind--teach' };
+    if (/actual|record|记录|live|replay|real|实测|实际/.test(value)) return { label: '实际记录', className: 'kind--actual' };
+    return { label: raw || '示例', className: 'kind--other' };
+  }
+
+  function renderExamples(examples) {
+    const wrap = h('div', 'examples');
+    for (const example of examples) {
+      const box = h('article', 'example');
+      const head = h('div', 'example-head');
+      const kind = exampleKind(example.kind);
+      head.appendChild(h('span', 'kind ' + kind.className, kind.label));
+      const sourceText = asText(example.source).trim();
+      if (sourceText) {
+        const info = resolveSource(example.source);
+        const sourceNode = h('span', 'example-source', info.text || sourceText);
+        if (info.meta) sourceNode.title = info.meta;
+        head.appendChild(sourceNode);
+      }
+      box.appendChild(head);
+
+      const grid = h('div', 'example-grid');
+      const cells = [['输入', example.input], ['预期', example.expected]];
+      let filled = 0;
+      for (const pair of cells) {
+        const text = asText(pair[1]).trim();
+        if (!text) continue;
+        const cell = h('div', 'example-cell');
+        cell.appendChild(h('div', 'mini-label', pair[0]));
+        cell.appendChild(h('div', 'example-box', text));
+        grid.appendChild(cell);
+        filled += 1;
+      }
+      if (filled) box.appendChild(grid);
+
+      const note = asText(example.note).trim();
+      if (note) box.appendChild(h('p', 'example-note', note));
+      wrap.appendChild(box);
+    }
+    return wrap;
+  }
+
+  function renderExplain(markdown) {
+    const details = h('details', 'explain');
+    details.appendChild(h('summary', null, '展开讲解'));
+    const body = h('div', 'md');
+    body.innerHTML = renderMarkdown(markdown);
+    details.appendChild(body);
+    return details;
+  }
+
+  function renderLimits(limits) {
+    const box = h('div', 'limits');
+    box.appendChild(h('h3', null, '不能这么说'));
+    const list = h('ul');
+    for (const item of limits) list.appendChild(h('li', null, item));
+    box.appendChild(list);
+    return box;
+  }
+
+  function renderDemo(demo) {
+    const box = h('div', 'demo');
+    box.appendChild(h('h3', null, '现场演示'));
+    const list = h('dl', 'demo-list');
+    const rows = [['台上做', demo.action], ['应看到', demo.evidence], ['失败降级', demo.fallback]];
+    for (const pair of rows) {
+      const text = asText(pair[1]).trim();
+      if (!text) continue;
+      list.appendChild(h('dt', null, pair[0]));
+      list.appendChild(h('dd', null, text));
+    }
+    box.appendChild(list);
+    return box;
+  }
+
+  function renderSources(refs) {
+    const box = h('div', 'sources');
+    box.appendChild(h('h3', null, '来源'));
+    const list = h('ul');
+    for (const ref of refs) {
+      const info = resolveSource(ref);
+      if (!info.text) continue;
+      const item = h('li', null, info.text);
+      if (info.meta) item.title = info.meta;
+      list.appendChild(item);
+    }
+    if (!list.children.length) return null;
+    box.appendChild(list);
+    return box;
+  }
+
+  function renderCard(rec, index, statusMap) {
+    const block = rec.raw;
+    const section = h('section', 'card');
+    section.id = rec.domId;
+    section.setAttribute('aria-labelledby', rec.domId + '-title');
+
+    const head = h('div', 'card-head');
+    const main = h('div', 'card-main');
+
+    const kicker = h('div', 'kicker');
+    kicker.appendChild(h('span', 'id-chip', '#' + rec.id));
+    const badges = h('span', 'badges');
+    const statuses = statusList(block);
+    if (statuses.length) {
+      for (const status of statuses) {
+        const info = statusMap.get(status.key) || { label: status.label || status.key, desc: '', className: 'badge--c6' };
+        const badge = h('span', 'badge ' + info.className, info.label || status.key);
+        if (info.desc) badge.title = info.desc;
+        badges.appendChild(badge);
+      }
+    } else {
+      badges.appendChild(h('span', 'badge badge--none', '未标状态'));
+    }
+    kicker.appendChild(badges);
+    main.appendChild(kicker);
+
+    const title = h('h2', 'card-title', asText(block.title).trim() || '（未命名素材块）');
+    title.id = rec.domId + '-title';
+    main.appendChild(title);
+
+    const oneLiner = asText(block.one_liner).trim();
+    if (oneLiner) main.appendChild(h('p', 'one-liner', oneLiner));
+
+    const tags = asArray(block.tags)
+      .map(function (tag) { return asText(tag).trim(); })
+      .filter(Boolean);
+    if (tags.length) {
+      const list = h('ul', 'tags');
+      for (const tag of tags) list.appendChild(h('li', 'tag', '#' + tag.replace(/^#/, '')));
+      main.appendChild(list);
+    }
+
+    head.appendChild(main);
+    const copyButton = h('button', 'copy-btn', '复制本块');
+    copyButton.type = 'button';
+    copyButton.setAttribute('aria-label', '复制本块：' + (asText(block.title).trim() || '#' + rec.id));
+    copyButton.addEventListener('click', function () { handleCopy(rec, copyButton); });
+    head.appendChild(copyButton);
+    section.appendChild(head);
+
+    const numbers = objectItems(block.numbers);
+    if (numbers.length) {
+      section.appendChild(h('h3', 'sub-h', '数字'));
+      section.appendChild(renderNumbers(numbers));
+    }
+
+    if (block.chart && typeof block.chart === 'object' && !Array.isArray(block.chart)) {
+      const chart = renderChart(block.chart);
+      if (chart) {
+        section.appendChild(h('h3', 'sub-h', '图表'));
+        section.appendChild(chart);
+      }
+    }
+
+    const examples = objectItems(block.examples);
+    if (examples.length) {
+      section.appendChild(h('h3', 'sub-h', '示例'));
+      section.appendChild(renderExamples(examples));
+    }
+
+    const markdown = asText(block.body_md).trim();
+    if (markdown) section.appendChild(renderExplain(markdown));
+
+    const limits = asArray(block.limits)
+      .map(function (item) { return displayText(item).trim(); })
+      .filter(Boolean);
+    if (limits.length) section.appendChild(renderLimits(limits));
+
+    const demo = block.demo_action && typeof block.demo_action === 'object' && !Array.isArray(block.demo_action)
+      ? block.demo_action
+      : null;
+    if (demo && (asText(demo.action).trim() || asText(demo.evidence).trim() || asText(demo.fallback).trim())) {
+      section.appendChild(renderDemo(demo));
+    }
+
+    const sourceBox = renderSources(asArray(block.sources));
+    if (sourceBox) section.appendChild(sourceBox);
+
+    return section;
+  }
+
+  function renderNotices(notices) {
+    const box = document.getElementById('ui-notices');
+    if (!box) return;
+    if (!notices.length) {
+      box.hidden = true;
+      box.replaceChildren();
+      return;
+    }
+    box.replaceChildren();
+    box.appendChild(h('h2', null, '数据提示（其余内容仍会正常显示）'));
+    const list = h('ul');
+    for (const notice of notices) list.appendChild(h('li', null, notice));
+    box.appendChild(list);
+    box.hidden = false;
+  }
+
+  function renderFatal(error) {
+    const box = document.getElementById('ui-fatal');
+    if (!box) return;
+    const message = error && error.message ? error.message : String(error);
+    box.replaceChildren();
+    box.appendChild(h('h2', null, '数据加载失败'));
+    box.appendChild(h('p', null, '无法读取 content.json：' + message));
+    box.appendChild(h('p', 'fatal-key', '请通过 http 访问，file:// 下浏览器会拦截本地文件请求。'));
+    const hint = h('p');
+    hint.appendChild(document.createTextNode('本地预览：在 '));
+    hint.appendChild(h('code', null, 'web/page/materials'));
+    hint.appendChild(document.createTextNode(' 目录运行 '));
+    hint.appendChild(h('code', null, 'python3 -m http.server 8123'));
+    hint.appendChild(document.createTextNode('，再打开该目录的 index.html。'));
+    box.appendChild(hint);
+    box.hidden = false;
+
+    const toc = document.getElementById('ui-toc');
+    if (toc) toc.hidden = true;
+    const stats = document.getElementById('ui-stats');
+    if (stats) stats.hidden = true;
+    const empty = document.getElementById('ui-empty');
+    if (empty) empty.hidden = true;
+  }
+
+  function fillHero(meta) {
+    const title = asText(meta.title).trim();
+    document.title = title || '素材页';
+    const titleNode = document.getElementById('ui-page-title');
+    if (titleNode) titleNode.textContent = title || '素材页';
+
+    const subtitle = asText(meta.subtitle).trim();
+    const subtitleNode = document.getElementById('ui-page-subtitle');
+    if (subtitleNode) {
+      subtitleNode.textContent = subtitle;
+      subtitleNode.hidden = !subtitle;
+    }
+
+    const metaLine = document.getElementById('ui-meta-line');
+    if (metaLine) {
+      metaLine.replaceChildren();
+      let count = 0;
+      const pairs = [['更新', meta.updated], ['基线提交', meta.base_commit]];
+      for (const pair of pairs) {
+        const value = displayText(pair[1]).trim();
+        if (!value) continue;
+        const item = h('span', 'meta-item');
+        item.appendChild(h('span', 'meta-label', pair[0]));
+        item.appendChild(h('span', 'meta-value', value));
+        metaLine.appendChild(item);
+        count += 1;
+      }
+      metaLine.hidden = count === 0;
+    }
+
+    const scopeNode = document.getElementById('ui-scope-note');
+    if (scopeNode) {
+      const scope = asText(meta.scope_note).trim();
+      scopeNode.textContent = scope;
+      scopeNode.hidden = !scope;
+    }
+  }
+
+  function fillSourcesMeta(doc) {
+    const node = document.getElementById('ui-sources-meta');
+    if (!node) return;
+    if (!doc || typeof doc !== 'object' || Array.isArray(doc)) {
+      node.textContent = 'sources.json 未加载：来源条目仅显示 key。';
+      return;
+    }
+    const parts = [];
+    const generated = asText(doc.generated_at).trim();
+    const note = asText(doc.note).trim();
+    if (generated) parts.push('来源清单生成于 ' + generated);
+    if (note) parts.push(note);
+    node.textContent = parts.join(' · ');
+  }
+
+  function makeFilterButton(label, key, count, info) {
+    const button = h('button', 'filter-btn');
+    button.type = 'button';
+    button.dataset.filter = key;
+    button.setAttribute('aria-pressed', key === '' ? 'true' : 'false');
+    if (info) {
+      const dot = h('span', 'toc-dot ' + info.className.replace('badge--', 'dot--'));
+      dot.setAttribute('aria-hidden', 'true');
+      button.appendChild(dot);
+    }
+    button.appendChild(h('span', 'filter-label', label));
+    button.appendChild(h('span', 'filter-count', String(count)));
+    button.setAttribute('aria-label', '筛选：' + label + '，' + count + ' 个素材块');
+    button.addEventListener('click', function () {
+      applyFilter(key === '' ? null : key);
+    });
+    return button;
+  }
+
+  function buildNav(ordered, statusMap) {
+    const toc = document.getElementById('ui-toc');
+    const links = document.getElementById('ui-toc-links');
+    const filters = document.getElementById('ui-toc-filters');
+    if (!toc || !links || !filters) return;
+    links.replaceChildren();
+    filters.replaceChildren();
+    if (!ordered.length) {
+      toc.hidden = true;
+      return;
+    }
+
+    ordered.forEach(function (rec, index) {
+      const item = h('li', 'toc-item');
+      const link = h('a', 'toc-link');
+      link.href = '#' + rec.domId;
+      const statuses = statusList(rec.raw);
+      if (statuses.length) {
+        const info = statusMap.get(statuses[0].key);
+        if (info) {
+          const dot = h('span', 'toc-dot ' + info.className.replace('badge--', 'dot--'));
+          dot.setAttribute('aria-hidden', 'true');
+          link.appendChild(dot);
+        }
+      }
+      link.appendChild(h('span', 'toc-text', (index + 1) + '. ' + (asText(rec.raw.title).trim() || rec.id)));
+      item.appendChild(link);
+      links.appendChild(item);
+      rec.tocLi = item;
+    });
+
+    const counts = new Map();
+    for (const rec of ordered) {
+      for (const status of statusList(rec.raw)) {
+        counts.set(status.key, (counts.get(status.key) || 0) + 1);
+      }
+    }
+
+    state.filterButtons = [];
+    const allButton = makeFilterButton('全部', '', ordered.length, null);
+    filters.appendChild(allButton);
+    state.filterButtons.push(allButton);
+
+    for (const info of statusMap.values()) {
+      const count = counts.get(info.key) || 0;
+      if (!count) continue;
+      const button = makeFilterButton(info.label, info.key, count, info);
+      if (info.desc) button.title = info.desc;
+      filters.appendChild(button);
+      state.filterButtons.push(button);
+    }
+
+    toc.hidden = false;
+  }
+
+  function applyFilter(key) {
+    state.filter = key;
+    for (const card of state.cards) {
+      const visible = key === null || card.keys.has(key);
+      card.section.hidden = !visible;
+      if (card.tocLi) card.tocLi.hidden = !visible;
+    }
+    for (const button of state.filterButtons) {
+      const active = button.dataset.filter === (key === null ? '' : key);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    const empty = document.getElementById('ui-filter-empty');
+    if (empty) {
+      const anyVisible = state.cards.some(function (card) { return !card.section.hidden; });
+      empty.hidden = anyVisible || state.cards.length === 0;
+    }
+    syncNavHeight();
+  }
+
+  function syncNavHeight() {
+    const toc = document.getElementById('ui-toc');
+    if (!toc || toc.hidden) return;
+    const height = toc.offsetHeight;
+    if (height > 0) {
+      document.documentElement.style.setProperty('--nav-h', height + 'px');
+    }
+  }
+
+  function normalizeBlocks(content, notices) {
+    const recs = [];
+    const seenIds = new Set();
+    const usedDomIds = new Set();
+    asArray(content.blocks).forEach(function (block, index) {
+      if (!block || typeof block !== 'object' || Array.isArray(block)) {
+        notices.push('blocks[' + index + '] 不是对象，已跳过。');
+        return;
+      }
+      let id = asText(block.id).trim();
+      if (!id) {
+        id = 'block-' + (index + 1);
+        notices.push('blocks[' + index + '] 缺少 id，页面临时使用「' + id + '」。');
+      }
+      if (seenIds.has(id)) {
+        notices.push('blocks 中存在重复 id「' + id + '」，后一个已跳过。');
+        return;
+      }
+      seenIds.add(id);
+
+      let domId = String(id).replace(/[^0-9A-Za-z_\-\u4e00-\u9fa5.:]/g, '-');
+      if (!domId) domId = 'section-' + (index + 1);
+      let candidate = domId;
+      let suffix = 2;
+      while (usedDomIds.has(candidate)
+        || usedDomIds.has(candidate + '-title')
+        || document.getElementById(candidate)
+        || document.getElementById(candidate + '-title')) {
+        candidate = domId + '-' + suffix;
+        suffix += 1;
+      }
+      usedDomIds.add(candidate);
+      usedDomIds.add(candidate + '-title');
+      recs.push({ id: id, domId: candidate, raw: block });
+    });
+    return recs;
+  }
+
+  function orderBlocks(content, recs, notices) {
+    const byId = new Map();
+    for (const rec of recs) byId.set(rec.id, rec);
+    const requested = asArray(content.order)
+      .map(function (item) { return asText(item).trim(); })
+      .filter(Boolean);
+    if (!requested.length) {
+      if (recs.length) notices.push('order 为空或缺失，已按 blocks 顺序展示。');
+      return recs.slice();
+    }
+
+    const ordered = [];
+    const seen = new Set();
+    for (const id of requested) {
+      if (seen.has(id)) {
+        notices.push('order 中重复出现「' + id + '」，已跳过重复项。');
+        continue;
+      }
+      seen.add(id);
+      const rec = byId.get(id);
+      if (!rec) {
+        notices.push('order 引用了不存在的 block「' + id + '」，已跳过。');
+        continue;
+      }
+      ordered.push(rec);
+    }
+    for (const rec of recs) {
+      if (!seen.has(rec.id)) {
+        notices.push('blocks 中的「' + rec.id + '」未列入 order，页面未展示。');
+      }
+    }
+    return ordered;
+  }
+
+  async function init() {
+    let content = null;
+    try {
+      content = await loadJson('content.json');
+    } catch (error) {
+      renderFatal(error);
+      return;
+    }
+    if (!content || typeof content !== 'object' || Array.isArray(content)) {
+      renderFatal(new Error('顶层不是 JSON 对象'));
+      return;
+    }
+
+    const notices = [];
+    let sourcesDoc = null;
+    try {
+      sourcesDoc = await loadJson('sources.json');
+    } catch (error) {
+      notices.push('sources.json 加载失败（' + (error && error.message ? error.message : String(error)) + '），来源条目仅显示 key。');
+    }
+    state.sourcesLoaded = Boolean(sourcesDoc);
+    state.sources = sourcesDoc && typeof sourcesDoc === 'object' && sourcesDoc.sources
+      && typeof sourcesDoc.sources === 'object' && !Array.isArray(sourcesDoc.sources)
+      ? sourcesDoc.sources
+      : {};
+    fillSourcesMeta(sourcesDoc);
+
+    const meta = content.meta && typeof content.meta === 'object' && !Array.isArray(content.meta)
+      ? content.meta
+      : {};
+    fillHero(meta);
+
+    const recs = normalizeBlocks(content, notices);
+    const ordered = orderBlocks(content, recs, notices);
+    const statusMap = buildStatusMap(meta, ordered);
+
+    buildNav(ordered, statusMap);
+
+    const cardsBox = document.getElementById('ui-cards');
+    if (cardsBox) cardsBox.replaceChildren();
+    state.cards = [];
+    ordered.forEach(function (rec, index) {
+      const section = renderCard(rec, index, statusMap);
+      if (cardsBox) cardsBox.appendChild(section);
+      state.cards.push({
+        rec: rec,
+        section: section,
+        tocLi: rec.tocLi || null,
+        keys: new Set(statusList(rec.raw).map(function (status) { return status.key; }))
+      });
+    });
+
+    let numberCount = 0;
+    let exampleCount = 0;
+    for (const rec of ordered) {
+      numberCount += objectItems(rec.raw.numbers).length;
+      exampleCount += objectItems(rec.raw.examples).length;
+    }
+    const stats = document.getElementById('ui-stats');
+    if (stats) {
+      stats.textContent = ordered.length + ' 个素材块 · ' + numberCount + ' 条数字 · ' + exampleCount + ' 个示例';
+    }
+
+    const empty = document.getElementById('ui-empty');
+    if (empty) empty.hidden = ordered.length > 0;
+
+    renderNotices(notices);
+
+    if (ordered.length) {
+      applyFilter(null);
+      syncNavHeight();
+    } else {
+      const toc = document.getElementById('ui-toc');
+      if (toc) toc.hidden = true;
+    }
+  }
+
+  window.addEventListener('resize', syncNavHeight, { passive: true });
+
+  window.addEventListener('beforeprint', function () {
+    document.querySelectorAll('details.explain').forEach(function (details) {
+      details.dataset.printOpen = details.open ? '1' : '0';
+      details.open = true;
+    });
+  });
+
+  window.addEventListener('afterprint', function () {
+    document.querySelectorAll('details.explain').forEach(function (details) {
+      details.open = details.dataset.printOpen === '1';
+      delete details.dataset.printOpen;
+    });
+  });
+
+  init();
+}());
+</script>
+</body>
+</html>

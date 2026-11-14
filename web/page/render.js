@@ -347,6 +347,134 @@
   }
 
   /* ==========================================================================
+   * 2b. 来源逐组说明（s6）/ 扫描级复算说明（s9）
+   *   全部由 model 的实算字段拼出，不写死组内条数；缺分组信息时如实说不可用。
+   * ========================================================================== */
+
+  function groupKind(m, name) {
+    var pv = m && m.provenance ? m.provenance : null;
+    var gk = pv && pv.byGroupKind ? pv.byGroupKind[name] : null;
+    return gk && typeof gk === "object" ? gk : null;
+  }
+
+  function countText(v) {
+    return isNum(v) ? String(Math.round(v)) : DASH;
+  }
+
+  /* s6 默认来源：必须是「导出的回放证据，非实时」+ closure 的 live/replay 拆分 +
+     scan10 / candidate-scan 的 replay 条数；不得把整表说成两条运行。 */
+  function liveSourceNote(m) {
+    var closure = groupKind(m, "closure");
+    var scan10 = groupKind(m, "scan10");
+    var candScan = groupKind(m, "candidate-scan");
+    if (!closure || !scan10 || !candScan) {
+      return "来源：导出的回放证据，非实时；分组计数不可用，无法按 demo_group 拆分。";
+    }
+    return "来源：导出的回放证据，非实时；其中 closure 闭环为 " + countText(closure.live) +
+      " 条 live 候选 + " + countText(closure.replay) + " 条 replay 基线；scan10 为 " +
+      countText(scan10.replay) + " 条 replay、candidate-scan 为 " + countText(candScan.replay) +
+      " 条 replay（扫描组说明见「留出集与证据」屏）。";
+  }
+
+  /* s9 扫描级复算：只讲基线侧可复算 / 候选侧属 gate 级口径且未验证；
+     gate 级配对数字留在 s6，不在这一屏重复，避免两个口径同屏。 */
+  function scanRecomputeText(m) {
+    var scan = m && m.s1 && m.s1.scan ? m.s1.scan : null;
+    if (!scan) return "当前复算不可用：没有扫描级数据。";
+    if (scan.source === "data") {
+      return "当前复算：两侧均由 search_results 复算一致（数据面形态）。";
+    }
+    var c = scan.counts || {};
+    var v = scan.verified || {};
+    var baseOk = v.baseCost === true && v.baseWall === true;
+    var candOk = v.candCost === true && v.candWall === true;
+    var head = "当前复算：基线侧 scan10 " + countText(c.baseRuns) + " 条 replay";
+    if (baseOk) head += "已由 runs 复算一致";
+    else if (v.baseCost === false || v.baseWall === false) head += "与 ADR 不一致，需人工核对";
+    else head += "无法核对";
+
+    if (candOk) return head + "；候选侧与 ADR 一致。";
+    return head + "；候选侧只有 " + countText(c.candReplay) + " 条 replay + " +
+      countText(c.candLive) + " 条 closure live，其配对合计属 gate 级口径，" +
+      "与 ADR 的扫描级数不是同一个数 —— 标记未验证（verified=false），" +
+      "数值见「逐题反馈对比」屏合计行。";
+  }
+
+  function scanGroupsText(m) {
+    var closure = groupKind(m, "closure");
+    var scan10 = groupKind(m, "scan10");
+    var candScan = groupKind(m, "candidate-scan");
+    if (!closure || !scan10 || !candScan) return "分组计数不可用：无法按 demo_group 拆分。";
+    return "分组：closure 闭环 " + countText(closure.live) + " 条 live 候选 + " +
+      countText(closure.replay) + " 条 replay 基线；scan10 " + countText(scan10.replay) +
+      " 条 replay；candidate-scan " + countText(candScan.replay) +
+      " 条 replay。scan10 与 candidate-scan 都是回放，不是 live 运行。";
+  }
+
+  /* s6 首屏人话结果：通过数不变，第二次总成本低 70.0%（$0.035560 → $0.010684）。
+     全部来自 s2.pairs / s2.totals，HTML 里不写死任何结论数字。
+     「不变」与降幅是结论，用朱红；候选金额用绿。 */
+  function writeResultNode(node, m, doc) {
+    if (!node) return;
+    clear(node);
+
+    var s2 = m && m.s2 ? m.s2 : null;
+    var totals = s2 && s2.totals ? s2.totals : null;
+    if (!s2 || !totals || !isNum(totals.base) || !isNum(totals.cand) || totals.base <= 0) {
+      node.textContent = DASH;
+      return;
+    }
+    var F = fmtOf(m);
+
+    var passOk = isArr(s2.pairs) && s2.pairs.length > 0;
+    var passDelta = 0;
+    var i;
+    for (i = 0; passOk && i < s2.pairs.length; i++) {
+      if (!isNum(s2.pairs[i].passedDelta)) passOk = false;
+      else passDelta += s2.pairs[i].passedDelta;
+    }
+
+    var drop = (1 - totals.cand / totals.base) * 100;
+    var dropWord = "";
+    var dropNum = "";
+    if (Math.abs(drop) < 0.05) {
+      dropWord = "持平";
+    } else if (drop > 0) {
+      dropWord = "低 ";
+      dropNum = drop.toFixed(1) + "%";
+    } else {
+      dropWord = "高 ";
+      dropNum = Math.abs(drop).toFixed(1) + "%";
+    }
+
+    node.appendChild(el(doc, "span", "", "通过数"));
+    if (!passOk) {
+      node.appendChild(el(doc, "span", "", DASH));
+    } else if (passDelta === 0) {
+      node.appendChild(el(doc, "span", "hl-red", "不变"));
+    } else {
+      node.appendChild(el(doc, "span", "",
+        (passDelta > 0 ? "+" : "−") + Math.abs(Math.round(passDelta))));
+    }
+    node.appendChild(el(doc, "span", "", "，第二次总成本" + dropWord));
+    if (dropNum) node.appendChild(el(doc, "span", "hl-red", dropNum));
+    node.appendChild(el(doc, "span", "", "（$" + F.usd(totals.base) + " → "));
+    node.appendChild(el(doc, "span", "hl-good", "$" + F.usd(totals.cand)));
+    node.appendChild(el(doc, "span", "", "）"));
+  }
+
+  function writeSourceNotes(doc, m) {
+    var result = doc.getElementById("live-result");
+    if (result) writeResultNode(result, m, doc);
+    var src = doc.getElementById("live-source-note");
+    if (src) src.textContent = liveSourceNote(m);
+    var rec = doc.getElementById("scan-recompute");
+    if (rec) rec.textContent = scanRecomputeText(m);
+    var grp = doc.getElementById("scan-groups");
+    if (grp) grp.textContent = scanGroupsText(m);
+  }
+
+  /* ==========================================================================
    * 3. #live-list —— 实时列表：题号 / 题目 / 两次成本（✅ ❌ + 金额）
    * ========================================================================== */
 
@@ -474,6 +602,24 @@
     }
 
     return chain.length;
+  }
+
+  /* 门禁结论的色调：verdict = adopt 时文字转绿，结论节点右上角的状态灯也一起转绿。
+     其余结论（reject / incomparable / unstable）维持原有朱红。 */
+  function syncVerdictTone(doc, m) {
+    var verdict = asStr(m && m.s3 ? m.s3.verdict : null);
+    var adopt = String(verdict).toLowerCase() === "adopt";
+
+    var body = doc.querySelector(".verdict-body");
+    if (body) body.className = adopt ? "verdict-body is-adopt" : "verdict-body";
+
+    var list = doc.getElementById("gate-chain");
+    if (!list || !list.children) return;
+    for (var i = 0; i < list.children.length; i++) {
+      var li = list.children[i];
+      if (!/(^|\s)is-final(\s|$)/.test(li.className || "")) continue;
+      li.className = adopt ? "step is-final is-adopt" : "step is-final";
+    }
   }
 
   /* ==========================================================================
@@ -739,6 +885,7 @@
       }
 
       writeScanScopeText(doc, m);
+      writeSourceNotes(doc, m);
 
       var note = doc.getElementById("verify-note");
       if (note) note.textContent = verifyNote(m);
@@ -756,6 +903,7 @@
 
       out.counts.pairs = renderLiveRows(doc, m);
       out.counts.chain = renderChain(doc, m);
+      syncVerdictTone(doc, m);
       out.counts.lineage = renderLineage(doc, m);
       out.counts.archives = renderArchives(doc, m);
       out.counts.snapshots = renderSnapshots(doc, m);
@@ -776,6 +924,7 @@
       if (vn) vn.textContent = "";
       var ha = doc.getElementById("holdout-attribution");
       if (ha) ha.textContent = "";
+      syncVerdictTone(doc, null);
       out.total = slots.length;
       out.dashes = slots.length;
       out.domTotal = slots.length;

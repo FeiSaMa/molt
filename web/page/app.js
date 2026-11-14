@@ -83,6 +83,8 @@
     }
 
     if (result && result.ok === true) {
+      var bootLive = root.MOLT_LIVE && root.MOLT_LIVE.resolve ? root.MOLT_LIVE.resolve() : null;
+      if (!bootLive || !bootLive.token) liveUpdateCps(0, 0, 0, 0, 0);
       doc.documentElement.setAttribute("data-ready", "1");
       hideWarning();
       return true;
@@ -388,6 +390,11 @@
     /* 实时面板：进入该屏先清空再连数据源，离开就停 */
     if (live) {
       if (slides[index] === live.slide) {
+        /* 同一个 index 的重入（hashchange / 初始化）不要清空并重启正在跑的数据源。 */
+        if (prev === index && root.MOLT_LIVE && root.MOLT_LIVE.isOn && root.MOLT_LIVE.isOn()) {
+          remember(index);
+          return;
+        }
         liveReset();
         liveSourceStart();
       } else if (prev >= 0 && slides[prev] === live.slide) {
@@ -568,6 +575,7 @@
   var LIVE_SCROLL_MS = 420;      /* 列表自动滚动缓动时长 */
 
   var live = null;
+  var liveSourceMode = "";
   var liveAuthWarned = false;   /* 401/403 只提示一次，别每 0.5s 刷一条 */
 
   /* 纵轴上限取整刻度（1 / 2 / 2.5 / 5 × 10^n）：0.008296 → 0.0100，
@@ -996,6 +1004,33 @@
      - 成本差 / 通过差 = 只算「两次都有数」的配对行，避免拿候选的空额去减全量
      颜色：基线 > 候选 → 红，否则绿；还没有可配对的行时保持默认墨色。
      最后一题落地时，四个数正好等于 render.js 用 s2.totals 写的终值。 */
+  function liveSetBound(key, text) {
+    if (!doc) return;
+    var nodes = doc.querySelectorAll('[data-bind="' + key + '"]');
+    for (var i = 0; i < nodes.length; i++) nodes[i].textContent = text;
+  }
+
+  function liveUpdateCps(pBase, pCand, pBaseOk, pCandOk, paired) {
+    var ok = paired > 0 && pBase > 0 && pCand > 0 && pBaseOk > 0 && pCandOk > 0;
+    if (!ok) {
+      liveSetBound("s1.cpsBase", "—");
+      liveSetBound("s1.cpsCand", "—");
+      liveSetBound("s1.cpsDropText", "—");
+      liveSetBound("s1.cpsDropPct", "—");
+      liveSetBound("s1.costMultiplier", "—");
+      return;
+    }
+    var cpsBase = pBase / pBaseOk;
+    var cpsCand = pCand / pCandOk;
+    var drop = (1 - cpsCand / cpsBase) * 100;
+    var dropWord = Math.abs(drop) < 0.05 ? "持平" : (drop > 0 ? "低 " + drop.toFixed(1) + "%" : "高 " + Math.abs(drop).toFixed(1) + "%");
+    liveSetBound("s1.cpsBase", cpsBase.toFixed(6));
+    liveSetBound("s1.cpsCand", cpsCand.toFixed(6));
+    liveSetBound("s1.cpsDropText", dropWord);
+    liveSetBound("s1.cpsDropPct", drop.toFixed(1));
+    liveSetBound("s1.costMultiplier", (cpsBase / cpsCand).toFixed(1));
+  }
+
   function liveSum() {
     var L = live;
     if (!L || !L.sums) return;
@@ -1017,6 +1052,8 @@
       }
     }
 
+    liveUpdateCps(pBase, pCand, pBaseOk, pCandOk, paired);
+
     var S = L.sums;
     /* 一侧还一行都没有时写「—」：不要用 $0.000000 冒充「已经花了 0 元」 */
     setText(S.base, nBase === 0 ? "—" : "$" + base.toFixed(6));
@@ -1032,6 +1069,7 @@
 
     tone(S.delta, paired === 0 ? "is-idle" : (pBase > pCand ? "is-bad" : "is-good"));
     tone(S.pass, paired === 0 ? "is-idle" : (pBaseOk > pCandOk ? "is-bad" : "is-good"));
+    liveHeadline(base, cand, pBaseOk, pCandOk, paired);
   }
 
   function setText(node, text) {
@@ -1064,9 +1102,19 @@
      列表行由 render.js 预先落好（含题名），这里只把它们藏起来；
      合计清成「—」，画布按空数据重画。 */
   function liveReset() {
+    if (doc) {
+      var badge = doc.getElementById("live-badge");
+      var cfgBadge = root.MOLT_LIVE && root.MOLT_LIVE.resolve ? root.MOLT_LIVE.resolve() : null;
+      if (badge && !liveSourceMode) {
+        badge.textContent = cfgBadge && cfgBadge.mode === "live" && cfgBadge.token
+          ? "RUNNING · 现场 probe replay（fixture/replay）"
+          : "NEED TOKEN · 填入 token 后现场运行";
+      }
+    }
     var L = live;
     if (!L) return;
 
+    liveUpdateCps(0, 0, 0, 0, 0);
     liveStop();
     liveFit();
     L.xShown = 1;
@@ -1076,6 +1124,17 @@
     L.yMax = 0.001;
     L.maxIdx = 0;
     L.list.scrollTop = 0;
+    var resultNode = doc ? doc.getElementById("live-result") : null;
+    if (resultNode) resultNode.textContent = "等待现场运行…";
+    liveLogClear();
+    var cfg0 = root.MOLT_LIVE && root.MOLT_LIVE.resolve ? root.MOLT_LIVE.resolve() : null;
+    if (cfg0 && cfg0.mode === "live" && cfg0.token) {
+      liveRunState("待运行", false);
+      liveConnState("已连接", "is-ok");
+    } else {
+      liveRunState("需要 token", true);
+      liveConnState("需要 token", "is-bad");
+    }
 
     /* 清空整张表：不留任何上一次 / 预置的行 */
     L.rows = [];
@@ -1095,18 +1154,185 @@
    *   - 否则 ?path：本地模拟（mock-source.js，生产可整块删除）；
    *   - 都没有：保持空载，不发任何请求。
    */
-  function liveSourceStart() {
+  function liveLog(text, bad) {
+    var node = doc ? doc.getElementById("live-log") : null;
+    if (!node) return;
+    node.hidden = false;
+    var stamp = new Date().toISOString().slice(11, 19);
+    node.textContent += "[" + stamp + "] " + text + "\n";
+    node.scrollTop = node.scrollHeight;
+    if (bad) addClass(node, "is-bad");
+  }
+
+  function liveLogClear() {
+    var node = doc ? doc.getElementById("live-log") : null;
+    if (!node) return;
+    node.textContent = "";
+    node.hidden = true;
+    removeClass(node, "is-bad");
+  }
+
+  function liveRunState(text, disabled) {
+    var button = doc ? doc.getElementById("live-run") : null;
+    var state = doc ? doc.getElementById("live-run-state") : null;
+    if (button) button.disabled = !!disabled;
+    if (state) state.textContent = text || "待运行";
+  }
+
+  function liveBadge(text, source) {
+    var node = doc ? doc.getElementById("live-badge") : null;
+    if (!node) return;
+    node.textContent = text;
+    if (source) liveSourceMode = source;
+  }
+
+  function liveEmpty(node) {
+    while (node && node.firstChild) node.removeChild(node.firstChild);
+  }
+
+  function liveSpan(cls, text) {
+    var node = doc.createElement("span");
+    if (cls) node.className = cls;
+    node.textContent = text;
+    return node;
+  }
+
+  function liveHeadline(baseCost, candCost, passBase, passCand, paired) {
+    var node = doc ? doc.getElementById("live-result") : null;
+    if (!node) return;
+    if (!paired) {
+      var cfg = root.MOLT_LIVE && root.MOLT_LIVE.resolve ? root.MOLT_LIVE.resolve() : null;
+      node.textContent = cfg && cfg.mode === "live" && cfg.token
+        ? "第一轮进行中，等待候选轮…"
+        : "填入 token 后现场运行…";
+      return;
+    }
+    var drop = baseCost > 0 ? (1 - candCost / baseCost) * 100 : 0;
+    var word = Math.abs(drop) < 0.05 ? "持平" :
+      (drop > 0 ? "低 " + drop.toFixed(1) + "%" : "高 " + Math.abs(drop).toFixed(1) + "%");
+    var pass = passCand === passBase ? "不变" : (passCand > passBase ? "+" : "−") + Math.abs(passCand - passBase);
+    liveEmpty(node);
+    node.appendChild(doc.createTextNode("通过数 "));
+    var passNode = liveSpan(passCand < passBase ? "hl-red" : "", pass);
+    node.appendChild(passNode);
+    node.appendChild(doc.createTextNode("，第二次总成本 " + word + "（$" + Number(baseCost).toFixed(6) + " → "));
+    node.appendChild(liveSpan("hl-good", "$" + Number(candCost).toFixed(6)));
+    node.appendChild(doc.createTextNode("）"));
+    if (candCost > baseCost) {
+      node.appendChild(doc.createTextNode("；通过数优先，成本上升需在结论中注明"));
+    }
+  }
+
+  function liveTrim(value) {
+    return String(value || "").replace(/^\s+|\s+$/g, "");
+  }
+
+  function liveTokenValue() {
+    return liveTrim(root.MOLT_AGENT_TOKEN || "");
+  }
+
+  function liveConnState(text, cls) {
+    var node = doc ? doc.getElementById("live-conn-state") : null;
+    if (!node) return;
+    node.textContent = text;
+    node.className = "conn-pill" + (cls ? " " + cls : "");
+  }
+
+  function liveShowTokenForm(show) {
+    var form = doc ? doc.getElementById("live-conn-form") : null;
+    var input = doc ? doc.getElementById("live-token") : null;
+    if (!form) return;
+    form.hidden = !show;
+    if (show && input) {
+      try { input.focus(); } catch (err) { /* 忽略 */ }
+    }
+  }
+
+  function liveValidateToken(base, token, done) {
+    var xhr;
+    try {
+      xhr = new root.XMLHttpRequest();
+      xhr.open("GET", String(base).replace(/\/$/, "") + "/api/tasks", true);
+      xhr.timeout = 8000;
+      xhr.setRequestHeader("Authorization", "Bearer " + token);
+      xhr.onreadystatechange = function () {
+        if (!xhr || xhr.readyState !== 4) return;
+        if (xhr.status === 200) done(null);
+        else if (xhr.status === 401 || xhr.status === 403) done({ status: xhr.status });
+        else done({ status: xhr.status || 0 });
+      };
+      xhr.ontimeout = function () { done({ status: 0 }); };
+      xhr.onerror = function () { done({ status: 0 }); };
+      xhr.send();
+    } catch (err) { done({ status: 0 }); }
+  }
+
+  function liveTokenSubmit(event) {
+    if (event && event.preventDefault) event.preventDefault();
+    var input = doc ? doc.getElementById("live-token") : null;
+    var button = doc ? doc.getElementById("live-conn-submit") : null;
+    var token = input ? liveTrim(input.value) : "";
+    if (!token) { liveNote("需要 Bearer token 才能现场运行。", true); return; }
+    var cfg = root.MOLT_LIVE && root.MOLT_LIVE.resolve ? root.MOLT_LIVE.resolve() : null;
+    var base = cfg && cfg.base ? cfg.base : "";
+    if (!base) { liveNote("没有可用 API 地址；请检查 ?port 或当前页面来源。", true); return; }
+    if (button) button.disabled = true;
+    liveConnState("验证中…", "");
+    liveNote("正在验证 token…", false);
+    liveValidateToken(base, token, function (err) {
+      if (button) button.disabled = false;
+      if (err) {
+        root.MOLT_AGENT_TOKEN = "";
+        liveReset();
+        liveConnState("token 错误", "is-bad");
+        liveNote("token 验证失败（HTTP " + (err.status || "网络错误") + "）。请重新输入有效的 Bearer token。", true);
+        liveShowTokenForm(true);
+        if (input) { try { input.focus(); } catch (focusErr) { /* 忽略 */ } }
+        return;
+      }
+      root.MOLT_AGENT_TOKEN = token;
+      if (input) input.value = "";
+      liveShowTokenForm(false);
+      liveConnState("已连接", "is-ok");
+      liveNote("token 有效；token 仅保存在本页内存；开始现场 probe replay…", false);
+      liveReset();
+      liveSourceStop();
+      liveSourceStart(true);
+    });
+  }
+
+  function liveSourceStart(force) {
     var liveApi = root.MOLT_LIVE;
     var cfg = liveApi && liveApi.resolve ? liveApi.resolve() : null;
 
+    var runButton = doc ? doc.getElementById("live-run") : null;
+    var hasToken = !!(cfg && cfg.mode === "live" && cfg.token);
+    if (runButton) runButton.disabled = !hasToken;
+    if (!hasToken) {
+      liveRunState("需要 token", true);
+      liveConnState("需要 token", "is-bad");
+      return;
+    }
     if (cfg && cfg.mode === "live") {
+      liveConnState("已连接", "is-ok");
+      liveSourceMode = cfg.source || "";
+      if (cfg.source === "probe2c") {
+        liveBadge("REPLAY · probe 2c 真实 Pi 记录", "probe2c");
+      } else {
+        liveBadge("RUNNING · 现场 probe replay（fixture/replay）", "probe");
+      }
       liveApi.start({
+        force: !!force,
         /* 离线 / 契约不符都只是静默重试：页面继续空载，不造数字。
            401/403 是配置问题，控制台提醒一次：token / Origin 没配对。 */
         onPayload: function (norm) { liveApplySource(norm); },
         onStatus: function (kind, detail) {
-          if (kind === "online") { liveNote(""); return; }
+          if (kind === "online") { liveNote(""); liveRunState("已完成", false); liveBadge(liveSourceMode === "probe2c" ? "REPLAY · probe 2c 真实 Pi 记录" : "LIVE · 本次 probe replay（fixture/replay，不是 live 模型）", liveSourceMode); return; }
+          if (kind === "starting") { liveNote("正在运行一次 fresh probe replay，完成后显示新数据…", false); liveLog("启动 probe replay"); liveRunState("运行中…", true); return; }
+          if (kind === "log") { liveLog(detail); return; }
           if (kind !== "offline") return;
+          liveLog("数据源错误：" + detail, true);
+          liveRunState("失败", false);
           if (detail === 401) {
             liveNote("实时接口 401：缺 token，用 ?token=<token> 传入（或设置 window.MOLT_AGENT_TOKEN）", true);
           } else if (detail === 403) {
@@ -1397,6 +1623,65 @@
     buildDots();
     liveInit();
     liveReset();
+    var liveRun = doc.getElementById("live-run");
+    if (liveRun) liveRun.addEventListener("click", function () {
+      if (!liveTokenValue() && !(root.MOLT_LIVE && root.MOLT_LIVE.resolve && root.MOLT_LIVE.resolve().token)) {
+        liveShowTokenForm(true);
+        liveNote("请先填入 Bearer token。", true);
+        return;
+      }
+      liveReset();
+      liveSourceStop();
+      liveSourceStart(true);
+    }, false);
+    var liveConnToggle = doc.getElementById("live-conn-toggle");
+    if (liveConnToggle) liveConnToggle.addEventListener("click", function () {
+      var form = doc.getElementById("live-conn-form");
+      liveShowTokenForm(!!(form && form.hidden));
+    }, false);
+    var liveConnForm = doc.getElementById("live-conn-form");
+    if (liveConnForm) liveConnForm.addEventListener("submit", liveTokenSubmit, false);
+    var liveConnCancel = doc.getElementById("live-conn-cancel");
+    if (liveConnCancel) liveConnCancel.addEventListener("click", function () { liveShowTokenForm(false); }, false);
+    var liveRetry = doc.getElementById("live-retry");
+    if (liveRetry) liveRetry.addEventListener("click", function () {
+      if (!liveTokenValue() && !(root.MOLT_LIVE && root.MOLT_LIVE.resolve && root.MOLT_LIVE.resolve().token)) {
+        liveShowTokenForm(true);
+        liveNote("请先填入 Bearer token。", true);
+        return;
+      }
+      liveReset();
+      liveSourceStop();
+      liveSourceStart(true);
+    }, false);
+    var liveDisconnect = doc.getElementById("live-disconnect");
+    if (liveDisconnect) liveDisconnect.addEventListener("click", function () {
+      root.MOLT_AGENT_TOKEN = "";
+      liveSourceStop();
+      liveReset();
+      liveConnState("已断开", "is-bad");
+      liveNote("已断开；再次运行需要重新填入 token。", false);
+    }, false);
+    var agentEntry = doc.getElementById("agent-entry");
+    var handoff = doc.getElementById("handoff");
+    var handoffClose = doc.getElementById("handoff-close");
+    if (agentEntry && handoff) agentEntry.addEventListener("click", function () {
+      handoff.hidden = false;
+      var link = handoff.querySelector(".handoff-link");
+      if (link) { try { link.focus({ preventScroll: true }); } catch (focusErr) { /* 忽略 */ } }
+    }, false);
+    if (handoffClose && handoff) handoffClose.addEventListener("click", function () {
+      handoff.hidden = true;
+      if (agentEntry) { try { agentEntry.focus({ preventScroll: true }); } catch (focusErr) { /* 忽略 */ } }
+    }, false);
+    var archReplay = doc.getElementById("arch-replay");
+    var archSlide = doc.getElementById("s4");
+    if (archReplay && archSlide) archReplay.addEventListener("click", function () {
+      var animated = archSlide.querySelectorAll(".arch-wire, .arch-node");
+      for (var i = 0; i < animated.length; i++) animated[i].style.animation = "none";
+      void archSlide.offsetWidth;
+      for (var j = 0; j < animated.length; j++) animated[j].style.animation = "";
+    }, false);
     startTagline();
     initStarField();
     if (slides.length > 0 && active < 0) {

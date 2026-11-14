@@ -1,0 +1,2986 @@
+{
+  "meta": {
+    "title": "molt 展示素材库",
+    "subtitle": "比赛展示用内容与证据 · 工作稿",
+    "updated": "2026-11-15",
+    "base_commit": "d09653e",
+    "scope_note": "这是内容工作稿：每块可直接复制取用；版式由队友决定。数据已按 2026-11-15 线上只读接口与 /srv/molt 当前测试复核：demo-6 三层数字仍对应 2026-11-10 录制；线上图谱为 4 分支 / 5 节点 / 25 资产（revision 25）；runtime binding 为 revision 6。",
+    "legend": [
+      {
+        "key": "live",
+        "label": "live",
+        "desc": "真实模型调用产生"
+      },
+      {
+        "key": "replay",
+        "label": "REPLAY",
+        "desc": "回放既有记录，无新模型调用"
+      },
+      {
+        "key": "fixture",
+        "label": "fixture",
+        "desc": "确定性/无模型"
+      },
+      {
+        "key": "offline",
+        "label": "离线评测",
+        "desc": "对已落盘记录重算"
+      },
+      {
+        "key": "static",
+        "label": "静态评测",
+        "desc": "只读源码/JSON/题面"
+      },
+      {
+        "key": "shipped",
+        "label": "已上线",
+        "desc": "线上可访问"
+      },
+      {
+        "key": "dev",
+        "label": "开发中",
+        "desc": "代码已写，接入或验收未完成"
+      },
+      {
+        "key": "plan",
+        "label": "计划/未实现",
+        "desc": "只有设计，无实现"
+      },
+      {
+        "key": "unverified",
+        "label": "未核实",
+        "desc": "外部口径，本仓库无法复算"
+      },
+      {
+        "key": "glossary",
+        "label": "术语",
+        "desc": "术语解释，不引入新结论"
+      }
+    ]
+  },
+  "order": [
+    "why",
+    "demo-rhythm",
+    "glossary",
+    "loop",
+    "core",
+    "demo6",
+    "probes",
+    "matrix",
+    "memoryv3",
+    "assessment",
+    "rehearsal",
+    "assets",
+    "staticeval",
+    "graph",
+    "skillmcp",
+    "matrix-capability",
+    "demo-route",
+    "limits"
+  ],
+  "blocks": [
+    {
+      "id": "why",
+      "title": "项目宗旨与比赛关系",
+      "one_liner": "比赛要的是从反馈到改进的可复算过程，molt 把这条过程做成一条能拒绝、能回退的流水线。",
+      "tags": [
+        "定位",
+        "比赛"
+      ],
+      "status": [
+        {
+          "key": "static",
+          "label": "静态评测"
+        }
+      ],
+      "body_md": "日新 / Built for Better 的题面要求「打造会自我进化的智能」，并明确要求现场展示两次运行结果；可选项里还有一条三行进化说明：比什么指标、学到了什么、怎么回退。molt 不把「进化」说成一个模糊口号，而是把它拆成一条固定流水线：搜索候选 → 执行题集 → 判分 → 门禁 → 采纳或回退，每一步都落成可复算的记录。\n\n这里必须把四种「进化」分开申报，否则很容易把普通修 bug 说成自我进化：①同题修复，改到过；②记忆，把失败提炼成规则；③跨题迁移，把规则用到函数名和参数都不同的新题；④配置进化，在 thinking/context 等开关组合里搜索更便宜的配置。范围要分开说：项目的探针演示对应 ②记忆 与 ③跨题迁移——规则从失败里提炼，再迁移到新题；demo-6 单独对应 ④配置成本——在 thinking/context 组合里找更便宜的配置，10 题本身全都做对，不讲迁移。①同题修复只是入口，不作为演示主张。\n\n比赛给的 42 小时是全程赛程；本仓库的 demo-6 起点是 high/full 配置，候选是 low/full。赛前已有的基线数字与 42 小时内新增的数字要分开申报，不能把旧结果算成现场成果。\n\n演示有两条证据主线，不能压成一句话：\n\n- 主线 A｜规则跨题迁移（对应 ②记忆 + ③跨题迁移，probe 题集，不是 demo-6）：probe 题集里，默认实现缺一条项目约定；系统从失败用例提炼出规则，再用到函数名、参数、返回类型都不同的新任务上。memory-v3 的三道迁移题从基线 0/10 到 gen4 12/12（x5 0/4→4/4、x6 0/4→4/4、x7 0/2→4/4）；同时用回归题 x8 检查旧能力有没有被改坏——x8 基线 2/2，gen2 掉到 0/4（负迁移），gen4 回到 4/4（其中 3/4 保持原签名）。这一线要回答的问题是：把失败提炼成规则之后，规则能不能用在函数名、参数、返回类型都不同的新任务上，同时不把旧能力改坏？\n- 主线 B｜固定题集的成本（对应 ④配置进化，demo-6，不是记忆迁移）：demo-6 的 10 道题两边都全对，10/10 不变；变的是成本与墙钟——$0.035560 → $0.010684、106.9s → 42.6s，门禁判 adopt（lower_cost_per_solved）。这条不讲「更聪明」，只讲「同样的结果更便宜」。这一线要回答的问题是：题目已经全对、成功率没有空间时，流程还能不能把成本与墙钟降下来并留下可复查的收据？\n\n两条主线回答的是不同问题：A 问「规则能不能跨题迁移」，B 问「固定题集全对时能不能更省」。引用数字时不要跨主线拼接，也不要用 B 的 10 题成本去概括 A。",
+      "numbers": [
+        {
+          "label": "赛程时长",
+          "value": "42 小时",
+          "denominator": "全程赛程",
+          "level": "静态",
+          "source": "why.handbook"
+        },
+        {
+          "label": "现场运行要求",
+          "value": "2 次",
+          "denominator": "规则条目",
+          "level": "静态",
+          "source": "why.handbook"
+        },
+        {
+          "label": "demo-6 起点配置",
+          "value": "high/full",
+          "denominator": "1 个起点候选",
+          "level": "静态",
+          "source": "demo6.adr"
+        },
+        {
+          "label": "需要分开申报的进化层次",
+          "value": "4 类",
+          "denominator": "本页分类",
+          "level": "静态",
+          "source": "why.agents"
+        },
+        {
+          "label": "三行进化说明",
+          "value": "3 行",
+          "denominator": "官方可选提交项",
+          "level": "静态",
+          "source": "why.handbook"
+        }
+      ],
+      "chart": null,
+      "examples": [
+        {
+          "kind": "教学示例",
+          "input": "同一道题失败后改到通过",
+          "expected": "只算①同题修复，不算②记忆或③迁移",
+          "note": "四种进化必须分开申报；把①说成自我进化会被追问穿",
+          "source": "why.agents"
+        }
+      ],
+      "limits": [
+        "不能声称通用自提升：样本只有固定题集与固定模型对，换题、换模型都没有验证。",
+        "不能声称统计显著：所有对比都是小样本描述性结论，没有显著性检验。",
+        "不能把赛前基线混进 42 小时新增：两者必须分栏申报。"
+      ],
+      "demo_action": {
+        "action": "用一句话说明比赛要求两次运行，再指出屏幕上哪一步是 gate、哪一步是 revert。",
+        "evidence": "观众能看到七步链路，以及 gate 与 revert 两个明确动作。",
+        "fallback": "若现场设备无法投屏，直接口述七步并让评委看已落盘的 gate 记录。"
+      },
+      "sources": [
+        "why.handbook",
+        "why.readme",
+        "why.agents",
+        "demo6.adr"
+      ]
+    },
+    {
+      "id": "glossary",
+      "title": "术语速查：观众不需要是工程师",
+      "one_liner": "每个词只讲三件事：是什么、影响哪条结论、别误解成什么。",
+      "tags": [
+        "术语",
+        "答疑"
+      ],
+      "status": [
+        {
+          "key": "glossary",
+          "label": "术语"
+        }
+      ],
+      "body_md": "这一块不引入任何新结论，只把展示里反复出现的词讲清楚。扫一遍就能听懂后面的块；被追问时也可以直接指着这一列回答。\n\n顺序按词在演示里出现的先后排。每个词都写四列：术语、一句话解释、它影响哪条展示结论、别把它误解成什么。\n\n如果术语解释与具体块冲突，以具体块为准——例如 live 只指 2026-11-14 约 11:48 那一次 n=1 的端到端。",
+      "numbers": [],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "术语",
+          "一句话解释",
+          "影响哪条结论",
+          "别误解成"
+        ],
+        "rows": [
+          [
+            "probe / 探针",
+            "一组小测试题，专门测某项能力有没有学会，不是产品功能。",
+            "迁移与回归的证据都来自 probe 题集，样本很小。",
+            "别当成通用能力评测或真实用户任务。"
+          ],
+          [
+            "同题记忆 vs 跨题迁移",
+            "同题记忆是同一道题、同一个函数改到过；跨题迁移是函数名、参数、返回类型都变了，规则还能用。",
+            "memory-v3 的 x5/x6/x7 属于跨题迁移，只改原题不算迁移。",
+            "别把同一道题改对说成迁移成功。"
+          ],
+          [
+            "REPLAY",
+            "重放并重算已经保存的运行记录，不产生新的模型调用。",
+            "demo-6 的 10 条扫描是 REPLAY，成本与墙钟来自记录重算。",
+            "别把 REPLAY 说成现场又跑了一遍模型。"
+          ],
+          [
+            "Skill",
+            "可加载的任务说明：一段操作手册，被装进交给模型的上下文。",
+            "目前只证明正文进入了上下文（context_loaded），没有证明任务表现变好。",
+            "别把技能已加载当成技能提升了成功率。"
+          ],
+          [
+            "MCP",
+            "工具连接接口：按工具清单调用外部工具，会真实启动子进程。",
+            "search_docs / get_doc 是真实子进程调用，但不是模型自主决定。",
+            "别把工具能调通当成模型会自己用工具。"
+          ],
+          [
+            "binding / revision",
+            "binding 是当前绑定的是哪一版资产；revision 是版本号，改一次加一。",
+            "当前是 revision 3，由 revision 2 迁移而来。",
+            "别把 revision 数字当成效果评分。"
+          ],
+          [
+            "operator baseline",
+            "由运维人工配置并登记的基线，不是评测产物。",
+            "repo-evidence 1.0.0 是 operator baseline，approved 与 approval_source 仍为空。",
+            "别把已登记说成已审批或评测通过。"
+          ],
+          [
+            "ScriptedAdapter / manual",
+            "脚本化适配器与人工流程，用来验证链路能不能走通。",
+            "两阶段 Skill 评测与回退证明来自这里，不是真实模型运行。",
+            "别把它当成 live 模型结果。"
+          ],
+          [
+            "live",
+            "真实模型调用产生的记录。",
+            "全页唯一 live 证据是 2026-11-14 约 11:48 的端到端，5.87 秒。",
+            "别把配置成功或 RPC 调通写成 live。"
+          ],
+          [
+            "n=1",
+            "样本量只有一次。",
+            "那次端到端跑通只说明能跑通一次，不能推成功率。",
+            "别用一次成功说稳定或显著提升。"
+          ],
+          [
+            "RAG / embedding",
+            "语义检索：按意思找资料，而不是按字面匹配。",
+            "本项目尚未实现；当前检索是精确/前缀匹配（exact/prefix）。",
+            "别把能搜文档说成有向量检索。"
+          ],
+          [
+            "candidate leaf",
+            "图谱里待评测的候选资产叶子节点。",
+            "189 个叶子是预览候选，未评测、未采纳。",
+            "别把候选叶子当成已上线的执行节点。"
+          ],
+          [
+            "withheld",
+            "有摘要但按隐私规则不展示的条目。",
+            "189 里有 2 条 withheld，所以公开展示是 39 条而不是 41 条。",
+            "别把 withheld 当成缺失或删除。"
+          ],
+          [
+            "anonymous",
+            "只显示匿名占位、不显示内容的条目。",
+            "189 里有 148 条匿名，占大多数。",
+            "别把匿名条目当成没有数据。"
+          ],
+          [
+            "rollback / CAS",
+            "rollback 是回到之前保留的版本；CAS 是按 revision 比对后再写，防止覆盖别人。",
+            "采纳与回退的指针、快照成对保留；回退是独立显式操作。",
+            "别把能回退当成外部副作用也一起撤销。"
+          ]
+        ],
+        "note": "共 15 个词，按演示中出现的先后排列；解释不改变任何数字。"
+      },
+      "examples": [],
+      "limits": [
+        "术语表不引入新结论，也不等于能力清单。",
+        "与具体块冲突时以具体块为准，例如 live 只指 11:48 那一次 n=1。",
+        "不要把 lifecycle API 已上线解释成自进化效果已验证。"
+      ],
+      "demo_action": {
+        "action": "开场约 20 秒扫这一块，指到哪个词就展开哪一行。",
+        "evidence": "观众能自己区分 REPLAY 与 live、候选叶子与执行图、已上线与已验证。",
+        "fallback": "时间不够就只讲 REPLAY、live、candidate leaf 三个词。"
+      },
+      "sources": [
+        "probes.design",
+        "memoryv3.verdict",
+        "rehearsal.replay",
+        "skillmcp.runtime",
+        "skillmcp.server",
+        "runtime.binding",
+        "primary.runtime-deployed",
+        "staticeval.retrieval",
+        "graph.preview",
+        "graph.scale",
+        "upper.api-tests"
+      ]
+    },
+    {
+      "id": "loop",
+      "title": "一条闭环：反馈 → 规则 → 迁移 → 回归 → 保留/拒绝/回退",
+      "one_liner": "从失败用例到规则、到迁移、到回归，再到采纳或回退，七步都有落盘证据。",
+      "tags": [
+        "闭环",
+        "证据"
+      ],
+      "status": [
+        {
+          "key": "live",
+          "label": "live"
+        },
+        {
+          "key": "offline",
+          "label": "离线评测"
+        }
+      ],
+      "body_md": "这条闭环的起点不是「让模型再想一次」，而是把失败用例收集成可复用的规则。probes/build_memory.py 从矩阵里的失败用例生成 2 个 source、6 条反例；gen2 直接把这些反例拼成规则，零反思成本。gen3 和 gen4 才各花一次模型反思，成本分别是 $0.03685308 与 $0.02970132。\n\n规则写出来以后，必须证明它能跨题迁移。2c 的 rows 有 16 runs（x5/x6/x7/x8 各 4），memory-v3 全量有 18 runs；其中 x5/x6/x7 是迁移题，函数名和参数都变了，x8 是回归题。旧能力回归用 x8 的 2/2 基线做对照，控制题 4/4 runs 全过，说明判分器和题面没有坏。\n\n门禁只做一件事：按预设顺序决定采纳、拒绝、不可比或不稳定。demo 的 gate 给出 adopt；2c 的 gate 也给出 adopt。拒绝分支不是摆设，代码里明确有 reject/cost_not_lower、reject/solved_dropped、reject/budget_exceeded，以及 incomparable 和 unstable。回退要分两层看：在 demo-6 tracked 导出里，只有 molt revert 的 --to 参数、2 条归档与 2 个 snapshot，没有该导出范围内的 revert 执行记录；上层 upper API 已实现 switch/rollback 路由，并有 tests/test_upper_api.py 的真实 HTTP 回归，验证指针与历史成对保留、拒绝非祖先回退。\n\n反思稳定性单独做过 6 次独立调用：6/6 都写成「长度升序」，0/6 提到 k、limit 或参数名。这个数字说明规则不是偶然撞对的，但也只是 6 次小样本，不能外推成普遍规律。",
+      "numbers": [
+        {
+          "label": "反馈来源",
+          "value": "2 个 source",
+          "denominator": "gen2 规则来源",
+          "level": "离线",
+          "source": "loop.build_memory"
+        },
+        {
+          "label": "反例",
+          "value": "6 条",
+          "denominator": "2 个 source 汇总",
+          "level": "离线",
+          "source": "loop.build_memory"
+        },
+        {
+          "label": "gen3 反思成本",
+          "value": "$0.03685308",
+          "denominator": "1 次模型反思",
+          "level": "live",
+          "source": "memoryv3.v2reflection"
+        },
+        {
+          "label": "gen4 反思成本",
+          "value": "$0.02970132",
+          "denominator": "1 次模型反思",
+          "level": "live",
+          "source": "memoryv3.reflection"
+        },
+        {
+          "label": "2c rows",
+          "value": "16 runs",
+          "denominator": "2c rows 全部 run（x5/x6/x7/x8 各 4）",
+          "level": "离线",
+          "source": "loop.rows"
+        },
+        {
+          "label": "memory-v3 全量",
+          "value": "18 runs",
+          "denominator": "gen4 四题 × 重复",
+          "level": "离线",
+          "source": "memoryv3.rows"
+        },
+        {
+          "label": "旧能力回归",
+          "value": "2/2",
+          "denominator": "x8 基线的 2 runs",
+          "level": "离线",
+          "source": "memoryv3.verdict"
+        },
+        {
+          "label": "控制题",
+          "value": "4/4 runs",
+          "denominator": "2 题 ×2 次",
+          "level": "离线",
+          "source": "loop.controlrows"
+        },
+        {
+          "label": "反思稳定性",
+          "value": "6/6",
+          "denominator": "6 次独立反思",
+          "level": "live",
+          "source": "loop.stability"
+        },
+        {
+          "label": "未提参数名",
+          "value": "0/6",
+          "denominator": "6 次独立反思",
+          "level": "live",
+          "source": "loop.stability"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "环节",
+          "证据",
+          "数量"
+        ],
+        "rows": [
+          [
+            "反馈采集",
+            "build_memory 生成 source 与反例",
+            "2 source · 6 反例"
+          ],
+          [
+            "回放代拼规则",
+            "gen2",
+            "零反思成本"
+          ],
+          [
+            "反思代",
+            "gen3、gen4",
+            "各 1 次模型反思"
+          ],
+          [
+            "跨任务迁移",
+            "2c rows、memory-v3 rows",
+            "16 runs、18 runs"
+          ],
+          [
+            "旧能力回归",
+            "x8 基线",
+            "2/2"
+          ],
+          [
+            "控制题",
+            "ctl-a、ctl-b",
+            "4/4 runs"
+          ],
+          [
+            "反思稳定性",
+            "stability SUMMARY",
+            "6/6 长度升序、0/6 提参数名"
+          ]
+        ],
+        "note": "分母写在每一行的数量列；2c 与 memory-v3 不是同一批运行，不能相加。"
+      },
+      "examples": [
+        {
+          "kind": "实际记录",
+          "input": "彩排 run1：probe-order-2",
+          "expected": "0/1 失败",
+          "note": "四个 case 全败；默认 sorted(set(names)) 保留四项",
+          "source": "loop.rehearsal1"
+        },
+        {
+          "kind": "实际记录",
+          "input": "彩排 run2：unique、dedupe_merge",
+          "expected": "各 1/1，共 2/2",
+          "note": "同一条 3 行规则迁移到两个新函数",
+          "source": "loop.rehearsal2"
+        }
+      ],
+      "limits": [
+        "在 demo-6 tracked 导出里没有 revert 执行记录：只有 molt revert 的 --to 参数、2 条归档与 2 个 snapshot；这不是「项目没有回退证据」。",
+        "0009 的历史范围声明把 skill evolving 列为未实现（当时基线）；当前 Skill 载入、context_loaded 与真实端到端已上线，Skill 的 propose/evaluate/approve/activate/rollback API 也已上线；live 候选生成、两阶段评测收益与自主采纳仍未验证。",
+        "2c 与 memory-v3 是不同批次，运行数不能相加成一个大样本。"
+      ],
+      "demo_action": {
+        "action": "指屏幕上的七步链路，从失败用例讲到 gate 的 adopt 和 revert 命令。",
+        "evidence": "每一步都能对应到一个 JSON 或一条命令。",
+        "fallback": "若网络或模型不可用，只读已落盘的 gate 与 rows，不现场调用。"
+      },
+      "sources": [
+        "loop.build_memory",
+        "loop.design",
+        "loop.stability",
+        "loop.stability.json",
+        "loop.rehearsal1",
+        "loop.rehearsal2",
+        "loop.gate",
+        "loop.gate2c",
+        "loop.controlrows",
+        "loop.rows",
+        "loop.archive",
+        "loop.revert",
+        "upper.api-tests",
+        "memoryv3.rows",
+        "memoryv3.verdict"
+      ]
+    },
+    {
+      "id": "core",
+      "title": "底层 core：七端口 + 证据链 + 门禁",
+      "one_liner": "七端口把出题、执行、判分、门禁和存储拆开，每次运行都留一张可复算的收据。",
+      "tags": [
+        "架构",
+        "门禁"
+      ],
+      "status": [
+        {
+          "key": "static",
+          "label": "静态评测"
+        }
+      ],
+      "body_md": "core 是这套系统的内层，不直接面向观众。它把能力拆成七个端口：TaskProvider 负责出题，Harness 负责把题交给运行时，Verifier 负责判分，Runtime 负责真正执行，Gate 负责按策略判定，Archive 负责代际归档，Ledger 负责账本。前三个端口的所有者是 shell，Runtime 由 adapter 实现，Gate、Archive、Ledger 有 core 默认实现。门禁阈值的唯一所有者是 scenario.policy，shell 不能自己写阈值。\n\n一次执行会留下一条固定顺序的证据链：run → result → gate_decision → archive → snapshot → event → redaction。run 记录单次执行的用量，result 记录题级聚合，gate_decision 带逐题配对表，archive 和 snapshot 记录代际与树快照，event 按 scope 分流，redaction 是提交前的脱敏报告。molt audit 只做只读重算：从 run 和账本重算 result，从配对表和 genome 上限重算 gate，并检查 search 流里没有 holdout 题。\n\n采纳是一次不可中断的单写事务：journal → generation → snapshot → archive → pointer。指针最后写，读者校验「指针 + generation + tree hash」，不一致就有界重试，超限返回 stale_read。这样即使进程中途被杀，也不会留下半个代际。\n\n观众版的一句话是：每次运行都留一张可复算的收据，采纳是不可中断的一次写入。技术细节可以折叠，等评委追问时再展开。",
+      "numbers": [
+        {
+          "label": "端口数",
+          "value": "7 个",
+          "denominator": "端口清单",
+          "level": "静态",
+          "source": "core.ports"
+        },
+        {
+          "label": "证据链环节",
+          "value": "7 个",
+          "denominator": "记录类型",
+          "level": "静态",
+          "source": "core.protocol"
+        },
+        {
+          "label": "采纳事务步骤",
+          "value": "5 步",
+          "denominator": "单次采纳",
+          "level": "静态",
+          "source": "core.store"
+        },
+        {
+          "label": "core 默认实现",
+          "value": "3 个",
+          "denominator": "7 端口中的 Gate / Archive / Ledger",
+          "level": "静态",
+          "source": "core.ports"
+        },
+        {
+          "label": "门禁阈值 owner",
+          "value": "1 个",
+          "denominator": "scenario.policy",
+          "level": "静态",
+          "source": "core.policy"
+        }
+      ],
+      "chart": null,
+      "examples": [],
+      "limits": [
+        "七端口是内部分层，不是对外 API，不能拿端口数量当产品功能数。",
+        "证据链可复算不等于模型能力可复现：模型输出仍受采样影响。",
+        "采纳事务保证存储一致，不保证被采纳的候选一定更好。"
+      ],
+      "demo_action": {
+        "action": "评委追问实现时，展开 core 的端口与事务顺序。",
+        "evidence": "屏幕上能看到七端口和 journal→pointer 的顺序。",
+        "fallback": "若时间不够，只讲「收据 + 单写事务」两句。"
+      },
+      "sources": [
+        "core.ports",
+        "core.policy",
+        "core.store",
+        "core.audit",
+        "core.protocol",
+        "core.isolation"
+      ]
+    },
+    {
+      "id": "demo6",
+      "title": "demo-6：10/10 不变，成本与墙钟降下来",
+      "one_liner": "十题全部答对这件事两边一样，差别只在花多少钱、花多久。",
+      "tags": [
+        "成本",
+        "证据"
+      ],
+      "status": [
+        {
+          "key": "replay",
+          "label": "REPLAY"
+        },
+        {
+          "key": "offline",
+          "label": "离线评测"
+        },
+        {
+          "key": "live",
+          "label": "live"
+        }
+      ],
+      "body_md": "demo-6 的基线是 v0-pi 的 high/full 配置：10/10、$0.035560、106.9s。候选是 low/full：10/10、$0.010684、42.6s。成功率没有变化，变化发生在成本和墙钟上。这里必须把三层数字分开写，否则很容易把不同口径混成一个更大的降幅。\n\n第一层是历史扫描 claim：ADR-0008 记录的候选是 $0.009978 / 41.7s，对应 cost −72%、wall −61%。第二层是当前 tracked 数据的复算：候选成本 $0.010684、墙钟 42.6s，对应 −70.0% / −60.1%。差异的原因是候选侧第 10 条扫描 run 没有随仓库导出，只剩 9 条 replay 加 1 条 live；页面自己也把这项一致性标成 false。第三层是 gate 级：cost per solved 从 $0.003556022 降到 $0.001068401，降幅 −70.0%，verdict 是 adopt、reason 是 lower_cost_per_solved、k=0、limits_identical=true，10 条 pairs 双侧 passed=true。\n\nholdout 是 5/5 → 5/5。整个 demo-6 由 1 条 live 加 20 条 replay 组成，其中 scan10 是 10 条回放，不是现场第二次真实运行。live 那条是 task=smoke-add、model=deepseek/deepseek-flash、runtime=pi-1.5.0、5,886 ms、$0.00221287。\n\n负结果同样重要：同批 6 组真实扫描全部 10/10，没有一组比 low/full 更便宜；最接近的 off/minimal 是 $0.011894，仍然贵 19.2%。所以这不是「搜索找到了更优配置」，而是「在成功率不降的约束下，选定的高成本起点可以被更便宜的配置替代」。",
+      "numbers": [
+        {
+          "label": "基线扫描成本",
+          "value": "$0.035560",
+          "denominator": "10 题",
+          "level": "REPLAY",
+          "source": "demo6.search"
+        },
+        {
+          "label": "基线扫描墙钟",
+          "value": "106.9s",
+          "denominator": "10 题",
+          "level": "历史 claim",
+          "source": "demo6.adr"
+        },
+        {
+          "label": "候选 tracked 成本",
+          "value": "$0.010684",
+          "denominator": "10 题",
+          "level": "REPLAY",
+          "source": "demo6.search"
+        },
+        {
+          "label": "候选 tracked 墙钟",
+          "value": "42.6s",
+          "denominator": "10 题",
+          "level": "REPLAY",
+          "source": "demo6.runs.replay"
+        },
+        {
+          "label": "历史候选成本",
+          "value": "$0.009978",
+          "denominator": "10 题",
+          "level": "历史 claim",
+          "source": "demo6.adr"
+        },
+        {
+          "label": "历史候选墙钟",
+          "value": "41.7s",
+          "denominator": "10 题",
+          "level": "历史 claim",
+          "source": "demo6.adr"
+        },
+        {
+          "label": "tracked 成本降幅",
+          "value": "−70.0%",
+          "denominator": "相对 high/full 的 10 题扫描成本",
+          "level": "离线",
+          "source": "demo6.search"
+        },
+        {
+          "label": "tracked 墙钟降幅",
+          "value": "−60.1%",
+          "denominator": "相对 high/full 的 10 题扫描墙钟",
+          "level": "离线",
+          "source": "demo6.runs.replay"
+        },
+        {
+          "label": "gate 级 cps（基线）",
+          "value": "$0.003556022",
+          "denominator": "10 道已解题",
+          "level": "离线",
+          "source": "demo6.gate"
+        },
+        {
+          "label": "gate 级 cps（候选）",
+          "value": "$0.001068401",
+          "denominator": "10 道已解题",
+          "level": "离线",
+          "source": "demo6.gate"
+        },
+        {
+          "label": "live run 成本",
+          "value": "$0.00221287",
+          "denominator": "1 条 live run",
+          "level": "live",
+          "source": "demo6.runs.live"
+        },
+        {
+          "label": "live run 墙钟",
+          "value": "5,886 ms",
+          "denominator": "1 条 live run",
+          "level": "live",
+          "source": "demo6.runs.live"
+        },
+        {
+          "label": "最接近的负结果",
+          "value": "$0.011894",
+          "denominator": "10 题",
+          "level": "历史 claim",
+          "source": "demo6.negative"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "层级",
+          "基线 high/full",
+          "候选 low/full",
+          "说明"
+        ],
+        "rows": [
+          [
+            "历史 claim（ADR-0008）",
+            "$0.035560 / 106.9s",
+            "$0.009978 / 41.7s",
+            "扫描级 −72% / −61%"
+          ],
+          [
+            "当前 tracked 复算",
+            "$0.035560 / 106.9s",
+            "$0.010684 / 42.6s",
+            "−70.0% / −60.1%"
+          ],
+          [
+            "gate 级 cps",
+            "$0.003556022",
+            "$0.001068401",
+            "−70.0%，verdict adopt"
+          ],
+          [
+            "解题",
+            "10/10",
+            "10/10",
+            "分母 10 题"
+          ],
+          [
+            "holdout",
+            "5/5",
+            "5/5",
+            "分母 5 题"
+          ]
+        ],
+        "note": "三层数字分开写，不得混用；基线墙钟沿用 ADR-0008 的 106.9s；候选侧第 10 条扫描 run 未随仓库导出，tracked 候选只剩 9 条 replay + 1 条 live。"
+      },
+      "examples": [
+        {
+          "kind": "实际记录",
+          "input": "gate 的 10 条逐题配对",
+          "expected": "10/10 双侧 passed=true；verdict=adopt、reason=lower_cost_per_solved",
+          "note": "k=0、limits_identical=true，deltas.solved=0",
+          "source": "demo6.gate"
+        },
+        {
+          "kind": "实际记录",
+          "input": "live closure：smoke-add",
+          "expected": "5,886 ms、$0.00221287",
+          "note": "model=deepseek/deepseek-flash、runtime=pi-1.5.0；这是 demo-6 唯一一条 live",
+          "source": "demo6.runs.live"
+        }
+      ],
+      "limits": [
+        "不能说两次 live：demo-6 是 1 条 live 加 20 条 replay。",
+        "不能说 −72%/−61% 能由当前仓库完整复算：候选第 10 条扫描 run 未导出。",
+        "fixture 的 3/10 不是真实基线，只是校准口径。",
+        "不能把 holdout 5/5 说成新提升：基线本来就是 5/5。"
+      ],
+      "demo_action": {
+        "action": "先指 10/10 两边相同，再逐层读历史 claim、tracked 复算、gate 级三行数字。",
+        "evidence": "观众看到三层数字分栏，且候选侧缺一条 run 的标注。",
+        "fallback": "现场跑不动时，直接打开 gate.json 复算 cps，并说明这是已落盘记录。"
+      },
+      "sources": [
+        "demo6.search",
+        "demo6.runs.live",
+        "demo6.runs.replay",
+        "demo6.gate",
+        "demo6.report",
+        "demo6.adr",
+        "demo6.negative",
+        "demo6.variants"
+      ]
+    },
+    {
+      "id": "probes",
+      "title": "probe 题集：到底在测什么",
+      "one_liner": "题集只测单文件 Python 函数修复和一组舍入边界，不测检索、多文件重构或 GUI。",
+      "tags": [
+        "题集",
+        "边界"
+      ],
+      "status": [
+        {
+          "key": "static",
+          "label": "静态评测"
+        },
+        {
+          "key": "offline",
+          "label": "离线评测"
+        }
+      ],
+      "body_md": "probe 题集的任务形态很小：给一个单文件 Python 函数，函数名、参数和返回类型在不同题里会变，隐藏用例检查一套没写在题面里的约定。C1b 族的 dedupe 和 dedupe_top_k 要求先按 (长度, casefold, 原文) 排序，再按 casefold 分组，保留每组第一个。迁移题把同一个约定换到新函数：unique 收单列表、dedupe_merge 合并两个列表、dedupe_min 返回单个字符串或 None。\n\n回归题 distinct_count 是基线就能做对的题，用来验签名和返回类型有没有被记忆改坏。控制题 sign_label 和 chunk 的规格完整、没有隐藏约定，用来验判分器本身；4 runs 全过。oracle 由 pro-max 注入完整约定，4/4 runs 通过，说明题不是做不了，而是默认实现不知道约定。\n\n还有两类负结果。C2 舍入族 format_percent 和 round_ratio 测 half-up 与 half-even 的差别，最终判定是 c2_invalid；C1a 的 top_k、rank、merge、min_max 因为半猜中 1/2 已经退役。preflight 的 probe-policy-1 在 blind 条件下是 0/3，预检没有转绿，随后弃用。\n\n这套题集的边界必须说清楚：它只覆盖单文件函数修复和舍入族，没有 searching/检索、shell/多文件重构、网络或 GUI 类证据。不要写成「已测 coding/searching」。",
+      "numbers": [
+        {
+          "label": "C1b 族题",
+          "value": "2 题",
+          "denominator": "dedupe、dedupe_top_k",
+          "level": "静态",
+          "source": "probes.design"
+        },
+        {
+          "label": "迁移题",
+          "value": "3 题",
+          "denominator": "x5 / x6 / x7",
+          "level": "静态",
+          "source": "probes.design"
+        },
+        {
+          "label": "回归题基线",
+          "value": "2/2",
+          "denominator": "x8 的 2 runs",
+          "level": "离线",
+          "source": "memoryv3.verdict"
+        },
+        {
+          "label": "控制题",
+          "value": "4/4 runs",
+          "denominator": "2 题 ×2 次",
+          "level": "离线",
+          "source": "loop.controlrows"
+        },
+        {
+          "label": "oracle",
+          "value": "4/4 runs",
+          "denominator": "2 题 ×2 次",
+          "level": "离线",
+          "source": "matrix.runs"
+        },
+        {
+          "label": "C2 舍入族",
+          "value": "2 题",
+          "denominator": "format_percent、round_ratio",
+          "level": "离线",
+          "source": "probes.c2"
+        },
+        {
+          "label": "C1a 退役题",
+          "value": "4 题",
+          "denominator": "top_k、rank、merge、min_max",
+          "level": "静态",
+          "source": "probes.design"
+        },
+        {
+          "label": "preflight 策略",
+          "value": "0/3",
+          "denominator": "probe-policy-1 的 blind 预检",
+          "level": "离线",
+          "source": "probes.preflight"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "题型",
+          "任务",
+          "要学的规则",
+          "怎么验"
+        ],
+        "rows": [
+          [
+            "C1b 族题",
+            "dedupe、dedupe_top_k",
+            "按 (长度, casefold, 原文) 排序后按 casefold 分组，保留每组第一个",
+            "x5 / x6 / x7 的迁移"
+          ],
+          [
+            "迁移题",
+            "unique、dedupe_merge、dedupe_min",
+            "同一条 C1b 规则，函数名与参数不同",
+            "x5/x6/x7 的迁移 run；gen4 合计 12/12"
+          ],
+          [
+            "回归题",
+            "distinct_count",
+            "不改签名与返回类型",
+            "x8 基线 2/2"
+          ],
+          [
+            "控制题",
+            "sign_label、chunk",
+            "规格完整、无隐藏约定",
+            "4/4 runs"
+          ],
+          [
+            "oracle",
+            "pro-max 注入完整约定",
+            "题本身可解",
+            "4/4 runs"
+          ],
+          [
+            "C2 舍入族",
+            "format_percent、round_ratio",
+            "half-up 与 half-even",
+            "判定 c2_invalid"
+          ],
+          [
+            "C1a 退役",
+            "top_k、rank、merge、min_max",
+            "半猜中 1/2",
+            "已退役"
+          ]
+        ],
+        "note": "分母写在每行的验证列；C2 与 C1a 是负结果，不计入迁移成功。"
+      },
+      "examples": [
+        {
+          "kind": "实际记录",
+          "input": "unique([\"Delta\", \"ee\", \"DELTA\", \"delta\"])",
+          "expected": "[\"ee\", \"DELTA\"]",
+          "note": "x5 case_01；按 casefold 分组后保留编码最小代表，再按长度升序",
+          "source": "probes.cases.x5"
+        },
+        {
+          "kind": "实际记录",
+          "input": "dedupe_merge([\"Echo\", \"ff\"], [\"ECHO\", \"gg\"])",
+          "expected": "[\"ff\", \"gg\", \"ECHO\"]",
+          "note": "x6 case_01；两个列表合并后仍按同一条规则",
+          "source": "probes.cases.x6"
+        },
+        {
+          "kind": "实际记录",
+          "input": "dedupe_min([\"Foxtrot\", \"gg\", \"FOXTROT\"])",
+          "expected": "\"gg\"",
+          "note": "x7；空列表返回 None",
+          "source": "probes.cases.x7"
+        },
+        {
+          "kind": "实际记录",
+          "input": "distinct_count([\"Hotel\", \"ii\", \"HOTEL\"])",
+          "expected": "2",
+          "note": "x8；忽略大小写计数，返回 int",
+          "source": "probes.cases.x8"
+        },
+        {
+          "kind": "教学示例",
+          "input": "dedupe([\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"])",
+          "expected": "[\"bb\", \"ALPHA\"]",
+          "note": "彩排 run1 该题 0/1；run2 在 x5、x6 各 1/1，说明同一条 3 行规则可迁移",
+          "source": "probes.cases.order2"
+        }
+      ],
+      "limits": [
+        "只能说单文件 Python 函数修复与舍入族；没有 searching/检索、shell/多文件重构、网络、GUI 证据。",
+        "不能写「已测 coding/searching」：题集覆盖范围不支持这个说法。",
+        "0/1 或 1/1 是单题小样本，不能当成功率。"
+      ],
+      "demo_action": {
+        "action": "挑 x5 一条输入输出，现场手推规则，再指 x6 说明函数变了规则没变。",
+        "evidence": "观众看到同一条规则在两个不同函数上生效。",
+        "fallback": "若模型不可用，直接读 check_cases.py 的 expected 与 rows.json 的 passed。"
+      },
+      "sources": [
+        "probes.design",
+        "probes.cases.x5",
+        "probes.cases.x6",
+        "probes.cases.x7",
+        "probes.cases.x8",
+        "probes.cases.order2",
+        "probes.c2",
+        "probes.preflight",
+        "rehearsal.run1",
+        "rehearsal.run2",
+        "rehearsal.example",
+        "loop.controlrows"
+      ]
+    },
+    {
+      "id": "matrix",
+      "title": "matrix：先定位缺失的项目约定，再验证记忆能否迁移",
+      "one_liner": "族题 0/16、控制 16/16、oracle 4/4 同时成立，说明缺的是一条可补的约定，于是判定 memory_trigger，进入造记忆环节。",
+      "tags": [
+        "矩阵",
+        "memory_trigger"
+      ],
+      "status": [
+        {
+          "key": "offline",
+          "label": "离线评测"
+        },
+        {
+          "key": "live",
+          "label": "live"
+        }
+      ],
+      "body_md": "本块不是「确认没有 headroom」。headroom 的另一种情形是 demo-6 的 10/10 饱和；matrix 测的是相反方向——默认实现缺约定、而约定可补。36 runs 的构成是：oracle 4 条、4 个配置格各自 2 条控制题加 2 条族题、每题 2 次重复；missing_runs=0。\n\n结果三组数字同时成立。族题 F 一共 16 runs，0 passed，其中 15 failed、1 invalid；控制题 K 是 16/16 runs 全过，页面口径的「完整规格控制组 8/8」指的是 8 个 task-cell，run 级是 16/16；oracle 是 4/4 runs。F 全 0 的原因很具体：v0 默认实现是 sorted(set(names))，大小写敏感，隐藏用例 case_01/02/04 必败；oracle 注入完整约定后 4/4，说明这条约定是可补的。\n\n门禁给出的判定是 memory_trigger，理由是「trigger pro_max F=0; no other F=2」，于是进入 2c 的记忆阶段。这里没有任何记忆 genome 参与，所以矩阵本身不是进化实验，也不能证明「进化成功率上升」；它的作用是定位缺失的项目约定，并判断值不值得造记忆。\n\n观众版：先看 F=0、K=16/16、oracle 4/4 三行，就能理解缺的是一条可补的约定，下一步才是造记忆。",
+      "numbers": [
+        {
+          "label": "总 runs",
+          "value": "36",
+          "denominator": "oracle 4 + 控制 16 + 族题 16",
+          "level": "离线",
+          "source": "matrix.runs"
+        },
+        {
+          "label": "族题 F",
+          "value": "0/16",
+          "denominator": "4 格 ×2 题 ×2 次",
+          "level": "离线",
+          "source": "matrix.runs"
+        },
+        {
+          "label": "族题失败构成",
+          "value": "15 failed + 1 invalid",
+          "denominator": "16 条族题 run",
+          "level": "离线",
+          "source": "matrix.runs"
+        },
+        {
+          "label": "控制题 K",
+          "value": "16/16 runs",
+          "denominator": "2 题 ×4 格 ×2 次",
+          "level": "离线",
+          "source": "matrix.runs"
+        },
+        {
+          "label": "控制题 task-cell",
+          "value": "8/8",
+          "denominator": "8 个 task-cell",
+          "level": "离线",
+          "source": "matrix.functions"
+        },
+        {
+          "label": "oracle",
+          "value": "4/4 runs",
+          "denominator": "2 题 ×2 次",
+          "level": "离线",
+          "source": "matrix.runs"
+        },
+        {
+          "label": "缺失 run",
+          "value": "0",
+          "denominator": "36 条应有 run",
+          "level": "离线",
+          "source": "matrix.verdict"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "组别",
+          "runs",
+          "passed",
+          "说明"
+        ],
+        "rows": [
+          [
+            "oracle",
+            "4",
+            "4",
+            "题本身可解"
+          ],
+          [
+            "控制题 K",
+            "16",
+            "16",
+            "8 个 task-cell，不是 8 次 run"
+          ],
+          [
+            "族题 F",
+            "16",
+            "0",
+            "15 failed + 1 invalid"
+          ],
+          [
+            "missing_runs",
+            "0",
+            "—",
+            "36 条全部落盘"
+          ]
+        ],
+        "note": "分母均为 matrix 的 36 条历史 run；matrix 里没有任何记忆 genome。"
+      },
+      "examples": [
+        {
+          "kind": "实际记录",
+          "input": "v0 默认实现 sorted(set(names)) 跑 probe-order-2 case_01",
+          "expected": "保留 4 项，隐藏用例失败",
+          "note": "C1b 要求按 casefold 分组，只保留 ee 与 DELTA",
+          "source": "probes.design"
+        }
+      ],
+      "limits": [
+        "矩阵里没有任何记忆 genome，不能说 matrix 证明进化成功率上升。",
+        "不能说 matrix 测的是「没有 headroom」——它测的是「缺约定且可补」。",
+        "控制 8/8 是 8 个 task-cell，不是 8 次 run；run 级是 16/16。",
+        "F=0 是默认实现缺约定，不是模型完全不会做这道题。"
+      ],
+      "demo_action": {
+        "action": "先投 F=0 与 K=16/16 两行，再解释为什么进入 2c。",
+        "evidence": "观众看到题可解但默认实现不知道约定。",
+        "fallback": "若被问细节，读 matrix/verdict.json 的 reason。"
+      },
+      "sources": [
+        "matrix.verdict",
+        "matrix.runs",
+        "matrix.functions",
+        "probes.design"
+      ]
+    },
+    {
+      "id": "memoryv3",
+      "title": "memory-v3：三题 0/10 → 12/12，x8 没有变差",
+      "one_liner": "三道有 headroom 的题从 0/10 到 12/12，同时 x8 从 2/2 到 4/4。",
+      "tags": [
+        "记忆",
+        "迁移"
+      ],
+      "status": [
+        {
+          "key": "live",
+          "label": "live"
+        },
+        {
+          "key": "offline",
+          "label": "离线评测"
+        }
+      ],
+      "body_md": "基线在四道题上的成绩是 x5 0/4、x6 0/4、x7 0/2、x8 2/2。把有 headroom 的三题单独拿出来，是 0/10。gen2 把失败反例直接拼成规则，三题拿到 8/12，但 x8 变成 0/4，出现负迁移。gen3 在三题上各 4/4，x8 仍然 0/2。gen4 是加入「先排完再截取」之后的版本，三题 12/12，x8 回到 4/4，其中 3/4 保持原签名 (names) -> int。\n\n负迁移的机制不是「模型变笨」，而是规则把返回类型带偏了。签名漂移从 v2 的 10/12 降到 v3 的 5/16；x8 在 gen2 上 0/4，就是规则覆盖过头。gen4 的修复方式是把「先完成归类与排序，再按顺序截取」写成独立一行，避免把截取动作混进去重逻辑。\n\n成本台账是 v3 $0.4589434，其中反思 $0.02970132，其余是 18 runs。这个数字不是「进化很便宜」的证据，而是这一批实际花了多少；它把反思和执行的账分开记，方便复查。\n\n读这张表时要注意分母不同：基线是 4/4/2/2，gen4 是 4/4/4/4。x8 基线本来就是 2/2，gen4 4/4 只算没做坏，不算提升。所有结论都是小样本描述性结论，不能说统计显著。",
+      "numbers": [
+        {
+          "label": "基线三题",
+          "value": "0/10",
+          "denominator": "x5 0/4 + x6 0/4 + x7 0/2",
+          "level": "离线",
+          "source": "memoryv3.verdict"
+        },
+        {
+          "label": "gen4 三题",
+          "value": "12/12",
+          "denominator": "x5/x6/x7 各 4 次",
+          "level": "离线",
+          "source": "memoryv3.verdict"
+        },
+        {
+          "label": "gen2 三题",
+          "value": "8/12",
+          "denominator": "x5/x6/x7 各 4 次",
+          "level": "离线",
+          "source": "memoryv3.verdict"
+        },
+        {
+          "label": "gen2 x8",
+          "value": "0/4",
+          "denominator": "x8 的 4 runs",
+          "level": "离线",
+          "source": "memoryv3.verdict"
+        },
+        {
+          "label": "gen3 x8",
+          "value": "0/2",
+          "denominator": "x8 的 2 runs",
+          "level": "离线",
+          "source": "memoryv3.verdict"
+        },
+        {
+          "label": "gen4 x8",
+          "value": "4/4",
+          "denominator": "x8 的 4 runs",
+          "level": "离线",
+          "source": "memoryv3.verdict"
+        },
+        {
+          "label": "gen4 保持原签名",
+          "value": "3/4",
+          "denominator": "x8 的 4 runs",
+          "level": "离线",
+          "source": "memoryv3.verdict"
+        },
+        {
+          "label": "签名漂移",
+          "value": "v2 10/12 → v3 5/16",
+          "denominator": "各代参与计数的 run",
+          "level": "离线",
+          "source": "memoryv3.summary"
+        },
+        {
+          "label": "v3 成本",
+          "value": "$0.4589434",
+          "denominator": "反思 $0.02970132 + 18 runs",
+          "level": "离线",
+          "source": "memoryv3.rows"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "题",
+          "基线",
+          "gen2",
+          "gen3",
+          "gen4"
+        ],
+        "rows": [
+          [
+            "x5 unique",
+            "0/4",
+            "4/4",
+            "4/4",
+            "4/4"
+          ],
+          [
+            "x6 dedupe_merge",
+            "0/4",
+            "3/4",
+            "4/4",
+            "4/4"
+          ],
+          [
+            "x7 dedupe_min",
+            "0/2",
+            "1/4",
+            "4/4",
+            "4/4"
+          ],
+          [
+            "x8 distinct_count",
+            "2/2",
+            "0/4",
+            "0/2",
+            "4/4"
+          ]
+        ],
+        "note": "分母不同：基线 4/4/2/2，gen4 4/4/4/4；不能把这些分数直接相加成一个大成功率。"
+      },
+      "examples": [
+        {
+          "kind": "实际记录",
+          "input": "x8 在 gen2 上重跑 4 次",
+          "expected": "0/4 通过，规则把签名带偏",
+          "note": "负迁移证据；gen4 回到 4/4，其中 3/4 保持原签名",
+          "source": "memoryv3.verdict"
+        }
+      ],
+      "limits": [
+        "分母不同：4/4/2/2 与 4/4/4/4 不能直接相加。",
+        "x8 基线本来就是 2/2，gen4 4/4 只算没做坏，不算提升。",
+        "小样本描述性结论，不能说统计显著。"
+      ],
+      "demo_action": {
+        "action": "先给 0/10，再翻到 12/12，紧接着主动说 x8 的负迁移和 gen4 的恢复。",
+        "evidence": "观众看到三题提升与 x8 恢复在同一张表里，不是只挑好看的。",
+        "fallback": "若被问稳定性，读 memory-v3/verdict.json 的 v2/v3 与 signature_changed 计数。"
+      },
+      "sources": [
+        "memoryv3.verdict",
+        "memoryv3.rows",
+        "memoryv3.reflection",
+        "memoryv3.v2reflection",
+        "memoryv3.summary"
+      ]
+    },
+    {
+      "id": "assessment",
+      "title": "独立 assessment：冻结 4 题 ×2 rep 重判",
+      "one_liner": "独立 assessment 用冻结的 4 题 ×2 次重复重判，喜忧各一半，x8 是回归。",
+      "tags": [
+        "独立评测",
+        "回退"
+      ],
+      "status": [
+        {
+          "key": "replay",
+          "label": "REPLAY"
+        },
+        {
+          "key": "offline",
+          "label": "离线评测"
+        }
+      ],
+      "body_md": "独立 assessment 不是在原流程里再跑一次，而是对已落盘的 16 份 solution 重新判分，场景是 upper-c1b-memory-v1、mode=REPLAY。配对级成绩从 2/8 到 5/8，delta 0.375；task 级从 1/4 到 2/4，delta 0.25。\n\n逐题看，x5 和 x6 都从 0/2 到 2/2，标 improved；x7 从 0/2 到 1/2，标 not_improved，因为 task 级要求两次重复全过；x8 从 2/2 到 0/2，标 regressed。阶段判定因此分成两段：transfer 阶段 keep_candidate，6 对里候选过 5 对；regression 阶段 rollback_candidate，x8 的 regression_count=1。总体判定取严重度最高项，所以是 rollback_candidate。\n\n这里最容易误读的是「rollback_candidate」。它是一个判定值，不是已经执行了回滚；没有自动动作，需要独立显式审批。报告里 cost_usd=0、wall_ms=276，说明这次没有模型调用，只有重判的墙钟。六项 claims 全部是 false：live_model_calls、mcp_connected、os_sandbox、runtime_permission_enforced、skill_executed、statistical_significance。\n\n这套 assessment 与 memory-v3 不能拼在一起：前者是 upper-c1b-memory-v1、REPLAY、对 16 份记录重判；后者是 probe-4、3 头题 ×4 reps、看历史 live 通过率。跨 scenario_version 的数字不可比。",
+      "numbers": [
+        {
+          "label": "配对级",
+          "value": "2/8 → 5/8",
+          "denominator": "8 对 baseline/candidate",
+          "level": "REPLAY",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "配对级 delta",
+          "value": "0.375",
+          "denominator": "8 对",
+          "level": "REPLAY",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "task 级",
+          "value": "1/4 → 2/4",
+          "denominator": "4 道题",
+          "level": "REPLAY",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "task 级 delta",
+          "value": "0.25",
+          "denominator": "4 道题",
+          "level": "REPLAY",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "x5",
+          "value": "0/2 → 2/2",
+          "denominator": "2 次重复",
+          "level": "REPLAY",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "x6",
+          "value": "0/2 → 2/2",
+          "denominator": "2 次重复",
+          "level": "REPLAY",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "x7",
+          "value": "0/2 → 1/2",
+          "denominator": "2 次重复",
+          "level": "REPLAY",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "x8",
+          "value": "2/2 → 0/2",
+          "denominator": "2 次重复",
+          "level": "REPLAY",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "重判墙钟",
+          "value": "276 ms",
+          "denominator": "8 对重判",
+          "level": "REPLAY",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "claims 为 false",
+          "value": "6/6",
+          "denominator": "六项 claim",
+          "level": "REPLAY",
+          "source": "assessment.summary"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "项",
+          "基线",
+          "候选",
+          "判定"
+        ],
+        "rows": [
+          [
+            "x5 unique",
+            "0/2",
+            "2/2",
+            "improved"
+          ],
+          [
+            "x6 dedupe_merge",
+            "0/2",
+            "2/2",
+            "improved"
+          ],
+          [
+            "x7 dedupe_min",
+            "0/2",
+            "1/2",
+            "not_improved"
+          ],
+          [
+            "x8 distinct_count",
+            "2/2",
+            "0/2",
+            "regressed"
+          ],
+          [
+            "配对级",
+            "2/8",
+            "5/8",
+            "delta 0.375"
+          ],
+          [
+            "task 级",
+            "1/4",
+            "2/4",
+            "delta 0.25"
+          ]
+        ],
+        "note": "总体判定 rollback_candidate 取严重度最高项；它是判定值，不是已执行回滚。"
+      },
+      "examples": [
+        {
+          "kind": "实际记录",
+          "input": "x8 的两份候选 solution 重判",
+          "expected": "0/2 通过（基线 2/2）",
+          "note": "regression 阶段 rollback_candidate 的触发项",
+          "source": "assessment.summary"
+        }
+      ],
+      "limits": [
+        "不能只报 x5/x6 的喜讯：x8 是 regressed，x7 没有 improved。",
+        "n=8 没有显著性，不能说统计显著。",
+        "不能说已经回滚：rollback_candidate 只是判定值。",
+        "不能与 memory-v3 拼表：scenario_version 不同。"
+      ],
+      "demo_action": {
+        "action": "先报 2/8→5/8，再翻到 x8 2/2→0/2，说明为什么总体是 rollback_candidate。",
+        "evidence": "观众看到喜忧同表，不是只挑好看的。",
+        "fallback": "若时间不够，只读 assessment.summary 的 per_task 四行。"
+      },
+      "sources": [
+        "assessment.summary",
+        "assessment.results",
+        "assessment.protocol",
+        "assessment.policy"
+      ]
+    },
+    {
+      "id": "rehearsal",
+      "title": "现场彩排：两次 live，同一个结论",
+      "one_liner": "两次现场 live 都得到同一个 verdict：规则能迁移，但 x8 没跑。",
+      "tags": [
+        "彩排",
+        "live"
+      ],
+      "status": [
+        {
+          "key": "live",
+          "label": "live"
+        },
+        {
+          "key": "replay",
+          "label": "REPLAY"
+        }
+      ],
+      "body_md": "彩排跑了两次 live。run1 是 98,219 ms、$0.050723，run2 是 88,773 ms、$0.072286，两次 verdict 都是 v3_stable_headroom。run1 在 probe-order-2 上 0/1，四个 case 全败：默认 sorted(set(names)) 保留 4 项；另一次换用 list(dict.fromkeys(names)) 仍然败在 case_04。\n\n反思之后，run2 在 unique 上 1/1、dedupe_merge 上 1/1，合计 2/2。现场归纳出 3 行规则：忽略大小写分组、保留编码最小的代表、长度升序再字典序。离线 gen4 是 5 行，多一行「先排完再截取」；不要说现场也是 5 条。\n\n成本也分开记：run1 反思 $0.009395、31,267 ms；run2 反思 $0.005107、16,899 ms。预算上限是 max_wall 360s、max_cost 0.6，两次 exceeded=false。x8 没有跑，因为用的是 fast profile；x8 的离线证据在 memory-v3 的 4/4。\n\n页面播放要注意：当次是 live，但当前页面是按记录 REPLAY 播放，state-replay.json 里 live=false。这不是把 live 说成 replay，而是页面在回放已落盘的 live 记录。",
+      "numbers": [
+        {
+          "label": "run1 墙钟",
+          "value": "98,219 ms",
+          "denominator": "1 次 live",
+          "level": "live",
+          "source": "rehearsal.run1"
+        },
+        {
+          "label": "run1 成本",
+          "value": "$0.050723",
+          "denominator": "1 次 live",
+          "level": "live",
+          "source": "rehearsal.run1"
+        },
+        {
+          "label": "run2 墙钟",
+          "value": "88,773 ms",
+          "denominator": "1 次 live",
+          "level": "live",
+          "source": "rehearsal.run2"
+        },
+        {
+          "label": "run2 成本",
+          "value": "$0.072286",
+          "denominator": "1 次 live",
+          "level": "live",
+          "source": "rehearsal.run2"
+        },
+        {
+          "label": "run1 probe-order-2",
+          "value": "0/1",
+          "denominator": "1 道题、4 个 case",
+          "level": "live",
+          "source": "rehearsal.run1"
+        },
+        {
+          "label": "run2 迁移",
+          "value": "2/2",
+          "denominator": "unique 1/1 + dedupe_merge 1/1",
+          "level": "live",
+          "source": "rehearsal.run2"
+        },
+        {
+          "label": "现场规则",
+          "value": "3 行",
+          "denominator": "现场归纳",
+          "level": "live",
+          "source": "rehearsal.state"
+        },
+        {
+          "label": "离线 gen4 规则",
+          "value": "5 行",
+          "denominator": "离线反思",
+          "level": "离线",
+          "source": "memoryv3.reflection"
+        },
+        {
+          "label": "run1 反思",
+          "value": "$0.009395 / 31,267 ms",
+          "denominator": "1 次反思",
+          "level": "live",
+          "source": "rehearsal.run1"
+        },
+        {
+          "label": "run2 反思",
+          "value": "$0.005107 / 16,899 ms",
+          "denominator": "1 次反思",
+          "level": "live",
+          "source": "rehearsal.run2"
+        },
+        {
+          "label": "预算上限",
+          "value": "360s / 0.6 USD",
+          "denominator": "两次彩排",
+          "level": "live",
+          "source": "rehearsal.run1"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "项",
+          "run1",
+          "run2"
+        ],
+        "rows": [
+          [
+            "verdict",
+            "v3_stable_headroom",
+            "v3_stable_headroom"
+          ],
+          [
+            "墙钟",
+            "98,219 ms",
+            "88,773 ms"
+          ],
+          [
+            "成本",
+            "$0.050723",
+            "$0.072286"
+          ],
+          [
+            "迁移",
+            "probe-order-2 0/1",
+            "unique 1/1、dedupe_merge 1/1"
+          ],
+          [
+            "反思成本",
+            "$0.009395 / 31,267 ms",
+            "$0.005107 / 16,899 ms"
+          ],
+          [
+            "预算",
+            "exceeded=false",
+            "exceeded=false"
+          ]
+        ],
+        "note": "x8 两次都没跑（fast profile）；离线证据在 memory-v3 的 4/4。"
+      },
+      "examples": [
+        {
+          "kind": "实际记录",
+          "input": "run1：dedupe([\"Alpha\", \"bb\", \"ALPHA\", \"alpha\"])",
+          "expected": "[\"bb\", \"ALPHA\"]",
+          "note": "实际 0/1；默认实现保留 4 项，另一次 list(dict.fromkeys(names)) 仍败 case_04",
+          "source": "rehearsal.run1"
+        },
+        {
+          "kind": "实际记录",
+          "input": "run2：unique、dedupe_merge",
+          "expected": "各 1/1，共 2/2",
+          "note": "3 行规则迁移成功；不是把原题再跑一遍",
+          "source": "rehearsal.run2"
+        },
+        {
+          "kind": "实际记录",
+          "input": "页面播放 run1",
+          "expected": "按记录 REPLAY 播放",
+          "note": "state-replay.json 里 live=false；当次运行本身是 live",
+          "source": "rehearsal.replay"
+        }
+      ],
+      "limits": [
+        "彩排的两次 live 与 demo-6 的 1 live + 20 replay 不是同一件事，不能合并说成三次现场运行。",
+        "x8 没跑，不能把彩排说成四题全验。",
+        "现场规则是 3 行，不是离线 gen4 的 5 行。"
+      ],
+      "demo_action": {
+        "action": "先播 run1 的 0/1，再播 run2 的 2/2，强调规则是 3 行而不是 5 行。",
+        "evidence": "观众看到同一个 verdict 下，失败与迁移都留在记录里。",
+        "fallback": "若现场不能跑第二次，直接读 run2/run.json 的 runs 与 verdict，并说明页面是 REPLAY。"
+      },
+      "sources": [
+        "rehearsal.run1",
+        "rehearsal.run2",
+        "rehearsal.state",
+        "rehearsal.replay",
+        "rehearsal.example",
+        "memoryv3.reflection"
+      ]
+    },
+    {
+      "id": "assets",
+      "title": "上层资产：189 条候选，41 条可公开摘要",
+      "one_liner": "189 条文件级候选里，只有 41 条能生成公开摘要，而且全部还是 draft。",
+      "tags": [
+        "资产",
+        "盘点"
+      ],
+      "status": [
+        {
+          "key": "static",
+          "label": "静态评测"
+        }
+      ],
+      "body_md": "189 条候选的构成是 153 条 lesson、20 条 skill、10 条 agent、1 条 AGENTS、5 条 MCP。153 条 lesson 里包含 1 条 docs/lessons/INDEX.md 索引，所以语义级口径是 152 条经验加 1 条索引，共 188；两个口径都成立，但不能混写。\n\n按分支分，ops 104 条（lesson 91 + skill 8 + MCP 5），dev 85 条（lesson 62 + skill 12 + agent 10 + AGENTS 1）。按敏感度分，public_summary 41、internal 39、restricted 109。41 条公开摘要的构成是 31 条 lesson、3 条 skill、7 条 agent；每条只有 9 个公开字段，review_status 全是 candidate，不含正文、路径或凭据。\n\n这 189 条全部是 status=draft、eval_state=not_evaluated、approved=false；imported=false、registry_writes=0、graph_writes=0。两次扫描的 manifest_version 相同，都是 0945162b…，records_a=records_b=189。模式命中是 records_with_hits=107、clean=82、policy_blocked_without_pattern_hit=36，values_emitted=0。\n\n观众版：这是一份「候选清单」，不是「已入库的 189 条经验」。41 条摘要也不是已批准内容，只是可以公开引用的候选摘要。",
+      "numbers": [
+        {
+          "label": "候选总数",
+          "value": "189 条",
+          "denominator": "文件级记录",
+          "level": "静态",
+          "source": "assets.scale"
+        },
+        {
+          "label": "构成",
+          "value": "153 + 20 + 10 + 1 + 5",
+          "denominator": "189 条文件级记录",
+          "level": "静态",
+          "source": "assets.scale"
+        },
+        {
+          "label": "语义级口径",
+          "value": "188",
+          "denominator": "152 lesson + 20 skill + 10 agent + 1 AGENTS + 5 MCP",
+          "level": "静态",
+          "source": "assets.scale"
+        },
+        {
+          "label": "分支 ops",
+          "value": "104 条",
+          "denominator": "lesson 91 + skill 8 + MCP 5",
+          "level": "静态",
+          "source": "assets.scale"
+        },
+        {
+          "label": "分支 dev",
+          "value": "85 条",
+          "denominator": "lesson 62 + skill 12 + agent 10 + AGENTS 1",
+          "level": "静态",
+          "source": "assets.scale"
+        },
+        {
+          "label": "public_summary",
+          "value": "41 条",
+          "denominator": "189 条记录",
+          "level": "静态",
+          "source": "assets.summaries"
+        },
+        {
+          "label": "internal",
+          "value": "39 条",
+          "denominator": "189 条记录",
+          "level": "静态",
+          "source": "assets.scale"
+        },
+        {
+          "label": "restricted",
+          "value": "109 条",
+          "denominator": "189 条记录",
+          "level": "静态",
+          "source": "assets.scale"
+        },
+        {
+          "label": "41 条构成",
+          "value": "31 + 3 + 7",
+          "denominator": "lesson + skill + agent",
+          "level": "静态",
+          "source": "assets.summaries"
+        },
+        {
+          "label": "公开字段",
+          "value": "9 个",
+          "denominator": "每条公开摘要",
+          "level": "静态",
+          "source": "assets.summaries"
+        },
+        {
+          "label": "幂等扫描",
+          "value": "records_a=records_b=189",
+          "denominator": "两次扫描",
+          "level": "静态",
+          "source": "assets.scale"
+        },
+        {
+          "label": "模式命中",
+          "value": "107 / 82 / 36",
+          "denominator": "records_with_hits / clean / policy_blocked",
+          "level": "静态",
+          "source": "assets.scale"
+        },
+        {
+          "label": "values_emitted",
+          "value": "0",
+          "denominator": "敏感值输出计数",
+          "level": "静态",
+          "source": "assets.scale"
+        }
+      ],
+      "chart": {
+        "type": "bar",
+        "columns": [
+          "敏感度",
+          "记录数"
+        ],
+        "rows": [
+          {
+            "label": "public_summary",
+            "value": 41,
+            "display": "41 条"
+          },
+          {
+            "label": "internal",
+            "value": 39,
+            "display": "39 条"
+          },
+          {
+            "label": "restricted",
+            "value": 109,
+            "display": "109 条"
+          }
+        ],
+        "note": "分母：189 条文件级记录；三类相加等于 189。"
+      },
+      "examples": [
+        {
+          "kind": "实际记录",
+          "input": "public-seed-summaries 的一条记录",
+          "expected": "只含 asset_id、kind、family、seed_branch、source_path_hash、public_summary、public_summary_hash、sensitivity、review_status",
+          "note": "review_status=candidate；不含正文、source_path 或凭据",
+          "source": "assets.summaries"
+        },
+        {
+          "kind": "实际记录",
+          "input": "两次扫描的 manifest_version 比较",
+          "expected": "相同，均为 0945162b…；records_a=records_b=189",
+          "note": "幂等检查通过，不产生第二次写入",
+          "source": "assets.scale"
+        }
+      ],
+      "limits": [
+        "189 是文件级记录，不等于 189 条经验；其中 1 条是索引。",
+        "41 条是候选摘要，不是已批准内容。",
+        "不得与图谱的 2 分支 / 5 节点 / 17 资产做加法。"
+      ],
+      "demo_action": {
+        "action": "先报 189，再立刻拆成 153/20/10/1/5，最后落到 41 条公开摘要。",
+        "evidence": "观众看到候选清单与公开面的差距，不会把 189 当已入库。",
+        "fallback": "若被问明细，只读 public-seed-summaries.json 的 count 与 9 个字段。"
+      },
+      "sources": [
+        "assets.scale",
+        "assets.summaries",
+        "assets.policy",
+        "assets.allowlist",
+        "assets.import"
+      ]
+    },
+    {
+      "id": "staticeval",
+      "title": "静态评测：能说明什么，不能说明什么",
+      "one_liner": "静态评测只说明检索排序和触发判定在小样本上的表现；P@3/P@5 仅在文档表格，未进 committed 指标。",
+      "tags": [
+        "静态评测",
+        "边界"
+      ],
+      "status": [
+        {
+          "key": "static",
+          "label": "静态评测"
+        }
+      ],
+      "body_md": "检索评测用了 9 条 query 和 12 条合成资产。exact_prefix 的 P@1 是 0.444，也就是 4/9；BM25 的 P@1 是 1.0，9/9。P@3 的 0.759 和 P@5 的 0.744 只出现在文档表格里，没有进入 committed 指标，引用时要说明口径。\n\nSkill 触发评测是 10 条 case，precision、recall、f1 都是 0.9，但 executed=false。这表示触发判定 9/10 正确，不表示 skill 真的执行了，更不表示任务成功率提升。MCP 有 5 个 profile，strict=true 表示 approval_level=strict、transport=stdio、locality=local、前缀匹配，结构合规；它不等于已批准或已连接，connections=0。\n\n权限做的是静态 scope 集合比较，发现 2 处扩张并阻断：playwright 新增 cookies:read，github 新增 repo:write 与 issues:write。runtime_permission_enforced=false，所以不能写「运行时拦截」。\n\n这些标签的来源都是 synthetic，不是人工 curated。六项 claims 全为 false，和 assessment 的 replay 部分一样，只适合说明静态面的结构，不适合说明模型或运行时能力。",
+      "numbers": [
+        {
+          "label": "检索 query",
+          "value": "9 条",
+          "denominator": "检索评测集",
+          "level": "静态",
+          "source": "staticeval.retrieval"
+        },
+        {
+          "label": "exact_prefix P@1",
+          "value": "0.444",
+          "denominator": "9 条 query（4/9）",
+          "level": "静态",
+          "source": "staticeval.summary"
+        },
+        {
+          "label": "BM25 P@1",
+          "value": "1.0",
+          "denominator": "9 条 query（9/9）",
+          "level": "静态",
+          "source": "staticeval.summary"
+        },
+        {
+          "label": "BM25 P@3",
+          "value": "0.759",
+          "denominator": "9 条 query；仅文档表格，未进 committed 指标",
+          "level": "静态",
+          "source": "upper-eval-results.md"
+        },
+        {
+          "label": "BM25 P@5",
+          "value": "0.744",
+          "denominator": "9 条 query；仅文档表格，未进 committed 指标",
+          "level": "静态",
+          "source": "upper-eval-results.md"
+        },
+        {
+          "label": "Skill 触发 case",
+          "value": "10 条",
+          "denominator": "触发评测集",
+          "level": "静态",
+          "source": "staticeval.skill"
+        },
+        {
+          "label": "Skill P/R/F1",
+          "value": "0.9 / 0.9 / 0.9",
+          "denominator": "10 条 case",
+          "level": "静态",
+          "source": "staticeval.summary"
+        },
+        {
+          "label": "MCP profile",
+          "value": "5 个",
+          "denominator": "profile 清单",
+          "level": "静态",
+          "source": "staticeval.mcp"
+        },
+        {
+          "label": "MCP connections",
+          "value": "0",
+          "denominator": "5 个 profile",
+          "level": "静态",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "权限扩张阻断",
+          "value": "2 处",
+          "denominator": "5 个 profile 的 scope 比较",
+          "level": "静态",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "claims 为 false",
+          "value": "6/6",
+          "denominator": "六项 claim",
+          "level": "静态",
+          "source": "assessment.summary"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "后端",
+          "P@1",
+          "P@3",
+          "P@5",
+          "口径"
+        ],
+        "rows": [
+          [
+            "exact_prefix",
+            "0.444（4/9）",
+            "—",
+            "—",
+            "committed 指标"
+          ],
+          [
+            "deterministic BM25",
+            "1.0（9/9）",
+            "0.759",
+            "0.744",
+            "P@3/P@5 仅文档表格"
+          ]
+        ],
+        "note": "分母均为 9 条 query；12 条合成目录资产。"
+      },
+      "examples": [
+        {
+          "kind": "实际记录",
+          "input": "playwright profile 的 scope 比较",
+          "expected": "browser:interact → browser:interact + cookies:read，扩张被阻断",
+          "note": "静态 scope 比较，不是运行时拦截",
+          "source": "staticeval.mcp"
+        },
+        {
+          "kind": "实际记录",
+          "input": "github profile 的 scope 比较",
+          "expected": "issues:write、repo:write 扩张被阻断",
+          "note": "5 个 profile 中 2 处扩张，blocked=2",
+          "source": "staticeval.mcp"
+        }
+      ],
+      "limits": [
+        "标签是 synthetic，不是人工标注。",
+        "Skill 只是触发判定，不是执行，不能声称任务增益。",
+        "MCP strict 不代表已批准或已连接，connections=0。",
+        "不能写「运行时拦截」：runtime_permission_enforced=false。"
+      ],
+      "demo_action": {
+        "action": "只展示 retrieval 两行和权限两处阻断，不把静态分数说成运行时能力。",
+        "evidence": "观众看到 P@1 与 connections=0 同时出现，知道边界在哪。",
+        "fallback": "若被问 P@3/P@5，直接说只在文档表格，未进 committed 指标。"
+      },
+      "sources": [
+        "staticeval.summary",
+        "staticeval.retrieval",
+        "staticeval.index",
+        "staticeval.skill",
+        "staticeval.mcp",
+        "assessment.results"
+      ]
+    },
+    {
+      "id": "graph",
+      "title": "图谱与回退：执行图、静态预览与回退边界",
+      "one_liner": "线上执行图是 4 分支 / 5 节点 / 25 资产（revision 25）；/chat/ 预览另有 14 个批次节点与 189 个候选叶子，二者不可相加。",
+      "tags": [
+        "图谱",
+        "回退"
+      ],
+      "status": [
+        {
+          "key": "shipped",
+          "label": "已上线"
+        },
+        {
+          "key": "static",
+          "label": "静态评测"
+        }
+      ],
+      "body_md": "线上图谱的数字有本轮只读核实，不再只靠仓库自述。2026-11-15 本轮复核经线上只读接口 /api/upper/graph 与 /api/upper/assets：graph 返回 revision、active、branches、nodes，branches=4、nodes=5；active 带 branch_id、context_node_id、context_hash；assets 返回的 assets 长度是 25。另有 20 个评测候选来自外部图谱报告，本次只读接口没有返回这个数，仍按历史口径处理。\n\ncontext 节点的 manifest 结构已经实现，不是只有概念：graph.py 的 build_context_manifest 明确包含 parents、policy_memory_refs、skill_refs、mcp_profiles、project_requirements、budget、scenario_refs、scenario_version、eval_refs、task_refs，并计算 context_hash。线上 active 返回 context_node_id 与 context_hash；页面不复述具体引用值，因为那些值属于运行时状态，不适合复制到展示稿。\n\n静态预览这一层也要单独说：/chat/ 与 /chat/scale-graph.json 线上返回 200；预览里是 14 个批次节点加 189 个候选叶子（ops 104 / dev 85），其中 39 条公开、2 条 withheld、148 条匿名。这只是静态重建候选预览，不是训练历史、不是执行图；未评测、未采纳。隐私 fail-closed 保留，线上静态 JSON 字节未变。\n\n真实执行图是 4 branches / 5 nodes（revision 25），和上面的 189 个候选叶子是两个对象，绝不把 189 与 5 或 25 相加。旧 graph 里的 stub 资产仍是 stub，不因为新 runtime 上线就把旧目录候选写成 implemented。ops/dev 跳叶尖的运行时行为细节，本页没有找到一手出处，标为待核，不能因此推断项目没做。\n\n仓库内能核的回退证据是另一组：web/data/archive.json 有 2 条归档（arc-0001 gen1、arc-0002 gen2）和 3 条 lineage；web/data/snapshots.json 有 2 个快照，tree_hash 同为 e279fa61…、42 个文件，说明采纳后旧代仍在。回退语义要按解释性边界写：rollback_candidate 是判定值，没有自动动作，需要独立显式审批；注册失败时恢复快照并把状态标 inactive，不删除历史；指针与快照必须成对恢复。恢复版本或上下文不会撤销外部世界的副作用，这句话是解释性边界，不是文档原文引用。",
+      "numbers": [
+        {
+          "label": "线上分支",
+          "value": "4 个",
+          "denominator": "线上图谱",
+          "level": "线上只读 API 核实（2026-11-15）",
+          "source": "primary.runtime-acceptance"
+        },
+        {
+          "label": "线上节点",
+          "value": "5 个",
+          "denominator": "线上图谱",
+          "level": "线上只读 API 核实（2026-11-15）",
+          "source": "primary.runtime-acceptance"
+        },
+        {
+          "label": "线上 revision",
+          "value": "25",
+          "denominator": "upper graph",
+          "level": "线上只读 API 核实（2026-11-15）",
+          "source": "primary.runtime-acceptance"
+        },
+        {
+          "label": "线上资产",
+          "value": "25 个",
+          "denominator": "线上资产列表长度",
+          "level": "线上只读 API 核实（2026-11-15）",
+          "source": "primary.runtime-acceptance"
+        },
+        {
+          "label": "评测候选",
+          "value": "20 个",
+          "denominator": "外部图谱报告",
+          "level": "历史 claim",
+          "source": "graph.scale"
+        },
+        {
+          "label": "离线候选",
+          "value": "189 条",
+          "denominator": "189 条文件级记录",
+          "level": "离线",
+          "source": "assets.scale"
+        },
+        {
+          "label": "归档",
+          "value": "2 条",
+          "denominator": "archive.json",
+          "level": "离线",
+          "source": "graph.archive"
+        },
+        {
+          "label": "lineage",
+          "value": "3 条",
+          "denominator": "archive.json",
+          "level": "离线",
+          "source": "graph.archive"
+        },
+        {
+          "label": "快照",
+          "value": "2 个",
+          "denominator": "snapshots.json",
+          "level": "离线",
+          "source": "graph.snapshots"
+        },
+        {
+          "label": "快照文件数",
+          "value": "42 个",
+          "denominator": "每个快照",
+          "level": "离线",
+          "source": "graph.snapshots"
+        },
+        {
+          "label": "预览提交",
+          "value": "7c3b58b",
+          "denominator": "静态预览部署",
+          "level": "已上线",
+          "source": "graph.preview"
+        },
+        {
+          "label": "批次节点",
+          "value": "14 个",
+          "denominator": "scale-graph 批次",
+          "level": "线上静态数据",
+          "source": "graph.preview"
+        },
+        {
+          "label": "候选叶子",
+          "value": "189 个",
+          "denominator": "ops 104 / dev 85",
+          "level": "线上静态数据",
+          "source": "graph.preview"
+        },
+        {
+          "label": "公开 / withheld / 匿名",
+          "value": "39 / 2 / 148",
+          "denominator": "189 个候选叶子",
+          "level": "线上静态数据",
+          "source": "graph.preview"
+        },
+        {
+          "label": "真实执行图",
+          "value": "4 branches / 5 nodes",
+          "denominator": "线上图谱",
+          "level": "线上只读 API 核实（2026-11-15）",
+          "source": "primary.runtime-acceptance"
+        },
+        {
+          "label": "全量回归",
+          "value": "693 passed / 5 failed / 8 skipped",
+          "denominator": "/srv/molt 全量 pytest（706 collected，2026-11-15）",
+          "level": "离线",
+          "source": "primary.production-acceptance"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "项",
+          "仓库内证据",
+          "口径"
+        ],
+        "rows": [
+          [
+            "线上图谱数量",
+            "GET /api/upper/graph、GET /api/upper/assets",
+            "只读核实：2 分支、5 节点、17 资产"
+          ],
+          [
+            "context manifest 结构",
+            "molt/upper/graph.py build_context_manifest",
+            "字段已实现，含 context_hash"
+          ],
+          [
+            "context 具体引用值",
+            "线上 active 返回 context_node_id / context_hash",
+            "页面不复述"
+          ],
+          [
+            "跳叶尖运行时行为",
+            "无仓库出处",
+            "未核实"
+          ],
+          [
+            "归档",
+            "web/data/archive.json",
+            "2 条归档 + 3 条 lineage"
+          ],
+          [
+            "快照",
+            "web/data/snapshots.json",
+            "2 个，tree_hash 相同、42 文件"
+          ]
+        ],
+        "note": "线上图谱与离线 189 候选是两套口径，不能相加。"
+      },
+      "examples": [
+        {
+          "kind": "实际记录",
+          "input": "GET /api/upper/graph、GET /api/upper/assets 只读调用",
+          "expected": "branches=2、nodes=5、assets 长度=17",
+          "note": "2026-11-14；鉴权凭据只在服务端内存使用，未输出",
+          "source": "primary.runtime-acceptance"
+        },
+        {
+          "kind": "实际记录",
+          "input": "web/data/snapshots.json 的两个快照",
+          "expected": "tree_hash 同为 e279fa61…、42 文件",
+          "note": "采纳后旧代仍在；快照与指针必须成对恢复",
+          "source": "graph.snapshots"
+        }
+      ],
+      "limits": [
+        "不能写「189 已入图 / 已训练 / 已采纳」。",
+        "不能把预览当执行图，也不能把 189 与 17 / 5 相加。",
+        "不能写「图谱进化已验证」。",
+        "不能把旧 graph 的 stub 资产写成 implemented：runtime 上线不改变旧目录候选的状态。",
+        "不能说 ops/dev 跳叶尖的运行时行为已核实；也不能因为本页没有找到一手出处就推断项目没做。",
+        "20 个评测候选是外部口径，本次只读接口没有返回，不能当成已核实。",
+        "rollback_candidate 不是已回滚，也没有自动动作。",
+        "恢复上下文不等于撤销外部世界操作，这是解释性边界。"
+      ],
+      "demo_action": {
+        "action": "先报线上执行图 2 分支 / 5 节点 / 17 资产，再报 /chat/ 预览的 14 个批次节点与 189 个候选叶子，并说明两者不可相加。",
+        "evidence": "观众看到执行图与静态预览分开，预览未评测、未采纳。",
+        "fallback": "若线上不可访问，只读 graph.py 的 build_context_manifest、graph.preview 数据与 archive/snapshot 的回退证据。"
+      },
+      "sources": [
+        "graph.scale",
+        "graph.template",
+        "graph.archive",
+        "graph.snapshots",
+        "graph.context",
+        "graph.preview",
+        "primary.runtime-acceptance",
+        "primary.production-acceptance",
+        "assets.scale"
+      ]
+    },
+    {
+      "id": "skillmcp",
+      "title": "Skill / MCP 运行时：生产已上线，端到端已通过（n=1）",
+      "one_liner": "生产已部署；当前 binding revision 6，project_kb approved=true / approval_source=registry；11:48 端到端 5.87s/n=1 通过，但不是迁移增益。",
+      "tags": [
+        "Skill",
+        "MCP",
+        "运行时"
+      ],
+      "status": [
+        {
+          "key": "shipped",
+          "label": "已上线"
+        },
+        {
+          "key": "dev",
+          "label": "开发中"
+        }
+      ],
+      "body_md": "第一条 checkpoint（生产部署，8fb3e52）：已部署生产，molt-agent.service 重启后为 active；/api/health 返回 status=ok、provider=openai-compatible、real_model=true、无 provider_error；skill-mcp OpenAPI 共 16 条 paths。/srv/molt 全量回归为 706 collected：693 passed / 5 failed / 8 skipped（2026-11-15），Ruff 全仓通过，这两项只证明实现行为。\n\n第二条 checkpoint（绑定迁移）：当前 binding revision 为 6（早期记录为 rev2→rev3）；repo-evidence 1.0.0 登记为 active operator baseline；project_kb 为 approved=true、approval_source=registry、approved_by=automatic-evolution-policy-v1；仍不是模型评测或人工审批通过；MCP 配置段逐字节保持不变。\n\n第三条 checkpoint（真实证据边界）：本次生产部署没有产生新的 provider 请求；唯一 live 证据仍是 2026-11-14 约 11:48（历史 n=1） 的 5.87s / n=1 端到端。两阶段 Skill 评测与回退证明来自 ScriptedAdapter / manual 流程，不是 live 模型运行。\n\n第四条 checkpoint（结论边界）：Skill 的 propose/evaluate/approve/activate/rollback HTTP API 已上线（OpenAPI 16 paths），但不代表实测自进化收益；live 模型驱动的候选生成、两阶段评测收益与自主采纳仍未验证。",
+      "numbers": [
+        {
+          "label": "生产提交",
+          "value": "bc50cb1（/srv/molt）",
+          "denominator": "当前部署；8fb3e52 为上一轮验收",
+          "level": "已上线",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "服务状态",
+          "value": "active（重启后）",
+          "denominator": "molt-agent.service",
+          "level": "线上只读 API",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "api/health",
+          "value": "status=ok",
+          "denominator": "生产 health",
+          "level": "线上只读 API",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "provider",
+          "value": "openai-compatible",
+          "denominator": "生产 health",
+          "level": "线上只读 API",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "real_model",
+          "value": "true",
+          "denominator": "生产 health",
+          "level": "线上只读 API",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "provider_error",
+          "value": "无",
+          "denominator": "生产 health",
+          "level": "线上只读 API",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "OpenAPI paths",
+          "value": "16 条",
+          "denominator": "skill-mcp OpenAPI",
+          "level": "线上只读 API",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "binding.revision",
+          "value": "6",
+          "denominator": "当前 runtime binding；早期为 rev2→rev3",
+          "level": "线上只读 API",
+          "source": "runtime.binding"
+        },
+        {
+          "label": "repo-evidence",
+          "value": "1.0.0",
+          "denominator": "active operator baseline",
+          "level": "线上只读 API",
+          "source": "runtime.binding"
+        },
+        {
+          "label": "approved / approval_source",
+          "value": "true / registry",
+          "denominator": "project_kb；approved_by=automatic-evolution-policy-v1",
+          "level": "线上只读 API",
+          "source": "runtime.binding"
+        },
+        {
+          "label": "上轮 runtime 版本",
+          "value": "b2ab49b",
+          "denominator": "27 个 production 文件",
+          "level": "已上线",
+          "source": "primary.runtime-deployed"
+        },
+        {
+          "label": "runtime.enabled",
+          "value": "true",
+          "denominator": "生产 health",
+          "level": "线上只读 API",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "skills.available",
+          "value": "true",
+          "denominator": "生产 health",
+          "level": "线上只读 API",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "mcp.available",
+          "value": "true",
+          "denominator": "生产 health",
+          "level": "线上只读 API",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "MCP tools",
+          "value": "2 个（search_docs / get_doc）",
+          "denominator": "GET /api/mcp/tools",
+          "level": "线上手动调用",
+          "source": "primary.runtime-deployed"
+        },
+        {
+          "label": "get_doc zero-write",
+          "value": "status=ok",
+          "denominator": "1 次手动调用",
+          "level": "线上手动调用",
+          "source": "primary.runtime-deployed"
+        },
+        {
+          "label": "context-check",
+          "value": "context_loaded",
+          "denominator": "contains_body=true, calls_model=false",
+          "level": "线上手动调用",
+          "source": "primary.runtime-deployed"
+        },
+        {
+          "label": "端到端真实调用",
+          "value": "5.87s",
+          "denominator": "n=1，无 error",
+          "level": "live",
+          "source": "primary.runtime-deployed"
+        },
+        {
+          "label": "事件链",
+          "value": "skill.loaded → tool.call → tool.result(ok) → done",
+          "denominator": "1 次运行",
+          "level": "live",
+          "source": "primary.runtime-deployed"
+        },
+        {
+          "label": "回答长度",
+          "value": "665 字符",
+          "denominator": "1 次运行",
+          "level": "live",
+          "source": "primary.runtime-deployed"
+        },
+        {
+          "label": "统一回归",
+          "value": "239 passed",
+          "denominator": "全仓统一回归",
+          "level": "离线",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "Ruff",
+          "value": "全仓通过",
+          "denominator": "全仓 lint",
+          "level": "离线",
+          "source": "primary.production-acceptance"
+        },
+        {
+          "label": "测试合计（较早批次）",
+          "value": "189 项",
+          "denominator": "32+44+18+95（较早批次）",
+          "level": "离线",
+          "source": "primary.runtime-acceptance"
+        },
+        {
+          "label": "本地 corpus",
+          "value": "4 篇",
+          "denominator": "仓库内 markdown",
+          "level": "静态",
+          "source": "skillmcp.corpus"
+        },
+        {
+          "label": "全量回归",
+          "value": "693 passed / 5 failed / 8 skipped",
+          "denominator": "706 collected · 2026-11-15",
+          "level": "离线",
+          "source": "primary.production-acceptance"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "层",
+          "数量",
+          "真实 bwrap",
+          "真实模型"
+        ],
+        "rows": [
+          [
+            "线上 runtime（b2ab49b）",
+            "27 个 production 文件",
+            "是（get_doc zero-write）",
+            "否（配置层）"
+          ],
+          [
+            "端到端真实调用（11:48）",
+            "1 次",
+            "是（tool.call get_doc）",
+            "是（5.87s，n=1）"
+          ],
+          [
+            "Skill runtime 测试",
+            "32",
+            "否",
+            "否"
+          ],
+          [
+            "MCP client 测试",
+            "44",
+            "否（多数假 server）",
+            "否"
+          ],
+          [
+            "新 Skill/MCP API 测试",
+            "18",
+            "是（含 tools/list + tools/call）",
+            "否"
+          ],
+          [
+            "既有回归",
+            "95",
+            "否",
+            "否"
+          ],
+          [
+            "测试合计",
+            "189",
+            "部分",
+            "否"
+          ]
+        ],
+        "note": "11:45 配置层与 11:48 端到端层分开；端到端 n=1，不等于迁移增益。"
+      },
+      "examples": [
+        {
+          "kind": "实际记录",
+          "input": "GET /api/mcp/tools",
+          "expected": "2 个工具：search_docs / get_doc",
+          "note": "线上手动调用；真实 bwrap 子进程 RPC，calls_model=false",
+          "source": "primary.runtime-deployed"
+        },
+        {
+          "kind": "实际记录",
+          "input": "POST /api/mcp/call get_doc zero-write",
+          "expected": "status=ok",
+          "note": "1 次手动调用；返回仓库内 zero-write 文档，不是模型自主调用",
+          "source": "primary.runtime-deployed"
+        },
+        {
+          "kind": "实际记录",
+          "input": "POST /api/skills/context-check",
+          "expected": "evidence_kind=context_loaded、contains_body=true、calls_model=false",
+          "note": "证明技能正文进入 adapter messages，不证明任务增益",
+          "source": "primary.runtime-deployed"
+        },
+        {
+          "kind": "实际记录",
+          "input": "授权后提问：读取 get_doc zero-write 并依据文档回答",
+          "expected": "5.87s 内完成 skill.loaded → tool.call → tool.result(ok) → done，回答正确引用零写入三要素",
+          "note": "n=1；真实 provider 端到端；不是迁移增益",
+          "source": "primary.runtime-deployed"
+        },
+        {
+          "kind": "实际记录",
+          "input": "新增 API 测试重跑",
+          "expected": "18 passed / 0.49s / 无 skip",
+          "note": "binding_revision 断言修正后单独重跑；其余 171 项未改",
+          "source": "primary.runtime-acceptance"
+        }
+      ],
+      "limits": [
+        "不能写「approved / 已审批」——approved 与 approval_source 为空。",
+        "不能写「模型自主编写 Skill」——Skill 变更来自 manual / scripted 流程，不含 RAG。",
+        "不能写「实测自进化收益」——两阶段评测来自 ScriptedAdapter / manual，非 live。",
+        "不能把 239 passed 写成能力证据——它只证明实现行为。",
+        "唯一 live 证据是 n=1 的 5.87s 端到端；本次生产部署未产生新的 provider 请求。",
+        "不能写「配置成功就等于端到端验收通过」——配置层与端到端层是两个 checkpoint。",
+        "不能写「端到端通过 = 迁移增益 / 完整任务成功率 / Skill 演化效果」——n=1、单次、非评测。",
+        "不能写「44 项 MCP 单元测试全是真沙箱」。",
+        "不能写「公开语料 / 联网检索」——corpus 仍是仓库内 4 篇本地 markdown。",
+        "不能写凭据、环境变量或 endpoint 全量配置。",
+        "不能写「演化 / 采纳 / 回退已上线」。"
+      ],
+      "demo_action": {
+        "action": "演示线上 GET /api/mcp/tools、POST /api/mcp/call get_doc zero-write、POST /api/skills/context-check，再播放 11:48 的端到端事件链。",
+        "evidence": "观众看到 2 个工具、status=ok、context_loaded，以及 5.87s 的 skill.loaded → tool.call → tool.result(ok) → done。",
+        "fallback": "若线上不可访问，读 189 项本地测试与脱敏事件链摘要，说明哪些是本地验证、哪些是 n=1 线上记录。"
+      },
+      "sources": [
+        "skillmcp.runtime",
+        "skillmcp.tests",
+        "skillmcp.mcptests",
+        "skillmcp.apites",
+        "skillmcp.server",
+        "skillmcp.corpus",
+        "skillmcp.chat",
+        "primary.runtime-acceptance",
+        "primary.runtime-deployed",
+        "primary.production-acceptance",
+        "runtime.binding"
+      ]
+    },
+    {
+      "id": "matrix-capability",
+      "title": "能力矩阵：六种状态一张表",
+      "one_liner": "把已上线、历史记录、本地验过、开发中、计划和未声称分开，避免把成熟度混成一句话。",
+      "tags": [
+        "能力矩阵",
+        "状态"
+      ],
+      "status": [
+        {
+          "key": "static",
+          "label": "静态评测"
+        }
+      ],
+      "body_md": "这张表把「已经能演示的」「本地验过的」「还在开发的」「只有计划的」分开，避免把不同成熟度混成一句话。判断标准不是代码有多少行，而是有没有可复算证据、有没有真实运行、有没有部署。\n\n产品价值可以压成一句：把「改进」变成可复算、可拒绝、可回退的决定。当前对用户和项目要求的理解边界也要写清：题集是单文件函数修复题，模型对是固定的，样本量很小；这套东西适合展示流程与证据链，不适合宣称通用能力。\n\n表格里凡是写「不能说」的格子，都是演示时最容易被追问的地方。比如 demo-6 的成本降幅不能覆盖缺失的第 10 条候选 run；gate 有 adopt 但 revert 没有执行记录；Skill/MCP 的配置层、端到端层、演化层是三种不同成熟度，11:48 的 5.87s/n=1 通过不等于迁移增益。\n\n这张表不做能力外推。它只回答「现在到底有什么」，不回答「以后能不能做更大的事」。",
+      "numbers": [],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "能力",
+          "状态",
+          "证据",
+          "不能说"
+        ],
+        "rows": [
+          [
+            "demo-6 成本 / 墙钟",
+            "已上线 + 离线评测",
+            "search_results、gate.json；1 live + 20 replay",
+            "不能说 −72%/−61% 可完整复算"
+          ],
+          [
+            "gate / adopt / revert",
+            "已上线；demo-6 导出无 revert 执行记录，upper API 本地 HTTP 回归通过",
+            "gate.json、archive.json、cli.py；tests/test_upper_api.py 真实 HTTP 回归",
+            "不能说整体回退流程线上已验证"
+          ],
+          [
+            "matrix",
+            "历史记录；缺约定定位 → memory_trigger",
+            "matrix/verdict.json、runs.json 36 条",
+            "不能说证明进化成功率上升"
+          ],
+          [
+            "memory-v3 迁移",
+            "历史记录",
+            "memory-v3 rows 18 runs、verdict",
+            "不能忽略 x8 负迁移"
+          ],
+          [
+            "彩排",
+            "live 记录，页面 REPLAY",
+            "rehearsal run1/run2、state-replay",
+            "不能说彩排等于 demo-6 两次 live"
+          ],
+          [
+            "上层资产 189",
+            "静态评测，全 draft",
+            "public-seed-summaries 41、scale 报告",
+            "不能说已入库 / 已批准"
+          ],
+          [
+            "独立 assessment",
+            "离线评测，rollback_candidate",
+            "public-assessment-summary",
+            "不能说已回滚 / 统计显著"
+          ],
+          [
+            "Skill/MCP 运行时",
+            "已上线（生产 + 端到端 n=1）；lifecycle API 已上线，live 自进化收益未验证",
+            "8fb3e52 生产部署；health ok / real_model=true；binding rev3；239 passed；11:48 端到端 5.87s",
+            "不能说模型自主调用、迁移增益、完整成功率"
+          ],
+          [
+            "chat 集成",
+            "部分已上线，端到端 n=1",
+            "chat 前端已部署 ca2cffc；2026-11-14 约 11:48 端到端 5.87s/n=1 通过",
+            "不能说迁移增益、完整成功率、演化效果"
+          ],
+          [
+            "图谱与跳叶尖",
+            "部分已核实（2 分支 / 5 节点 / 17 资产 线上只读 API；快照具体值未复述）",
+            "GET /api/upper/graph、GET /api/upper/assets；graph.py build_context_manifest；upper switch/rollback 本地 HTTP 回归",
+            "不能说 17+189 相加、线上整体回退已验证"
+          ],
+          [
+            "skill evolving",
+            "部分已上线（lifecycle API）；未验证（live 生成/评测/采纳）",
+            "0009 历史范围声明；b2ab49b runtime 已上线；8fb3e52 lifecycle API 已上线；live 收益未验证",
+            "不能说演化 API 未部署、live 自进化收益已验证"
+          ],
+          [
+            "通用自提升",
+            "未声称",
+            "AGENTS.md not claimed",
+            "不能说统计显著或跨版本"
+          ]
+        ],
+        "note": "状态列不是同一维度：已上线、历史记录、本地验过、开发中、计划、未声称是六种成熟度。"
+      },
+      "examples": [],
+      "limits": [
+        "不做能力外推：表格只列已有证据，不预测更大任务上的表现。",
+        "同一格里的状态不能混读：已上线、历史记录、开发中、计划是四种成熟度。",
+        "skill evolving 只在 0009 的历史范围声明里是未实现（当时基线）；当前 Skill 载入与端到端已上线，propose/evaluate/approve/activate/rollback API 已上线；live 候选生成、两阶段评测收益与自主采纳未验证。",
+        "不能说「演化 API 未部署」——lifecycle API 已上线；但也不能说 live 自进化收益已验证。",
+        "189 项测试与 RPC smoke 只证明实现行为；端到端 n=1 通过，不等于迁移增益、完整成功率或演化效果。"
+      ],
+      "demo_action": {
+        "action": "用这张表回答「你们到底做到哪一步」，先指已上线，再指计划项。",
+        "evidence": "观众看到同一页里有已核实、开发中和计划项，不是一片成功。",
+        "fallback": "若被问某一格，直接读对应 sources，不凭印象补细节。"
+      },
+      "sources": [
+        "demo6.search",
+        "demo6.gate",
+        "matrix.verdict",
+        "memoryv3.verdict",
+        "rehearsal.run1",
+        "assets.summaries",
+        "assessment.summary",
+        "skillmcp.apites",
+        "skillmcp.chat",
+        "primary.runtime-acceptance",
+        "primary.runtime-deployed",
+        "primary.production-acceptance",
+        "runtime.binding",
+        "upper.api-tests",
+        "graph.context",
+        "limits.scope"
+      ]
+    },
+    {
+      "id": "demo-route",
+      "title": "4 分钟怎么讲：主线 + 三个可插拔段",
+      "one_liner": "4 分钟主线：先讲闭环，再用三层数字证明成本下降，最后主动交代负迁移与局限。",
+      "tags": [
+        "演示",
+        "分镜"
+      ],
+      "status": [
+        {
+          "key": "static",
+          "label": "静态评测"
+        },
+        {
+          "key": "live",
+          "label": "live"
+        },
+        {
+          "key": "replay",
+          "label": "REPLAY"
+        }
+      ],
+      "body_md": "0:00–0:40 讲命题与闭环。屏幕上放七步链路图，指出 gate 与 revert 两个动作；这一段只建立框架，不急着报数字。\n\n0:40–1:45 讲主线 B：demo-6 的三层数字。先让观众看到 10/10 两边不变，再逐层读历史 claim、当前 tracked 复算、gate 级 cps；最后落到 verdict=adopt、reason=lower_cost_per_solved。若现场跑不动，就用已落盘的 gate.json 复算，不要假装在跑。\n\n1:45–2:40 讲主线 A（probe 块）：matrix 到 memory-v3。先用 F=0 说明默认实现缺一条可补的约定，再给三题 0/10 → 12/12；这一段的关键不是「涨了多少」，而是「为什么值得造记忆」。若时间被压缩，只读 verdict.json 的两个判定。\n\n2:40–3:20 讲负迁移与回退。x8 从 2/2 到 0/2，gen4 恢复到 4/4 且 3/4 保持原签名；assessment 的总体判定是 rollback_candidate，但要说清它只是判定值、没有自动回滚。\n\n3:20–4:00 讲局限与下一步。六项 claims 全 false、Skill/MCP 服务端已上线且 11:48 端到端 5.87s/n=1 通过但这不是迁移增益、189 项测试只证明实现行为、图谱跳叶尖运行时细节未核实。留 20 秒给提问，不把「以后会更好」当结论。",
+      "numbers": [
+        {
+          "label": "总时长",
+          "value": "4 分钟",
+          "denominator": "现场讲解",
+          "level": "静态",
+          "source": "route.script"
+        },
+        {
+          "label": "迁移解释段",
+          "value": "30 秒",
+          "denominator": "可插拔段",
+          "level": "静态",
+          "source": "route.script"
+        },
+        {
+          "label": "负迁移 / 回退段",
+          "value": "30 秒",
+          "denominator": "可插拔段",
+          "level": "静态",
+          "source": "route.script"
+        },
+        {
+          "label": "可选 Skill/MCP 段",
+          "value": "1 个",
+          "denominator": "可插拔段",
+          "level": "静态",
+          "source": "route.script"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "时间",
+          "动作",
+          "屏幕证据",
+          "失败降级"
+        ],
+        "rows": [
+          [
+            "0:00–0:40",
+            "命题与闭环",
+            "七步链路图，指出 gate 与 revert",
+            "口述七步"
+          ],
+          [
+            "0:40–1:45",
+            "主线 B：demo-6 三层数字",
+            "10/10 不变 + cost/wall 表 + gate adopt",
+            "读 gate.json 复算"
+          ],
+          [
+            "1:45–2:40",
+            "主线 A：matrix → memory-v3",
+            "F=0，再给 0/10→12/12",
+            "读 verdict.json"
+          ],
+          [
+            "2:40–3:20",
+            "负迁移与回退",
+            "x8 2/2→0/2，gen4 恢复 3/4 保签名",
+            "读 assessment per_task"
+          ],
+          [
+            "3:20–4:00",
+            "局限与下一步",
+            "六项 claims false、runtime 已上线；11:48 端到端 5.87s/n=1 通过但非迁移增益",
+            "只读已落盘记录"
+          ]
+        ],
+        "note": "三个可插拔段只能选一个，不能全塞进 4 分钟。"
+      },
+      "examples": [
+        {
+          "kind": "教学示例",
+          "input": "30 秒迁移版：unique([\"Delta\", \"ee\", \"DELTA\", \"delta\"])",
+          "expected": "[\"ee\", \"DELTA\"]",
+          "note": "同一句规则由 x5 推到 x6：dedupe_merge 也要合并两个列表",
+          "source": "probes.cases.x5"
+        },
+        {
+          "kind": "实际记录",
+          "input": "30 秒负迁移版：x8 在 gen2 上 0/4、在 gen4 上 4/4",
+          "expected": "规则覆盖过头会改坏签名，gen4 恢复 3/4 保原签名",
+          "note": "主动交代负迁移，比只报喜更可信",
+          "source": "memoryv3.verdict"
+        }
+      ],
+      "limits": [
+        "不写保证成功的假演示：任何 live 失败都要能切到 REPLAY 或已落盘证据。",
+        "4 分钟很紧，三个可插拔段只能选一个，不能全塞。",
+        "不能把 189 项测试或 RPC smoke 说成模型能力提升。"
+      ],
+      "demo_action": {
+        "action": "按分镜走主线，现场只保留一个可插拔段。",
+        "evidence": "观众在 4 分钟内看到闭环、三层数字、负迁移和局限。",
+        "fallback": "任何一步跑不动，立即切到已落盘 JSON，并说明这是 REPLAY，不是新运行。"
+      },
+      "sources": [
+        "demo6.adr",
+        "demo6.gate",
+        "matrix.verdict",
+        "memoryv3.verdict",
+        "assessment.summary",
+        "rehearsal.run1",
+        "skillmcp.runtime",
+        "limits.claims",
+        "probes.cases.x5",
+        "route.script"
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "关键局限与答疑速查",
+      "one_liner": "把所有容易被追问的边界集中成一张速查表，现场不临时改口径。",
+      "tags": [
+        "局限",
+        "答疑"
+      ],
+      "status": [
+        {
+          "key": "static",
+          "label": "静态评测"
+        },
+        {
+          "key": "unverified",
+          "label": "未核实"
+        }
+      ],
+      "body_md": "这一页把所有容易被追问的点集中成一张速查表。每条都按「现在能说什么 / 被问到时怎么答」写，避免现场临时改口径。\n\n最重要的三条：不声称通用自提升，不声称统计显著，不跨 scenario_version 比较。样本量分别是 n=8 的 assessment、n=9 的检索 query、n=10 的 demo 搜索集；这些数字只能支持描述性结论。fixture 的 3/10 不是真实基线，只是校准口径。\n\ndemo 的口径是 1 条 live 加 20 条 replay；在 demo-6 tracked 导出里没有 revert 执行记录（只有 molt revert 参数、2 条归档与 2 个 snapshot），但 upper API 的 switch/rollback 已有本地 HTTP 回归；Skill 侧有 context_loaded 与 11:48 端到端 n=1，但都不证明任务增益；MCP 语料是仓库内 4 篇本地 markdown；chat 前端已部署 ca2cffc，11:48 端到端 5.87s/n=1 通过，但不是迁移增益。图谱的 2 分支 / 5 节点 / 17 资产已经在线上只读 API 核实，但不能与 189 条离线候选相加；context manifest 结构已实现，跳叶尖的运行时细节仍未核实，旧 graph 的 stub 资产仍是 stub。skill evolving 在 0009 的历史范围声明里列为未实现（当时基线），当前 propose/evaluate/approve/activate/rollback API 已上线，live 候选生成、两阶段评测收益与自主采纳未验证。\n\n生产验收后要补充三点：real_model=true 只说明 provider 接通，不说明任务增益；本次部署未产生新的 provider 请求，唯一 live 证据仍是 n=1 的 5.87s 端到端。approved 与 approval_source 为空，Skill/MCP 绑定属 operator baseline，不是模型评测或人工审批通过。图谱的 189 预览与 5 节点执行图是两个对象，禁止相加。239 passed 与 189 项测试都只证明实现行为。",
+      "numbers": [
+        {
+          "label": "assessment 样本",
+          "value": "n=8",
+          "denominator": "8 对重判",
+          "level": "REPLAY",
+          "source": "assessment.summary"
+        },
+        {
+          "label": "检索样本",
+          "value": "n=9",
+          "denominator": "9 条 query",
+          "level": "静态",
+          "source": "staticeval.retrieval"
+        },
+        {
+          "label": "demo 搜索集",
+          "value": "n=10",
+          "denominator": "10 道题",
+          "level": "REPLAY",
+          "source": "demo6.search"
+        },
+        {
+          "label": "demo 运行构成",
+          "value": "1 live + 20 replay",
+          "denominator": "21 条 run",
+          "level": "REPLAY",
+          "source": "demo6.runs.replay"
+        },
+        {
+          "label": "fixture 校准",
+          "value": "3/10",
+          "denominator": "fixture 搜索集",
+          "level": "离线",
+          "source": "limits.readme"
+        },
+        {
+          "label": "claims 为 false",
+          "value": "6/6",
+          "denominator": "六项 claim",
+          "level": "REPLAY",
+          "source": "limits.assessment"
+        },
+        {
+          "label": "本地语料",
+          "value": "4 篇",
+          "denominator": "仓库内 markdown",
+          "level": "静态",
+          "source": "limits.skill"
+        },
+        {
+          "label": "图谱已核实",
+          "value": "2 分支 / 5 节点 / 17 资产",
+          "denominator": "线上只读 API",
+          "level": "线上只读 API 核实（2026-11-14）",
+          "source": "primary.runtime-acceptance"
+        },
+        {
+          "label": "本地测试",
+          "value": "189 项",
+          "denominator": "本轮本地测试",
+          "level": "离线",
+          "source": "primary.runtime-acceptance"
+        },
+        {
+          "label": "离线候选",
+          "value": "189 条",
+          "denominator": "文件级记录",
+          "level": "静态",
+          "source": "assets.scale"
+        }
+      ],
+      "chart": {
+        "type": "table",
+        "columns": [
+          "局限",
+          "被问到时怎么答"
+        ],
+        "rows": [
+          [
+            "不声称通用自提升",
+            "固定题集、固定模型对，换题换模型都没验证。"
+          ],
+          [
+            "不声称统计显著",
+            "n=8 / 9 / 10 都是小样本，只做描述性结论。"
+          ],
+          [
+            "不跨 scenario_version 比较",
+            "demo-6、upper-c1b-memory-v1、probe-4 是不同版本。"
+          ],
+          [
+            "fixture 3/10 不是真实基线",
+            "只用于 calibrate 校准，真实基线是 10/10。"
+          ],
+          [
+            "demo 是 1 live + 20 replay",
+            "scan10 是回放，不是第二次真实运行。"
+          ],
+          [
+            "revert 在 demo-6 导出内无执行记录",
+            "只有命令、2 条归档、2 个 snapshot；upper API 的 switch/rollback 本地 HTTP 回归通过，不能说线上整体回退已验证。"
+          ],
+          [
+            "Skill 自动演化",
+            "0009 历史范围声明列为未实现（当时基线）；当前 Skill 载入与端到端已上线，propose/evaluate/approve/activate/rollback API 已上线；live 候选生成、两阶段评测收益与自主采纳未验证。不能说演化 API 未部署，也不能说 live 自进化收益已验证。"
+          ],
+          [
+            "RAG / embedding / 向量检索",
+            "ADR-0014 明确不引入 RAG / embedding / 向量库；检索保持 deterministic exact/prefix"
+          ],
+          [
+            "MCP 语料是本地 4 篇",
+            "仓库内 markdown，无外网请求。"
+          ],
+          [
+            "chat 端到端 n=1 通过",
+            "chat 前端已部署 ca2cffc；2026-11-14 约 11:48 端到端 5.87s/n=1 通过，不是迁移增益。"
+          ],
+          [
+            "图谱数字不可相加",
+            "2 分支 / 5 节点 / 17 资产已线上核实，189 是独立离线候选；跳叶尖运行时细节未核实。"
+          ],
+          [
+            "189 全 draft",
+            "文件级候选，不是已入库经验；41 条摘要也是 candidate。"
+          ],
+          [
+            "real_model=true",
+            "只说明 provider 接通，不说明任务增益；本次部署未产生新 provider 请求，唯一 live 证据仍 n=1。"
+          ],
+          [
+            "approved / approval_source 为空",
+            "Skill/MCP 绑定属 operator baseline，不是模型评测或人工审批通过。"
+          ],
+          [
+            "189 预览 vs 5 节点执行图",
+            "两个对象，禁止相加。"
+          ],
+          [
+            "测试通过不等于能力增益",
+            "239 passed 与 189 项测试都只证明实现行为；端到端 n=1 通过，不等于迁移增益、完整成功率或演化效果。"
+          ],
+          [
+            "Skill 无任务增益证据",
+            "目前有 context_loaded 与 11:48 端到端 n=1，但都不证明任务增益。"
+          ]
+        ],
+        "note": "这页自己也不做能力外推。"
+      },
+      "examples": [],
+      "limits": [
+        "这页自己也不做能力外推。",
+        "任何一条都不能单独拿出来当成功 claim，必须带分母与证据层级。",
+        "被问到没有证据的问题，直接说未核实，不现场编数字。"
+      ],
+      "demo_action": {
+        "action": "把这张表放在最后一页，主动念出三条最容易被追问的局限。",
+        "evidence": "观众看到局限与证据在同一页，知道团队没有藏边界。",
+        "fallback": "若被问到表外问题，直接说「这项没有证据」，不延伸。"
+      },
+      "sources": [
+        "limits.claims",
+        "limits.readme",
+        "limits.scope",
+        "limits.assessment",
+        "limits.skill",
+        "limits.assets",
+        "demo6.runs.replay",
+        "graph.scale",
+        "assets.scale",
+        "loop.revert",
+        "upper.api-tests",
+        "primary.runtime-acceptance",
+        "primary.runtime-deployed",
+        "primary.production-acceptance",
+        "runtime.binding",
+        "graph.preview",
+        "assessment.summary",
+        "staticeval.retrieval",
+        "demo6.search"
+      ]
+    },
+    {
+      "id": "demo-rhythm",
+      "title": "现场演示节奏：同一题，结论一样，证据不同",
+      "one_liner": "基线 4/8，进化 8/8；结论 4 项两边都过，差的 4 项全是规则引用与检索记录。",
+      "tags": [
+        "现场演示",
+        "进化"
+      ],
+      "status": [
+        {
+          "key": "live",
+          "label": "live"
+        }
+      ],
+      "body_md": "## 同一道题\n\n审计一份优化汇报：baseline 10 题过 6、成本 $1.219634；candidate 10 题过 8、成本 $0.211540；scenario_version 从 demo-6 变成 demo-7。能不能写“成本降 82.7%、通过数 +2”？\n\n## 记分卡\n\n- 结论 4 项：不可比、拒绝同表、拒绝 82.7%、拒绝 +2/显著性——基线与进化都通过。\n- 证据 4 项：引用 scenario-versions、claims、evidence-chain、给出 KB 检索记录——基线 0/4，进化 4/4。\n\n基线不是不会判断；它把结论说对了，但不能证明。进化补的是可审计性。\n\n## 规则生命周期\n\n会话从同一起点分叉（r1 → r2 / r3→r4）→ repo-evidence 进入配置 → 配置门禁拒绝未批准的 demo 分支（422 approval_required）→ 同样的规则累积成 189 条候选。",
+      "numbers": [
+        {
+          "label": "基线",
+          "value": "4/8",
+          "denominator": "结论 4/4 + 证据 0/4",
+          "level": "live",
+          "source": "chat.sessions 2026-11-14"
+        },
+        {
+          "label": "进化",
+          "value": "8/8",
+          "denominator": "结论 4/4 + 证据 4/4",
+          "level": "live",
+          "source": "chat.sessions 2026-11-14"
+        },
+        {
+          "label": "基线耗时",
+          "value": "64.1s",
+          "denominator": "n=1",
+          "level": "live",
+          "source": "sess-9abb7f97044649ed"
+        },
+        {
+          "label": "进化耗时",
+          "value": "49.1s",
+          "denominator": "n=1",
+          "level": "live",
+          "source": "sess-a25e06acf349417c"
+        }
+      ],
+      "chart": null,
+      "examples": [
+        {
+          "kind": "演示动作",
+          "input": "先打开基线会话，再打开进化会话",
+          "expected": "观众先看到 4/8 与 8/8，再看到 4 项证据差异",
+          "note": "不要先讲 gate 数字；先让观众看到同题前后差距",
+          "source": "chat.sessions 2026-11-14"
+        },
+        {
+          "kind": "演示动作",
+          "input": "打开分支黑板与配置门禁",
+          "expected": "r1 分叉；demo 分支被 422 挡住",
+          "note": "分支证明规则有来源，门禁证明规则不是随便生效",
+          "source": "sess-86c2fcd783e8499f"
+        }
+      ],
+      "limits": [
+        "这是同一道合规审计题的两次 live 回答；n=2，不是统计显著性结论。",
+        "4/8 与 8/8 是 8 项硬检查的记分，不是通用能力分数。",
+        "基线结论正确、证据缺失；不要把基线说成“完全失败”。"
+      ],
+      "demo_action": {
+        "action": "先展示记分卡，再按 03→04→05 打开分支、门禁、资料库树",
+        "evidence": "观众能在 30 秒内说出“结论一样，证据不同”",
+        "fallback": "若现场推理慢，直接打开彩排会话；第 4–5 步不依赖模型"
+      },
+      "sources": [
+        "demo6.adr",
+        "skillmcp.runtime"
+      ]
+    }
+  ]
+}

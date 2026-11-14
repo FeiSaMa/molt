@@ -40,6 +40,18 @@
     xhr: null,
     backoff: 0,
     sig: "",
+    runId: "",
+    runReady: false,
+    runTimer: 0,
+    triggering: false,
+    autoRun: false,
+    force: false,
+    source: "",
+    replayTimer: 0,
+    replayNorm: null,
+    replayBase: null,
+    replayIndex: 0,
+    replayPhase: 0,
     onPayload: null,
     onStatus: null
   };
@@ -85,19 +97,39 @@
   function resolve() {
     var base = trim(root.MOLT_AGENT_BASE);
     var path = trim(root.MOLT_AGENT_PATH);
+    var source = trim(query("source"));
+    var runRequested = trim(query("run")) === "1";
+    if (!source && !runRequested) source = "probe2c";
     var port = trim(query("port"));
     var token = trim(query("token")) || trim(root.MOLT_AGENT_TOKEN);
 
+    if (!base) {
+      /* 经 Web/API 同源代理访问时，默认使用当前 origin；无 token 也保留 base，
+         这样 token 表单可以先做有效性检查，未连接时仍不会发 /api/tasks。 */
+      var originLoc = root.location;
+      if (originLoc && (originLoc.protocol === "http:" || originLoc.protocol === "https:") && originLoc.hostname) {
+        base = originLoc.protocol + "//" + originLoc.hostname + (originLoc.port ? ":" + originLoc.port : "");
+      }
+    }
+
     if (!base && /^\d{1,5}$/.test(port)) {
-      base = "http" + "://127.0.0.1:" + port;
+      var loc = root.location;
+      if (loc && (loc.protocol === "http:" || loc.protocol === "https:") && loc.hostname) {
+        /* 页面经代理访问时，port 指向同一主机的 API；file:// 仍回退 loopback。 */
+        base = loc.protocol + "//" + loc.hostname + ":" + port;
+      } else {
+        base = "http" + "://127.0.0.1:" + port;
+      }
     }
 
     if (base) {
       return {
         mode: "live",
         base: stripSlash(base),
-        path: path || DEF_PATH,
+        path: path || (DEF_PATH + (source ? "?source=" + encodeURIComponent(source) : "")),
+        source: source,
         token: token,
+        autoRun: runRequested && !source,
         interval: DEF_INTERVAL,
         timeout: DEF_TIMEOUT
       };
@@ -107,7 +139,9 @@
       mode: "idle",
       base: "",
       path: "",
+      source: "",
       token: "",
+      autoRun: false,
       interval: 0,
       timeout: DEF_TIMEOUT
     };
@@ -174,6 +208,80 @@
     return parts.join("|");
   }
 
+  function stopReplay() {
+    if (S.replayTimer) {
+      root.clearTimeout(S.replayTimer);
+      S.replayTimer = 0;
+    }
+    S.replayNorm = null;
+    S.replayBase = null;
+    S.replayIndex = 0;
+    S.replayPhase = 0;
+  }
+
+  function startReplay(norm) {
+    stopReplay();
+    if (!norm || !isArr(norm.pairs) || !norm.pairs.length) return;
+    S.replayNorm = norm;
+    S.replayBase = norm.pairs.map(function (pair) {
+      return {
+        taskId: pair.taskId,
+        baseCost: pair.baseCost,
+        basePassed: pair.basePassed,
+        candCost: 0,
+        candPassed: false
+      };
+    });
+    S.replayIndex = 0;
+    S.replayPhase = 0;
+    replayStep();
+  }
+
+  function replayStep() {
+    if (!S.running || !S.replayNorm || !S.replayBase) return;
+    var norm = S.replayNorm;
+    var pairs = norm.pairs;
+    var base = S.replayBase;
+    var len = pairs.length;
+    var partial = [];
+    var i;
+
+    if (S.replayPhase === 0) {
+      /* 第一轮：只出现基线，所有题按顺序跑完，候选列保持 pending。 */
+      if (S.replayIndex >= len) {
+        S.replayPhase = 1;
+        S.replayIndex = 0;
+        S.replayTimer = root.setTimeout(replayStep, 700);
+        return;
+      }
+      for (i = 0; i <= S.replayIndex; i++) partial.push(base[i]);
+      S.replayIndex += 1;
+      if (S.replayIndex < len) {
+        S.replayTimer = root.setTimeout(replayStep, 420);
+      } else {
+        S.replayPhase = 1;
+        S.replayIndex = 0;
+        S.replayTimer = root.setTimeout(replayStep, 700);
+      }
+    } else {
+      /* 第二轮：第一轮全部完成后，再逐题补候选结果。 */
+      if (S.replayIndex >= len) {
+        S.replayNorm = null;
+        S.replayBase = null;
+        S.replayIndex = 0;
+        S.replayPhase = 0;
+        S.replayTimer = 0;
+        return;
+      }
+      for (i = 0; i < len; i++) partial.push(i <= S.replayIndex ? pairs[i] : base[i]);
+      S.replayIndex += 1;
+      S.replayTimer = S.replayIndex < len ? root.setTimeout(replayStep, 420) : 0;
+    }
+    if (typeof S.onPayload === "function") {
+      try { S.onPayload({ pairs: partial, count: partial.length }); } catch (err) { /* 回调异常不打断轮询 */ }
+    }
+  }
+
   function emit(kind, detail) {
     if (typeof S.onStatus !== "function") return;
     try {
@@ -201,11 +309,7 @@
     var sig = signature(norm);
     if (sig === S.sig) return true;
     S.sig = sig;
-    if (typeof S.onPayload === "function") {
-      try {
-        S.onPayload(norm, payload);
-      } catch (err) { /* 回调异常不打断轮询 */ }
-    }
+    startReplay(norm);
     return true;
   }
 
@@ -224,6 +328,119 @@
     if (S.timer) {
       root.clearTimeout(S.timer);
       S.timer = 0;
+    }
+  }
+
+  function runSchedule(ms) {
+    if (!S.running) return;
+    if (S.runTimer) root.clearTimeout(S.runTimer);
+    S.runTimer = root.setTimeout(function () {
+      S.runTimer = 0;
+      pollRun();
+    }, ms);
+  }
+
+  function triggerRun(force) {
+    var xhr;
+    try {
+      xhr = new root.XMLHttpRequest();
+      if (!xhr) return;
+      S.triggering = true;
+      emit("starting", "probe");
+      emit("log", "请求启动 probe replay" + (force ? "（强制新 run）" : ""));
+      xhr.open("POST", S.base + "/api/tasks/run", true);
+      xhr.timeout = DEF_TIMEOUT;
+      xhr.setRequestHeader("Content-Type", "application/json");
+      if (S.token) xhr.setRequestHeader("Authorization", "Bearer " + S.token);
+      xhr.onreadystatechange = function () {
+        if (!xhr || xhr.readyState !== 4) return;
+        S.xhr = null;
+        if (xhr.status < 200 || xhr.status >= 300) {
+          S.triggering = false;
+          S.runId = "";
+          emit("offline", xhr.status);
+          return;
+        }
+        var payload = null;
+        try { payload = JSON.parse(xhr.responseText); } catch (err) { payload = null; }
+        if (!payload || typeof payload.run_id !== "string" || !payload.run_id) {
+          S.triggering = false;
+          emit("offline", "probe");
+          return;
+        }
+        S.runId = payload.run_id;
+        S.runReady = false;
+        pollRun();
+      };
+      S.xhr = xhr;
+      xhr.send(JSON.stringify({ force: !!force }));
+    } catch (err) {
+      S.xhr = null;
+      S.triggering = false;
+      emit("offline", "xhr");
+      S.path = DEF_PATH;
+      poll();
+    }
+  }
+
+  function pollRun() {
+    if (!S.running || !S.runId) return;
+    var xhr;
+    try {
+      xhr = new root.XMLHttpRequest();
+      if (!xhr) return;
+      xhr.open("GET", S.base + "/api/probe/runs/" + encodeURIComponent(S.runId), true);
+      xhr.timeout = DEF_TIMEOUT;
+      if (S.token) xhr.setRequestHeader("Authorization", "Bearer " + S.token);
+      xhr.onreadystatechange = function () {
+        if (!xhr || xhr.readyState !== 4) return;
+        S.xhr = null;
+        if (xhr.status < 200 || xhr.status >= 300) {
+          S.triggering = false;
+          emit("offline", xhr.status);
+          S.path = DEF_PATH;
+          poll();
+          return;
+        }
+        var payload = null;
+        try { payload = JSON.parse(xhr.responseText); } catch (err) { payload = null; }
+        if (!payload || typeof payload.status !== "string") {
+          S.triggering = false;
+          emit("offline", "probe");
+          S.path = DEF_PATH;
+          poll();
+          return;
+        }
+        if (payload.status === "completed") {
+          S.triggering = false;
+          S.runReady = true;
+          S.path = DEF_PATH + "?probe_run_id=" + encodeURIComponent(S.runId);
+          S.sig = "";
+          var gate = payload.gate || {};
+          var action = payload.action || {};
+          emit("log", "probe 完成 · gate=" + (gate.verdict || "—") + " · action=" + (action.kind || "—") + (action.archive_id ? " · archive " + action.archive_id : ""));
+          poll();
+          return;
+        }
+        if (payload.status === "failed") {
+          emit("log", "probe 失败 · " + ((payload.error && payload.error.code) || "probe_error"));
+          S.triggering = false;
+          S.runId = "";
+          emit("offline", "probe");
+          S.path = DEF_PATH;
+          poll();
+          return;
+        }
+        runSchedule(1000);
+      };
+      S.xhr = xhr;
+      xhr.send(null);
+    } catch (err) {
+      S.xhr = null;
+      S.triggering = false;
+      emit("offline", "xhr");
+      S.path = DEF_PATH;
+      poll();
     }
   }
 
@@ -277,18 +494,44 @@
     S.path = cfg.path;
     S.mode = cfg.mode;
     S.token = cfg.token;
+    S.autoRun = cfg.autoRun;
+    S.source = cfg.source || "";
+    S.force = !!(opts && opts.force);
+    if (S.force) {
+      S.runReady = false;
+      S.runId = "";
+    }
     S.running = true;
     S.backoff = 0;
     S.sig = "";
     S.onPayload = opts && opts.onPayload ? opts.onPayload : null;
     S.onStatus = opts && opts.onStatus ? opts.onStatus : null;
 
-    poll();
+    if (S.force && S.mode === "live" && S.source === "probe2c") {
+      S.sig = "";
+      emit("log", "回放 probe 2c 真实 Pi 记录");
+      poll();
+    } else if (S.runReady && S.runId) {
+      S.path = DEF_PATH + "?probe_run_id=" + encodeURIComponent(S.runId);
+      poll();
+    } else if (S.runId && S.autoRun) {
+      /* 重新进入 S6：附着到已经启动的 run，不再触发第二次。 */
+      pollRun();
+    } else if (S.autoRun || S.force) {
+      triggerRun(S.force);
+    } else {
+      poll();
+    }
     return true;
   }
 
   function stop() {
     stopTimer();
+    stopReplay();
+    if (S.runTimer) {
+      root.clearTimeout(S.runTimer);
+      S.runTimer = 0;
+    }
     if (S.xhr) {
       try { S.xhr.abort(); } catch (err) { /* 忽略 */ }
       S.xhr = null;
