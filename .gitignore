@@ -32,3 +32,9 @@ probes/report/**/response*.jsonl
 web/data/probe/state.json
 web/data/probe/run.json
 shells/probe/memory/live.md
+
+# 本地工作备份与临时导出
+backup/
+*.bak-*
+web/page/*.bak-*
+.playwright-mcp/
