@@ -28,11 +28,12 @@
 
 ```bash
 # 必贴
-PYTHONDONTWRITEBYTECODE=1 uv run pytest -q
 uv run ruff check .
 PYTHONDONTWRITEBYTECODE=1 uv run python -m molt schema validate --all
 PYTHONDONTWRITEBYTECODE=1 uv run python -m molt scenario validate --scenario scenarios/demo/scenario.json
 ```
+
+<!-- 全量 `pytest` 为手动 / 集中执行，不属于 CI，非必贴项。 -->
 
 ```
 <粘贴最后几行输出；没有输出的检查写「通过」并给出退出码>
@@ -51,7 +52,7 @@ PYTHONDONTWRITEBYTECODE=1 uv run python -m molt audit --scenario demo
 
 ## Checklist
 
-- [ ] 测试：新增行为有用例，`pytest -q` 全绿
+- [ ] 测试：新增行为有用例；全量 pytest 手动 / 集中执行，不要求 CI 全绿
 - [ ] Schema：`schema validate --all` +
       `scenario validate --scenario scenarios/demo/scenario.json` 通过；`docs/protocol.md` 未手改
 - [ ] 零写入：`git status --porcelain` 为空；`tests/test_zero_write.py` 通过

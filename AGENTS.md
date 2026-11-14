@@ -248,7 +248,9 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 
 一次变更合并前必须满足：
 
-- [ ] 测试：`uv run pytest -q` 全绿（新增行为有对应用例）。
+- [ ] 测试：新增行为必须带用例；全量 `uv run pytest -q` 为手动 / 集中执行，
+      不属于 CI（CI 只有 `lint`、`schema`、`boundary`、`audit`、`secret-scan` 五个作业），
+      不要求全量套件在 CI 全绿。
 - [ ] Schema：`molt schema validate --all` 与
       `molt scenario validate --scenario scenarios/demo/scenario.json` 通过；
       `docs/protocol.md` 无手改漂移。

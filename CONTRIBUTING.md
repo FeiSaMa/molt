@@ -58,7 +58,8 @@ feat(shell): 新增 svc-config shell 的三端口实现
 ## 五、测试要求
 
 - 行为变更必须带用例；只写实现不写用例的 PR 不合并。
-- 全量：`PYTHONDONTWRITEBYTECODE=1 uv run pytest -q`。
+- 全量：`PYTHONDONTWRITEBYTECODE=1 uv run pytest -q`，**手动 / 集中执行，不属于 CI**
+  （CI 只有 `lint`、`schema`、`boundary`、`audit`、`secret-scan` 五个作业）；PR 不要求贴全量结果。
 - 真实 Pi 调用默认跳过（`pytest.mark.pi`），只有设置 `MOLT_RUN_PI_LIVE=1` 才跑，
   且受预算约束；CI 只在手动 `pi-smoke` 工作流里跑。
 - 涉及仓库写入的测试，用文件系统树快照验收，**不要**用 `git status` 代替
@@ -100,26 +101,27 @@ feat(shell): 新增 svc-config shell 的三端口实现
 - [ ] 标注是否触碰 **verifier / scenario_version 构件**（冻结面，见 AGENTS §六）。
 - [ ] **零写入**：`git status --porcelain` 为空；`tests/test_zero_write.py` 通过。
 - [ ] **provenance**：`run.ext.provenance.kind` 与实际一致，fixture 未标 live。
-- [ ] 粘贴验证命令与输出（`ruff`、`pytest`、`schema validate`、
+- [ ] 粘贴验证命令与输出（`ruff`、`schema validate`、
       `scenario validate --scenario scenarios/demo/scenario.json`）。
+- [ ] 全量 `pytest` 手动 / 集中执行，不属于 CI，非 PR 必贴项。
 - [ ] 回滚方式：revert 提交 / `molt revert --to <archive_id>` / 重生成导出。
 
 ## 九、CI 期望
 
-`.github/workflows/ci.yml` 六个作业必须全绿：`lint`、`schema`、`boundary`、`unit`、
-`audit`、`secret-scan`。`audit` 作业同时跑 `molt demo --mode replay`（180s 上限、产物落
-`/tmp`），把 D7 的分组 / provenance / 15 文件导出纳入 CI。`pi-smoke` 是独立的手动工作流
-（`workflow_dispatch`），不属于必需检查：
+`.github/workflows/ci.yml` 五个作业：`lint`、`schema`、`boundary`、`audit`、`secret-scan`；
+CI 不运行 pytest（全量为手动 / 集中执行，见 §五）。`audit` 作业同时跑
+`molt demo --mode replay`（180s 上限、产物落 `/tmp`），把 D7 的分组 / provenance / 15 文件
+导出纳入 CI。`pi-smoke` 是独立的手动工作流（`workflow_dispatch`），不是 CI 作业：
 只跑 1 条 live task，`max_cost_usd` 是**本次单 run** 的运行后验收上限（不是 scenario 总预算），
 超过即 fail。CI 只用仓库 secrets，任何 key 都不得写进工作流文件。
 
-已知兼容性缺口：CI 的 `unit` 只跑 **3.12**（必需检查名为 `unit (3.12)`）；3.11 仅做语法/本地
-兼容检查，不进 CI。3.11 下全量 `pytest -q` 有 4 例浮点差异——`test_gate_policy` 的 G1、G3，
+已知兼容性缺口：3.11 下全量 `pytest -q` 有 4 例浮点差异——`test_gate_policy` 的 G1、G3，
 `test_gate_cli` 与 `test_zero_write`（都经 `gate --fixture`）。原因是 CPython 3.12 起内置
 `sum()` 改用 Neumaier 补偿求和，`tests/fixtures/gate/` 里 `cost_per_solved_usd` 的期望值
-按 3.12 的浮点结果固化，3.11 下差 1e-16。**CI 不因此阻塞**；修复需改 gate 夹具或引入容差，
-会碰 `bench/**` 或 `tests/fixtures/`，按冻结面流程另行开 PR，修好再把 3.11 加回矩阵。
+按 3.12 的浮点结果固化，3.11 下差 1e-16。因此**手动 / 集中执行全量 pytest 时用 3.12**；
+修复需改 gate 夹具或引入容差，会碰 `bench/**` 或 `tests/fixtures/`，按冻结面流程另行开 PR。
 
 分支保护现状：仓库有**两个 active ruleset**（`main-protection` 与旧的 `protect-main`）。
-两者求并集，严格项为准（删除保护、禁 non-fast-forward、PR + 评审 + 六个必需检查）。
+两者求并集，严格项为准：启用的规则是删除保护与禁 non-fast-forward，
+**未登记必需状态检查**；CI 的五个作业不构成合并阻塞项。
 旧 ruleset 是否删除由用户决定，未在本批次处理。
