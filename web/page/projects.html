@@ -108,7 +108,7 @@
     min-height: 0;
     padding-top: clamp(8px, 1.2vh, 14px);
   }
-  .tree-panel { display: flex; min-width: 0; min-height: 0; }
+  .tree-panel { display: flex; flex-direction: column; gap: 5px; min-width: 0; min-height: 0; }
   .viewport {
     position: relative;
     flex: 1;
@@ -123,7 +123,18 @@
     background-size: 22px 22px;
     overflow: hidden;
   }
-  .tree { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity .2s ease; }
+  .tree-scroll {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    padding: 0 14px 34px;
+    scrollbar-width: thin;
+    scrollbar-color: #C9D2DC transparent;
+  }
+  .tree-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+  .tree-scroll::-webkit-scrollbar-thumb { background: #CDD5DE; border-radius: 4px; }
+  .tree-scroll::-webkit-scrollbar-track { background: transparent; }
+  .tree { display: block; margin: 0 auto; opacity: 0; transition: opacity .2s ease; }
   .tree.is-visible { opacity: 1; }
 
   .loading {
@@ -151,16 +162,13 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .legend {
-    position: absolute;
-    left: 10px;
-    bottom: 8px;
-    z-index: 3;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 3px 13px;
+    padding: 0 2px;
     color: var(--ink-3);
-    font: .56rem var(--font-num);
+    font: .55rem var(--font-num);
     pointer-events: none;
   }
   .legend .line {
@@ -178,11 +186,18 @@
   .lane-band { fill: rgba(244,245,247,.42); }
   .lane-band.alt { fill: rgba(255,255,255,0); }
   .lane-line { stroke: var(--line); stroke-width: 1; }
-  .lane-label { fill: var(--ink-3); font-family: var(--font-num); font-size: 8.5px; font-weight: 600; letter-spacing: .06em; }
-  .lane-count { fill: #A7AFB9; font-family: var(--font-num); font-size: 8px; }
+  .lane-label {
+    fill: var(--ink-2);
+    font-family: var(--font-num);
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-anchor: middle;
+  }
+  .lane-count { fill: #A7AFB9; font-family: var(--font-num); font-size: 8px; text-anchor: middle; }
 
-  .edge { fill: none; stroke: #9AA6B4; stroke-width: 1.2; opacity: .6; }
-  .edge.is-branch { stroke-dasharray: 4 3; opacity: .78; }
+  .edge { fill: none; stroke: #9AA6B4; stroke-width: 1.1; opacity: .62; }
+  .edge.is-branch { stroke-dasharray: 4 3; opacity: .8; }
   .edge.is-rollback { stroke: var(--red); }
   .edge.is-experiment { stroke: var(--gold); }
 
@@ -196,20 +211,13 @@
   .tree-node:hover .node-card { stroke: #B9C7D6; }
   .tree-node:focus-visible .node-card { stroke: var(--indigo); stroke-width: 2.2; }
   .tree-node.is-selected .node-card { fill: #F3F7FC; stroke: var(--indigo); stroke-width: 2.2; }
-  .tree-node.is-current .node-card { stroke: var(--indigo); stroke-width: 1.8; }
-  .tree-node.is-current.is-selected .node-card { stroke-width: 2.4; }
+  .tree-node.is-current .node-card { fill: #F7FAFD; stroke: var(--indigo); stroke-width: 2.6; }
+  .tree-node.is-current.is-selected .node-card { stroke-width: 3; }
   .tree-node.is-new { animation: node-in .3s ease both; }
   @keyframes node-in { from { opacity: 0; } to { opacity: 1; } }
-  .node-title { fill: var(--ink); font-family: var(--font-body); font-size: 12.5px; font-weight: 600; }
-  .node-meta { fill: var(--ink-3); font-family: var(--font-num); font-size: 9.5px; }
-  .node-flag {
-    fill: var(--indigo);
-    font-family: var(--font-num);
-    font-size: 7.5px;
-    font-weight: 600;
-    letter-spacing: .08em;
-    text-anchor: end;
-  }
+  .node-line { fill: var(--ink); font-family: var(--font-num); font-size: 9px; font-weight: 600; }
+  .node-line.sub { fill: var(--ink-3); font-size: 8px; font-weight: 400; }
+  .node-dot { fill: var(--indigo); }
 
   /* ---------- 右侧回放面板 ---------- */
   .replay {
@@ -348,24 +356,26 @@
         <button type="button" class="tab is-active" id="tab-a" role="tab" aria-selected="true" aria-controls="tree-panel">项目 A｜研究仓库</button>
         <button type="button" class="tab" id="tab-b" role="tab" aria-selected="false" aria-controls="tree-panel">项目 B｜展示页</button>
       </div>
-      <p class="meta" id="project-meta">molt · 节点 14 · 泳道 4 · 回退 2 次</p>
+      <p class="meta" id="project-meta">molt · 节点 26 · 泳道 5 · 回退 4 次</p>
     </div>
-    <div class="current-chip" aria-live="polite"><span>当前</span><b id="current-rev">r7</b></div>
+    <div class="current-chip" aria-live="polite"><span>当前</span><b id="current-rev">r12</b></div>
   </header>
 
   <main>
     <section class="tree-panel" id="tree-panel" aria-label="项目进化树">
       <div class="viewport" id="viewport">
-        <svg id="tree" class="tree" role="group" aria-label="项目进化树"></svg>
+        <div class="tree-scroll" id="tree-scroll">
+          <svg id="tree" class="tree" role="group" aria-label="项目进化树"></svg>
+        </div>
         <div class="loading" id="loading" hidden>
           <span class="spinner" aria-hidden="true"></span>
           <p>正在加载项目快照…</p>
         </div>
-        <div class="legend" aria-hidden="true">
-          <span><i class="line"></i>提交</span>
-          <span><i class="line dashed"></i>回退 / 实验</span>
-          <span class="legend-sep">Tab 聚焦节点 · Enter 选中</span>
-        </div>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="line"></i>提交</span>
+        <span><i class="line dashed"></i>回退 / 实验</span>
+        <span class="legend-sep">纵向滚动查看 · Tab 聚焦 · Enter 选中</span>
       </div>
     </section>
     <aside class="replay" id="replay" aria-live="polite" aria-label="对话回放">
@@ -383,21 +393,23 @@
 /* DEMO_FIXTURE — 手工构造的演示数据。
    口径：8/8 是 8 项审查清单得分；189 = 153 + 20 + 10 + 1 + 5；
    demo-6 / demo-7 只作为版本标识，不混用数值。
-   说明：题目列出的关键链共 9 / 7 个节点；为撑起「复杂进化树」并达到
-   14 / 10 个节点，在既有支线末端补了同风格的延续节点（r9–r13、b7–b9），
-   不改动任何关键节点的父子关系。 */
+   A：26 节点 / 5 泳道，r0–r25 连续编号；主链 13 个，回退 4 次。
+   B：18 节点 / 4 泳道，b0–b17 连续编号；主链 9 个，回退 3 次。
+   题目给出的分支计数与锚点有重叠，按「补足到 26 / 18」在既有分支末端补了
+   延续节点；所有列出的锚点与父子关系保持不变。 */
 var PROJECT_FIXTURES = {
   a: {
     id: "a",
     name: "项目 A｜研究仓库",
     short: "molt",
     revPrefix: "r",
-    current: "r7",
+    current: "r12",
     lanes: [
       { name: "主线", kind: "main" },
-      { name: "支线 r1", kind: "branch" },
-      { name: "实验", kind: "experiment" },
-      { name: "支线 r5", kind: "branch" }
+      { name: "分支 1 · 实验", kind: "experiment" },
+      { name: "分支 2 · 回退", kind: "branch" },
+      { name: "分支 3 · 回退", kind: "branch" },
+      { name: "分支 4 · 回退", kind: "branch" }
     ],
     nodes: [
       {
@@ -410,11 +422,11 @@ var PROJECT_FIXTURES = {
         ]
       },
       {
-        id: "r1", rev: "r1", label: "检索规则", action: "保留", parent: "r0", lane: 0,
-        note: "把检索规则写死，后续节点都按它走",
+        id: "r1", rev: "r1", label: "读规则", action: "保留", parent: "r0", lane: 0,
+        note: "规则：先检索，再核对，最后落结论",
         messages: [
-          { role: "user", text: "检索这块先定规则：先查项目知识库，再读 claims，不要凭记忆写数字。" },
-          { role: "assistant", text: "规则写成三步：一、检索 project_kb 的 scenario-versions；二、读 claims.md 核对数字；三、找不到来源就不写。" },
+          { role: "user", text: "先把检索规则读一遍：哪些能写，哪些不能写？" },
+          { role: "assistant", text: "规则三步：一、检索 project_kb 的 scenario-versions；二、读 claims.md 核对数字；三、找不到来源就不写。" },
           { role: "tool", text: "检索 project_kb：scenario-versions", tool: "检索 project_kb" },
           { role: "assistant", text: "检索结果里 demo-6 与 demo-7 是两组版本号；跨版本的成本与通过数不能放进同一张表比较。" }
         ]
@@ -432,7 +444,17 @@ var PROJECT_FIXTURES = {
         ]
       },
       {
-        id: "r4", rev: "r4", label: "修补口径", action: "保留", parent: "r2", lane: 0,
+        id: "r3", rev: "r3", label: "补配对表", action: "保留", parent: "r2", lane: 0,
+        note: "配对表按同一 scenario_version 逐题对齐",
+        messages: [
+          { role: "user", text: "结论里引用的数字要能逐题对上；补一张配对表。" },
+          { role: "assistant", text: "配对表只按同一个 scenario_version 内配对，不跨版本拼接。" },
+          { role: "tool", text: "读取 variants.json", tool: "读取 variants.json" },
+          { role: "assistant", text: "配对表补完，8 项审查清单仍按结论 4 项、证据 4 项分开记。" }
+        ]
+      },
+      {
+        id: "r4", rev: "r4", label: "修口径", action: "保留", parent: "r3", lane: 0,
         note: "修补口径：审查得分与通过数分开",
         messages: [
           { role: "user", text: "检查一下有没有把「审查得分」写成「通过题数」。" },
@@ -442,37 +464,82 @@ var PROJECT_FIXTURES = {
         ]
       },
       {
-        id: "r7", rev: "r7", label: "定稿摘要", action: "保留", parent: "r4", lane: 0,
-        note: "当前快照：定稿摘要 + 限制条件",
+        id: "r7", rev: "r7", label: "合并", action: "保留", parent: "r4", lane: 0,
+        note: "合并实验结论，不带实验数字",
         messages: [
-          { role: "user", text: "把摘要定稿；限制条件要留在正文，不许挪到脚注。" },
-          { role: "assistant", text: "定稿：结论只保留能被检索记录支持的部分，限制条件紧随结论。" },
+          { role: "user", text: "把实验支线的结论并到主线，但别把实验数字带进来。" },
+          { role: "assistant", text: "合并只取结论：实验分支保留在树上，正文只写可复核的部分。" },
           { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
-          { role: "assistant", text: "证据链已对齐：每条结论都有对应的检索记录与原文位置。" },
-          { role: "user", text: "好，这一版作为当前快照。" }
+          { role: "assistant", text: "合并完成；跨版本对比仍然排除，限制条件留在正文。" }
         ]
       },
       {
-        id: "r3", rev: "r3", label: "回退到 r1", action: "回退", parent: "r1", lane: 1,
-        note: "从 r1 回退 · r2 草稿保留但不沿用", rollbackFrom: "r1",
+        id: "r9", rev: "r9", label: "复算", action: "保留", parent: "r7", lane: 0,
+        note: "合并后复算审查清单",
         messages: [
-          { role: "user", text: "r2 那版结论先撤回，口径还没对齐，回到 r1 重来。" },
-          { role: "assistant", text: "已回退到 r1：r2 的草稿保留在历史里，不删除；接下来只改检索规则相关部分。" },
+          { role: "user", text: "合并后重算一遍审查清单，确认没有把实验分支的数字算进去。" },
+          { role: "assistant", text: "复算只看主线证据：结论 4 项、证据 4 项，仍是 8/8。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "复算结果与合并前一致；资料库覆盖仍按 189 条记。" }
+        ]
+      },
+      {
+        id: "r12", rev: "r12", label: "当前定稿", action: "保留", parent: "r9", lane: 0,
+        note: "当前快照：摘要与限制一起定稿",
+        messages: [
+          { role: "user", text: "这一版作为当前快照，摘要和限制一起定稿。" },
+          { role: "assistant", text: "已定稿：摘要只保留可复核结论，限制条件紧随其后。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "证据链对齐；8 项审查清单 8/8，没有新增跨版本数字。" },
+          { role: "user", text: "好，当前就停在 r12。" }
+        ]
+      },
+      {
+        id: "r14", rev: "r14", label: "补附录", action: "保留", parent: "r12", lane: 0,
+        note: "附录只放检索记录索引",
+        messages: [
+          { role: "user", text: "给正文补一个附录，放检索记录索引。" },
+          { role: "assistant", text: "附录只放检索记录和原文位置，不放结论。" },
+          { role: "tool", text: "检索 project_kb：evidence-chain", tool: "检索 project_kb" }
+        ]
+      },
+      {
+        id: "r15", rev: "r15", label: "扩样本", action: "保留", parent: "r14", lane: 0,
+        note: "扩样本仍按同版本配对",
+        messages: [
+          { role: "user", text: "样本范围再扩一层，看看结论稳不稳。" },
+          { role: "assistant", text: "扩样本仍按同版本配对；样本外的结果不并入当前结论。" },
+          { role: "tool", text: "读取 variants.json", tool: "读取 variants.json" }
+        ]
+      },
+      {
+        id: "r16", rev: "r16", label: "回退到 r15", action: "回退", parent: "r15", lane: 0,
+        note: "主链回退 · 从 r15 回退", rollbackFrom: "r15",
+        messages: [
+          { role: "user", text: "r15 的扩样本口径不对，退回 r15 重来。" },
+          { role: "assistant", text: "已从 r15 回退；r15 之后的改动保留在历史里，不删除。" },
           { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" }
         ]
       },
       {
-        id: "r5", rev: "r5", label: "继续修订", action: "保留", parent: "r3", lane: 1,
-        note: "从 r3 继续 · 证据链补齐",
+        id: "r17", rev: "r17", label: "重写摘要", action: "保留", parent: "r16", lane: 0,
+        note: "回退后重写摘要",
         messages: [
-          { role: "user", text: "从 r1 的口径继续，先把证据链补全。" },
-          { role: "assistant", text: "按 r1 的三步规则重跑一遍：检索、核对、再落结论。" },
-          { role: "tool", text: "检索 project_kb：evidence-chain", tool: "检索 project_kb" },
-          { role: "assistant", text: "把证据记录补齐；其中 demo-6 只作为版本标识出现，不参与任何数值比较。" }
+          { role: "user", text: "在回退后的口径上重写摘要，别引用被撤回的扩样本。" },
+          { role: "assistant", text: "摘要只引用 r15 及之前的证据；扩样本留作后续工作。" },
+          { role: "assistant", text: "限制条件保留，8 项审查清单仍按 8/8 记。" }
         ]
       },
       {
-        id: "r6", rev: "r6", label: "并表实验", action: "实验", parent: "r2", lane: 2,
+        id: "r18", rev: "r18", label: "留待复核", action: "保留", parent: "r17", lane: 0,
+        note: "待复核 · 当前仍停在 r12",
+        messages: [
+          { role: "user", text: "这一版先不合并，留待复核。" },
+          { role: "assistant", text: "已标记为待复核分支；当前快照仍是 r12。" }
+        ]
+      },
+      {
+        id: "r5", rev: "r5", label: "并表实验", action: "实验", parent: "r2", lane: 1,
         note: "实验分支 · 并表方案未合并",
         messages: [
           { role: "user", text: "试一下把 demo-6 和 demo-7 的结果并成一张表，看看能不能一眼看出差异。" },
@@ -481,58 +548,111 @@ var PROJECT_FIXTURES = {
         ]
       },
       {
-        id: "r9", rev: "r9", label: "归一化实验", action: "实验", parent: "r6", lane: 2,
+        id: "r10", rev: "r10", label: "归一化续", action: "实验", parent: "r5", lane: 1,
         note: "实验分支 · 归一化方案未合并",
         messages: [
           { role: "user", text: "如果非要并表，能不能只展示归一化后的比例？" },
           { role: "assistant", text: "归一化也依赖分母口径；分母来自不同版本，比例同样不可比。" },
           { role: "tool", text: "检索 project_kb：scenario-versions", tool: "检索 project_kb" },
-          { role: "assistant", text: "结论：并表方案放弃，只保留一条失败记录。" }
+          { role: "assistant", text: "结论：并表方案放弃，只保留失败记录。" }
         ]
       },
       {
-        id: "r10", rev: "r10", label: "归档实验", action: "实验", parent: "r9", lane: 2,
+        id: "r19", rev: "r19", label: "小样本复核", action: "实验", parent: "r10", lane: 1,
+        note: "实验分支 · 小样本复核未合并",
+        messages: [
+          { role: "user", text: "用小样本再核一次并表方案。" },
+          { role: "assistant", text: "小样本也改变不了版本不同这个前提；结果仍不可比。" },
+          { role: "tool", text: "检索 project_kb：scenario-versions", tool: "检索 project_kb" }
+        ]
+      },
+      {
+        id: "r20", rev: "r20", label: "归档实验", action: "实验", parent: "r19", lane: 1,
         note: "实验归档 · 未合并",
         messages: [
-          { role: "user", text: "把这次实验的结论收一下。" },
-          { role: "assistant", text: "归档：并表与归一化都不成立，原因是版本不同；不改主线。" }
+          { role: "user", text: "把实验链收尾。" },
+          { role: "assistant", text: "归档：并表、归一化、小样本复核都不并入主线。" }
         ]
       },
       {
-        id: "r8", rev: "r8", label: "回退到 r5", action: "回退", parent: "r5", lane: 3,
-        note: "从 r5 回退 · 实验分支保留", rollbackFrom: "r5",
+        id: "r6", rev: "r6", label: "回退到 r4", action: "回退", parent: "r4", lane: 2,
+        note: "从 r4 回退 · 实验分支保留", rollbackFrom: "r4",
         messages: [
-          { role: "user", text: "r6 那条实验支线不要了，回到 r5。" },
-          { role: "assistant", text: "已从 r5 回退；实验分支原样保留在树上，只是不再沿用。" },
+          { role: "user", text: "r5 的并表实验不要带进主线，回到 r4。" },
+          { role: "assistant", text: "已从 r4 回退；实验分支保留，不删除。" },
           { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" }
         ]
       },
       {
-        id: "r11", rev: "r11", label: "补证据", action: "保留", parent: "r8", lane: 3,
-        note: "在 r8 上补证据",
+        id: "r11", rev: "r11", label: "继续改配对表", action: "保留", parent: "r6", lane: 2,
+        note: "从 r6 继续 · 配对表重排",
         messages: [
-          { role: "user", text: "在 r5 的基础上把证据补到能复核。" },
-          { role: "assistant", text: "补两类记录：KB 检索命中、原文引用位置；缺一项就不写结论。" },
-          { role: "tool", text: "检索 project_kb：claims", tool: "检索 project_kb" },
-          { role: "assistant", text: "证据补齐，8 项审查清单仍按结论 4 项、证据 4 项分开记。" }
+          { role: "user", text: "从 r4 继续，先把配对表改到能逐题复核。" },
+          { role: "assistant", text: "按 r4 的口径重排配对表，只保留同版本配对。" },
+          { role: "tool", text: "读取 variants.json", tool: "读取 variants.json" },
+          { role: "assistant", text: "配对表补齐；实验分支的数字不进入这张表。" }
         ]
       },
       {
-        id: "r12", rev: "r12", label: "改摘要", action: "保留", parent: "r11", lane: 3,
-        note: "摘要措辞改为可复核",
+        id: "r21", rev: "r21", label: "补证据", action: "保留", parent: "r11", lane: 2,
+        note: "补配对表证据",
         messages: [
-          { role: "user", text: "摘要里的措辞太重，换成能复核的说法。" },
-          { role: "assistant", text: "改成「已按 8 项审查清单复核，限制条件见正文」；不用结论性的措辞。" },
+          { role: "user", text: "给配对表补证据来源。" },
+          { role: "assistant", text: "每条配对都补检索记录和原文位置；缺来源的行删掉。" },
+          { role: "tool", text: "检索 project_kb：claims", tool: "检索 project_kb" }
+        ]
+      },
+      {
+        id: "r8", rev: "r8", label: "回退到 r7", action: "回退", parent: "r7", lane: 3,
+        note: "从 r7 回退 · 合并提交保留", rollbackFrom: "r7",
+        messages: [
+          { role: "user", text: "合并后的正文引用了实验分支，退回 r7 重做。" },
+          { role: "assistant", text: "已从 r7 回退；合并提交保留在历史里。" },
           { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" }
         ]
       },
       {
-        id: "r13", rev: "r13", label: "留草案", action: "保留", parent: "r12", lane: 3,
+        id: "r22", rev: "r22", label: "重排引用", action: "保留", parent: "r8", lane: 3,
+        note: "重排引用：结论 / 证据 / 限制",
+        messages: [
+          { role: "user", text: "把引用按结论、证据、限制三组重排。" },
+          { role: "assistant", text: "重排后每条结论只指向一条证据链，避免交叉引用。" },
+          { role: "assistant", text: "实验分支的引用全部移出正文。" }
+        ]
+      },
+      {
+        id: "r23", rev: "r23", label: "补限制", action: "保留", parent: "r22", lane: 3,
+        note: "限制条件写具体",
+        messages: [
+          { role: "user", text: "限制条件写具体：版本、样本范围、证据覆盖。" },
+          { role: "assistant", text: "限制分三条写，全部留在正文，不放脚注。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" }
+        ]
+      },
+      {
+        id: "r24", rev: "r24", label: "留草案", action: "保留", parent: "r23", lane: 3,
         note: "草案分支 · 等待复核",
         messages: [
-          { role: "user", text: "下一版提纲先留着，别合并。" },
-          { role: "assistant", text: "草案：把资料库构成 189 = 153 + 20 + 10 + 1 + 5 放进页脚，正文只谈结论与限制。" },
-          { role: "assistant", text: "标记为草案分支，等待复核。" }
+          { role: "user", text: "这一支先留草案，不合并。" },
+          { role: "assistant", text: "已标草案；当前快照仍是 r12。" }
+        ]
+      },
+      {
+        id: "r13", rev: "r13", label: "回退到 r9", action: "回退", parent: "r9", lane: 4,
+        note: "从 r9 回退 · 定稿保留", rollbackFrom: "r9",
+        messages: [
+          { role: "user", text: "复算后的附录口径不对，回到 r9。" },
+          { role: "assistant", text: "已从 r9 回退；r12 的定稿保留，不删除。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" }
+        ]
+      },
+      {
+        id: "r25", rev: "r25", label: "复核口径", action: "保留", parent: "r13", lane: 4,
+        note: "复核审查清单",
+        messages: [
+          { role: "user", text: "在 r9 的口径上再核一遍审查清单。" },
+          { role: "assistant", text: "复核结果：8 项仍按 8/8 记，限制条件不变。" },
+          { role: "tool", text: "检索 project_kb：审查清单", tool: "检索 project_kb" }
         ]
       }
     ]
@@ -542,11 +662,12 @@ var PROJECT_FIXTURES = {
     name: "项目 B｜展示页",
     short: "showcase",
     revPrefix: "b",
-    current: "b5",
+    current: "b8",
     lanes: [
       { name: "主线", kind: "main" },
-      { name: "支线 b1", kind: "branch" },
-      { name: "支线 b3", kind: "branch" }
+      { name: "分支 1 · 回退", kind: "branch" },
+      { name: "分支 2 · 回退", kind: "branch" },
+      { name: "分支 3 · 回退", kind: "branch" }
     ],
     nodes: [
       {
@@ -569,80 +690,151 @@ var PROJECT_FIXTURES = {
         ]
       },
       {
-        id: "b3", rev: "b3", label: "改文案", action: "保留", parent: "b1", lane: 0,
-        note: "改文案：不做跨版本数值对比",
+        id: "b2", rev: "b2", label: "改标题", action: "保留", parent: "b1", lane: 0,
+        note: "改标题：条件先行",
         messages: [
-          { role: "user", text: "把首屏那句「成本大幅下降」删掉，改成条件说明。" },
+          { role: "user", text: "首屏标题改成条件说明，不要「成本大幅下降」。" },
           { role: "assistant", text: "改为：「两组结果来自不同版本，成本与通过数不可直接比较。」" },
           { role: "tool", text: "检索 project_kb：展示页文案", tool: "检索 project_kb" },
           { role: "user", text: "claim 卡片只放能被检索记录支持的内容。" },
-          { role: "assistant", text: "每张 claim 卡片固定三行：结论、证据、限制；缺证据的条目直接不展示。" }
+          { role: "assistant", text: "每张卡片固定三行：结论、证据、限制；缺证据不展示。" }
         ]
       },
       {
-        id: "b5", rev: "b5", label: "版式定稿", action: "保留", parent: "b3", lane: 0,
-        note: "当前快照：版式与截图口径定稿",
+        id: "b4", rev: "b4", label: "改证据段", action: "保留", parent: "b2", lane: 0,
+        note: "改证据段：来源与适用条件",
         messages: [
-          { role: "user", text: "版式定稿：三栏，截图统一口径。" },
-          { role: "assistant", text: "三栏：结论 / 证据 / 资料库；截图统一 1440 宽、浅底、不套浏览器边框。" },
-          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "user", text: "证据段按「检索记录 → 原文位置 → 适用条件」排。" },
+          { role: "assistant", text: "已改成三段式；没有原文位置的行直接删。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "证据段与正文结论一一对应，8 项审查清单仍按 8/8 记。" }
+        ]
+      },
+      {
+        id: "b6", rev: "b6", label: "收尾", action: "保留", parent: "b4", lane: 0,
+        note: "收尾：截图、页脚、限制",
+        messages: [
+          { role: "user", text: "收尾：截图、页脚、限制说明一起定。" },
+          { role: "assistant", text: "截图统一 1440 宽、浅底、无浏览器边框；页脚只放资料库构成。" },
+          { role: "tool", text: "检索 project_kb：展示页截图", tool: "检索 project_kb" },
           { role: "assistant", text: "页脚按 153 lessons + 20 Skill + 10 Agent + 1 AGENTS.md + 5 MCP 展开，合计 189。" }
         ]
       },
       {
-        id: "b2", rev: "b2", label: "回退到 b1", action: "回退", parent: "b1", lane: 1,
-        note: "从 b1 回退 · 花哨版式弃用", rollbackFrom: "b1",
+        id: "b8", rev: "b8", label: "版式定稿", action: "保留", parent: "b6", lane: 0,
+        note: "当前快照：版式定稿",
         messages: [
-          { role: "user", text: "上一版版式太花，回到 b1 重排。" },
-          { role: "assistant", text: "已从 b1 回退；花哨版式的改动保留在历史里，不再沿用。" },
-          { role: "assistant", text: "重排原则：一屏只讲一件事，数字不抢标题。" }
+          { role: "user", text: "版式定稿：三栏，截图统一口径。" },
+          { role: "assistant", text: "三栏：结论 / 证据 / 资料库；截图统一 1440 宽、浅底、不套浏览器边框。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "页脚按资料库构成展开，合计 189；不写跨版本对比。" }
         ]
       },
       {
-        id: "b4", rev: "b4", label: "回退到 b3", action: "回退", parent: "b3", lane: 2,
-        note: "从 b3 回退 · claim 卡片重写", rollbackFrom: "b3",
+        id: "b10", rev: "b10", label: "补附录", action: "保留", parent: "b8", lane: 0,
+        note: "附录只放检索记录索引",
         messages: [
-          { role: "user", text: "claim 卡片的写法退回 b3，现在的版本读起来像广告。" },
-          { role: "assistant", text: "已从 b3 回退；只保留「结论 / 证据 / 限制」三行结构。" },
-          { role: "tool", text: "读取 checklist.md", tool: "读取 checklist.md" }
+          { role: "user", text: "附录放检索记录索引，别放截图。" },
+          { role: "assistant", text: "附录只放检索记录与原文位置，截图仍留在正文。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" }
         ]
       },
       {
-        id: "b6", rev: "b6", label: "统一截图口径", action: "保留", parent: "b4", lane: 2,
-        note: "从 b4 继续 · 统一截图口径",
-        messages: [
-          { role: "user", text: "截图口径写进说明：宽度、底色、是否带边框。" },
-          { role: "assistant", text: "统一为 1440 宽、浅底、无浏览器边框；局部放大图单独标注裁切范围。" },
-          { role: "tool", text: "检索 project_kb：展示页截图", tool: "检索 project_kb" },
-          { role: "assistant", text: "截图里出现的数字必须和正文同源，不能用旧版截图。" }
-        ]
-      },
-      {
-        id: "b7", rev: "b7", label: "等宽数字栏", action: "保留", parent: "b6", lane: 2,
-        note: "在 b6 上改等宽数字列",
-        messages: [
-          { role: "user", text: "数字列改成等宽，方便逐位对照。" },
-          { role: "assistant", text: "已改为等宽数字列；189 的拆分单独一行，避免和审查得分混排。" },
-          { role: "assistant", text: "8/8 只出现在审查清单区块，不出现在资料库区块。" }
-        ]
-      },
-      {
-        id: "b8", rev: "b8", label: "拆审查清单", action: "保留", parent: "b2", lane: 1,
-        note: "在 b2 上拆审查清单",
-        messages: [
-          { role: "user", text: "把 8/8 拆开展示，别只给一个总分。" },
-          { role: "assistant", text: "拆成结论 4 项、证据 4 项；每项后面标注是否能落到检索记录。" },
-          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
-          { role: "assistant", text: "8 项全部可追溯，才显示 8/8；缺一项就显示缺项。" }
-        ]
-      },
-      {
-        id: "b9", rev: "b9", label: "页脚口径", action: "保留", parent: "b8", lane: 1,
-        note: "页脚只放资料库构成",
+        id: "b11", rev: "b11", label: "改页脚", action: "保留", parent: "b10", lane: 0,
+        note: "页脚按资料库构成展开",
         messages: [
           { role: "user", text: "页脚只留一行资料库构成。" },
           { role: "assistant", text: "页脚：189 条 = 153 lessons + 20 Skill + 10 Agent + 1 AGENTS.md + 5 MCP。" },
           { role: "assistant", text: "不放跨版本对比，也不用结论性的措辞。" }
+        ]
+      },
+      {
+        id: "b12", rev: "b12", label: "留待复核", action: "保留", parent: "b11", lane: 0,
+        note: "待复核 · 当前仍停在 b8",
+        messages: [
+          { role: "user", text: "这一版先留待复核，不发布。" },
+          { role: "assistant", text: "已标记待复核；当前快照仍是 b8。" }
+        ]
+      },
+      {
+        id: "b3", rev: "b3", label: "回退到 b2", action: "回退", parent: "b2", lane: 1,
+        note: "从 b2 回退 · 花哨标题弃用", rollbackFrom: "b2",
+        messages: [
+          { role: "user", text: "标题那版太花，回到 b2 重写。" },
+          { role: "assistant", text: "已从 b2 回退；花哨标题保留在历史里，不再沿用。" },
+          { role: "assistant", text: "重排原则：标题先讲条件，再讲结论。" }
+        ]
+      },
+      {
+        id: "b7", rev: "b7", label: "重排首屏", action: "保留", parent: "b3", lane: 1,
+        note: "从 b3 继续 · 首屏压缩",
+        messages: [
+          { role: "user", text: "首屏只留一条结论和一条限制。" },
+          { role: "assistant", text: "已压缩首屏；数字统一等宽，限制紧随结论。" },
+          { role: "tool", text: "读取 checklist.md", tool: "读取 checklist.md" },
+          { role: "assistant", text: "claim 卡片不超过三行，缺证据的条目直接不展示。" }
+        ]
+      },
+      {
+        id: "b13", rev: "b13", label: "改 claim 卡片", action: "保留", parent: "b7", lane: 1,
+        note: "claim 卡片改成结论句",
+        messages: [
+          { role: "user", text: "卡片标题改成结论句，不要形容词。" },
+          { role: "assistant", text: "卡片标题只写可复核结论，形容词全部删掉。" },
+          { role: "assistant", text: "8/8 只在审查清单区块出现。" }
+        ]
+      },
+      {
+        id: "b14", rev: "b14", label: "留草案", action: "保留", parent: "b13", lane: 1,
+        note: "草案分支 · 等待复核",
+        messages: [
+          { role: "user", text: "这一支先留草案。" },
+          { role: "assistant", text: "已标草案，不合并；当前快照仍是 b8。" }
+        ]
+      },
+      {
+        id: "b5", rev: "b5", label: "回退到 b4", action: "回退", parent: "b4", lane: 2,
+        note: "从 b4 回退 · 长版证据段弃用", rollbackFrom: "b4",
+        messages: [
+          { role: "user", text: "证据段排得太长，退回 b4。" },
+          { role: "assistant", text: "已从 b4 回退；三段式改写保留在历史里。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" }
+        ]
+      },
+      {
+        id: "b15", rev: "b15", label: "重写证据段", action: "保留", parent: "b5", lane: 2,
+        note: "重写证据段：两行结构",
+        messages: [
+          { role: "user", text: "证据段改成两行：来源、适用条件。" },
+          { role: "assistant", text: "已改成两行；每条结论只配一条证据链。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" }
+        ]
+      },
+      {
+        id: "b16", rev: "b16", label: "补来源", action: "保留", parent: "b15", lane: 2,
+        note: "补来源，缺来源的结论删除",
+        messages: [
+          { role: "user", text: "给缺来源的结论补检索记录。" },
+          { role: "assistant", text: "缺来源的结论已删；留下的都能回到检索记录。" },
+          { role: "assistant", text: "8 项审查清单仍按 8/8 记。" }
+        ]
+      },
+      {
+        id: "b9", rev: "b9", label: "回退到 b6", action: "回退", parent: "b6", lane: 3,
+        note: "从 b6 回退 · 收尾改动保留", rollbackFrom: "b6",
+        messages: [
+          { role: "user", text: "收尾版的页脚口径不对，回到 b6。" },
+          { role: "assistant", text: "已从 b6 回退；收尾改动保留在历史里。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" }
+        ]
+      },
+      {
+        id: "b17", rev: "b17", label: "复核页脚", action: "保留", parent: "b9", lane: 3,
+        note: "复核页脚口径",
+        messages: [
+          { role: "user", text: "页脚重新按构成展开，只用一行。" },
+          { role: "assistant", text: "页脚：189 条 = 153 lessons + 20 Skill + 10 Agent + 1 AGENTS.md + 5 MCP。" },
+          { role: "assistant", text: "不放跨版本对比，也不写结论性措辞。" }
         ]
       }
     ]
@@ -660,14 +852,15 @@ var PROJECT_FIXTURES = {
   var ACTION_COLOR = { "起始": "#3A4048", "保留": "#1B4D8F", "回退": "#C0392B", "实验": "#B98A2F" };
   var ROLE_LABEL = { user: "你", assistant: "molt", tool: "工具" };
 
-  var GUTTER = 86;
-  var TOP = 10;
-  var LANE_H = 96;
-  var NODE_W = 122;
-  var NODE_H = 62;
-  var COL_PITCH = 140;
-  var RIGHT = 18;
-  var BOTTOM = 30;
+  var LEFT = 24;
+  var TOP = 44;
+  var LANE_GAP = 150;
+  var DEPTH_GAP = 56;
+  var NODE_W = 128;
+  var NODE_H = 34;
+  var RIGHT = 24;
+  var BOTTOM = 28;
+  var BAND_PAD = (LANE_GAP - NODE_W) / 2;
 
   var state = {
     projectId: null,
@@ -882,41 +1075,43 @@ var PROJECT_FIXTURES = {
     state.nodes.forEach(function (node) {
       maxDepth = Math.max(maxDepth, nodeDepth(node));
     });
-    var width = GUTTER + maxDepth * COL_PITCH + NODE_W + RIGHT;
-    var height = TOP + state.lanes.length * LANE_H + BOTTOM;
+    var width = LEFT + (state.lanes.length - 1) * LANE_GAP + NODE_W + RIGHT;
+    var height = TOP + maxDepth * DEPTH_GAP + NODE_H + BOTTOM;
 
     svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+    svg.setAttribute("width", String(width));
+    svg.setAttribute("height", String(height));
     svg.setAttribute("aria-label", state.project.short + " 项目进化树：" + state.nodes.length + " 个节点，" + state.lanes.length + " 条泳道");
     appendDefs(svg);
 
     var laneLayer = svgEl("g", { class: "lane-layer" });
     state.lanes.forEach(function (lane, index) {
-      var laneTop = TOP + index * LANE_H;
+      var laneX = LEFT + index * LANE_GAP;
       laneLayer.appendChild(svgEl("rect", {
         class: "lane-band" + (index % 2 === 1 ? " alt" : ""),
-        x: "0",
-        y: String(laneTop),
-        width: String(width),
-        height: String(LANE_H)
-      }));
-      laneLayer.appendChild(svgEl("line", {
-        class: "lane-line",
-        x1: "0",
-        y1: String(laneTop),
-        x2: String(width),
-        y2: String(laneTop)
+        x: String(laneX - BAND_PAD),
+        y: "0",
+        width: String(LANE_GAP),
+        height: String(height)
       }));
       var count = 0;
       state.nodes.forEach(function (node) {
         if (node.lane === index) count += 1;
       });
-      var label = svgEl("text", { class: "lane-label", x: "12", y: String(laneTop + LANE_H / 2 - 2) });
+      var label = svgEl("text", { class: "lane-label", x: String(laneX + NODE_W / 2), y: "18" });
       label.textContent = lane.name;
       laneLayer.appendChild(label);
-      var countText = svgEl("text", { class: "lane-count", x: "12", y: String(laneTop + LANE_H / 2 + 11) });
+      var countText = svgEl("text", { class: "lane-count", x: String(laneX + NODE_W / 2), y: "31" });
       countText.textContent = count + " 节点";
       laneLayer.appendChild(countText);
     });
+    laneLayer.appendChild(svgEl("line", {
+      class: "lane-line",
+      x1: "0",
+      y1: String(TOP - 8),
+      x2: String(width),
+      y2: String(TOP - 8)
+    }));
     svg.appendChild(laneLayer);
 
     var edgeLayer = svgEl("g", { class: "edge-layer" });
@@ -924,12 +1119,12 @@ var PROJECT_FIXTURES = {
       if (!node.parent) return;
       var parent = state.byId[node.parent];
       if (!parent) return;
-      var x1 = GUTTER + nodeDepth(parent) * COL_PITCH + NODE_W;
-      var y1 = TOP + parent.lane * LANE_H + LANE_H / 2;
-      var x2 = GUTTER + nodeDepth(node) * COL_PITCH - 5;
-      var y2 = TOP + node.lane * LANE_H + LANE_H / 2;
-      var mid = x1 + Math.max(14, (x2 - x1) / 2);
-      var d = "M" + x1 + " " + y1 + " C" + mid + " " + y1 + " " + mid + " " + y2 + " " + x2 + " " + y2;
+      var x1 = LEFT + parent.lane * LANE_GAP + NODE_W / 2;
+      var y1 = TOP + nodeDepth(parent) * DEPTH_GAP + NODE_H;
+      var x2 = LEFT + node.lane * LANE_GAP + NODE_W / 2;
+      var y2 = TOP + nodeDepth(node) * DEPTH_GAP - 2;
+      var mid = y1 + Math.max(10, (y2 - y1) / 2);
+      var d = "M" + x1 + " " + y1 + " C" + x1 + " " + mid + " " + x2 + " " + mid + " " + x2 + " " + y2;
       var cls = "edge";
       var marker = "arrow-normal";
       if (node.action === "回退") {
@@ -951,9 +1146,12 @@ var PROJECT_FIXTURES = {
     state.nodes.forEach(function (node) {
       var isCurrent = node.id === state.currentId;
       var isSelected = node.id === state.selectedId;
+      var source = node.rollbackFrom ? state.byId[node.rollbackFrom] : null;
+      var actionText = node.action;
+      if (node.action === "回退" && source) actionText += " · 从 " + source.rev;
       var group = svgEl("g", { class: "tree-node", tabindex: "0", role: "button" });
       group.setAttribute("data-id", node.id);
-      group.setAttribute("aria-label", node.rev + " " + node.label + "，" + node.action + "，" + node.messages.length + " 条消息");
+      group.setAttribute("aria-label", node.rev + " " + node.label + "，" + actionText + "，" + node.messages.length + " 条消息");
       group.setAttribute("aria-pressed", isSelected ? "true" : "false");
       if (isCurrent) group.setAttribute("aria-current", "true");
       if (isCurrent) group.classList.add("is-current");
@@ -965,43 +1163,42 @@ var PROJECT_FIXTURES = {
       tip.textContent = node.rev + " · " + node.label + " · " + node.note;
       group.appendChild(tip);
 
-      var x = GUTTER + nodeDepth(node) * COL_PITCH;
-      var y = TOP + node.lane * LANE_H + LANE_H / 2;
+      var x = LEFT + node.lane * LANE_GAP;
+      var y = TOP + nodeDepth(node) * DEPTH_GAP;
       group.appendChild(svgEl("rect", {
         class: "node-card",
         x: String(x),
-        y: String(y - NODE_H / 2),
+        y: String(y),
         width: String(NODE_W),
         height: String(NODE_H),
-        rx: "6",
-        ry: "6"
+        rx: "4",
+        ry: "4"
       }));
       group.appendChild(svgEl("rect", {
         class: "node-accent",
-        x: String(x + 7),
-        y: String(y - NODE_H / 2 + 10),
+        x: String(x + 1),
+        y: String(y + 5),
         width: "3",
-        height: String(NODE_H - 20),
+        height: String(NODE_H - 10),
         rx: "1.5",
         fill: ACTION_COLOR[node.action] || "#6B7280"
       }));
 
-      var title = svgEl("text", { class: "node-title", x: String(x + 16), y: String(y - 8) });
-      title.textContent = node.label;
-      group.appendChild(title);
+      var line1 = svgEl("text", { class: "node-line", x: String(x + 10), y: String(y + 14) });
+      line1.textContent = node.rev + " · " + actionText;
+      group.appendChild(line1);
 
-      var meta1 = svgEl("text", { class: "node-meta", x: String(x + 16), y: String(y + 9) });
-      meta1.textContent = node.rev + " · " + node.action;
-      group.appendChild(meta1);
-
-      var meta2 = svgEl("text", { class: "node-meta", x: String(x + 16), y: String(y + 23) });
-      meta2.textContent = node.messages.length + " 条消息";
-      group.appendChild(meta2);
+      var line2 = svgEl("text", { class: "node-line sub", x: String(x + 10), y: String(y + 27) });
+      line2.textContent = node.messages.length + " 条消息";
+      group.appendChild(line2);
 
       if (isCurrent) {
-        var flag = svgEl("text", { class: "node-flag", x: String(x + NODE_W - 1), y: String(y - NODE_H / 2 - 7) });
-        flag.textContent = "当前";
-        group.appendChild(flag);
+        group.appendChild(svgEl("circle", {
+          class: "node-dot",
+          cx: String(x + NODE_W - 8),
+          cy: String(y + 8),
+          r: "2.6"
+        }));
       }
 
       group.addEventListener("click", function () { selectNode(node.id); });
@@ -1164,6 +1361,7 @@ var PROJECT_FIXTURES = {
       updateHeader();
       renderTree();
       state.noticeText = "已存在从 " + target.rev + " 的回退节点，直接切换到该快照。";
+      bringNodeIntoView(existing.id);
       playNode(existing);
       return;
     }
@@ -1192,16 +1390,27 @@ var PROJECT_FIXTURES = {
     updateHeader();
     renderTree();
     state.noticeText = "已写入新快照 " + rev + "；原节点全部保留。";
+    bringNodeIntoView(node.id);
     playNode(node);
   }
 
-  function selectNode(id) {
+  function selectNode(id, keepScroll) {
     if (state.writing) return;
     var node = state.byId[id];
     if (!node) return;
     state.selectedId = id;
     refreshSelection();
+    if (!keepScroll) bringNodeIntoView(id);
     playNode(node);
+  }
+
+  function bringNodeIntoView(id) {
+    var groups = $("tree").querySelectorAll(".tree-node");
+    for (var i = 0; i < groups.length; i++) {
+      if (groups[i].getAttribute("data-id") !== id) continue;
+      try { groups[i].scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (err) { /* 忽略 */ }
+      return;
+    }
   }
 
   /* ---------- 项目切换 ---------- */
@@ -1231,6 +1440,8 @@ var PROJECT_FIXTURES = {
     setActiveTab(key);
     renderProjectLoading();
     showLoading(true);
+    var scroller = $("tree-scroll");
+    if (scroller) { scroller.scrollTop = 0; scroller.scrollLeft = 0; }
     $("tree").classList.remove("is-visible");
 
     var wait = 500 + Math.random() * 200;
@@ -1271,7 +1482,7 @@ var PROJECT_FIXTURES = {
 
       var tree = $("tree");
       requestAnimationFrame(function () { tree.classList.add("is-visible"); });
-      selectNode(state.currentId);
+      selectNode(state.currentId, true);
     });
   }
 
