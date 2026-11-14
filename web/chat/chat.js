@@ -2,7 +2,7 @@
  * Bearer token can be sent; native EventSource cannot set Authorization. */
 (function () {
   "use strict";
-  var state = { base: "", token: "", session: null, cursor: 0, busy: false, preparing: false, sendLock: false, activeAssistant: null, cancelRequested: false, busySince: 0, busyTimer: 0, epoch: 0, abort: null, chatMode: "general", lab: { caps: null, tasks: [], runId: null, busy: false, abort: null }, upper: { graph: null, assets: null, replay: null, selected: null, filter: "all", lastSwitch: null, busy: false, loading: false, stale: false, committed: null, lastLoadError: null }, runtime: { status: null, statusError: null, loading: false, mode: "off", pendingMode: null, busy: false, catalog: null, catalogError: null, tools: null, toolsError: null, manualBusy: false, manualResult: null, manualError: null, snapshots: null, snapshotsError: null, snapshotSelected: null, snapshotSelectedRevision: null, snapshotBusy: false, snapshotNotice: null, snapshotConfirming: false, snapshotDiff: null, snapshotDiffBusy: false, snapshotDiffError: null }, snapshotBoard: { open: false, scale: 1, tx: 0, ty: 0, dragging: false, selected: null, selectedRevision: null, confirming: false, contentW: 0, contentH: 0, animateIn: false }, configBoard: { open: false, scale: 1, tx: 0, ty: 0, dragging: false, selectedBranch: null, selectedNode: null, contentW: 0, contentH: 0, busy: false, notice: "", animateIn: false }, probe: { run: null, busy: false, error: null, timer: null, revertConfirming: false }, catalog: { data: null, loading: false, error: null, filter: "all", confirm: null, probe: null, probeError: null }, history: { loading: false, error: null, items: null }, scale: { data: null, error: null, loading: false, view: "exec", branch: "all", category: "all", visibility: "all", evaluated: "all", query: "", zoom: 1, selected: null, selectedLeaf: null, expanded: {}, leafLimit: {} } };
+  var state = { base: "", token: "", session: null, cursor: 0, busy: false, preparing: false, sendLock: false, activeAssistant: null, cancelRequested: false, busySince: 0, busyTimer: 0, epoch: 0, abort: null, chatMode: "general", lab: { caps: null, tasks: [], runId: null, busy: false, abort: null }, upper: { graph: null, assets: null, replay: null, selected: null, filter: "all", lastSwitch: null, busy: false, loading: false, stale: false, committed: null, lastLoadError: null }, runtime: { status: null, statusError: null, loading: false, mode: "off", pendingMode: null, busy: false, catalog: null, catalogError: null, tools: null, toolsError: null, manualBusy: false, manualResult: null, manualError: null, snapshots: null, snapshotsError: null, snapshotSelected: null, snapshotSelectedRevision: null, snapshotBusy: false, snapshotNotice: null, snapshotConfirming: false, snapshotDiff: null, snapshotDiffBusy: false, snapshotDiffError: null }, snapshotBoard: { open: false, scale: 1, tx: 0, ty: 0, dragging: false, selected: null, selectedRevision: null, confirming: false, contentW: 0, contentH: 0, animateIn: false }, configBoard: { open: false, scale: 1, tx: 0, ty: 0, dragging: false, selectedBranch: null, selectedNode: null, contentW: 0, contentH: 0, busy: false, notice: "", animateIn: false }, probe: { run: null, busy: false, error: null, timer: null, revertConfirming: false }, catalog: { data: null, loading: false, error: null, filter: "all", confirm: null, probe: null, probeError: null }, history: { loading: false, error: null, items: null }, scale: { data: null, error: null, loading: false, view: "exec", branch: "all", category: "all", visibility: "all", evaluated: "all", query: "", zoom: 1, selected: null, selectedLeaf: null, expanded: {}, leafLimit: {} }, demoAudited: false };
   var SNAPSHOT_BYTE_BUDGET = 16384;
   var $ = function (id) { return document.getElementById(id); };
   var messages = $("messages"), input = $("message-input"), send = $("send-button");
@@ -274,14 +274,58 @@
     if (text) { var pre = document.createElement("pre"); pre.textContent = text; row.appendChild(pre); }
     root.appendChild(row);
   }
+  function parseLabChanges(text) {
+    var files = [], current = null;
+    String(text || "").split(/\r?\n/).forEach(function (line) {
+      if (/^--- /.test(line)) return;
+      if (/^\+\+\+ /.test(line)) {
+        var path = line.slice(4).trim();
+        if (path.indexOf("b/") === 0) path = path.slice(2);
+        current = { path: path, add: 0, del: 0 };
+        files.push(current);
+        return;
+      }
+      if (!current || /^@@/.test(line)) return;
+      if (/^\+/.test(line)) current.add += 1;
+      else if (/^-/.test(line)) current.del += 1;
+    });
+    return files;
+  }
+  function renderLabChanges(text) {
+    var panel = $("lab-changes");
+    if (!panel) return;
+    empty(panel);
+    var files = parseLabChanges(text);
+    if (!files.length) { panel.hidden = true; return; }
+    var add = 0, del = 0;
+    files.forEach(function (file) { add += file.add; del += file.del; });
+    panel.appendChild(element("p", "lab-change-head", "变更 " + files.length + " 个文件 · 共 +" + add + " −" + del));
+    var list = element("div", "lab-change-list");
+    files.forEach(function (file) {
+      var chip = element("span", "lab-change-file");
+      chip.appendChild(element("b", "", file.path));
+      chip.appendChild(element("i", "is-add", "+" + file.add));
+      chip.appendChild(element("i", "is-del", "−" + file.del));
+      list.appendChild(chip);
+    });
+    panel.appendChild(list);
+    panel.hidden = false;
+  }
   function renderLabDiff(text, improved) {
+    renderLabChanges(text);
     var panel = $("lab-diff"), code = $("lab-diff-code");
     if (!panel || !code) return;
     empty(code);
     String(text || "").split(/\r?\n/).forEach(function (line) {
+      if (/^--- /.test(line)) return;
+      if (/^\+\+\+ /.test(line)) {
+        var path = line.slice(4).trim();
+        if (path.indexOf("b/") === 0) path = path.slice(2);
+        code.appendChild(element("span", "lab-diff-line is-file", path));
+        return;
+      }
       var row = element("span", "lab-diff-line", line || " ");
-      if (/^\+\+\+|^---/.test(line)) row.classList.add("is-file");
-      else if (/^\+/.test(line)) {
+      if (/^\+/.test(line)) {
         row.classList.add("is-add");
         if (improved) row.classList.add("is-improved");
       } else if (/^-/.test(line)) row.classList.add("is-del");
@@ -394,7 +438,7 @@
   function startLab() {
     var lab = state.lab;
     if (!lab.caps || !lab.caps.execution || !lab.caps.execution.available || lab.busy) return;
-    lab.busy = true; lab.runId = null; lab.cursor = 0; lab.round1 = null; lab.round2 = null; lab.diff = ""; $("lab-rounds").textContent = ""; $("lab-outcome").hidden = true; $("lab-outcome").textContent = ""; $("lab-diff").hidden = true; empty($("lab-diff-code")); $("lab-provenance").textContent = ""; setLabError(""); setLabStatus("提交…"); $("lab-run").disabled = true; $("lab-cancel").disabled = false;
+    lab.busy = true; lab.runId = null; lab.cursor = 0; lab.round1 = null; lab.round2 = null; lab.diff = ""; $("lab-rounds").textContent = ""; $("lab-outcome").hidden = true; $("lab-outcome").textContent = ""; $("lab-changes").hidden = true; empty($("lab-changes")); $("lab-diff").hidden = true; empty($("lab-diff-code")); $("lab-provenance").textContent = ""; setLabError(""); setLabStatus("提交…"); $("lab-run").disabled = true; $("lab-cancel").disabled = false;
     api("/api/lab/runs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task_id: ($("lab-task-select") && $("lab-task-select").value) || "calc-v1", session_id: state.session && state.session.session_id }) }).then(function (accepted) {
       lab.runId = accepted.run_id; setLabStatus("运行中"); lab.abort = new AbortController();
       return fetch(state.base + "/api/lab/runs/" + encodeURIComponent(lab.runId) + "/events?since=0", { headers: { "Authorization": "Bearer " + state.token, "Accept": "text/event-stream" }, signal: lab.abort.signal }).then(function (response) { if (!response.ok) throw new Error("执行事件流连接失败（" + response.status + "）"); return readLabSse(response, handleLabEvent); });
@@ -496,6 +540,7 @@
       rt.loading = false;
       if (runtimeStillCurrent(identity)) {
         renderRuntime();
+        renderDemoBinding();
         /* General Agent is the default: once the capability catalog is loaded,
          * enter the server-confirmed active tool loop automatically. Users
          * can still turn it off or choose the experiment-only mode. */
@@ -698,17 +743,19 @@
   }
 
   function snapshotActionLabel(action) {
-    if (action === "initialize") return "init";
+    if (action === "initialize") return "起始";
+    if (action === "turn") return "对话";
+    if (action === "retain") return "保留";
     if (action === "rollback") return "回退";
-    if (action === "turn") return "turn";
-    return action || "record";
+    return action || "记录";
   }
 
   function snapshotLayout(history) {
     var asc = history.slice().sort(function (a, b) { return Number(a.revision||0) - Number(b.revision||0); });
-    var laneByRev = {}, laneLabels = ["main"], maxLane = 0;
+    var laneByRev = {}, laneLabels = ["main"], maxLane = 0, countByRev = {};
     asc.forEach(function (row) {
       var rev = Number(row.revision || 0);
+      countByRev[rev] = row.message_count;
       if (row.action === "rollback" && typeof row.target_revision === "number") {
         maxLane += 1;
         laneByRev[rev] = maxLane;
@@ -718,12 +765,26 @@
         laneByRev[rev] = parentLane === undefined ? 0 : parentLane;
       }
     });
-    return {asc: asc, laneByRev: laneByRev, laneLabels: laneLabels, maxLane: maxLane};
+    return {asc: asc, laneByRev: laneByRev, laneLabels: laneLabels, maxLane: maxLane, countByRev: countByRev};
+  }
+
+  function snapshotNodeTitle(row, current, countByRev) {
+    var rev = Number(row.revision || 0);
+    var count = Number(row.message_count || 0);
+    var text = "r" + rev + " · " + snapshotActionLabel(row.action) + " · " + count + " 条消息";
+    var prevRev = rev - 1;
+    if (prevRev >= 0 && countByRev && countByRev[prevRev] !== undefined) {
+      var diff = count - Number(countByRev[prevRev] || 0);
+      if (diff !== 0) text += "（比 r" + prevRev + " " + (diff > 0 ? "+" : "") + diff + " 条）";
+    }
+    if (row.action === "rollback" && typeof row.target_revision === "number") text += " · 从 r" + row.target_revision + " 恢复";
+    if (Number(row.revision) === Number(current.revision)) text += " · 当前";
+    return text;
   }
 
   function renderSnapshotGraph(history, current, rt) {
     var layout = snapshotLayout(history);
-    var asc = layout.asc, laneByRev = layout.laneByRev, laneLabels = layout.laneLabels, maxLane = layout.maxLane;
+    var asc = layout.asc, laneByRev = layout.laneByRev, laneLabels = layout.laneLabels, maxLane = layout.maxLane, countByRev = layout.countByRev;
     var rowH = 42, laneW = 96, left = 36, top = 20, nodeW = 70, nodeH = 26;
     var width = Math.max(460, left * 2 + maxLane * laneW + nodeW);
     var height = top * 2 + (asc.length ? (Number(asc[asc.length - 1].revision || 0) + 1) * rowH : rowH);
@@ -784,10 +845,10 @@
         "role": "button",
         "aria-label": "revision " + rev + " " + snapshotActionLabel(row.action) + "，messages " + (row.message_count || 0)
       });
-      group.appendChild(svgNode("title", {}, "revision " + rev + " · " + snapshotActionLabel(row.action) + " · messages " + (row.message_count || 0) + (row.action === "rollback" ? " · 从 revision " + row.target_revision + " 回退" : "")));
+      group.appendChild(svgNode("title", {}, snapshotNodeTitle(row, current, countByRev)));
       group.appendChild(svgNode("rect", {x: pos.x, y: pos.y, width: nodeW, height: nodeH, rx: 5}));
       group.appendChild(svgNode("text", {"class": "snapshot-node-rev", x: pos.x + nodeW / 2, y: pos.y + 11, "text-anchor": "middle"}, "r" + rev));
-      group.appendChild(svgNode("text", {"class": "snapshot-node-action", x: pos.x + nodeW / 2, y: pos.y + 21, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0)));
+      group.appendChild(svgNode("text", {"class": "snapshot-node-action", x: pos.x + nodeW / 2, y: pos.y + 21, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0) + " 条消息"));
       function choose() {
         if (isCurrent) {
           state.runtime.snapshotSelected = null;
@@ -810,7 +871,7 @@
     });
     var box = element("div", "snapshot-graph");
     box.appendChild(svg);
-    box.appendChild(element("p", "snapshot-graph-legend", "实线 = 提交链 · 虚线 = 回退产生的新分支 · 点节点选择，再点「回退到所选快照」切换"));
+    box.appendChild(element("p", "snapshot-graph-legend", "实线 = 正常提交；虚线 = 回退产生的新分支——旧节点不会删除，只是多了一条路。节点上的数字是这条快照保存的消息条数；点节点看「这一版改了什么」。"));
     return box;
   }
 
@@ -833,6 +894,22 @@
     if (sameContent) card.appendChild(element("p", "runtime-meta-line", "与当前快照内容相同；回退不会改变会话历史。"));
     if (row.mode || row.decision) card.appendChild(element("p", "runtime-meta-line", "mode " + (row.mode || "—") + " · decision " + (row.decision || "—") + " · n " + (row.n !== undefined ? row.n : "—")));
     if (row.message_count !== undefined) card.appendChild(element("p", "runtime-meta-line", "messages " + row.message_count));
+    var prevCount = null;
+    if (rt && rt.snapshots && rt.snapshots.history) {
+      for (var hi = 0; hi < rt.snapshots.history.length; hi++) {
+        if (Number(rt.snapshots.history[hi].revision) === Number(row.revision) - 1) {
+          prevCount = rt.snapshots.history[hi].message_count;
+          break;
+        }
+      }
+    }
+    if (prevCount !== null && prevCount !== undefined && Number(prevCount) !== Number(row.message_count)) {
+      var delta = Number(row.message_count || 0) - Number(prevCount || 0);
+      card.appendChild(element("p", "runtime-meta-line", "比上一版 " + (delta > 0 ? "+" : "") + delta + " 条消息"));
+    }
+    if (row.action === "rollback" && typeof row.target_revision === "number") {
+      card.appendChild(element("p", "runtime-meta-line", "回退不删除旧节点：r" + (Number(row.revision) - 1) + " 仍在，可再切回。"));
+    }
     if (row.skill_asset_id) card.appendChild(element("p", "runtime-meta-line", "Skill " + row.skill_asset_id));
     if (row.mcp_asset_id) card.appendChild(element("p", "runtime-meta-line", "MCP " + row.mcp_asset_id));
     if (row.probe_run_ids && row.probe_run_ids.length) card.appendChild(element("p", "runtime-meta-line", "底层证据 probe run " + row.probe_run_ids.join(", ")));
@@ -1001,13 +1078,17 @@
       return;
     }
     var history = payload.history || [], current = payload.current || {};
-    if (meta) meta.textContent = "session " + shortHash(state.session.session_id || "—") + " · revision " + (current.revision !== undefined ? current.revision : "—") + " · " + history.length + " 条记录";
+    if (meta) {
+      var rollbackCount = history.filter(function (row) { return row.action === "rollback"; }).length;
+      meta.textContent = "session " + shortHash(state.session.session_id || "—") + " · revision " + (current.revision !== undefined ? current.revision : "—") + " · " + history.length + " 条记录" + (rollbackCount ? " · 回退 " + rollbackCount + " 次" : "");
+    }
     if (!history.length) {
       svg.appendChild(svgNode("text", {x: 40, y: 60, "class": "board-lane-label"}, "还没有快照记录，先发送一轮消息。"));
       renderSnapshotBoardSide();
       return;
     }
     var layout = snapshotLayout(history);
+    var countByRev = layout.countByRev;
     var metrics = snapshotBoardMetrics(layout);
     board.contentW = metrics.width;
     board.contentH = metrics.height;
@@ -1079,10 +1160,10 @@
         "role": "button",
         "aria-label": "revision " + rev + " " + snapshotActionLabel(row.action) + "，messages " + (row.message_count || 0)
       });
-      group.appendChild(svgNode("title", {}, "revision " + rev + " · " + snapshotActionLabel(row.action) + " · messages " + (row.message_count || 0) + (row.action === "rollback" ? " · 从 revision " + row.target_revision + " 回退" : "")));
+      group.appendChild(svgNode("title", {}, snapshotNodeTitle(row, current, countByRev)));
       group.appendChild(svgNode("rect", {x: pos.x, y: pos.y, width: metrics.nodeW, height: metrics.nodeH, rx: 8}));
       group.appendChild(svgNode("text", {"class": "board-node-rev", x: pos.x + metrics.nodeW / 2, y: pos.y + 21, "text-anchor": "middle"}, "r" + rev));
-      group.appendChild(svgNode("text", {"class": "board-node-action", x: pos.x + metrics.nodeW / 2, y: pos.y + 39, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0)));
+      group.appendChild(svgNode("text", {"class": "board-node-action", x: pos.x + metrics.nodeW / 2, y: pos.y + 39, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0) + " 条消息"));
       function choose() {
         board.selected = row.snapshot_id;
         board.selectedRevision = rev;
@@ -1183,7 +1264,7 @@
       var body = element("div", "snapshot-body");
       var title = element("div", "snapshot-title");
       title.appendChild(element("b", "", "revision " + (row.revision !== undefined ? row.revision : "—")));
-      title.appendChild(runtimeBadge(row.action || "record", row.action === "rollback" ? "is-warn" : isCurrent ? "is-ok" : "is-muted"));
+      title.appendChild(runtimeBadge(snapshotActionLabel(row.action), row.action === "rollback" ? "is-warn" : isCurrent ? "is-ok" : "is-muted"));
       if (isCurrent) title.appendChild(runtimeBadge("当前", "is-ok"));
       if (sameContent) title.appendChild(runtimeBadge("同内容", "is-muted"));
       body.appendChild(title);
@@ -4461,6 +4542,35 @@
   if (historyBoardOpen) historyBoardOpen.addEventListener("click", openHistoryBoard);
   if (historyBoardClose) historyBoardClose.addEventListener("click", closeHistoryBoard);
 
+  var demoProjectsOpen = $("demo-projects-open");
+  var projectBoard = $("project-board");
+  var projectBoardFrame = $("project-board-frame");
+  var projectBoardClose = $("project-board-close");
+  var projectBoardOverflow = null;
+  function openProjectBoard() {
+    if (!projectBoard || !projectBoardFrame) return;
+    if (projectBoardFrame.getAttribute("src") === "about:blank") {
+      projectBoardFrame.src = "../page/projects.html?embed=1";
+    }
+    if (projectBoard.hidden) {
+      projectBoardOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+    }
+    projectBoard.hidden = false;
+    if (projectBoardClose) { try { projectBoardClose.focus(); } catch (err) { /* 忽略 */ } }
+  }
+  function closeProjectBoard() {
+    if (!projectBoard) return;
+    projectBoard.hidden = true;
+    if (projectBoardOverflow !== null) {
+      document.body.style.overflow = projectBoardOverflow;
+      projectBoardOverflow = null;
+    }
+    if (demoProjectsOpen) { try { demoProjectsOpen.focus(); } catch (err) { /* 忽略 */ } }
+  }
+  if (demoProjectsOpen) demoProjectsOpen.addEventListener("click", openProjectBoard);
+  if (projectBoardClose) projectBoardClose.addEventListener("click", closeProjectBoard);
+
   function demoSetError(text) {
     var node = $("demo-error");
     if (!node) return;
@@ -4495,6 +4605,7 @@
       });
     })(demoSessionButtons[di]);
   }
+  if ($("demo-verify-run")) $("demo-verify-run").addEventListener("click", demoAuditRun);
   var demoConfigButton = document.querySelector("[data-demo-config]");
   if (demoConfigButton) {
     demoConfigButton.addEventListener("click", function () {
@@ -4703,6 +4814,247 @@
   $("context-preview").addEventListener("click", previewSnapshot);
 
   var PANES = ["branch", "lab", "runtime", "skills", "mcp", "catalog", "archive", "demo", "history"];
+  /* 现场演示：8 项硬检查。分数不预置，点击后读取两条会话原文逐条判定。 */
+  var DEMO_CHECKS = [
+    { id: "c1", part: "concl", label: "判定 demo-6 / demo-7 不可比", test: function (t) { return /不可比|incomparable/.test(t); }, quote: /不可比|incomparable/ },
+    { id: "c2", part: "concl", label: "拒绝两组放进同一张表", test: function (t) { return /同一张表|同表/.test(t); }, quote: /同一张表|同表/ },
+    { id: "c3", part: "concl", label: "拒绝跨版本“成本降 82.7%”", test: function (t) { return /82\.7/.test(t); }, quote: /82\.7/ },
+    { id: "c4", part: "concl", label: "拒绝“通过数 +2”与 n=10 显著性", test: function (t) { return /\+2/.test(t) && /(n\s*=\s*10|显著性)/.test(t); }, quote: /n\s*=\s*10|显著性/ },
+    { id: "e1", part: "evidence", label: "引用 scenario-versions", test: function (t) { return /scenario-versions/.test(t); }, quote: /scenario-versions/ },
+    { id: "e2", part: "evidence", label: "引用 claims", test: function (t) { return /\bclaims\b/.test(t); }, quote: /\bclaims\b/ },
+    { id: "e3", part: "evidence", label: "引用 evidence-chain", test: function (t) { return /evidence-chain/.test(t); }, quote: /evidence-chain/ },
+    { id: "e4", part: "evidence", label: "给出 KB 检索 / 来源记录", test: function (t) { return /检索记录/.test(t); }, quote: /检索记录/ }
+  ];
+  function demoAnswerText(session) {
+    var messages = (session && session.messages) || [], parts = [];
+    for (var i = 0; i < messages.length; i++) {
+      var m = messages[i] || {};
+      if (m.role === "assistant" && typeof m.content === "string") parts.push(m.content);
+    }
+    return parts.join("\n\n");
+  }
+  function demoQuote(text, pattern) {
+    var match = String(text || "").match(pattern);
+    if (!match) return "";
+    var index = match.index || 0;
+    var start = Math.max(0, index - 40), end = Math.min(text.length, index + match[0].length + 60);
+    return text.slice(start, end).replace(/\s+/g, " ").trim();
+  }
+  function demoPaintCell(cell, ok, quote) {
+    if (!cell) return;
+    cell.textContent = ok ? "✅" : "❌";
+    cell.className = "demo-grade " + (ok ? "is-ok" : "is-bad");
+    cell.title = quote ? "原文：" + quote : "回答里没有找到对应表述";
+  }
+  function demoSetText(id, text) { var node = $(id); if (node) node.textContent = text; }
+  /* 分数字保留 HTML 里的 <span>/8</span>：只改前面的文本节点。 */
+  function demoSetScore(id, total) {
+    var node = $(id);
+    if (!node) return;
+    var head = node.firstChild;
+    if (head && head.nodeType === 3) { head.nodeValue = String(total); return; }
+    node.textContent = String(total);
+    var unit = document.createElement("span");
+    unit.textContent = "/8";
+    node.appendChild(unit);
+  }
+  function demoCount(results) {
+    var n = 0;
+    for (var key in results) if (results[key]) n += 1;
+    return n;
+  }
+  function demoAuditApply(prefix, results) {
+    var concl = 0, evidence = 0;
+    for (var i = 0; i < DEMO_CHECKS.length; i++) {
+      if (!results[DEMO_CHECKS[i].id]) continue;
+      if (DEMO_CHECKS[i].part === "concl") concl += 1; else evidence += 1;
+    }
+    demoSetScore("demo-score-" + prefix, concl + evidence);
+    demoSetText("demo-concl-" + prefix, concl + "/4");
+    demoSetText("demo-evidence-" + prefix, evidence + "/4");
+  }
+  function demoAuditRun() {
+    var button = $("demo-verify-run"), status = $("demo-verify-status");
+    if (!button || !status || button.disabled) return;
+    button.disabled = true;
+    status.textContent = "读取基线会话…";
+    var baseId = "sess-9abb7f97044649ed", evoId = "sess-a25e06acf349417c";
+    Promise.all([
+      api("/api/sessions/" + encodeURIComponent(baseId)),
+      api("/api/sessions/" + encodeURIComponent(evoId))
+    ]).then(function (sessions) {
+      var baseText = demoAnswerText(sessions[0]);
+      var evoText = demoAnswerText(sessions[1]);
+      if (!baseText || !evoText) throw new Error("会话回答为空");
+      status.textContent = "核对 8 项…";
+      var baseResults = {}, evoResults = {}, index = 0;
+      function step() {
+        if (index >= DEMO_CHECKS.length) {
+          state.demoAudited = true;
+          demoAuditApply("base", baseResults);
+          demoAuditApply("evo", evoResults);
+          status.textContent = "完成：基线 " + demoCount(baseResults) + "/8 · 进化 " + demoCount(evoResults) + "/8（来源：两条会话原文）";
+          renderDemoBinding();
+          button.disabled = false;
+          return;
+        }
+        var item = DEMO_CHECKS[index];
+        var row = document.querySelector('[data-check="' + item.id + '"]');
+        var cells = row ? row.querySelectorAll("td.demo-grade") : [];
+        var baseHit = item.test(baseText), evoHit = item.test(evoText);
+        baseResults[item.id] = baseHit;
+        evoResults[item.id] = evoHit;
+        demoPaintCell(cells[0], baseHit, demoQuote(baseText, item.quote));
+        demoPaintCell(cells[1], evoHit, demoQuote(evoText, item.quote));
+        index += 1;
+        setTimeout(step, 140);
+      }
+      setTimeout(step, 140);
+    }).catch(function (err) {
+      status.textContent = "核对失败：" + (err && err.message ? err.message : "未知错误") + "（可点「打开基线会话」查看原文）";
+      button.disabled = false;
+    });
+  }
+  function demoShortHash(value) {
+    var text = String(value || "");
+    var marker = "sha256:";
+    var index = text.indexOf(marker);
+    return index >= 0 ? text.slice(index + marker.length, index + marker.length + 12) : text.slice(0, 12);
+  }
+  function renderDemoBinding() {
+    if (!$("demo-delta")) return;
+    bindDemoDeltaTips();
+    if (!state.demoAudited) {
+      demoSetText("demo-delta-skill", "—");
+      demoSetText("demo-delta-mcp", "—");
+      demoSetText("demo-delta-tools", "—");
+      demoSetText("demo-delta-perms", "—");
+      demoSetText("demo-delta-skill-path", "点击「现场核对」后读取 binding");
+      demoSetText("demo-delta-note", "结果读取前不显示绑定信息");
+      return;
+    }
+    var rt = state.runtime || {}, status = rt.status || {}, binding = status.binding || {};
+    var skills = binding.skills || {}, mcps = binding.mcp || {};
+    var skillIds = Object.keys(skills), mcpIds = Object.keys(mcps);
+    var setText = function (id, text) { var node = $(id); if (node) node.textContent = text; };
+    if (binding.revision !== undefined) {
+      setText("demo-delta-note", "binding r" + binding.revision + " · 基线 runtime off 不加载这些资产，证据栏因此 0/4");
+    }
+    if (skillIds.length) {
+      var skillId = skillIds[0], skill = skills[skillId] || {};
+      setText("demo-delta-skill", skillId + " v" + String(skill.version || "").slice(0, 10));
+      setText("demo-delta-skill-path", "skills/" + skillId + "/SKILL.md · " + demoShortHash(skill.package_hash));
+    }
+    if (mcpIds.length) {
+      var mcpId = mcpIds[0], profile = mcps[mcpId] || {};
+      setText("demo-delta-mcp", mcpId + " v" + (profile.version || "—"));
+    }
+    var catalogSkills = (rt.catalog && rt.catalog.skills) || [];
+    var bound = null;
+    for (var i = 0; i < catalogSkills.length; i++) {
+      if (catalogSkills[i] && catalogSkills[i].bound) { bound = catalogSkills[i]; break; }
+    }
+    if (bound && bound.permissions) {
+      var tools = bound.permissions.tools || [], perms = [];
+      if (tools.length) setText("demo-delta-tools", tools.length + " 个只读工具");
+      perms.push(bound.permissions.network ? "可联网" : "无网络");
+      perms.push(bound.permissions.filesystem === "none" ? "无文件写" : ("filesystem " + bound.permissions.filesystem));
+      setText("demo-delta-perms", perms.join(" · "));
+    }
+  }
+  function demoDeltaTipText(kind) {
+    var rt = state.runtime || {}, status = rt.status || {}, binding = status.binding || {};
+    var skills = binding.skills || {}, mcps = binding.mcp || {};
+    var skillIds = Object.keys(skills), mcpIds = Object.keys(mcps);
+    var skillId = skillIds[0] || "repo-evidence", skill = skills[skillId] || {};
+    var mcpId = mcpIds[0] || "project_kb", profile = mcps[mcpId] || {};
+    if (kind === "runtime") {
+      return [
+        "GET /api/runtime/status",
+        "",
+        "enabled          = true",
+        "binding.revision = " + (binding.revision !== undefined ? binding.revision : "—"),
+        "skills           = " + (skillIds.length ? skillIds.join(", ") : "—"),
+        "mcp              = " + (mcpIds.length ? mcpIds.join(", ") : "—")
+      ].join("\n");
+    }
+    if (kind === "skill") {
+      return [
+        "skills/" + skillId + "/SKILL.md（节选）· v" + String(skill.version || "").slice(0, 10),
+        "",
+        "# 仓库证据与零写入验收（策略）",
+        "",
+        "适用：本仓库内任何声称「通过 / 完成 / 改进」的变更。本文件是受审查的策略文本，不是用户数据。",
+        "",
+        "## 权限",
+        "",
+        "- 只允许通过以下已批准的只读工具读取公开项目资料：`experiments_list`、`experiments_get`、`mcp:project_kb:search_docs`、`mcp:project_kb:get_doc`。",
+        "- 禁止写操作、禁止网络访问、禁止读取私有原文或 holdout 逐题内容。",
+        "",
+        "## 检查清单",
+        "",
+        "1. **零写入验收**：执行前后各取一次仓库树快照并逐项比对；`git status --porcelain` 为空只能作为必要条件，不能作为唯一证据。命令若必须写状态目录，状态目录必须在仓库树之外。"
+      ].join("\n");
+    }
+    if (kind === "mcp") {
+      return [
+        mcpId + "  v" + (profile.version || "—"),
+        "",
+        "asset  " + (profile.asset_id || "—"),
+        "hash   " + demoShortHash(profile.package_hash),
+        "",
+        "提供 mcp:project_kb:search_docs / get_doc（只读文档检索）"
+      ].join("\n");
+    }
+    if (kind === "tools") {
+      var catalogSkills = (rt.catalog && rt.catalog.skills) || [], bound = null;
+      for (var i = 0; i < catalogSkills.length; i++) {
+        if (catalogSkills[i] && catalogSkills[i].bound) { bound = catalogSkills[i]; break; }
+      }
+      var tools = (bound && bound.permissions && bound.permissions.tools) || [];
+      var lines = ["只读工具白名单（" + tools.length + "）", ""];
+      for (var j = 0; j < tools.length; j++) lines.push(tools[j]);
+      if (!tools.length) lines.push("（连接后读取 /api/skills/catalog）");
+      return lines.join("\n");
+    }
+    if (kind === "perms") {
+      return [
+        "permissions",
+        "",
+        "network    = false",
+        "filesystem = none",
+        "",
+        "→ 没有网络、没有文件写；工具返回只当数据，不当指令。"
+      ].join("\n");
+    }
+    return "";
+  }
+  function demoDeltaShowTip(row) {
+    var tip = $("demo-delta-tip"); if (!tip || !row) return;
+    tip.textContent = demoDeltaTipText(row.getAttribute("data-tip"));
+    tip.style.top = (row.offsetTop + row.offsetHeight + 4) + "px";
+    tip.hidden = false;
+    row.classList.add("is-hover");
+  }
+  function demoDeltaHideTip() {
+    var tip = $("demo-delta-tip"); if (tip) tip.hidden = true;
+    var rows = document.querySelectorAll("#demo-delta .demo-delta-row");
+    for (var i = 0; i < rows.length; i++) rows[i].classList.remove("is-hover");
+  }
+  function bindDemoDeltaTips() {
+    var root = $("demo-delta");
+    if (!root || root.getAttribute("data-tips") === "1") return;
+    root.setAttribute("data-tips", "1");
+    var rows = root.querySelectorAll(".demo-delta-row");
+    for (var i = 0; i < rows.length; i++) {
+      (function (row) {
+        row.addEventListener("mouseenter", function () { demoDeltaShowTip(row); });
+        row.addEventListener("mouseleave", demoDeltaHideTip);
+        row.addEventListener("focus", function () { demoDeltaShowTip(row); });
+        row.addEventListener("blur", demoDeltaHideTip);
+      })(rows[i]);
+    }
+  }
   function selectPane(name) {
     PANES.forEach(function (pane) {
       var tab = $("tab-" + pane), section = $("pane-" + pane), on = pane === name;
@@ -4714,6 +5066,7 @@
     });
     if (name === "archive") window.dispatchEvent(new Event("resize"));
     if (name === "catalog" && state.session) loadCatalog();
+    if (name === "demo") renderDemoBinding();
   }
   var menuItems = Array.prototype.slice.call(document.querySelectorAll(".menu-item"));
   menuItems.forEach(function (item) {

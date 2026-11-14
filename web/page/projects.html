@@ -1,0 +1,2101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOLT · 项目树 · 对话回放</title>
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #FCFCFD;
+    --paper-2: #F4F5F7;
+    --ink: #14161A;
+    --ink-2: #3A4048;
+    --ink-3: #6B7280;
+    --line: #E6E8EC;
+    --red: #C0392B;
+    --indigo: #1B4D8F;
+    --gold: #B98A2F;
+    --green: #1E7A46;
+    --violet: #7D6AA8;
+    --font-display: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+    --font-body: -apple-system, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    --font-num: "SF Mono", ui-monospace, "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 600px at 8% -10%, rgba(27,77,143,.055), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(185,138,47,.06), transparent 55%),
+      var(--paper);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; }
+  .page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: clamp(12px, 1.9vh, 22px) clamp(14px, 2.2vw, 30px) 8px;
+    overflow: hidden;
+  }
+
+  /* ---------- 顶部信息条 ---------- */
+  .top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 8px 20px;
+    align-items: end;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .kicker { margin: 0; color: var(--indigo); font: 600 .6rem var(--font-num); letter-spacing: .14em; }
+  .back-link {
+    display: inline-block;
+    margin-top: 5px;
+    color: var(--ink-3);
+    font: .61rem var(--font-num);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .back-link:hover { color: var(--indigo); border-color: var(--indigo); }
+  .top-mid { text-align: center; min-width: 0; }
+  .tabs {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(255,255,255,.72);
+  }
+  .tab {
+    padding: 5px 11px;
+    border: 0;
+    border-radius: 3px;
+    color: var(--ink-3);
+    background: transparent;
+    font: 500 .71rem var(--font-body);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color .18s ease, background .18s ease, box-shadow .18s ease;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.is-active { color: var(--indigo); background: #F3F6FA; box-shadow: inset 0 0 0 1px #DCE5EF; }
+  .meta { margin: 6px 0 0; color: var(--ink-3); font: .6rem var(--font-num); letter-spacing: .03em; }
+  .current-chip {
+    justify-self: end;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid #C9D4E2;
+    border-radius: 4px;
+    background: #F6F9FC;
+    color: var(--indigo);
+    white-space: nowrap;
+  }
+  .current-chip span { font: 600 .54rem var(--font-num); letter-spacing: .12em; }
+  .current-chip b { font: 600 1.02rem var(--font-num); letter-spacing: -.02em; }
+
+  /* ---------- 双栏工作区 ---------- */
+  .workspace {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.62fr) minmax(360px, 1fr);
+    gap: clamp(10px, 1.4vw, 18px);
+    flex: 1;
+    min-height: 0;
+    padding-top: clamp(7px, 1.1vh, 12px);
+  }
+  .column { display: flex; flex-direction: column; gap: 9px; min-width: 0; min-height: 0; }
+  .session-column .tree-panel { flex: 1 1 auto; }
+  .session-column .replay { flex: 0 0 40%; min-height: 236px; }
+  .config-column .tree-panel { flex: 1 1 auto; }
+  .config-column .config-detail { flex: 0 0 43%; min-height: 228px; }
+
+  .tree-panel { display: flex; flex-direction: column; gap: 5px; min-height: 0; min-width: 0; }
+  .tree-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 28px;
+    padding: 0 2px;
+  }
+  .tree-head .eyebrow { margin: 0 0 2px; color: var(--indigo); font: 600 .53rem var(--font-num); letter-spacing: .14em; }
+  .tree-head h2 { margin: 0; font: 600 .94rem/1.1 var(--font-display); letter-spacing: -.01em; }
+  .tree-chip {
+    padding: 2px 6px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: rgba(255,255,255,.72);
+    color: var(--ink-3);
+    font: 500 .56rem var(--font-num);
+    white-space: nowrap;
+  }
+  .tree-chip.is-current { color: var(--indigo); border-color: #C9D4E2; background: #F6F9FC; }
+  .config-head-right { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+
+  .viewport {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background-color: rgba(255,255,255,.58);
+    background-image:
+      linear-gradient(rgba(27,77,143,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(27,77,143,.045) 1px, transparent 1px);
+    background-size: 22px 22px;
+    overflow: hidden;
+  }
+  .tree-scroll {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    padding: 0 14px 30px;
+    scrollbar-width: thin;
+    scrollbar-color: #C9D2DC transparent;
+  }
+  .tree-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+  .tree-scroll::-webkit-scrollbar-thumb { background: #CDD5DE; border-radius: 4px; }
+  .tree-scroll::-webkit-scrollbar-track { background: transparent; }
+  .graph-svg { display: block; margin: 0 auto; opacity: 0; transition: opacity .2s ease; }
+  .graph-svg.is-visible { opacity: 1; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px 12px;
+    padding: 0 2px;
+    color: var(--ink-3);
+    font: .55rem var(--font-num);
+    pointer-events: none;
+  }
+  .legend .line {
+    display: inline-block;
+    width: 16px;
+    height: 0;
+    margin-right: 5px;
+    border-top: 1.2px solid #8A97A6;
+    vertical-align: middle;
+  }
+  .legend .dashed { border-top-style: dashed; border-top-color: var(--red); }
+  .legend .merge-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 5px;
+    border-radius: 2px;
+    background: var(--violet);
+    vertical-align: middle;
+  }
+  .legend-sep { padding-left: 10px; border-left: 1px solid var(--line); }
+
+  /* ---------- 加载遮罩 ---------- */
+  .loading {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: rgba(252,252,253,.9);
+    backdrop-filter: blur(2px);
+  }
+  .loading[hidden] { display: none; }
+  .loading p { margin: 0; color: var(--ink-3); font: .64rem var(--font-num); letter-spacing: .06em; }
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid #D5DCE5;
+    border-top-color: var(--indigo);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- SVG 图 ---------- */
+  .lane-band { fill: rgba(244,245,247,.42); }
+  .lane-band.alt { fill: rgba(255,255,255,0); }
+  .lane-line { stroke: var(--line); stroke-width: 1; }
+  .lane-label {
+    fill: var(--ink-2);
+    font-family: var(--font-num);
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-anchor: middle;
+  }
+  .lane-count { fill: #A7AFB9; font-family: var(--font-num); font-size: 8px; text-anchor: middle; }
+
+  .edge { fill: none; stroke: #9AA6B4; stroke-width: 1.1; opacity: .62; }
+  .edge.is-branch { stroke-dasharray: 4 3; opacity: .8; }
+  .edge.is-rollback { stroke: var(--red); }
+  .edge.is-experiment { stroke: var(--gold); }
+
+  .graph-node { cursor: pointer; outline: none; }
+  .graph-node .node-card {
+    fill: #fff;
+    stroke: #DDE2E8;
+    stroke-width: 1;
+    transition: fill .15s ease, stroke .15s ease;
+  }
+  .graph-node:hover .node-card { stroke: #B9C7D6; }
+  .graph-node:focus-visible .node-card { stroke: var(--indigo); stroke-width: 2.2; }
+  .graph-node.is-config-match .node-card { fill: #FBF9FE; stroke: #B9A9D6; stroke-width: 1.5; }
+  .graph-node.is-linked .node-card { stroke: var(--violet); stroke-width: 1.8; }
+  .graph-node.is-selected .node-card { fill: #F3F7FC; stroke: var(--indigo); stroke-width: 2.2; }
+  .config-node.is-selected .node-card { fill: #F7F4FC; stroke: var(--violet); stroke-width: 2.4; }
+  .graph-node.is-current .node-card { fill: #F7FAFD; stroke: var(--indigo); stroke-width: 2.6; }
+  .config-node.is-current .node-card { stroke: var(--indigo); }
+  .graph-node.is-current.is-selected .node-card { stroke-width: 3; }
+  .graph-node.is-new { animation: node-in .3s ease both; }
+  @keyframes node-in { from { opacity: 0; } to { opacity: 1; } }
+  .node-line { fill: var(--ink); font-family: var(--font-num); font-size: 9px; font-weight: 600; }
+  .node-line.sub { fill: var(--ink-3); font-size: 8px; font-weight: 400; }
+  .node-dot { fill: var(--indigo); }
+  .merge-badge { fill: var(--violet); }
+  .merge-badge-text {
+    fill: #fff;
+    font-family: var(--font-num);
+    font-size: 6.5px;
+    font-weight: 600;
+    text-anchor: middle;
+    letter-spacing: .02em;
+  }
+
+  /* ---------- 会话回放 ---------- */
+  .replay {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: rgba(255,255,255,.76);
+    box-shadow: 0 14px 38px rgba(20,22,26,.045);
+    overflow: hidden;
+  }
+  .replay-head { padding: 9px 12px 8px; border-bottom: 1px solid var(--line); }
+  .replay-kicker { margin: 0; color: var(--indigo); font: 600 .55rem var(--font-num); letter-spacing: .12em; }
+  .replay-title { margin: 4px 0 0; font: 600 clamp(.92rem, 1.1vw, 1.05rem)/1.3 var(--font-display); overflow-wrap: anywhere; }
+  .replay-stats { margin: 5px 0 0; color: var(--ink-3); font: .58rem/1.55 var(--font-num); }
+  .replay-config {
+    margin: 6px 0 0;
+    padding: 4px 7px;
+    border-left: 2px solid var(--violet);
+    background: #F8F6FC;
+    color: #5B4B7D;
+    font: .58rem/1.55 var(--font-num);
+    overflow-wrap: anywhere;
+  }
+  .replay-note { margin: 5px 0 0; color: var(--ink-3); font-size: .61rem; line-height: 1.55; }
+  .replay-chip {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 1px 5px;
+    border: 1px solid #C9D4E2;
+    border-radius: 2px;
+    color: var(--indigo);
+    background: #F5F8FC;
+    font: 600 .53rem var(--font-num);
+    letter-spacing: .08em;
+  }
+  .replay-notice {
+    margin: 6px 0 0;
+    padding: 4px 7px;
+    border-left: 2px solid var(--gold);
+    background: #FDFAF3;
+    color: #8A6A1F;
+    font-size: .59rem;
+    line-height: 1.55;
+  }
+  .replay-log {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 9px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .replay-empty { margin: 14px 4px; color: var(--ink-3); font-size: .7rem; line-height: 1.65; }
+  .replay-loading { margin: 14px 4px; color: var(--ink-3); font: .61rem var(--font-num); letter-spacing: .04em; }
+  .replay-foot { border-top: 1px solid var(--line); padding: 7px 12px 9px; }
+  .replay-status { margin: 0; color: var(--ink-3); font: .57rem var(--font-num); line-height: 1.55; }
+  .replay-status.is-done { color: var(--green); }
+
+  .msg { display: flex; flex-direction: column; gap: 2px; animation: msg-in .22s ease both; }
+  @keyframes msg-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  .msg-role { margin: 0; color: var(--ink-3); font: 600 .53rem var(--font-num); letter-spacing: .1em; }
+  .msg-body {
+    margin: 0;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    color: var(--ink-2);
+    font-size: .7rem;
+    line-height: 1.62;
+    overflow-wrap: anywhere;
+  }
+  .msg.user .msg-role { color: var(--indigo); }
+  .msg.user .msg-body { border-color: #D7E1ED; background: #F6F9FC; }
+  .msg.assistant .msg-role { color: var(--green); }
+  .msg.tool .msg-role { color: var(--gold); }
+  .msg.tool .msg-body {
+    padding: 4px 7px;
+    border: 0;
+    border-left: 2px solid rgba(185,138,47,.6);
+    border-radius: 0 3px 3px 0;
+    background: rgba(244,245,247,.75);
+    color: var(--ink-3);
+    font: .57rem/1.55 var(--font-num);
+  }
+  .msg.pending .msg-body { color: var(--ink-3); }
+  .dots { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+
+  .rollback-btn {
+    width: 100%;
+    margin-top: 6px;
+    padding: 7px 9px;
+    border: 1px solid #C9D4E2;
+    border-radius: 4px;
+    background: #F6F9FC;
+    color: var(--indigo);
+    font: 500 .69rem var(--font-body);
+    cursor: pointer;
+    transition: border-color .18s ease, background .18s ease, color .18s ease;
+  }
+  .rollback-btn:hover { border-color: var(--indigo); }
+  .rollback-btn.is-armed { border-color: #D9A7A1; background: #FDF6F5; color: var(--red); }
+  .rollback-btn:disabled { opacity: .55; cursor: default; }
+
+  /* ---------- 配置清单 ---------- */
+  .config-detail {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: rgba(255,255,255,.76);
+    box-shadow: 0 14px 38px rgba(20,22,26,.04);
+    overflow: hidden;
+  }
+  .config-detail-head { padding: 9px 12px 8px; border-bottom: 1px solid var(--line); }
+  .config-kicker { margin: 0; color: var(--violet); font: 600 .55rem var(--font-num); letter-spacing: .12em; }
+  .config-title { margin: 4px 0 0; font: 600 .95rem/1.3 var(--font-display); overflow-wrap: anywhere; }
+  .config-stats { margin: 5px 0 0; color: var(--ink-3); font: .57rem/1.55 var(--font-num); }
+  .config-linked { margin: 5px 0 0; color: var(--violet); font: .56rem/1.5 var(--font-num); }
+  .config-note { margin: 5px 0 0; color: var(--ink-3); font-size: .6rem; line-height: 1.55; }
+  .config-body { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 12px 11px; }
+  .manifest { display: flex; flex-direction: column; gap: 2px; }
+  .manifest-row {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 7px;
+    padding: 5px 0;
+    border-top: 1px dashed var(--line);
+  }
+  .manifest-row:first-child { border-top: 0; }
+  .manifest-key { color: var(--ink-3); font: 600 .55rem var(--font-num); letter-spacing: .06em; }
+  .manifest-items { display: flex; flex-wrap: wrap; gap: 3px 5px; }
+  .manifest-item {
+    padding: 1px 5px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: #fff;
+    color: var(--ink-2);
+    font: .56rem var(--font-num);
+  }
+  .manifest-item.is-add { color: var(--green); border-color: #CFE3D6; background: #F4FAF6; }
+  .manifest-item.is-remove { color: var(--red); border-color: #E8D0CC; background: #FDF7F6; }
+  .manifest-item.is-same { color: var(--ink-3); background: #FAFBFC; }
+  .manifest-empty { color: var(--ink-3); font: .58rem var(--font-num); }
+  .config-diff { margin: 8px 0 0; color: var(--ink-3); font: .57rem/1.6 var(--font-num); }
+  .config-bindings { margin: 9px 0 0; padding-top: 7px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: .62rem; line-height: 1.65; }
+  .config-bindings b { color: var(--ink-2); }
+  .config-empty { padding: 14px 12px; color: var(--ink-3); font-size: .7rem; line-height: 1.65; }
+
+  /* ---------- 页脚 ---------- */
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 3px 18px;
+    padding-top: 7px;
+    color: var(--ink-3);
+    font-size: .56rem;
+    line-height: 1.55;
+  }
+  .foot b { color: var(--ink-2); font-weight: 600; }
+
+  /* ---------- iframe 嵌入 ---------- */
+  html.embed body { overflow: hidden; }
+  html.embed .page { height: 100vh; padding: 8px 10px 6px; }
+  html.embed .back-link, html.embed .foot { display: none; }
+  html.embed .top { padding-bottom: 7px; align-items: center; }
+  html.embed .workspace { padding-top: 6px; }
+
+  /* ---------- 窄屏：上下堆叠 ---------- */
+  @media (max-width: 900px) {
+    body { overflow: auto; }
+    .page { height: auto; padding: 13px 13px 10px; overflow: visible; }
+    .top { grid-template-columns: 1fr auto; }
+    .top-mid { grid-column: 1 / -1; grid-row: 2; text-align: left; }
+    .top-mid .tabs { width: 100%; }
+    .tab { flex: 1; }
+    .workspace { grid-template-columns: 1fr; overflow: visible; }
+    .session-column, .config-column { min-height: 0; }
+    .session-column .tree-panel, .config-column .tree-panel { flex: none; height: 430px; }
+    .session-column .replay { flex: none; height: 360px; min-height: 0; }
+    .config-column .config-detail { flex: none; height: 320px; min-height: 0; }
+    html.embed body { overflow: auto; }
+    html.embed .page { height: auto; overflow: visible; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div class="top-left">
+      <p class="kicker">PROJECT TREE / DEMO</p>
+      <a class="back-link" id="back-link" href="../chat/index.html">← 返回研究对话</a>
+    </div>
+    <div class="top-mid">
+      <div class="tabs" role="tablist" aria-label="切换项目">
+        <button type="button" class="tab is-active" id="tab-a" role="tab" aria-selected="true" aria-controls="workspace">项目 A｜研究仓库</button>
+        <button type="button" class="tab" id="tab-b" role="tab" aria-selected="false" aria-controls="workspace">项目 B｜展示页</button>
+      </div>
+      <p class="meta" id="project-meta">molt · 节点 26 · 泳道 5 · 回退 4 次</p>
+    </div>
+    <div class="current-chip" aria-live="polite"><span>当前</span><b id="current-rev">r12</b></div>
+  </header>
+
+  <main class="workspace" id="workspace">
+    <section class="column session-column" aria-label="会话树与回放">
+      <div class="tree-panel">
+        <div class="tree-head">
+          <div><p class="eyebrow">SESSION TREE</p><h2>会话树</h2></div>
+          <span class="tree-chip" id="session-count">26 节点 · 5 泳道</span>
+        </div>
+        <div class="viewport" id="viewport">
+          <div class="tree-scroll" id="tree-scroll">
+            <svg id="tree" class="graph-svg" role="group" aria-label="会话树"></svg>
+          </div>
+        </div>
+        <div class="legend" aria-hidden="true">
+          <span><i class="line"></i>提交</span>
+          <span><i class="line dashed"></i>回退 / 实验</span>
+          <span><i class="merge-dot"></i>合并双父</span>
+          <span class="legend-sep">纵向滚动 · Tab 聚焦 · Enter 选中</span>
+        </div>
+      </div>
+      <aside class="replay" id="replay" aria-live="polite" aria-label="会话回放">
+        <p class="replay-empty">正在加载项目快照…</p>
+      </aside>
+    </section>
+
+    <section class="column config-column" aria-label="配置树与清单">
+      <div class="tree-panel">
+        <div class="tree-head">
+          <div><p class="eyebrow">CONFIG TREE</p><h2>配置树</h2></div>
+          <div class="config-head-right">
+            <span class="tree-chip" id="config-count">10 节点 · 3 泳道</span>
+            <span class="tree-chip is-current" id="config-current">当前 c9</span>
+          </div>
+        </div>
+        <div class="viewport" id="config-viewport">
+          <div class="tree-scroll" id="config-scroll">
+            <svg id="config-tree" class="graph-svg" role="group" aria-label="配置树"></svg>
+          </div>
+        </div>
+        <div class="legend" aria-hidden="true">
+          <span>点配置看清单</span>
+          <span class="legend-sep">点会话看绑定</span>
+        </div>
+      </div>
+      <aside class="config-detail" id="config-detail" aria-live="polite" aria-label="配置清单">
+        <p class="config-empty">选择配置节点查看 skills / mcp / memory 清单。</p>
+      </aside>
+    </section>
+
+    <div class="loading" id="loading" hidden>
+      <span class="spinner" aria-hidden="true"></span>
+      <p>正在加载项目快照…</p>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <span><b>DEMO_FIXTURE</b> 会话树 + 配置树；合并双父，回退只新增，不删除历史</span>
+    <span>8 项审查清单 8/8 ｜ 资料库 189 = 153 + 20 + 10 + 1 + 5</span>
+  </footer>
+</div>
+
+<script id="project-fixtures">
+/* DEMO_FIXTURE — 手工构造的演示数据。
+   口径：8/8 是 8 项审查清单得分；189 = 153 + 20 + 10 + 1 + 5；
+   demo-6 / demo-7 只作为版本标识，不混用数值。
+   A 会话：26 节点 / 5 泳道 / 4 回退 / 2 合并（r19、r23）。
+   B 会话：18 节点 / 4 泳道 / 3 回退 / 1 合并（b13）。
+   A 配置：10 节点 / 3 泳道 / 2 合并（c4、c7）。
+   B 配置：8 节点 / 2 泳道 / 1 合并（d4）。
+   每个会话节点都带 configRef；合并节点保留 parent（首父）与 parents（全部父）。 */
+var PROJECT_FIXTURES = {
+  a: {
+    id: "a",
+    name: "项目 A｜研究仓库",
+    short: "molt",
+    revPrefix: "r",
+    current: "r12",
+    lanes: [
+      { name: "主线", kind: "main" },
+      { name: "分支 1", kind: "branch" },
+      { name: "分支 2", kind: "branch" },
+      { name: "分支 3", kind: "branch" },
+      { name: "分支 4", kind: "branch" }
+    ],
+    nodes: [
+      {
+        id: "r0", rev: "r0", label: "建立仓库", action: "起始", parent: null, lane: 0, configRef: "c0",
+        note: "起点：研究仓库的只读约定",
+        messages: [
+          { role: "user", text: "先把研究口径固定下来：结论必须能回到检索记录和原文。" },
+          { role: "tool", text: "读取 AGENTS.md：研究仓库只读约定、提交格式、禁改清单", tool: "读取 AGENTS.md" },
+          { role: "assistant", text: "仓库约定已读；先拆「结论 / 证据 / 限制」三层，后续每次修订只动一层。" },
+          { role: "assistant", text: "起点先不写任何数字，等检索规则和 claims 就位。" }
+        ]
+      },
+      {
+        id: "r1", rev: "r1", label: "读规则", action: "保留", parent: "r0", lane: 0, configRef: "c1",
+        note: "规则：先检索，再核对，最后落结论",
+        messages: [
+          { role: "user", text: "先把检索规则读一遍：哪些能写，哪些不能写？" },
+          { role: "tool", text: "检索 project_kb：scenario-versions", tool: "检索 project_kb" },
+          { role: "assistant", text: "demo-6 与 demo-7 是两组版本号，跨版本的成本与通过数不能同表比较。" },
+          { role: "assistant", text: "规则定为三步：检索、核对 claims、找不到来源就不写。" }
+        ]
+      },
+      {
+        id: "r2", rev: "r2", label: "写结论", action: "保留", parent: "r1", lane: 0, configRef: "c2",
+        note: "结论草稿；8 项审查清单 8/8",
+        messages: [
+          { role: "user", text: "按这个规则写一版结论，顺便报一下 8 项审查清单的分数。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "只有可复核条目能进正文；资料库当前覆盖 189 条。" },
+          { role: "assistant", text: "结论草稿：8 项审查清单 8/8，其中结论 4 项、证据 4 项。" },
+          { role: "user", text: "189 这个数要在页脚拆开写，别只给总数。" },
+          { role: "assistant", text: "页脚按 153 lessons + 20 Skill + 10 Agent + 1 AGENTS.md + 5 MCP 拆开，合计 189。" }
+        ]
+      },
+      {
+        id: "r3", rev: "r3", label: "补配对表", action: "保留", parent: "r2", lane: 0, configRef: "c3",
+        note: "配对表按同一 scenario_version 逐题对齐",
+        messages: [
+          { role: "user", text: "结论里的数字要逐题对上，补一张配对表。" },
+          { role: "tool", text: "读取 variants.json", tool: "读取 variants.json" },
+          { role: "assistant", text: "只按同一个 scenario_version 内配对，不跨版本拼接。" },
+          { role: "assistant", text: "配对表补完；8 项审查清单仍按结论 4 项、证据 4 项分开记。" }
+        ]
+      },
+      {
+        id: "r4", rev: "r4", label: "修口径", action: "保留", parent: "r3", lane: 0, configRef: "c3",
+        note: "修补口径：审查得分与通过数分开",
+        messages: [
+          { role: "user", text: "检查一下有没有把「审查得分」写成「通过题数」。" },
+          { role: "tool", text: "检索 project_kb：审查清单", tool: "检索 project_kb" },
+          { role: "assistant", text: "发现一处：摘要把 8/8 说成通过数；8/8 是 8 项审查清单的得分。" },
+          { role: "assistant", text: "已改成「8 项审查清单 8/8」，并注明清单覆盖结论与证据各 4 项。" }
+        ]
+      },
+      {
+        id: "r7", rev: "r7", label: "合并", action: "保留", parent: "r4", lane: 0, configRef: "c4",
+        note: "合并实验结论，不带实验数字",
+        messages: [
+          { role: "user", text: "把实验支线的结论并到主线，但别把实验数字带进来。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "合并只取结论和证据链；实验分支原样保留在树上。" },
+          { role: "assistant", text: "合并完成；跨版本对比仍排除，限制条件留在正文。" },
+          { role: "user", text: "合并后记得重算一遍。" },
+          { role: "assistant", text: "下一步复算审查清单，确认没有把实验分支的数字算进去。" }
+        ]
+      },
+      {
+        id: "r9", rev: "r9", label: "复算", action: "保留", parent: "r7", lane: 0, configRef: "c4",
+        note: "合并后复算审查清单",
+        messages: [
+          { role: "user", text: "合并后重算审查清单，确认没有把实验分支的数字算进去。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "复算只看主线证据：结论 4 项、证据 4 项。" },
+          { role: "assistant", text: "结果仍是 8/8；资料库覆盖按 189 条记。" },
+          { role: "user", text: "好，这一版作为当前快照的候选。" }
+        ]
+      },
+      {
+        id: "r12", rev: "r12", label: "当前定稿", action: "保留", parent: "r9", lane: 0, configRef: "c7",
+        note: "当前快照：摘要与限制一起定稿",
+        messages: [
+          { role: "user", text: "这一版作为当前快照，摘要和限制一起定稿。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "摘要只保留可复核结论，限制紧随其后。" },
+          { role: "assistant", text: "证据链对齐；8 项审查清单 8/8，没有新增跨版本数字。" },
+          { role: "user", text: "好，当前就停在 r12。" }
+        ]
+      },
+      {
+        id: "r14", rev: "r14", label: "补附录", action: "保留", parent: "r12", lane: 0, configRef: "c9",
+        note: "附录只放检索记录索引",
+        messages: [
+          { role: "user", text: "给正文补一个附录，放检索记录索引。" },
+          { role: "tool", text: "检索 project_kb：evidence-chain", tool: "检索 project_kb" },
+          { role: "assistant", text: "附录只放检索记录和原文位置，不放结论。" },
+          { role: "assistant", text: "索引按 r12 的证据链生成，后续改动不自动并入。" }
+        ]
+      },
+      {
+        id: "r15", rev: "r15", label: "扩样本", action: "保留", parent: "r14", lane: 0, configRef: "c9",
+        note: "扩样本仍按同版本配对",
+        messages: [
+          { role: "user", text: "样本范围再扩一层，看看结论稳不稳。" },
+          { role: "tool", text: "读取 variants.json", tool: "读取 variants.json" },
+          { role: "assistant", text: "扩样本仍按同版本配对；样本外的结果不并入当前结论。" },
+          { role: "assistant", text: "结论稳定性待复核，先不改正文。" }
+        ]
+      },
+      {
+        id: "r16", rev: "r16", label: "回退到 r15", action: "回退", parent: "r15", lane: 0, configRef: "c9",
+        note: "主链回退 · 从 r15 回退", rollbackFrom: "r15",
+        messages: [
+          { role: "user", text: "r15 的扩样本口径不对，退回 r15 重来。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "已从 r15 回退；r15 之后的改动保留在历史里，不删除。" },
+          { role: "assistant", text: "回退后口径回到 r15，扩样本留作后续工作。" }
+        ]
+      },
+      {
+        id: "r17", rev: "r17", label: "重写摘要", action: "保留", parent: "r16", lane: 0, configRef: "c9",
+        note: "回退后重写摘要",
+        messages: [
+          { role: "user", text: "在回退后的口径上重写摘要，别引用被撤回的扩样本。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "摘要只引用 r15 及之前的证据；扩样本留作后续工作。" },
+          { role: "assistant", text: "限制条件保留，8 项审查清单仍按 8/8 记。" }
+        ]
+      },
+      {
+        id: "r18", rev: "r18", label: "留待复核", action: "保留", parent: "r17", lane: 0, configRef: "c9",
+        note: "待复核 · 当前仍停在 r12",
+        messages: [
+          { role: "user", text: "这一版先不合并，留待复核。" },
+          { role: "tool", text: "读取 checklist.md", tool: "读取 checklist.md" },
+          { role: "assistant", text: "已标记为待复核分支；当前快照仍是 r12。" },
+          { role: "assistant", text: "复核前不发布，也不改写当前摘要。" }
+        ]
+      },
+      {
+        id: "r5", rev: "r5", label: "并表实验", action: "实验", parent: "r2", lane: 1, configRef: "c3",
+        note: "实验分支 · 并表方案未合并",
+        messages: [
+          { role: "user", text: "试一下把 demo-6 和 demo-7 的结果并成一张表，看看差异。" },
+          { role: "tool", text: "检索 project_kb：scenario-versions", tool: "检索 project_kb" },
+          { role: "assistant", text: "可以做版式实验，但两组版本不同，数值不可比。" },
+          { role: "assistant", text: "实验分支先留着，标「实验」，不合并到主线。" }
+        ]
+      },
+      {
+        id: "r13", rev: "r13", label: "回退到 r9", action: "回退", parent: "r9", lane: 1, configRef: "c8",
+        note: "从 r9 回退 · 定稿保留", rollbackFrom: "r9",
+        messages: [
+          { role: "user", text: "复算后的附录口径不对，回到 r9。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "已从 r9 回退；r12 的定稿保留，不删除。" },
+          { role: "assistant", text: "回退只改当前采用的口径，历史节点全部保留。" }
+        ]
+      },
+      {
+        id: "r25", rev: "r25", label: "复核口径", action: "保留", parent: "r13", lane: 1, configRef: "c8",
+        note: "复核审查清单",
+        messages: [
+          { role: "user", text: "在 r9 的口径上再核一遍审查清单。" },
+          { role: "tool", text: "检索 project_kb：审查清单", tool: "检索 project_kb" },
+          { role: "assistant", text: "复核结果：8 项仍按 8/8 记，限制条件不变。" },
+          { role: "assistant", text: "这一支继续保留，等 r23 合并后再看是否并入。" }
+        ]
+      },
+      {
+        id: "r10", rev: "r10", label: "归一化续", action: "实验", parent: "r5", lane: 2, configRef: "c6",
+        note: "实验分支 · 归一化方案未合并",
+        messages: [
+          { role: "user", text: "如果非要并表，能不能只展示归一化后的比例？" },
+          { role: "tool", text: "检索 project_kb：scenario-versions", tool: "检索 project_kb" },
+          { role: "assistant", text: "归一化也依赖分母口径；分母来自不同版本，比例同样不可比。" },
+          { role: "assistant", text: "结论：并表方案放弃，只保留失败记录。" }
+        ]
+      },
+      {
+        id: "r19", rev: "r19", label: "合并 r5 + r9", action: "合并", parent: "r5", parents: ["r5", "r9"], lane: 2, configRef: "c7",
+        note: "双父合并：实验结论 + 主线复算",
+        messages: [
+          { role: "user", text: "把实验分支 r5 和主线 r9 并起来，别把实验数字带进正文。" },
+          { role: "tool", text: "检索 project_kb：scenario-versions", tool: "检索 project_kb" },
+          { role: "assistant", text: "两边版本不同，合并只能取结论和证据链，数值不能相加。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "已生成合并节点：保留 r5 的实验结论，主线数值仍以 r9 为准。" },
+          { role: "user", text: "合并后的限制写清楚。" },
+          { role: "assistant", text: "限制条件保留在正文：跨版本不比较，实验数字只作参考。" }
+        ]
+      },
+      {
+        id: "r20", rev: "r20", label: "合并后复核", action: "保留", parent: "r19", lane: 2, configRef: "c9",
+        note: "合并后复核并绑定当前配置",
+        messages: [
+          { role: "user", text: "合并后的结论能不能直接发布？" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "还要复核 8 项审查清单，确认实验引用已移出正文。" },
+          { role: "assistant", text: "复核通过；这一版绑定当前配置 c9，发布前仍需限制说明。" }
+        ]
+      },
+      {
+        id: "r6", rev: "r6", label: "回退到 r4", action: "回退", parent: "r4", lane: 3, configRef: "c4",
+        note: "从 r4 回退 · 实验分支保留", rollbackFrom: "r4",
+        messages: [
+          { role: "user", text: "r5 的并表实验不要带进主线，回到 r4。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "已从 r4 回退；实验分支保留，不删除。" },
+          { role: "assistant", text: "回退后重新排配对表，实验数字不进入正文。" }
+        ]
+      },
+      {
+        id: "r11", rev: "r11", label: "继续改配对表", action: "保留", parent: "r6", lane: 3, configRef: "c5",
+        note: "从 r6 继续 · 配对表重排",
+        messages: [
+          { role: "user", text: "从 r4 继续，先把配对表改到能逐题复核。" },
+          { role: "tool", text: "读取 variants.json", tool: "读取 variants.json" },
+          { role: "assistant", text: "按 r4 的口径重排，只保留同版本配对。" },
+          { role: "assistant", text: "配对表补齐；实验分支的数字不进入这张表。" }
+        ]
+      },
+      {
+        id: "r21", rev: "r21", label: "补证据", action: "保留", parent: "r11", lane: 3, row: 8, configRef: "c5",
+        note: "补配对表证据",
+        messages: [
+          { role: "user", text: "给配对表补证据来源。" },
+          { role: "tool", text: "检索 project_kb：claims", tool: "检索 project_kb" },
+          { role: "assistant", text: "每条配对补检索记录和原文位置；缺来源的行删掉。" },
+          { role: "assistant", text: "配对表可复核，等合并节点统一收口。" }
+        ]
+      },
+      {
+        id: "r8", rev: "r8", label: "回退到 r7", action: "回退", parent: "r7", lane: 4, configRef: "c4",
+        note: "从 r7 回退 · 合并提交保留", rollbackFrom: "r7",
+        messages: [
+          { role: "user", text: "合并后的正文引用了实验分支，退回 r7 重做。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "已从 r7 回退；合并提交保留在历史里。" },
+          { role: "assistant", text: "重做时只保留 r7 及之前的证据，实验引用全部移出。" }
+        ]
+      },
+      {
+        id: "r22", rev: "r22", label: "重排引用", action: "保留", parent: "r8", lane: 4, configRef: "c7",
+        note: "重排引用：结论 / 证据 / 限制",
+        messages: [
+          { role: "user", text: "把引用按结论、证据、限制三组重排。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "每条结论只指向一条证据链，避免交叉引用。" },
+          { role: "assistant", text: "实验分支的引用全部移出正文，限制条件单独成段。" }
+        ]
+      },
+      {
+        id: "r23", rev: "r23", label: "合并 r11 + r19", action: "合并", parent: "r11", parents: ["r11", "r19"], lane: 4, configRef: "c7",
+        note: "双父合并：配对表 + 合并结论",
+        messages: [
+          { role: "user", text: "把 r11 的配对表和 r19 的合并结论合到一起。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "r11 提供逐题配对，r19 提供合并结论；两者不冲突。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "合并完成，8 项审查清单仍按 8/8 记，跨版本数字不进入结果。" },
+          { role: "user", text: "两边的限制都保留。" },
+          { role: "assistant", text: "已保留两边限制；这一版绑定配置 c7，等待最终复核。" }
+        ]
+      },
+      {
+        id: "r24", rev: "r24", label: "留草案", action: "保留", parent: "r23", lane: 4, configRef: "c9",
+        note: "草案分支 · 等待复核",
+        messages: [
+          { role: "user", text: "这一支先留草案，不合并。" },
+          { role: "tool", text: "读取 checklist.md", tool: "读取 checklist.md" },
+          { role: "assistant", text: "已标草案；当前快照仍是 r12。" },
+          { role: "assistant", text: "草案不影响主线，等复核后再决定。" }
+        ]
+      }
+    ],
+    configTree: {
+      id: "a-config",
+      current: "c9",
+      lanes: [
+        { name: "主线", kind: "main" },
+        { name: "证据 / 实验", kind: "branch" },
+        { name: "回退", kind: "branch" }
+      ],
+      nodes: [
+        {
+          id: "c0", label: "起始（无 skill）", action: "起始", parent: null, lane: 0,
+          note: "根配置：空清单", skills: [], mcp: [], memory: []
+        },
+        {
+          id: "c1", label: "+claims", action: "保留", parent: "c0", lane: 0,
+          note: "加入 claims 规则", skills: ["claims"], mcp: [], memory: []
+        },
+        {
+          id: "c2", label: "+scenario-versions", action: "保留", parent: "c1", lane: 0,
+          note: "加入版本检索", skills: ["claims", "scenario-versions"], mcp: [], memory: []
+        },
+        {
+          id: "c3", label: "+evidence-chain", action: "保留", parent: "c1", lane: 1,
+          note: "证据链分支", skills: ["claims", "evidence-chain"], mcp: [], memory: []
+        },
+        {
+          id: "c4", label: "合并 c2 + c3", action: "合并", parent: "c2", parents: ["c2", "c3"], lane: 0,
+          note: "双父合并：版本检索 + 证据链",
+          skills: ["claims", "scenario-versions", "evidence-chain"], mcp: [], memory: []
+        },
+        {
+          id: "c5", label: "+project_kb MCP", action: "保留", parent: "c4", lane: 0,
+          note: "接入 project_kb MCP",
+          skills: ["claims", "scenario-versions", "evidence-chain"], mcp: ["project_kb"], memory: []
+        },
+        {
+          id: "c6", label: "实验：+memory 规则", action: "实验", parent: "c4", lane: 1,
+          note: "实验分支：加入 memory 规则",
+          skills: ["claims", "scenario-versions", "evidence-chain"], mcp: [], memory: ["memory-rules"]
+        },
+        {
+          id: "c7", label: "合并 c5 + c6", action: "合并", parent: "c5", parents: ["c5", "c6"], lane: 0,
+          note: "双父合并：MCP + memory",
+          skills: ["claims", "scenario-versions", "evidence-chain"], mcp: ["project_kb"], memory: ["memory-rules"]
+        },
+        {
+          id: "c8", label: "回退到 c4", action: "回退", parent: "c4", lane: 2, rollbackFrom: "c4",
+          note: "从 c4 回退，清掉 MCP / memory",
+          skills: ["claims", "scenario-versions", "evidence-chain"], mcp: [], memory: []
+        },
+        {
+          id: "c9", label: "当前", action: "保留", parent: "c7", lane: 0,
+          note: "当前配置：三 skill + MCP + memory",
+          skills: ["claims", "scenario-versions", "evidence-chain"], mcp: ["project_kb"], memory: ["memory-rules"]
+        }
+      ]
+    }
+  },
+  b: {
+    id: "b",
+    name: "项目 B｜展示页",
+    short: "showcase",
+    revPrefix: "b",
+    current: "b8",
+    lanes: [
+      { name: "主线", kind: "main" },
+      { name: "分支 1", kind: "branch" },
+      { name: "分支 2", kind: "branch" },
+      { name: "分支 3", kind: "branch" }
+    ],
+    nodes: [
+      {
+        id: "b0", rev: "b0", label: "定信息层级", action: "起始", parent: null, lane: 0, configRef: "d0",
+        note: "起点：先定信息层级",
+        messages: [
+          { role: "user", text: "展示页先定层级：先讲结论，再给证据，最后放资料库规模。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "第一屏只放一条结论和一条限制，数字统一等宽。" },
+          { role: "assistant", text: "层级定了：结论 / 证据 / 资料库，先不写具体数字。" }
+        ]
+      },
+      {
+        id: "b1", rev: "b1", label: "读口径", action: "保留", parent: "b0", lane: 0, configRef: "d1",
+        note: "读口径：只展示可复核数字",
+        messages: [
+          { role: "user", text: "文案里能出现哪些数字？先把口径读一遍。" },
+          { role: "tool", text: "读取 checklist.md", tool: "读取 checklist.md" },
+          { role: "assistant", text: "只允许 8 项审查清单 8/8、资料库 189 条，以及 demo-6 / demo-7 的版本标识。" },
+          { role: "assistant", text: "版本标识只说明不可比，不做数值对比；跨版本数字不并排。" }
+        ]
+      },
+      {
+        id: "b2", rev: "b2", label: "改标题", action: "保留", parent: "b1", lane: 0, configRef: "d2",
+        note: "改标题：条件先行",
+        messages: [
+          { role: "user", text: "首屏标题改成条件说明，不要「成本大幅下降」。" },
+          { role: "tool", text: "检索 project_kb：展示页文案", tool: "检索 project_kb" },
+          { role: "assistant", text: "标题先讲条件：两组结果来自不同版本，成本与通过数不可直接比较。" },
+          { role: "user", text: "claim 卡片只放能被检索记录支持的内容。" },
+          { role: "assistant", text: "每张卡片固定三行：结论、证据、限制；缺证据不展示。" }
+        ]
+      },
+      {
+        id: "b4", rev: "b4", label: "改证据段", action: "保留", parent: "b2", lane: 0, configRef: "d2",
+        note: "改证据段：来源与适用条件",
+        messages: [
+          { role: "user", text: "证据段按「检索记录 → 原文位置 → 适用条件」排。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "已改成三段式；没有原文位置的行直接删。" },
+          { role: "assistant", text: "证据段与正文结论一一对应，8 项审查清单仍按 8/8 记。" }
+        ]
+      },
+      {
+        id: "b6", rev: "b6", label: "收尾", action: "保留", parent: "b4", lane: 0, configRef: "d4",
+        note: "收尾：截图、页脚、限制",
+        messages: [
+          { role: "user", text: "收尾：截图、页脚、限制说明一起定。" },
+          { role: "tool", text: "检索 project_kb：展示页截图", tool: "检索 project_kb" },
+          { role: "assistant", text: "截图统一 1440 宽、浅底、无浏览器边框；页脚只放资料库构成。" },
+          { role: "assistant", text: "页脚按 153 + 20 + 10 + 1 + 5 展开，合计 189。" }
+        ]
+      },
+      {
+        id: "b8", rev: "b8", label: "版式定稿", action: "保留", parent: "b6", lane: 0, configRef: "d5",
+        note: "当前快照：版式定稿",
+        messages: [
+          { role: "user", text: "版式定稿：三栏，截图统一口径。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "三栏：结论 / 证据 / 资料库；截图统一 1440 宽、浅底、不套浏览器边框。" },
+          { role: "assistant", text: "页脚按资料库构成展开，合计 189；不写跨版本对比。" },
+          { role: "user", text: "好，当前停在 b8。" }
+        ]
+      },
+      {
+        id: "b10", rev: "b10", label: "补附录", action: "保留", parent: "b8", lane: 0, configRef: "d5",
+        note: "附录只放检索记录索引",
+        messages: [
+          { role: "user", text: "附录放检索记录索引，别放截图。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "附录只放检索记录与原文位置，截图仍留在正文。" },
+          { role: "assistant", text: "索引按 b8 的证据链生成，后续改动不自动并入。" }
+        ]
+      },
+      {
+        id: "b11", rev: "b11", label: "改页脚", action: "保留", parent: "b10", lane: 0, configRef: "d5",
+        note: "页脚按资料库构成展开",
+        messages: [
+          { role: "user", text: "页脚只留一行资料库构成。" },
+          { role: "tool", text: "检索 project_kb：claims", tool: "检索 project_kb" },
+          { role: "assistant", text: "页脚按 153 + 20 + 10 + 1 + 5 展开，合计 189。" },
+          { role: "assistant", text: "不放跨版本对比，也不用结论性的措辞。" }
+        ]
+      },
+      {
+        id: "b12", rev: "b12", label: "留待复核", action: "保留", parent: "b11", lane: 0, configRef: "d5",
+        note: "待复核 · 当前仍停在 b8",
+        messages: [
+          { role: "user", text: "这一版先留待复核，不发布。" },
+          { role: "tool", text: "读取 checklist.md", tool: "读取 checklist.md" },
+          { role: "assistant", text: "已标记待复核；当前快照仍是 b8。" },
+          { role: "assistant", text: "复核前不改页脚，也不发布。" }
+        ]
+      },
+      {
+        id: "b3", rev: "b3", label: "回退到 b2", action: "回退", parent: "b2", lane: 1, configRef: "d3",
+        note: "从 b2 回退 · 花哨标题弃用", rollbackFrom: "b2",
+        messages: [
+          { role: "user", text: "标题那版太花，回到 b2 重写。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "已从 b2 回退；花哨标题保留在历史里，不再沿用。" },
+          { role: "assistant", text: "重排原则：标题先讲条件，再讲结论。" }
+        ]
+      },
+      {
+        id: "b13", rev: "b13", label: "合并 b3 + b6", action: "合并", parent: "b3", parents: ["b3", "b6"], lane: 1, configRef: "d4",
+        note: "双父合并：证据链 + 收尾版",
+        messages: [
+          { role: "user", text: "把 b3 的证据链和 b6 的收尾版并起来。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "b3 补的是证据段，b6 改的是版式；合并以证据段为准。" },
+          { role: "tool", text: "读取 checklist.md", tool: "读取 checklist.md" },
+          { role: "assistant", text: "合并完成：claim 卡片三行结构保留，8 项审查清单仍按 8/8 记。" },
+          { role: "user", text: "标题口径不要回退。" },
+          { role: "assistant", text: "标题仍用 b3 的条件说明，不改回旧版。" }
+        ]
+      },
+      {
+        id: "b14", rev: "b14", label: "压首屏", action: "保留", parent: "b13", lane: 1, configRef: "d5",
+        note: "合并后压缩首屏",
+        messages: [
+          { role: "user", text: "合并后首屏还能再压一压吗？" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "首屏只留一条结论和一条限制；其他内容进证据段。" },
+          { role: "assistant", text: "版式不变，当前快照仍是 b8。" }
+        ]
+      },
+      {
+        id: "b5", rev: "b5", label: "回退到 b4", action: "回退", parent: "b4", lane: 2, configRef: "d3",
+        note: "从 b4 回退 · 长版证据段弃用", rollbackFrom: "b4",
+        messages: [
+          { role: "user", text: "证据段排得太长，退回 b4。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "已从 b4 回退；三段式改写保留在历史里。" },
+          { role: "assistant", text: "重写时只保留来源和适用条件两行。" }
+        ]
+      },
+      {
+        id: "b15", rev: "b15", label: "重写证据段", action: "保留", parent: "b5", lane: 2, configRef: "d4",
+        note: "重写证据段：两行结构",
+        messages: [
+          { role: "user", text: "证据段改成两行：来源、适用条件。" },
+          { role: "tool", text: "读取 evidence-chain", tool: "读取 evidence-chain" },
+          { role: "assistant", text: "已改成两行；每条结论只配一条证据链。" },
+          { role: "assistant", text: "缺来源的结论不展示，8 项审查清单仍按 8/8 记。" }
+        ]
+      },
+      {
+        id: "b16", rev: "b16", label: "补来源", action: "保留", parent: "b15", lane: 2, configRef: "d4",
+        note: "补来源，缺来源的结论删除",
+        messages: [
+          { role: "user", text: "给缺来源的结论补检索记录。" },
+          { role: "tool", text: "检索 project_kb：claims", tool: "检索 project_kb" },
+          { role: "assistant", text: "缺来源的结论已删；留下的都能回到检索记录。" },
+          { role: "assistant", text: "证据段与正文一一对应，等合并节点统一收口。" }
+        ]
+      },
+      {
+        id: "b7", rev: "b7", label: "重排首屏", action: "保留", parent: "b3", lane: 3, configRef: "d7",
+        note: "实验配置：展示规则",
+        messages: [
+          { role: "user", text: "首屏只留一条结论和一条限制。" },
+          { role: "tool", text: "读取 checklist.md", tool: "读取 checklist.md" },
+          { role: "assistant", text: "已压缩首屏；数字统一等宽，限制紧随结论。" },
+          { role: "assistant", text: "claim 卡片不超过三行，缺证据的条目直接不展示。" }
+        ]
+      },
+      {
+        id: "b9", rev: "b9", label: "回退到 b6", action: "回退", parent: "b6", lane: 3, configRef: "d6",
+        note: "从 b6 回退 · 收尾改动保留", rollbackFrom: "b6",
+        messages: [
+          { role: "user", text: "收尾版的页脚口径不对，回到 b6。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "已从 b6 回退；收尾改动保留在历史里。" },
+          { role: "assistant", text: "页脚重新按构成展开，不写单层总数。" }
+        ]
+      },
+      {
+        id: "b17", rev: "b17", label: "复核页脚", action: "保留", parent: "b9", lane: 3, configRef: "d6",
+        note: "复核页脚口径",
+        messages: [
+          { role: "user", text: "页脚重新按构成展开，只用一行。" },
+          { role: "tool", text: "读取 claims.md", tool: "读取 claims.md" },
+          { role: "assistant", text: "页脚按 153 + 20 + 10 + 1 + 5 展开，合计 189。" },
+          { role: "assistant", text: "不放跨版本对比，也不写结论性措辞。" }
+        ]
+      }
+    ],
+    configTree: {
+      id: "b-config",
+      current: "d5",
+      lanes: [
+        { name: "主线", kind: "main" },
+        { name: "证据 / 回退 / 实验", kind: "branch" }
+      ],
+      nodes: [
+        {
+          id: "d0", label: "起始（无 skill）", action: "起始", parent: null, lane: 0,
+          note: "根配置：空清单", skills: [], mcp: [], memory: []
+        },
+        {
+          id: "d1", label: "+claims", action: "保留", parent: "d0", lane: 0,
+          note: "加入 claims 规则", skills: ["claims"], mcp: [], memory: []
+        },
+        {
+          id: "d2", label: "+scenario-versions", action: "保留", parent: "d1", lane: 0,
+          note: "加入版本检索", skills: ["claims", "scenario-versions"], mcp: [], memory: []
+        },
+        {
+          id: "d3", label: "+evidence-chain", action: "保留", parent: "d1", lane: 1,
+          note: "证据链分支", skills: ["claims", "evidence-chain"], mcp: [], memory: []
+        },
+        {
+          id: "d4", label: "合并 d2 + d3", action: "合并", parent: "d2", parents: ["d2", "d3"], lane: 0,
+          note: "双父合并：版本检索 + 证据链",
+          skills: ["claims", "scenario-versions", "evidence-chain"], mcp: [], memory: []
+        },
+        {
+          id: "d5", label: "当前", action: "保留", parent: "d4", lane: 0,
+          note: "当前配置：三 skill",
+          skills: ["claims", "scenario-versions", "evidence-chain"], mcp: [], memory: []
+        },
+        {
+          id: "d6", label: "回退到 d2", action: "回退", parent: "d2", lane: 1, rollbackFrom: "d2",
+          note: "从 d2 回退，清掉证据链",
+          skills: ["claims", "scenario-versions"], mcp: [], memory: []
+        },
+        {
+          id: "d7", label: "实验：+展示规则", action: "实验", parent: "d4", lane: 1,
+          note: "实验分支：加入展示规则",
+          skills: ["claims", "scenario-versions", "evidence-chain"], mcp: [], memory: ["showcase-rules"]
+        }
+      ]
+    }
+  }
+};
+</script>
+
+<script>
+(function () {
+  "use strict";
+
+  var EMBED = new URLSearchParams(window.location.search).get("embed") === "1";
+  if (EMBED) document.documentElement.classList.add("embed");
+
+  var ACTION_COLOR = { "起始": "#3A4048", "保留": "#1B4D8F", "回退": "#C0392B", "实验": "#B98A2F", "合并": "#7D6AA8" };
+  var ROLE_LABEL = { user: "你", assistant: "molt", tool: "工具" };
+
+  var LEFT = 24;
+  var TOP = 44;
+  var LANE_GAP = 150;
+  var DEPTH_GAP = 56;
+  var NODE_W = 132;
+  var NODE_H = 34;
+  var RIGHT = 24;
+  var BOTTOM = 28;
+  var BAND_PAD = (LANE_GAP - NODE_W) / 2;
+
+  var state = {
+    projectId: null,
+    project: null,
+    nodes: [],
+    byId: {},
+    lanes: [],
+    currentId: null,
+    selectedId: null,
+    config: {
+      nodes: [],
+      byId: {},
+      lanes: [],
+      currentId: null,
+      selectedId: null,
+      linkedId: null,
+      matchId: null
+    },
+    armedNode: null,
+    armTimer: null,
+    writing: false,
+    loading: false,
+    loadToken: 0,
+    playToken: 0,
+    newNodeId: null,
+    dynamicSeq: 0,
+    noticeText: null,
+    cache: {}
+  };
+
+  function $(id) { return document.getElementById(id); }
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined && text !== null) node.textContent = String(text);
+    return node;
+  }
+
+  function svgEl(tag, attrs) {
+    var node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    if (attrs) {
+      Object.keys(attrs).forEach(function (key) { node.setAttribute(key, attrs[key]); });
+    }
+    return node;
+  }
+
+  function clear(parent) { while (parent.firstChild) parent.removeChild(parent.firstChild); }
+  function sleep(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
+  function rand(min, max) { return min + Math.random() * (max - min); }
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+  function cloneMessages(list) {
+    return list.map(function (message) {
+      return { role: message.role, text: message.text, tool: message.tool };
+    });
+  }
+
+  function cloneSessionNodes(list) {
+    return list.map(function (node) {
+      return {
+        id: node.id,
+        rev: node.rev,
+        label: node.label,
+        action: node.action,
+        messages: cloneMessages(node.messages),
+        parent: node.parent,
+        parents: node.parents ? node.parents.slice() : undefined,
+        lane: node.lane,
+        row: node.row,
+        note: node.note || "",
+        rollbackFrom: node.rollbackFrom || null,
+        configRef: node.configRef,
+        configInherited: false,
+        dynamic: false
+      };
+    });
+  }
+
+  function cloneConfigNodes(list) {
+    return list.map(function (node) {
+      return {
+        id: node.id,
+        label: node.label,
+        action: node.action,
+        parent: node.parent,
+        parents: node.parents ? node.parents.slice() : undefined,
+        lane: node.lane,
+        row: node.row,
+        note: node.note || "",
+        rollbackFrom: node.rollbackFrom || null,
+        skills: (node.skills || []).slice(),
+        mcp: (node.mcp || []).slice(),
+        memory: (node.memory || []).slice()
+      };
+    });
+  }
+
+  function cloneLanes(list) {
+    return list.map(function (lane) { return { name: lane.name, kind: lane.kind || "branch" }; });
+  }
+
+  function nodeParents(node) {
+    if (node && Array.isArray(node.parents) && node.parents.length) return node.parents;
+    return node && node.parent ? [node.parent] : [];
+  }
+
+  function nodeDepth(node, byId) {
+    if (!node) return 0;
+    if (typeof node.row === "number") return node.row;
+    var parents = nodeParents(node);
+    var depth = -1;
+    for (var i = 0; i < parents.length; i++) {
+      var parent = byId[parents[i]];
+      if (parent) depth = Math.max(depth, nodeDepth(parent, byId));
+    }
+    return depth < 0 ? 0 : depth + 1;
+  }
+
+  function nodeName(node) { return node.rev || node.id; }
+
+  function parentText(node, byId) {
+    var parents = nodeParents(node);
+    if (!parents.length) return "—";
+    return parents.map(function (id) {
+      var parent = byId[id];
+      return parent ? nodeName(parent) : id;
+    }).join(" + ");
+  }
+
+  function laneName(index, lanes) {
+    var lane = (lanes || [])[index];
+    return lane ? lane.name : "—";
+  }
+
+  function sessionLine1(node) {
+    if (node.action === "合并") {
+      return node.rev + " · 合并 " + nodeParents(node).map(function (id) {
+        var parent = state.byId[id];
+        return parent ? parent.rev : id;
+      }).join(" + ");
+    }
+    if (node.action === "回退" && node.rollbackFrom) {
+      var source = state.byId[node.rollbackFrom];
+      return node.rev + " · 回退 · 从 " + (source ? source.rev : node.rollbackFrom);
+    }
+    return node.rev + " · " + node.action;
+  }
+
+  function configLine1(node) {
+    if (node.action === "合并") {
+      return node.id + " · 合并 " + nodeParents(node).join(" + ");
+    }
+    if (node.action === "回退" && node.rollbackFrom) {
+      return node.id + " · 回退 · 从 " + node.rollbackFrom;
+    }
+    return node.id + " · " + node.action;
+  }
+
+  function sessionLine2(node) { return node.messages.length + " 条消息"; }
+  function configLine2(node) { return node.skills.length + " skill · " + node.mcp.length + " MCP · " + node.memory.length + " mem"; }
+
+  function configSummary(id) {
+    var node = state.config.byId[id];
+    if (!node) return "—";
+    var items = [];
+    node.skills.forEach(function (name) { items.push("+" + name); });
+    node.mcp.forEach(function (name) { items.push("+" + name + "(MCP)"); });
+    node.memory.forEach(function (name) { items.push("+" + name + "(memory)"); });
+    return items.length ? items.join(" ") : "无 skill";
+  }
+
+  function diffItems(items, parentItems) {
+    var out = [];
+    (items || []).forEach(function (name) {
+      out.push({ name: name, mark: parentItems.indexOf(name) >= 0 ? "same" : "add" });
+    });
+    (parentItems || []).forEach(function (name) {
+      if (items.indexOf(name) < 0) out.push({ name: name, mark: "remove" });
+    });
+    return out;
+  }
+
+  function changeList(node, primary) {
+    var out = [];
+    ["skills", "mcp", "memory"].forEach(function (key) {
+      var current = node[key] || [];
+      var previous = primary ? (primary[key] || []) : [];
+      current.forEach(function (name) { if (previous.indexOf(name) < 0) out.push("+" + name); });
+      previous.forEach(function (name) { if (current.indexOf(name) < 0) out.push("−" + name); });
+    });
+    return out;
+  }
+
+  /* ---------- 通用图渲染 ---------- */
+
+  function appendDefs(svg, prefix) {
+    var defs = svgEl("defs");
+    [
+      ["normal", "#9AA6B4"],
+      ["rollback", "#C0392B"],
+      ["experiment", "#B98A2F"]
+    ].forEach(function (pair) {
+      var marker = svgEl("marker", {
+        id: prefix + "-" + pair[0],
+        viewBox: "0 0 8 8",
+        refX: "7",
+        refY: "4",
+        markerWidth: "7",
+        markerHeight: "7",
+        orient: "auto",
+        markerUnits: "userSpaceOnUse"
+      });
+      marker.appendChild(svgEl("path", { d: "M0,0 L8,4 L0,8 Z", fill: pair[1] }));
+      defs.appendChild(marker);
+    });
+    svg.appendChild(defs);
+  }
+
+  function renderGraph(svg, nodes, lanes, byId, options) {
+    clear(svg);
+
+    var maxDepth = 0;
+    nodes.forEach(function (node) { maxDepth = Math.max(maxDepth, nodeDepth(node, byId)); });
+    var width = LEFT + (lanes.length - 1) * LANE_GAP + NODE_W + RIGHT;
+    var height = TOP + maxDepth * DEPTH_GAP + NODE_H + BOTTOM;
+
+    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+    svg.setAttribute("width", String(width));
+    svg.setAttribute("height", String(height));
+    svg.setAttribute("aria-label", options.ariaLabel + "：" + nodes.length + " 个节点，" + lanes.length + " 条泳道");
+    appendDefs(svg, options.markerPrefix);
+
+    var laneLayer = svgEl("g", { class: "lane-layer" });
+    lanes.forEach(function (lane, index) {
+      var laneX = LEFT + index * LANE_GAP;
+      laneLayer.appendChild(svgEl("rect", {
+        class: "lane-band" + (index % 2 === 1 ? " alt" : ""),
+        x: String(laneX - BAND_PAD),
+        y: "0",
+        width: String(LANE_GAP),
+        height: String(height)
+      }));
+      var count = 0;
+      nodes.forEach(function (node) { if (node.lane === index) count += 1; });
+      var label = svgEl("text", { class: "lane-label", x: String(laneX + NODE_W / 2), y: "18" });
+      label.textContent = lane.name;
+      laneLayer.appendChild(label);
+      var countText = svgEl("text", { class: "lane-count", x: String(laneX + NODE_W / 2), y: "31" });
+      countText.textContent = count + " 节点";
+      laneLayer.appendChild(countText);
+    });
+    laneLayer.appendChild(svgEl("line", {
+      class: "lane-line", x1: "0", y1: String(TOP - 8), x2: String(width), y2: String(TOP - 8)
+    }));
+    svg.appendChild(laneLayer);
+
+    var edgeLayer = svgEl("g", { class: "edge-layer" });
+    nodes.forEach(function (node) {
+      nodeParents(node).forEach(function (parentId) {
+        var parent = byId[parentId];
+        if (!parent) return;
+        var x1 = LEFT + parent.lane * LANE_GAP + NODE_W / 2;
+        var y1 = TOP + nodeDepth(parent, byId) * DEPTH_GAP + NODE_H;
+        var x2 = LEFT + node.lane * LANE_GAP + NODE_W / 2;
+        var y2 = TOP + nodeDepth(node, byId) * DEPTH_GAP - 2;
+        var mid = y1 + Math.max(10, (y2 - y1) / 2);
+        var d = "M" + x1 + " " + y1 + " C" + x1 + " " + mid + " " + x2 + " " + mid + " " + x2 + " " + y2;
+        var cls = "edge";
+        var marker = "normal";
+        if (node.action === "回退") {
+          cls += " is-branch is-rollback";
+          marker = "rollback";
+        } else if (node.action === "实验") {
+          cls += " is-branch is-experiment";
+          marker = "experiment";
+        }
+        edgeLayer.appendChild(svgEl("path", {
+          class: cls,
+          d: d,
+          "marker-end": "url(#" + options.markerPrefix + "-" + marker + ")"
+        }));
+      });
+    });
+    svg.appendChild(edgeLayer);
+
+    var nodeLayer = svgEl("g", { class: "node-layer" });
+    nodes.forEach(function (node) {
+      var isCurrent = node.id === options.currentId;
+      var isSelected = node.id === options.selectedId;
+      var isLinked = node.id === options.linkedId;
+      var isMatch = !!(options.matchConfigId && node.configRef === options.matchConfigId);
+      var group = svgEl("g", { class: options.nodeClass + " graph-node", tabindex: "0", role: "button" });
+      group.setAttribute("data-id", node.id);
+      group.setAttribute("aria-label", nodeName(node) + " " + node.label + "，" + node.action + "，" + (node.messages ? node.messages.length + " 条消息" : (node.skills || []).length + " 项 skill"));
+      group.setAttribute("aria-pressed", isSelected ? "true" : "false");
+      if (isCurrent) group.setAttribute("aria-current", "true");
+      if (isCurrent) group.classList.add("is-current");
+      if (isSelected) group.classList.add("is-selected");
+      if (isLinked) group.classList.add("is-linked");
+      if (isMatch) group.classList.add("is-config-match");
+      if (node.id === options.newNodeId) group.classList.add("is-new");
+
+      var tip = svgEl("title");
+      tip.textContent = nodeName(node) + " · " + node.label + " · " + node.note;
+      group.appendChild(tip);
+
+      var x = LEFT + node.lane * LANE_GAP;
+      var y = TOP + nodeDepth(node, byId) * DEPTH_GAP;
+      group.appendChild(svgEl("rect", {
+        class: "node-card", x: String(x), y: String(y), width: String(NODE_W), height: String(NODE_H), rx: "4", ry: "4"
+      }));
+      group.appendChild(svgEl("rect", {
+        class: "node-accent", x: String(x + 1), y: String(y + 5), width: "3", height: String(NODE_H - 10), rx: "1.5",
+        fill: ACTION_COLOR[node.action] || "#6B7280"
+      }));
+
+      var line1 = svgEl("text", { class: "node-line", x: String(x + 10), y: String(y + 14) });
+      line1.textContent = options.line1(node);
+      group.appendChild(line1);
+
+      var line2 = svgEl("text", { class: "node-line sub", x: String(x + 10), y: String(y + 27) });
+      line2.textContent = options.line2(node);
+      group.appendChild(line2);
+
+      if (node.action === "合并") {
+        var badgeW = 27;
+        group.appendChild(svgEl("rect", {
+          class: "merge-badge",
+          x: String(x + NODE_W - badgeW - 3),
+          y: String(y - 9),
+          width: String(badgeW),
+          height: "10",
+          rx: "2.5"
+        }));
+        var badgeText = svgEl("text", {
+          class: "merge-badge-text",
+          x: String(x + NODE_W - badgeW / 2 - 3),
+          y: String(y - 2)
+        });
+        badgeText.textContent = "合并";
+        group.appendChild(badgeText);
+      }
+
+      if (isCurrent) {
+        group.appendChild(svgEl("circle", {
+          class: "node-dot", cx: String(x + NODE_W - 8), cy: String(y + 8), r: "2.6"
+        }));
+      }
+
+      group.addEventListener("click", function () { options.onSelect(node.id); });
+      group.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          options.onSelect(node.id);
+        }
+      });
+      nodeLayer.appendChild(group);
+    });
+    svg.appendChild(nodeLayer);
+  }
+
+  function renderSessionTree() {
+    renderGraph($("tree"), state.nodes, state.lanes, state.byId, {
+      markerPrefix: "session",
+      nodeClass: "tree-node",
+      ariaLabel: "会话树",
+      currentId: state.currentId,
+      selectedId: state.selectedId,
+      matchConfigId: state.config.matchId,
+      newNodeId: state.newNodeId,
+      line1: sessionLine1,
+      line2: sessionLine2,
+      onSelect: selectSession
+    });
+    state.newNodeId = null;
+  }
+
+  function renderConfigTree() {
+    renderGraph($("config-tree"), state.config.nodes, state.config.lanes, state.config.byId, {
+      markerPrefix: "config",
+      nodeClass: "config-node",
+      ariaLabel: "配置树",
+      currentId: state.config.currentId,
+      selectedId: state.config.selectedId,
+      linkedId: state.config.linkedId,
+      line1: configLine1,
+      line2: configLine2,
+      onSelect: selectConfig
+    });
+  }
+
+  function refreshSessionSelection() {
+    var groups = $("tree").querySelectorAll(".tree-node");
+    for (var i = 0; i < groups.length; i++) {
+      var group = groups[i];
+      var id = group.getAttribute("data-id");
+      var node = state.byId[id];
+      var selected = id === state.selectedId;
+      var current = id === state.currentId;
+      var match = !!(state.config.matchId && node && node.configRef === state.config.matchId);
+      group.classList.toggle("is-selected", selected);
+      group.classList.toggle("is-current", current);
+      group.classList.toggle("is-config-match", match);
+      group.setAttribute("aria-pressed", selected ? "true" : "false");
+      if (current) group.setAttribute("aria-current", "true");
+      else group.removeAttribute("aria-current");
+    }
+  }
+
+  function refreshConfigSelection() {
+    var groups = $("config-tree").querySelectorAll(".config-node");
+    for (var i = 0; i < groups.length; i++) {
+      var group = groups[i];
+      var id = group.getAttribute("data-id");
+      var selected = id === state.config.selectedId;
+      var linked = id === state.config.linkedId;
+      var current = id === state.config.currentId;
+      group.classList.toggle("is-selected", selected);
+      group.classList.toggle("is-linked", linked);
+      group.classList.toggle("is-current", current);
+      group.setAttribute("aria-pressed", selected ? "true" : "false");
+      if (current) group.setAttribute("aria-current", "true");
+      else group.removeAttribute("aria-current");
+    }
+  }
+
+  function bringIntoView(svgId, targetId) {
+    var svg = $(svgId);
+    if (!svg) return;
+    var scroll = svgId === "tree" ? $("tree-scroll") : $("config-scroll");
+    if (!scroll) return;
+    var groups = svg.querySelectorAll(".graph-node");
+    for (var i = 0; i < groups.length; i++) {
+      if (groups[i].getAttribute("data-id") !== targetId) continue;
+      var nodeRect = groups[i].getBoundingClientRect();
+      var box = scroll.getBoundingClientRect();
+      var pad = 10;
+      if (nodeRect.top < box.top + pad) scroll.scrollTop -= (box.top + pad - nodeRect.top);
+      else if (nodeRect.bottom > box.bottom - pad) scroll.scrollTop += (nodeRect.bottom - (box.bottom - pad));
+      if (nodeRect.left < box.left + pad) scroll.scrollLeft -= (box.left + pad - nodeRect.left);
+      else if (nodeRect.right > box.right - pad) scroll.scrollLeft += (nodeRect.right - (box.right - pad));
+      return;
+    }
+  }
+
+  /* ---------- 配置清单 ---------- */
+
+  function renderConfigDetail(id, opts) {
+    opts = opts || {};
+    var panel = $("config-detail");
+    clear(panel);
+    if (!id) {
+      panel.appendChild(el("p", "config-empty", "选择配置节点查看 skills / mcp / memory 清单。"));
+      return;
+    }
+    var node = state.config.byId[id];
+    if (!node) {
+      panel.appendChild(el("p", "config-empty", "配置节点不存在。"));
+      return;
+    }
+    var parents = nodeParents(node);
+    var primary = parents.length ? state.config.byId[parents[0]] : null;
+
+    var head = el("div", "config-detail-head");
+    head.appendChild(el("p", "config-kicker", "CONFIG / " + node.id));
+    head.appendChild(el("h3", "config-title", node.label));
+    head.appendChild(el("p", "config-stats", "动作 · " + node.action + " ｜ 泳道 " + laneName(node.lane, state.config.lanes) + " ｜ 父版本 " + parentText(node, state.config.byId) + " ｜ " + node.skills.length + " skill · " + node.mcp.length + " MCP · " + node.memory.length + " memory"));
+    if (opts.linkedFrom) head.appendChild(el("p", "config-linked", "由会话 " + opts.linkedFrom + " 链接"));
+    if (opts.inherited) head.appendChild(el("p", "config-linked", "回退新增节点沿用此配置"));
+    if (node.note) head.appendChild(el("p", "config-note", node.note));
+    panel.appendChild(head);
+
+    var body = el("div", "config-body");
+    var manifest = el("div", "manifest");
+    ["skills", "mcp", "memory"].forEach(function (key) {
+      var row = el("div", "manifest-row");
+      row.appendChild(el("span", "manifest-key", key));
+      var items = el("div", "manifest-items");
+      var diff = diffItems(node[key] || [], primary ? (primary[key] || []) : []);
+      if (!diff.length) {
+        items.appendChild(el("span", "manifest-empty", "—"));
+      } else {
+        diff.forEach(function (item) {
+          var mark = item.mark === "add" ? "+" : item.mark === "remove" ? "−" : "·";
+          items.appendChild(el("span", "manifest-item is-" + item.mark, mark + item.name));
+        });
+      }
+      row.appendChild(items);
+      manifest.appendChild(row);
+    });
+    body.appendChild(manifest);
+
+    var changes = changeList(node, primary);
+    var summary = primary
+      ? ("相对 " + primary.id + "：" + (changes.length ? changes.join(" ") : "无变化"))
+      : "根配置：空清单";
+    body.appendChild(el("p", "config-diff", summary));
+    if (parents.length > 1) {
+      body.appendChild(el("p", "config-diff", "双父合并：" + parents.join(" + ") + "（差异相对 " + parents[0] + "）"));
+    }
+
+    var bound = state.nodes.filter(function (sessionNode) { return sessionNode.configRef === id; });
+    bound.sort(function (a, b) { return parseInt(a.rev.slice(1), 10) - parseInt(b.rev.slice(1), 10); });
+    var bindings = el("p", "config-bindings");
+    bindings.appendChild(el("b", null, "绑定会话 " + bound.length + " 个："));
+    bindings.appendChild(document.createTextNode(bound.length ? bound.map(function (sessionNode) { return sessionNode.rev; }).join(" · ") : "暂无"));
+    body.appendChild(bindings);
+    panel.appendChild(body);
+  }
+
+  /* ---------- 选择与会话回放 ---------- */
+
+  function linkSessionConfig(node) {
+    if (!node || !node.configRef) return;
+    var configNode = state.config.byId[node.configRef];
+    if (!configNode) return;
+    state.config.linkedId = configNode.id;
+    state.config.selectedId = null;
+    state.config.matchId = null;
+    refreshConfigSelection();
+    refreshSessionSelection();
+    renderConfigDetail(configNode.id, { linkedFrom: node.rev, inherited: !!node.configInherited });
+    bringIntoView("config-tree", configNode.id);
+  }
+
+  function selectSession(id) {
+    if (state.writing) return;
+    var node = state.byId[id];
+    if (!node) return;
+    state.selectedId = id;
+    refreshSessionSelection();
+    bringIntoView("tree", id);
+    linkSessionConfig(node);
+    playNode(node);
+  }
+
+  function selectConfig(id) {
+    var node = state.config.byId[id];
+    if (!node) return;
+    state.config.selectedId = id;
+    state.config.linkedId = id;
+    state.config.matchId = id;
+    refreshConfigSelection();
+    refreshSessionSelection();
+    renderConfigDetail(id, {});
+    bringIntoView("config-tree", id);
+
+    var first = null;
+    for (var i = 0; i < state.nodes.length; i++) {
+      if (state.nodes[i].configRef === id) { first = state.nodes[i].id; break; }
+    }
+    if (first) bringIntoView("tree", first);
+  }
+
+  function appendMessageRow(log, message) {
+    var row = el("div", "msg " + message.role);
+    row.appendChild(el("p", "msg-role", ROLE_LABEL[message.role] || message.role));
+    row.appendChild(el("p", "msg-body", message.text));
+    log.appendChild(row);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function appendPending(log, role) {
+    var row = el("div", "msg pending " + role);
+    row.appendChild(el("p", "msg-role", ROLE_LABEL[role] || role));
+    var body = el("p", "msg-body");
+    body.appendChild(el("span", "dots", role === "tool" ? "检索中…" : "输入中…"));
+    row.appendChild(body);
+    log.appendChild(row);
+    log.scrollTop = log.scrollHeight;
+    return row;
+  }
+
+  function playNode(node) {
+    var token = ++state.playToken;
+    state.armedNode = null;
+    if (state.armTimer) {
+      clearTimeout(state.armTimer);
+      state.armTimer = null;
+    }
+
+    var notice = state.noticeText;
+    state.noticeText = null;
+
+    var panel = $("replay");
+    clear(panel);
+
+    var head = el("div", "replay-head");
+    head.appendChild(el("p", "replay-kicker", "SNAPSHOT / " + node.rev));
+    head.appendChild(el("h2", "replay-title", node.label));
+    head.appendChild(el("p", "replay-stats", "动作 · " + node.action + " ｜ 泳道 " + laneName(node.lane, state.lanes) + " ｜ 父节点 " + parentText(node, state.byId) + " ｜ " + node.messages.length + " 条消息"));
+    head.appendChild(el("p", "replay-config", "配置 " + node.configRef + (node.configInherited ? "（沿用）" : "") + " · " + configSummary(node.configRef)));
+    if (node.note) head.appendChild(el("p", "replay-note", node.note));
+    if (notice) head.appendChild(el("p", "replay-notice", notice));
+    if (node.id === state.currentId) head.appendChild(el("span", "replay-chip", "当前快照"));
+    panel.appendChild(head);
+
+    var log = el("div", "replay-log");
+    log.appendChild(el("p", "replay-loading", "读取快照 " + node.rev + "…"));
+    panel.appendChild(log);
+
+    var foot = el("div", "replay-foot");
+    var status = el("p", "replay-status", "读取快照 " + node.rev + "…");
+    foot.appendChild(status);
+    panel.appendChild(foot);
+
+    appendRollbackControl(foot, status, node, token);
+
+    (async function () {
+      await sleep(300);
+      if (token !== state.playToken) return;
+      clear(log);
+
+      var total = node.messages.length;
+      for (var i = 0; i < total; i++) {
+        var message = node.messages[i];
+        var pending = appendPending(log, message.role);
+        await sleep(message.role === "tool" ? 600 : rand(450, 700));
+        if (token !== state.playToken) return;
+        pending.remove();
+        appendMessageRow(log, message);
+        if (!state.writing) status.textContent = "这是第 " + (i + 1) + " 条 / 共 " + total + " 条";
+        log.scrollTop = log.scrollHeight;
+      }
+
+      if (token !== state.playToken || state.writing) return;
+      status.textContent = "本轮结束";
+      status.classList.add("is-done");
+    })();
+  }
+
+  function appendRollbackControl(foot, status, node, token) {
+    if (node.id === state.currentId) return;
+    var armed = state.armedNode === node.id;
+    var button = el("button", "rollback-btn" + (armed ? " is-armed" : ""), armed ? "确认回退" : "回退到此节点");
+    button.type = "button";
+    button.addEventListener("click", function () {
+      if (state.writing) return;
+      if (state.armedNode !== node.id) {
+        state.armedNode = node.id;
+        button.textContent = "确认回退";
+        button.classList.add("is-armed");
+        status.classList.remove("is-done");
+        status.textContent = "再点一次确认（15 秒内有效）；回退只新增节点，不删除历史。";
+        if (state.armTimer) clearTimeout(state.armTimer);
+        state.armTimer = setTimeout(function () {
+          if (state.armedNode !== node.id) return;
+          state.armedNode = null;
+          if (button.isConnected) {
+            button.textContent = "回退到此节点";
+            button.classList.remove("is-armed");
+          }
+          if (status.isConnected && !status.classList.contains("is-done")) status.textContent = "已取消确认。";
+        }, 15000);
+        return;
+      }
+      performRollback(node, button, status, token);
+    });
+    foot.appendChild(button);
+  }
+
+  async function performRollback(target, button, status, token) {
+    state.writing = true;
+    state.armedNode = null;
+    if (state.armTimer) {
+      clearTimeout(state.armTimer);
+      state.armTimer = null;
+    }
+    button.disabled = true;
+    button.textContent = "写入快照…";
+    status.classList.remove("is-done");
+    status.textContent = "写入快照…";
+
+    await sleep(600);
+    state.writing = false;
+
+    if (state.selectedId !== target.id || token !== state.playToken) return;
+
+    var existing = findRollback(target.id);
+    if (existing) {
+      state.currentId = existing.id;
+      state.selectedId = existing.id;
+      updateHeader();
+      renderSessionTree();
+      state.noticeText = "已存在从 " + target.rev + " 的回退节点，直接切换到该快照。";
+      linkSessionConfig(existing);
+      bringIntoView("tree", existing.id);
+      playNode(existing);
+      return;
+    }
+
+    var depth = nodeDepth(target, state.byId) + 1;
+    var lane = allocateLane(depth);
+    var rev = nextRev();
+    var node = {
+      id: "rollback-" + (++state.dynamicSeq),
+      rev: rev,
+      label: "回退 · 从 " + target.rev,
+      action: "回退",
+      messages: cloneMessages(target.messages),
+      parent: target.id,
+      lane: lane,
+      note: "从 " + target.rev + " 回退 · 演示新增，原节点全部保留",
+      rollbackFrom: target.id,
+      configRef: target.configRef,
+      configInherited: true,
+      dynamic: true
+    };
+
+    state.nodes.push(node);
+    state.byId[node.id] = node;
+    state.currentId = node.id;
+    state.selectedId = node.id;
+    state.newNodeId = node.id;
+    updateHeader();
+    renderSessionTree();
+    state.noticeText = "已写入新快照 " + rev + "；配置 " + node.configRef + " 沿用，原节点全部保留。";
+    linkSessionConfig(node);
+    bringIntoView("tree", node.id);
+    playNode(node);
+  }
+
+  function findRollback(sourceId) {
+    for (var i = 0; i < state.nodes.length; i++) {
+      var node = state.nodes[i];
+      if (node.action === "回退" && node.rollbackFrom === sourceId) return node;
+    }
+    return null;
+  }
+
+  function laneBusy(laneIndex, depth) {
+    for (var i = 0; i < state.nodes.length; i++) {
+      var node = state.nodes[i];
+      if (node.lane === laneIndex && nodeDepth(node, state.byId) === depth) return true;
+    }
+    return false;
+  }
+
+  function allocateLane(depth) {
+    var i;
+    for (i = 0; i < state.lanes.length; i++) {
+      if (state.lanes[i].kind === "rollback" && !laneBusy(i, depth)) return i;
+    }
+    for (i = 1; i < state.lanes.length; i++) {
+      if (!laneBusy(i, depth)) return i;
+    }
+    var rollbackLaneCount = 0;
+    for (i = 0; i < state.lanes.length; i++) {
+      if (state.lanes[i].kind === "rollback") rollbackLaneCount += 1;
+    }
+    state.lanes.push({ name: "回退 " + pad2(rollbackLaneCount + 1), kind: "rollback" });
+    return state.lanes.length - 1;
+  }
+
+  function nextRev() {
+    var prefix = state.project.revPrefix;
+    var max = -1;
+    state.nodes.forEach(function (node) {
+      var match = /^([a-z]+)(\d+)$/.exec(node.rev);
+      if (match && match[1] === prefix) max = Math.max(max, parseInt(match[2], 10));
+    });
+    return prefix + (max + 1);
+  }
+
+  /* ---------- 顶部与加载 ---------- */
+
+  function setActiveTab(key) {
+    var tabA = $("tab-a");
+    var tabB = $("tab-b");
+    tabA.classList.toggle("is-active", key === "a");
+    tabB.classList.toggle("is-active", key === "b");
+    tabA.setAttribute("aria-selected", key === "a" ? "true" : "false");
+    tabB.setAttribute("aria-selected", key === "b" ? "true" : "false");
+  }
+
+  function updateHeader() {
+    if (!state.project) return;
+    var rollbacks = 0;
+    state.nodes.forEach(function (node) { if (node.action === "回退") rollbacks += 1; });
+    $("project-meta").textContent = state.project.short + " · 节点 " + state.nodes.length + " · 泳道 " + state.lanes.length + " · 回退 " + rollbacks + " 次";
+    var current = state.byId[state.currentId];
+    $("current-rev").textContent = current ? current.rev : "—";
+    $("session-count").textContent = state.nodes.length + " 节点 · " + state.lanes.length + " 泳道";
+    $("config-count").textContent = state.config.nodes.length + " 节点 · " + state.config.lanes.length + " 泳道";
+    var configCurrent = state.config.currentId ? state.config.byId[state.config.currentId] : null;
+    $("config-current").textContent = configCurrent ? "当前 " + configCurrent.id : "当前 —";
+  }
+
+  function showLoading(flag) { $("loading").hidden = !flag; }
+
+  function renderProjectLoading() {
+    var panel = $("replay");
+    clear(panel);
+    panel.appendChild(el("p", "replay-empty", "正在加载项目快照…"));
+    var detail = $("config-detail");
+    clear(detail);
+    detail.appendChild(el("p", "config-empty", "正在加载配置树…"));
+  }
+
+  /* ---------- 项目切换 ---------- */
+
+  function snapshotRuntime() {
+    if (!state.projectId) return;
+    state.cache[state.projectId] = {
+      nodes: state.nodes,
+      lanes: state.lanes,
+      currentId: state.currentId,
+      dynamicSeq: state.dynamicSeq
+    };
+  }
+
+  function loadProject(key) {
+    if (state.loading || state.writing) return;
+    if (state.projectId === key) return;
+    var fixture = PROJECT_FIXTURES[key];
+    if (!fixture) return;
+
+    snapshotRuntime();
+
+    state.loading = true;
+    state.loadToken += 1;
+    state.playToken += 1;
+    var token = state.loadToken;
+    setActiveTab(key);
+    renderProjectLoading();
+    showLoading(true);
+    $("tree-scroll").scrollTop = 0;
+    $("tree-scroll").scrollLeft = 0;
+    $("config-scroll").scrollTop = 0;
+    $("config-scroll").scrollLeft = 0;
+    $("tree").classList.remove("is-visible");
+    $("config-tree").classList.remove("is-visible");
+
+    var wait = 500 + Math.random() * 200;
+    sleep(wait).then(function () {
+      if (token !== state.loadToken) return;
+
+      var saved = state.cache[key];
+      state.projectId = key;
+      state.project = fixture;
+      if (saved) {
+        state.nodes = saved.nodes;
+        state.lanes = saved.lanes;
+        state.currentId = saved.currentId;
+        state.dynamicSeq = saved.dynamicSeq;
+      } else {
+        state.nodes = cloneSessionNodes(fixture.nodes);
+        state.lanes = cloneLanes(fixture.lanes);
+        state.currentId = fixture.current;
+        state.dynamicSeq = 0;
+      }
+      state.byId = {};
+      state.nodes.forEach(function (node) { state.byId[node.id] = node; });
+
+      var configTree = fixture.configTree;
+      state.config = {
+        nodes: cloneConfigNodes(configTree.nodes),
+        byId: {},
+        lanes: cloneLanes(configTree.lanes),
+        currentId: configTree.current,
+        selectedId: null,
+        linkedId: null,
+        matchId: null
+      };
+      state.config.nodes.forEach(function (node) { state.config.byId[node.id] = node; });
+
+      state.selectedId = null;
+      state.armedNode = null;
+      state.writing = false;
+      state.newNodeId = null;
+      state.noticeText = null;
+      if (state.armTimer) {
+        clearTimeout(state.armTimer);
+        state.armTimer = null;
+      }
+      state.playToken += 1;
+
+      renderSessionTree();
+      renderConfigTree();
+      updateHeader();
+      showLoading(false);
+      state.loading = false;
+
+      requestAnimationFrame(function () {
+        $("tree").classList.add("is-visible");
+        $("config-tree").classList.add("is-visible");
+      });
+      selectSession(state.currentId);
+    });
+  }
+
+  function bind() {
+    $("tab-a").addEventListener("click", function () { loadProject("a"); });
+    $("tab-b").addEventListener("click", function () { loadProject("b"); });
+
+    var resizeTimer = null;
+    function scrollToSelection() {
+      if (!state.projectId) return;
+      var sessionTarget = state.selectedId || state.currentId;
+      if (sessionTarget) bringIntoView("tree", sessionTarget);
+      if (state.config.linkedId) bringIntoView("config-tree", state.config.linkedId);
+    }
+    window.addEventListener("resize", function () {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(scrollToSelection, 80);
+    });
+    if (typeof ResizeObserver !== "undefined") {
+      var lastWidth = -1;
+      var lastHeight = -1;
+      var observer = new ResizeObserver(function (entries) {
+        var rect = entries[0].contentRect;
+        if (rect.width === lastWidth && rect.height === lastHeight) return;
+        lastWidth = rect.width;
+        lastHeight = rect.height;
+        if (rect.width > 0 && rect.height > 0) scrollToSelection();
+      });
+      observer.observe($("viewport"));
+      observer.observe($("config-viewport"));
+    }
+
+    if (!EMBED) {
+      document.addEventListener("keydown", function (event) {
+        if (event.key !== "Escape") return;
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = "../chat/index.html";
+      });
+    }
+  }
+
+  bind();
+  loadProject("a");
+})();
+</script>
+</body>
+</html>
