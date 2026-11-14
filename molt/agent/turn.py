@@ -52,6 +52,7 @@ from molt.agent.tools import (
     TOOLS,
     ToolOutcome,
     build_tool_specs,
+    execute_tool,
     execute_tool_dispatch,
 )
 
@@ -522,87 +523,46 @@ class TurnRunner:
         messages: list[dict[str, Any]],
         reply: ChatReply,
     ) -> tuple[str, list[str] | None]:
-        """Legacy tool loop: each call is checked, executed and answered.
+        if len(reply.tool_calls) > 1:
+            raise ChatError(
+                ErrorCode.TOO_MANY_TOOL_CALLS, "上游返回了多个工具调用，已拒绝执行", False
+            )
+        call = reply.tool_calls[0]
+        with session.condition:
+            self._alive(session)
+            session.append_event(
+                "tool.call",
+                {
+                    "turn_id": turn_id,
+                    "call_id": call.call_id,
+                    "tool": call.name,
+                    "arguments": _parsed_arguments(call),
+                },
+            )
+            session.append_event("status", {"turn_id": turn_id, "state": "tool"})
 
-        The first request uses ``tool_choice="auto"``. Later requests keep
-        ``"none"`` for compatibility, but a provider that still emits tool calls
-        is honoured rather than rejected: every call id gets a ``tool.result``
-        and every result is sent back in the next provider request.
-        """
+        outcome = execute_tool(call.name, call.arguments, self._index)
 
-        current = messages
-        current_reply = reply
-        experiment_refs: list[str] = []
-        status_tool_sent = False
-        while True:
-            if not current_reply.tool_calls:
-                return current_reply.content, experiment_refs or None
-            calls = current_reply.tool_calls
-            assistant_message: dict[str, Any] = {
-                "role": "assistant",
-                "content": current_reply.content or "",
-                "tool_calls": [
-                        {
-                            "id": call.call_id,
-                            "type": "function",
-                            "function": {"name": call.name, "arguments": call.arguments},
-                        }
-                    for call in calls
-                ],
-            }
-            if getattr(current_reply, "reasoning_content", ""):
-                assistant_message["reasoning_content"] = current_reply.reasoning_content
-            current = [*current, assistant_message]
-            for call in calls:
-                self._check_cancel(session, turn_id)
-                with session.condition:
-                    self._alive(session)
-                    session.append_event(
-                        "tool.call",
-                        {
-                            "turn_id": turn_id,
-                            "call_id": call.call_id,
-                            "tool": call.name,
-                            "arguments": _parsed_arguments(call),
-                        },
-                    )
-                if not status_tool_sent:
-                    with session.condition:
-                        self._alive(session)
-                        session.append_event(
-                            "status", {"turn_id": turn_id, "state": "tool"}
-                        )
-                    status_tool_sent = True
-                self._local.tool_calls = int(getattr(self._local, "tool_calls", 0)) + 1
-                outcome = execute_tool_dispatch(
-                    call.name, call.arguments, self._index, None, None
-                )
-                with session.condition:
-                    self._alive(session)
-                    session.append_event(
-                        "tool.result",
-                        {
-                            "turn_id": turn_id,
-                            **outcome.event_payload(call.call_id, call.name),
-                        },
-                    )
-                if outcome.status == "ok" and isinstance(outcome.result, dict):
-                    experiment_id = outcome.result.get("experiment_id")
-                    if (
-                        isinstance(experiment_id, str)
-                        and experiment_id not in experiment_refs
-                        and find_experiment(self._index, experiment_id)
-                    ):
-                        experiment_refs.append(experiment_id)
-                self._check_cancel(session, turn_id)
-                current.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": call.call_id,
-                        "content": outcome.tool_message_content(),
-                    }
-                )
-            current_reply = self._complete(session, turn_id, current, TOOLS, "none")
+        with session.condition:
+            self._alive(session)
+            session.append_event(
+                "tool.result",
+                {"turn_id": turn_id, **outcome.event_payload(call.call_id, call.name)},
+            )
+
+        experiment_refs: list[str] | None = None
+        if outcome.status == "ok" and isinstance(outcome.result, dict):
+            experiment_id = outcome.result.get("experiment_id")
+            if isinstance(experiment_id, str) and find_experiment(self._index, experiment_id):
+                experiment_refs = [experiment_id]
+
+        followup = _tool_followup_messages(messages, call, outcome)
+        second = self._adapter.complete(followup, TOOLS, "none")
+        if second.tool_calls:
+            raise ChatError(
+                ErrorCode.TOO_MANY_TOOL_CALLS, "上游返回了多个工具调用，已拒绝执行", False
+            )
+        return second.content, experiment_refs
 
     # ---- runtime 路径 -----------------------------------------------------
     def _run_runtime_turn(
@@ -756,12 +716,34 @@ class TurnRunner:
     ) -> tuple[str, list[str] | None]:
         status_tool_sent = False
         experiment_refs: list[str] = []
+        tool_calls_used = 0
+        output_bytes = 0
+        rounds = 0
 
         while True:
+            rounds += 1
+            if rounds > MAX_RUNTIME_ROUNDS:
+                raise ChatError(
+                    ErrorCode.TOOL_BUDGET_EXCEEDED,
+                    f"本次 turn 的轮数预算（{MAX_RUNTIME_ROUNDS}）已耗尽",
+                    False,
+                )
             reply: ChatReply = self._complete(session, turn_id, messages, specs, "auto")
             if not reply.tool_calls:
                 return reply.content, experiment_refs or None
             calls = reply.tool_calls
+            if len(calls) > MAX_RUNTIME_TOOL_CALLS_PER_ROUND:
+                raise ChatError(
+                    ErrorCode.TOO_MANY_TOOL_CALLS,
+                    f"单轮最多 {MAX_RUNTIME_TOOL_CALLS_PER_ROUND} 个工具调用，已拒绝执行",
+                    False,
+                )
+            if tool_calls_used + len(calls) > MAX_RUNTIME_TOOL_CALLS:
+                raise ChatError(
+                    ErrorCode.TOOL_BUDGET_EXCEEDED,
+                    f"本次 turn 的工具调用次数预算（{MAX_RUNTIME_TOOL_CALLS}）已耗尽",
+                    False,
+                )
 
             assistant: dict[str, Any] = {
                 "role": "assistant",
@@ -825,6 +807,14 @@ class TurnRunner:
                         "content": outcome.tool_message_content(),
                     }
                 )
+                output_bytes += len(outcome.tool_message_content().encode("utf-8"))
+                if output_bytes > RUNTIME_OUTPUT_BYTES:
+                    raise ChatError(
+                        ErrorCode.TOOL_BUDGET_EXCEEDED,
+                        "本次 turn 的工具输出预算（64 KiB）已耗尽",
+                        False,
+                    )
+                tool_calls_used += 1
 
     # ---- 收尾 -------------------------------------------------------------
     def _finish(

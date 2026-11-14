@@ -249,6 +249,7 @@ class McpClient:
             raise McpProtocolError("tool_result_not_an_object")
         if result.get("isError") is True:
             raise McpToolError(name, result)
+        self._enforce_budget(name, result)
         return result
 
     def ping(self) -> dict[str, Any]:
@@ -552,6 +553,22 @@ class McpClient:
             proc.stdin.flush()
         except (BrokenPipeError, ValueError) as exc:
             raise McpFrameError("send_failed", str(exc)) from exc
+
+    def _enforce_budget(self, tool: str, result: dict[str, Any]) -> None:
+        total = 0
+        content = result.get("content")
+        if isinstance(content, list):
+            for item in content:
+                if isinstance(item, dict) and isinstance(item.get("text"), str):
+                    total += len(item["text"].encode("utf-8"))
+        if isinstance(result.get("structuredContent"), dict):
+            total += len(
+                json.dumps(result["structuredContent"], ensure_ascii=False).encode("utf-8")
+            )
+        if total > self.spec.max_output_bytes:
+            raise McpBudgetError(
+                "output_budget_exceeded", f"{tool}: {total} > {self.spec.max_output_bytes}"
+            )
 
     def _record(self, direction: str, message: dict[str, Any]) -> None:
         if self.transcript_path is None:
