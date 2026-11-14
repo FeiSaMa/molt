@@ -1501,16 +1501,18 @@ body.connected .provider-chip.is-mock { border-color: #e6dcc4; color: #8a6a1f; b
 .demo-side-split .is-bad { color: var(--chat-red); }
 .demo-side-split .is-good { color: #1e7a46; }
 .demo-side .text-button { padding: 4px 7px; font-size: .62rem; }
-.demo-delta { margin-top: 8px; padding: 7px 10px; border: 1px solid var(--chat-line); border-radius: 5px; background: #fbfcfe; }
+.demo-delta { position: relative; margin-top: 8px; padding: 7px 10px; border: 1px solid var(--chat-line); border-radius: 5px; background: #fbfcfe; }
 .demo-delta-title { margin: 0 0 4px; color: var(--chat-muted); font: 600 .56rem var(--font-num); letter-spacing: .05em; text-transform: uppercase; }
 .demo-delta-head, .demo-delta-row { display: grid; grid-template-columns: 52px 1fr 1.25fr; gap: 6px; align-items: baseline; }
 .demo-delta-head { margin-top: 2px; color: var(--chat-muted); font: 600 .52rem var(--font-num); letter-spacing: .04em; }
-.demo-delta-row { color: var(--chat-ink); font: .62rem var(--font-num); line-height: 1.55; }
+.demo-delta-row { color: var(--chat-ink); font: .62rem var(--font-num); line-height: 1.55; cursor: help; }
 .demo-delta-row > span { color: var(--chat-muted); }
 .demo-delta-row b { font-weight: 600; color: var(--chat-muted); overflow-wrap: anywhere; }
 .demo-delta-row b.is-on { color: var(--chat-blue); }
 .demo-delta-path { margin: 5px 0 0; color: var(--chat-muted); font: .55rem var(--font-num); overflow-wrap: anywhere; }
 .demo-delta-note { margin: 4px 0 0; color: var(--chat-muted); font-size: .62rem; line-height: 1.5; }
+.demo-delta-row.is-hover { background: #f2f7fc; }
+.demo-delta-tip { position: absolute; z-index: 30; left: 0; right: 0; margin-top: 4px; padding: 8px 10px; border: 1px solid var(--chat-line); border-radius: 5px; background: #fff; box-shadow: 0 8px 20px rgba(20, 22, 26, .14); color: var(--chat-ink); font: .55rem/1.6 var(--font-num); white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: none; }
 .demo-callout { margin: 10px 0 0; padding: 9px 10px; border: 1px solid #d7e1ee; border-radius: 5px; background: #f5f8fc; color: var(--chat-muted); font-size: .7rem; line-height: 1.65; }
 .demo-callout b { color: var(--chat-ink); }
 .demo-checks { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: .64rem; }

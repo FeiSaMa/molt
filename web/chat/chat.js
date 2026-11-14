@@ -4784,6 +4784,102 @@
       perms.push(bound.permissions.filesystem === "none" ? "无文件写" : ("filesystem " + bound.permissions.filesystem));
       setText("demo-delta-perms", perms.join(" · "));
     }
+    bindDemoDeltaTips();
+  }
+  function demoDeltaTipText(kind) {
+    var rt = state.runtime || {}, status = rt.status || {}, binding = status.binding || {};
+    var skills = binding.skills || {}, mcps = binding.mcp || {};
+    var skillIds = Object.keys(skills), mcpIds = Object.keys(mcps);
+    var skillId = skillIds[0] || "repo-evidence", skill = skills[skillId] || {};
+    var mcpId = mcpIds[0] || "project_kb", profile = mcps[mcpId] || {};
+    if (kind === "runtime") {
+      return [
+        "GET /api/runtime/status",
+        "",
+        "enabled          = true",
+        "binding.revision = " + (binding.revision !== undefined ? binding.revision : "—"),
+        "skills           = " + (skillIds.length ? skillIds.join(", ") : "—"),
+        "mcp              = " + (mcpIds.length ? mcpIds.join(", ") : "—")
+      ].join("\n");
+    }
+    if (kind === "skill") {
+      return [
+        "skills/" + skillId + "/SKILL.md（节选）· v" + String(skill.version || "").slice(0, 10),
+        "",
+        "# 仓库证据与零写入验收（策略）",
+        "",
+        "适用：本仓库内任何声称「通过 / 完成 / 改进」的变更。",
+        "",
+        "## 权限",
+        "",
+        "- 只允许通过以下已批准的只读工具读取公开项目资料：",
+        "  experiments_list、experiments_get、",
+        "  mcp:project_kb:search_docs、mcp:project_kb:get_doc。",
+        "- 禁止写操作、禁止网络访问、禁止读取私有原文或 holdout 逐题内容。",
+        "",
+        "## 检查清单",
+        "",
+        "1. 零写入验收：执行前后各取一次仓库树快照并逐项比对。"
+      ].join("\n");
+    }
+    if (kind === "mcp") {
+      return [
+        mcpId + "  v" + (profile.version || "—"),
+        "",
+        "asset  " + (profile.asset_id || "—"),
+        "hash   " + demoShortHash(profile.package_hash),
+        "",
+        "提供 mcp:project_kb:search_docs / get_doc（只读文档检索）"
+      ].join("\n");
+    }
+    if (kind === "tools") {
+      var catalogSkills = (rt.catalog && rt.catalog.skills) || [], bound = null;
+      for (var i = 0; i < catalogSkills.length; i++) {
+        if (catalogSkills[i] && catalogSkills[i].bound) { bound = catalogSkills[i]; break; }
+      }
+      var tools = (bound && bound.permissions && bound.permissions.tools) || [];
+      var lines = ["只读工具白名单（" + tools.length + "）", ""];
+      for (var j = 0; j < tools.length; j++) lines.push(tools[j]);
+      if (!tools.length) lines.push("（连接后读取 /api/skills/catalog）");
+      return lines.join("\n");
+    }
+    if (kind === "perms") {
+      return [
+        "permissions",
+        "",
+        "network    = false",
+        "filesystem = none",
+        "",
+        "→ 没有网络、没有文件写；工具返回只当数据，不当指令。"
+      ].join("\n");
+    }
+    return "";
+  }
+  function demoDeltaShowTip(row) {
+    var tip = $("demo-delta-tip"); if (!tip || !row) return;
+    tip.textContent = demoDeltaTipText(row.getAttribute("data-tip"));
+    tip.style.top = (row.offsetTop + row.offsetHeight + 4) + "px";
+    tip.hidden = false;
+    row.classList.add("is-hover");
+  }
+  function demoDeltaHideTip() {
+    var tip = $("demo-delta-tip"); if (tip) tip.hidden = true;
+    var rows = document.querySelectorAll("#demo-delta .demo-delta-row");
+    for (var i = 0; i < rows.length; i++) rows[i].classList.remove("is-hover");
+  }
+  function bindDemoDeltaTips() {
+    var root = $("demo-delta");
+    if (!root || root.getAttribute("data-tips") === "1") return;
+    root.setAttribute("data-tips", "1");
+    var rows = root.querySelectorAll(".demo-delta-row");
+    for (var i = 0; i < rows.length; i++) {
+      (function (row) {
+        row.addEventListener("mouseenter", function () { demoDeltaShowTip(row); });
+        row.addEventListener("mouseleave", demoDeltaHideTip);
+        row.addEventListener("focus", function () { demoDeltaShowTip(row); });
+        row.addEventListener("blur", demoDeltaHideTip);
+      })(rows[i]);
+    }
   }
   function selectPane(name) {
     PANES.forEach(function (pane) {
