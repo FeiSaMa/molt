@@ -7,7 +7,11 @@ Stubs are never executed: ``execute_stub`` only reports the non-execution.
 
 from __future__ import annotations
 
+import fcntl
 import json
+import os
+from collections.abc import Mapping
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +24,19 @@ REGISTRY_SCHEMA_VERSION = "1.0.0"
 class UpperRegistryError(RuntimeError):
     """Raised for invalid lifecycle transitions or registry misuse."""
 
+
+
+def _merged_mutation(method):
+    """Run a registry mutation under the cross-process write lock, after reload."""
+
+    def wrapper(self, *args, **kwargs):
+        with self._write_locked():
+            self.refresh()
+            return method(self, *args, **kwargs)
+
+    wrapper.__name__ = method.__name__
+    wrapper.__doc__ = method.__doc__
+    return wrapper
 
 class UpperRegistry:
     def __init__(self, state_dir: Path | str, *, repo_root: Path | str | None = None) -> None:
@@ -59,6 +76,33 @@ class UpperRegistry:
         }
         atomic_write_json(self.path, payload)
 
+    @contextmanager
+    def _write_locked(self):
+        """Serialize registry mutations across threads and processes.
+
+        ``registry.json`` is a whole-file snapshot, so a stale in-memory copy
+        must never be written back over assets another writer just added.
+        """
+
+        self.state_dir.mkdir(parents=True, exist_ok=True)
+        lock_path = self.state_dir / ".registry.lock"
+        fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
+
+    def refresh(self) -> None:
+        """Re-read the on-disk snapshot before a read-modify-write cycle."""
+
+        self._assets = {}
+        if self.path.exists():
+            self._load()
+
     def _require(self, asset_id: str) -> UpperAsset:
         try:
             return self._assets[asset_id]
@@ -71,6 +115,7 @@ class UpperRegistry:
             raise UpperRegistryError(f"{field_name} must be a non-empty identity")
         return actor.strip()
 
+    @_merged_mutation
     def register(self, asset: UpperAsset, *, replace: bool = False) -> UpperAsset:
         if asset.asset_id in self._assets:
             existing = self._assets[asset.asset_id]
@@ -84,6 +129,25 @@ class UpperRegistry:
             raise UpperRegistryError("new assets must be registered as draft")
         asset.updated_at = utc_now()
         self._assets[asset.asset_id] = asset
+        self._save()
+        return asset
+
+    @_merged_mutation
+    def annotate(self, asset_id: str, patch: Mapping[str, Any]) -> UpperAsset:
+        """Merge non-executable metadata into an asset's content.
+
+        Used by automatic evolution to attach ``source_session``/``evidence_id``
+        after the lifecycle wrote the package. Package/artifact hashes are not
+        changed, and an identity conflict is still detected by the caller.
+        """
+
+        asset = self._require(asset_id)
+        if not isinstance(patch, Mapping):
+            raise UpperRegistryError("annotation patch must be a mapping")
+        asset.content.update({str(key): value for key, value in patch.items()})
+        asset.hash = asset.compute_content_hash()
+        asset.content_hash = asset.hash
+        asset.updated_at = utc_now()
         self._save()
         return asset
 
@@ -106,6 +170,7 @@ class UpperRegistry:
         ]
         return sorted(assets, key=lambda item: item.asset_id)
 
+    @_merged_mutation
     def mark_evaluated(self, asset_id: str) -> UpperAsset:
         asset = self._require(asset_id)
         if asset.status != "draft":
@@ -117,6 +182,7 @@ class UpperRegistry:
         self._save()
         return asset
 
+    @_merged_mutation
     def approve(
         self,
         asset_id: str,
@@ -145,6 +211,7 @@ class UpperRegistry:
         self._save()
         return asset
 
+    @_merged_mutation
     def reject(self, asset_id: str, *, rejected_by: str, reason: str) -> UpperAsset:
         asset = self._require(asset_id)
         if asset.status != "evaluated":
@@ -163,6 +230,7 @@ class UpperRegistry:
         self._save()
         return asset
 
+    @_merged_mutation
     def activate(self, asset_id: str) -> UpperAsset:
         asset = self._require(asset_id)
         if asset.status != "approved":
@@ -181,6 +249,7 @@ class UpperRegistry:
         self._save()
         return asset
 
+    @_merged_mutation
     def rollback(self, asset_id: str, *, reason: str, rolled_back_by: str) -> UpperAsset:
         asset = self._require(asset_id)
         if asset.status != "active":
@@ -197,6 +266,26 @@ class UpperRegistry:
         self._save()
         return asset
 
+    @_merged_mutation
+    def restore(self, asset_id: str, *, reason: str, restored_by: str) -> UpperAsset:
+        asset = self._require(asset_id)
+        if asset.status != "rolled_back":
+            raise UpperRegistryError(
+                f"asset {asset_id} must be rolled_back to restore, got {asset.status}"
+            )
+        actor = self._require_actor(restored_by, "restored_by")
+        if not reason.strip():
+            raise UpperRegistryError("restore reason is required")
+        if not asset.approved_by:
+            raise UpperRegistryError("cannot restore without approved_by")
+        asset.status = "active"
+        asset.pending_permission = None
+        asset.status_reason = f"restored by {actor}: {reason.strip()}"
+        asset.updated_at = utc_now()
+        self._save()
+        return asset
+
+    @_merged_mutation
     def request_permission_change(
         self,
         asset_id: str,
@@ -229,6 +318,7 @@ class UpperRegistry:
         self._save()
         return asset
 
+    @_merged_mutation
     def approve_permission_change(self, asset_id: str, *, approved_by: str) -> UpperAsset:
         asset = self._require(asset_id)
         pending = asset.pending_permission

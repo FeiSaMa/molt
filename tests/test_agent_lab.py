@@ -245,7 +245,9 @@ def test_lab_command_timeout_fails_closed(tmp_path: Path) -> None:
         time.sleep(0.05)
     assert run.status == "failed"
     assert run.error and run.error["code"] == "command_timeout"
-    assert list(tmp_path.iterdir()) == []
+    assert [item for item in tmp_path.iterdir() if item.name != "runs"] == []
+    if (tmp_path / "runs").exists():
+        assert all(item.suffix == ".json" for item in (tmp_path / "runs").iterdir())
 
 
 def test_lab_cleans_workspace_after_success(tmp_path: Path) -> None:
@@ -259,4 +261,6 @@ def test_lab_cleans_workspace_after_success(tmp_path: Path) -> None:
             break
         time.sleep(0.05)
     assert run.status == "completed"
-    assert list(tmp_path.iterdir()) == []
+    assert [item for item in tmp_path.iterdir() if item.name != "runs"] == []
+    if (tmp_path / "runs").exists():
+        assert all(item.suffix == ".json" for item in (tmp_path / "runs").iterdir())

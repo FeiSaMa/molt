@@ -58,7 +58,6 @@ uv run python -B -m molt serve \
   --upper-state /tmp/molt-serve-upper \
   --skills-root skills \
   --skill-state /tmp/molt-serve-state \
-  --operator ops-reviewer \
   --mcp-allowlist molt/mcp/allowlist.default.json
 ```
 
@@ -73,8 +72,8 @@ uv run python -B -m molt serve \
   binding、candidates、evaluations、`skill-registry`、`skill-admin` 索引全部
   落在它下面。`--state` 只用于旧 agent token / 其它状态；未显式给
   `--skill-state` 时才默认取 `--state`。上线示例：
-  `--skill-state /home/feisama/molt-upper-state/runtime`，则 binding 在
-  `/home/feisama/molt-upper-state/runtime/skills/current.json`。
+  `--skill-state $MOLT_UPPER_STATE/runtime`，则 binding 在
+  `$MOLT_UPPER_STATE/runtime/skills/current.json`。
 - MCP 注册表读自 `--upper-state`（`<upper-state>/registry.json`）。选择规则是
   **binding 的 `asset_id` + `version` 精确匹配**，不是「同 server 第一条」：
   - registry 没有该 server 的任何 `mcp_profile` 记录 → 允许
@@ -97,7 +96,6 @@ uv run python -B -m molt serve \
 | `--skills-root` | `<repo>/skills` | 只读技能包根目录；显式给出即启用 runtime |
 | `--skill-state` | `<state>` | runtime/演化 state 根：binding、candidates、evaluations、skill-registry 全在其下；必须在仓库外；显式给出即启用 runtime |
 | `--mcp-allowlist` | 关闭 | allowlist JSON；给出路径才启用 MCP |
-| `--operator` | 无 | 单一服务器审批主体（身份字符串，非密钥）。请求体的 `approved_by` 只作一致性声明；持久化的 actor 始终取该配置。未配置即 fail closed。所有持有共享 Bearer token 的客户端都以该主体授权，不提供 per-human 归因 |
 
 ### state 目录
 
@@ -122,11 +120,6 @@ uv run python -B -m molt serve \
 目录不存在时才回退 repo `skills_root/<skill_id>`，且 binding 的 asset_id 必须
 是已登记 skill asset 或 `operator_baseline`，hash 不符即
 `skill_integrity_mismatch`。不会从 `skill-candidates/` 或任意 UUID 目录加载。
-
-operator baseline 不是审批：registry 记录 `approved_by=null`，content/sidecar/commit
-record 带 `approval_source="operator_baseline"` 与 `keep_evidence_id=null`；核心
-`activate_asset` 拒绝把它当 adoption（`baseline_not_approved`），恢复 baseline
-只能走 `rollback`。
 
 C 切片只读 binding；写入仍由 `molt.skills.binding.BindingStore.commit` 的
 CAS 单写者路径负责。后续审批/评测切片可以在同一 store 上扩展，不需要改本 API
@@ -394,12 +387,6 @@ skill_unavailable}`，不返回正文或源文件 locator。
 409 + `details.reason="skill_evidence_mismatch"`。**默认 fail-closed，不提供静默
 override**；人工例外需后续显式 `override_reason` 设计，本切片未实现。
 
-`approved_by` 仍必填，但只作为一致性声明：必须等于服务端 `--operator` 配置的主体，
-否则 403 `forbidden` + `details.reason="operator_not_authorized"`；未配置主体 → 403
-`forbidden` + `details.reason="operator_not_configured"`。实际写入 registry 的
-`approved_by` 始终是服务端配置值，不由请求体选择。认证边界是单一共享 Bearer
-token：持有 token 的客户端都被视为该主体，没有 per-human 归因。
-
 ### `POST /api/skills/activate`
 
 请求：
@@ -631,7 +618,6 @@ HTTP 错误形状沿用 `{error:{code,message,details?}}`。
 | 400 | `bad_request` | 未知字段、缺字段、非法 mode/参数 |
 | 401 | `unauthorized` | 缺/错 Bearer |
 | 403 | `forbidden_origin` | Origin 不允许 |
-| 403 | `forbidden` | 审批主体未配置，或 `approved_by` 伪造/与服务端主体不一致（技能审批） |
 | 404 | `not_found` | 未知 session / asset / 评测；rollback `details.reason="rollback_target_missing"` |
 | 409 | `conflict` | `skill_integrity_mismatch`、`runtime_disabled`、`provider_unavailable`、`skill_state_conflict`、`skill_identity_conflict`、`skill_rollback_ambiguous`、`skill_registry_conflict`、`skill_eval_invalid`、`skill_not_keep`、`skill_evidence_mismatch`、`skill_package_untrusted`、`rollback_target_unavailable`、MCP 绑定/profile 系列（见上） |
 | 413 | `payload_too_large` | body >64 KiB、工具输出 >64 KiB |
@@ -680,7 +666,7 @@ SSE-only 码不会出现在 HTTP 响应里；`errors.py` 的 `SSE_ONLY` 与
 ```bash
 # 1) dry-run（默认，不写任何状态）
 python3 -B scripts/migrate_skill_binding.py \
-  --skill-state /home/feisama/molt-upper-state/runtime \
+  --skill-state $MOLT_UPPER_STATE/runtime \
   --skills-root skills --repo-root . \
   --skill-id repo-evidence \
   --target-asset-id skill-repo-evidence-1-0-0 \
@@ -714,12 +700,12 @@ python3 -B scripts/migrate_skill_binding.py ... --apply --json
 ```bash
 # 只对账，不迁移：补写缺失 commit record，输出 adopted/stale
 python3 -B scripts/migrate_skill_binding.py \
-  --skill-state /home/feisama/molt-upper-state/runtime \
+  --skill-state $MOLT_UPPER_STATE/runtime \
   --repo-root . --reconcile-only --json
 
 # 只把不可采用的 prepared intent 标 stale；不删文件、不改 current、不写链
 python3 -B scripts/migrate_skill_binding.py \
-  --skill-state /home/feisama/molt-upper-state/runtime \
+  --skill-state $MOLT_UPPER_STATE/runtime \
   --repo-root . --cleanup-stale-intents --json
 ```
 
@@ -751,3 +737,22 @@ python3 -B scripts/migrate_skill_binding.py \
   route 或按实验切换，而不改变旧 message 契约。
 - 本切片不实现通用 adopt/evolve 平台；回退目标由 lifecycle 的 commit chain
   派生，C 侧用 binding history 做上一版本断言。
+
+## 从复用池移除 Memory / MCP 资产
+
+`POST /api/evolution/assets/{asset_id}/rollback`
+
+- 需要 Bearer token；body：`{"reason": "...", "rolled_back_by": "..."}`。
+- 只允许 `policy_memory` / `mcp_profile`；Skill 仍走 `POST /api/skills/rollback` 的 binding 回滚。
+- 语义：把 registry 资产标记为 `rolled_back`，后续自动复用不再选中它；**不修改已绑定会话的快照**，已绑定的 MCP profile / memory 仍按原快照运行。
+- 200：`asset_id / kind / title / version / status / status_reason`；409：`asset_not_found` / `asset_not_active` / `asset_kind_not_retirable`。
+- `GET /api/evolution/catalog` 的每个资产新增 `reuse_count`：当前仍引用该资产的会话快照数；只统计数量，不暴露其他 session id。
+
+### 恢复到复用池
+
+`POST /api/evolution/assets/{asset_id}/restore`
+
+- 需要 Bearer token；body：`{"reason": "...", "restored_by": "..."}`。
+- 只允许 `policy_memory` / `mcp_profile`，且资产必须是 `rolled_back`。
+- 恢复为 `active`，后续自动复用重新可见；**不修改已绑定会话的快照**。
+- `GET /api/evolution/catalog?include_rolled_back=1` 可同时返回 active 与 rolled_back 资产，并带 `status` 字段。

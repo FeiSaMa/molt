@@ -89,7 +89,7 @@
 
 ## 评审与流程
 
-- 新 API/契约属于契约域；按 `AGENTS.md` 需要 ADR；评审为建议，不设 approve 数量门禁。
+- 新 API/契约属于契约域；按 `AGENTS.md` 需要 ADR + 至少 2 人评审。
 - 本实现只在本地与部署分支存在，未 commit 到 `main`、未 push。
 - 服务器部署保留 `/tmp/molt-chat-agent-backup-*` 回滚目录。
 

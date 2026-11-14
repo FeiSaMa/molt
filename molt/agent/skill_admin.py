@@ -32,9 +32,12 @@ from molt.skills.eval_tasks import EvalTask, EvalTaskError, load_tasks
 from molt.skills.evolution import (
     ProviderUnavailable,
     SkillEvolutionError,
+    evidence_allows_approval,
     propose_candidate,
 )
 from molt.skills.lifecycle import (
+    _load_sidecar,
+    _write_sidecar,
     activate_asset,
     approve_asset,
     mark_evaluated_from_evidence,
@@ -118,6 +121,11 @@ class SkillAdmin:
         )
 
     # -- helpers -----------------------------------------------------------
+    def _refresh_registry(self) -> None:
+        refresh = getattr(self.registry, "refresh", None)
+        if callable(refresh):
+            refresh()
+
     def _binding(self) -> BindingStore:
         if self.binding_store is None:
             raise SkillAdminError(
@@ -297,6 +305,7 @@ class SkillAdmin:
         return adopted
 
     def status(self) -> dict[str, Any]:
+        self._refresh_registry()
         reconciled = self._reconcile()
         return {"reconciled": reconciled, "revision": self._revision()}
 
@@ -309,7 +318,10 @@ class SkillAdmin:
         base_version: str | None = None,
         manual_body: str | None = None,
         version: str | None = None,
+        created_by: str = "operator",
+        origin: str = "synthetic",
     ) -> dict[str, Any]:
+        self._refresh_registry()
         try:
             base = load_package(self.skills_root, skill_id, version=base_version)
         except SkillPackageError:
@@ -343,10 +355,11 @@ class SkillAdmin:
             asset = register_asset(
                 self.registry,
                 package,
-                created_by="operator",
-                origin="synthetic",
+                created_by=created_by,
+                origin=origin,
                 sidecar_dir=self.sidecar_dir,
                 declared_origin=candidate.origin,
+                generation_meta=candidate.generation_meta,
             )
         except (SkillPackageError, UpperRegistryError, SkillEvolutionError):
             raise SkillAdminError(
@@ -358,7 +371,9 @@ class SkillAdmin:
             "candidate_id": f"candidate-{asset.name}-{asset.version}-{hash_short}",
             "package_hash": str(asset.content.get("package_hash", "")),
             "origin": candidate.origin,
+            "authorship": candidate.generation_meta.get("authorship"),
             "calls_model": bool(candidate.generation_meta.get("calls_model", False)),
+            "generation_meta": dict(candidate.generation_meta),
         }
 
     # -- evaluate ----------------------------------------------------------
@@ -368,7 +383,9 @@ class SkillAdmin:
         *,
         baseline_asset_id: str | None = None,
         manual_outputs: Mapping[str, str] | None = None,
+        require_transfer_gain: bool = True,
     ) -> dict[str, Any]:
+        self._refresh_registry()
         reconciled = self._reconcile()
         asset = self._skill_asset(asset_id)
         if asset.status != "draft":
@@ -399,6 +416,7 @@ class SkillAdmin:
                 self.state_dir,
                 evaluator=evaluator,
                 asset_id=asset_id,
+                require_transfer_gain=require_transfer_gain,
             )
             evidence_path = Path(result["evidence_path"])
             mark_evaluated_from_evidence(self.registry, asset_id, evidence_path)
@@ -545,6 +563,7 @@ class SkillAdmin:
         note: str | None = None,
     ) -> dict[str, Any]:
         # The recorded actor is server-derived; the body value is only a consistency claim.
+        self._refresh_registry()
         approver = self._require_approval_principal(approved_by)
         asset = self._skill_asset(asset_id)
         if asset.status != "evaluated":
@@ -574,6 +593,75 @@ class SkillAdmin:
             ) from None
         return {"asset_id": asset_id, "status": approved.status}
 
+    def approve_automatic(
+        self,
+        asset_id: str,
+        *,
+        evidence_id: str,
+        actor: str,
+        note: str,
+    ) -> dict[str, Any]:
+        """Approve a model-authored candidate through the same evidence gate.
+
+        This is the server-side automatic policy, not a human operator. It still
+        requires ``final=keep`` transfer+regression evidence bound to this exact
+        asset and package hash; it cannot bypass ``approve_asset``.
+        """
+
+        self._refresh_registry()
+        asset = self._skill_asset(asset_id)
+        if asset.status != "evaluated":
+            raise SkillAdminError(
+                "skill_state_conflict",
+                409,
+                "只有 evaluated 资产可以审批",
+                {"reason": "skill_state_conflict", "status": asset.status},
+            )
+        evidence, evidence_path = self._evidence_for_asset(evidence_id, asset)
+        if not evidence_allows_approval(evidence):
+            raise SkillAdminError(
+                "skill_not_keep",
+                409,
+                "evidence 未通过 keep 门禁",
+                {"reason": "skill_not_keep"},
+            )
+        try:
+            approved = approve_asset(
+                self.registry,
+                asset_id,
+                approved_by=actor,
+                note=note,
+                evidence=evidence,
+            )
+        except (SkillEvolutionError, UpperRegistryError) as exc:
+            text = str(exc)
+            if "keep" in text:
+                raise SkillAdminError(
+                    "skill_not_keep",
+                    409,
+                    "evidence 未通过 keep 门禁",
+                    {"reason": "skill_not_keep"},
+                ) from None
+            raise SkillAdminError(
+                "skill_state_conflict",
+                409,
+                "资产无法审批",
+                {"reason": "skill_state_conflict", "status": asset.status},
+            ) from None
+        sidecar_path = self.sidecar_dir / f"{asset_id}.json"
+        sidecar = _load_sidecar(sidecar_path) if sidecar_path.is_file() else {}
+        sidecar["review"] = {
+            "status": "auto_approved",
+            "reviewed_by": actor,
+            "reviewed_at": utc_now(),
+            "note": note,
+        }
+        sidecar["approved_by"] = actor
+        sidecar["approval_source"] = "automatic_policy"
+        sidecar["keep_evidence_id"] = evidence_id
+        _write_sidecar(sidecar_path, sidecar)
+        return {"asset_id": asset_id, "status": approved.status, "evidence_id": evidence_id}
+
     def _assert_identity_unique(self, asset: UpperAsset) -> None:
         target_hash = str(asset.content.get("package_hash", ""))
         for other in self.registry.list_assets(kind="skill"):
@@ -601,7 +689,10 @@ class SkillAdmin:
         actor: str,
         evidence_id: str,
         reason: str | None = None,
+        mcp_entries: Mapping[str, dict[str, Any]] | None = None,
+        commit_binding: bool = True,
     ) -> dict[str, Any]:
+        self._refresh_registry()
         reconciled = self._reconcile()
         asset = self._skill_asset(asset_id)
         self._assert_identity_unique(asset)
@@ -619,6 +710,8 @@ class SkillAdmin:
                 reason=reason or "",
                 evidence_id=evidence_id,
                 evidence_path=str(_path),
+                mcp_entries=mcp_entries,
+                commit_binding=commit_binding,
                 fault_hook=None,
             )
         except (SkillEvolutionError, BindingError, UpperRegistryError):
@@ -635,7 +728,10 @@ class SkillAdmin:
             "package_hash": entry["package_hash"],
             "revision": revision,
             "commit_record_id": str(revision),
+            "binding_committed": bool(result.get("binding_committed", True)),
         }
+        if mcp_entries:
+            payload["mcp"] = sorted(str(key) for key in mcp_entries)
         if reconciled:
             payload["reconciled"] = reconciled
         return payload
@@ -667,6 +763,7 @@ class SkillAdmin:
         expected_revision: int,
         evidence_id: str | None = None,
     ) -> dict[str, Any]:
+        self._refresh_registry()
         reconciled = self._reconcile()
         store = self._binding()
         snapshot = store.load()

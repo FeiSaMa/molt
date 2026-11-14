@@ -69,6 +69,7 @@ class LabCancelled(RuntimeError):
 class LabRun:
     run_id: str
     task_id: str
+    session_id: str | None
     provider: str
     model: str
     real_model: bool
@@ -98,6 +99,7 @@ class LabRun:
         return {
             "run_id": self.run_id,
             "task_id": self.task_id,
+            "session_id": self.session_id,
             "status": self.status,
             "provider": self.provider,
             "model": self.model,
@@ -112,6 +114,7 @@ class LabRun:
         return {
             "run_id": self.run_id,
             "task_id": self.task_id,
+            "session_id": self.session_id,
             "status": self.status,
             "provider": self.provider,
             "real_model": self.real_model,
@@ -146,6 +149,8 @@ class LabManager:
     ) -> None:
         self.adapter = adapter
         self.lab_root = (lab_root or Path("/tmp/molt-lab")).resolve()
+        self.runs_root = self.lab_root / "runs"
+        self.runs_root.mkdir(parents=True, exist_ok=True)
         self.sandbox = sandbox or probe_sandbox()
         self.max_wall = max_wall
         self.command_timeout = command_timeout
@@ -194,7 +199,7 @@ class LabManager:
         return public_tasks()
 
     # ---- lifecycle ---------------------------------------------------------
-    def create(self, task_id: str) -> LabRun:
+    def create(self, task_id: str, *, session_id: str | None = None) -> LabRun:
         task = get_task(task_id)
         if task is None:
             raise LabTaskNotFound(task_id)
@@ -209,6 +214,7 @@ class LabManager:
         run = LabRun(
             run_id=new_id("lab"),
             task_id=task.task_id,
+            session_id=session_id,
             provider=self.adapter.name,
             model=self.adapter.model,
             real_model=bool(self.adapter.real_model),
@@ -237,6 +243,31 @@ class LabManager:
     def get(self, run_id: str) -> LabRun | None:
         with self._lock:
             return self._runs.get(run_id)
+
+    def runs_for_session(
+        self, session_id: str | None, *, full: bool = False
+    ) -> list[dict[str, Any]]:
+        if not isinstance(session_id, str) or not session_id:
+            return []
+        with self._lock:
+            runs = [
+                (run.public() if full else run.summary())
+                for run in self._runs.values()
+                if run.session_id == session_id
+            ]
+        return sorted(runs, key=lambda item: item.get("created_at") or "")
+
+    def _persist(self, run: LabRun) -> None:
+        try:
+            payload = run.public()
+            payload["task_id"] = run.task_id
+            path = self.runs_root / f"{run.run_id}.json"
+            path.write_text(
+                json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        except OSError:
+            return
 
     def cancel(self, run_id: str) -> bool:
         run = self.get(run_id)
@@ -403,6 +434,7 @@ class LabManager:
             if workspace is not None:
                 workspace.cleanup()
             run.workspace = None
+            self._persist(run)
             self._semaphore.release()
 
     def _propose(
@@ -420,11 +452,16 @@ class LabManager:
                 "note": "MOCK 演示：真实模型未配置，patch 来自确定性 fixture",
             }
 
+        target = next(
+            (name for name in before if name != task.test_file),
+            next(iter(before), "solution.py"),
+        )
         system = (
             "You are a coding agent in a sandbox. Return ONLY a JSON object. "
-            'Use either {"file":"calc.py","old":"...","new":"..."} to replace an exact '
-            'substring, or {"file":"calc.py","content":"..."} to replace the whole file. '
-            "Keep the change minimal."
+            f'Use either {{"file":"{target}","old":"...","new":"..."}} to replace an exact '
+            f'substring, or {{"file":"{target}","content":"..."}} to replace the whole file. '
+            "Only one file can be patched; do not edit test files. "
+            "Make the smallest correct change."
         )
         user = (
             f"Task: {task.title}\n\nFiles:\n"

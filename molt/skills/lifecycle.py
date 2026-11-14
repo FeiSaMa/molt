@@ -256,6 +256,7 @@ def register_asset(
     origin: str = "synthetic",
     sidecar_dir: Path | str,
     declared_origin: str,
+    generation_meta: Mapping[str, Any] | None = None,
 ) -> UpperAsset:
     """Register one skill package as a ``draft`` asset plus a metadata sidecar.
 
@@ -286,6 +287,13 @@ def register_asset(
         # Source location only; activation publishes to <state>/skills/packages.
         "package_dir": str(pkg.package_dir),
     }
+    if generation_meta:
+        safe_meta = {
+            key: generation_meta[key]
+            for key in ("authorship", "calls_model", "driver", "model")
+            if key in generation_meta
+        }
+        content["generation_meta"] = safe_meta
     asset = UpperAsset(
         asset_id=asset_id,
         kind="skill",
@@ -319,6 +327,8 @@ def register_asset(
         "created_at": utc_now(),
         "created_by": creator,
     }
+    if generation_meta:
+        sidecar["generation_meta"] = dict(content["generation_meta"])
     _write_sidecar(_sidecar_path(sidecar_dir, asset_id), sidecar)
     return registered
 
@@ -1358,6 +1368,8 @@ def activate_asset(
     reason: str | None = None,
     sidecar_dir: Path | str | None = None,
     package_root: Path | str | None = None,
+    mcp_entries: Mapping[str, Mapping[str, Any]] | None = None,
+    commit_binding: bool = True,
     fault_hook: Any | None = None,
 ) -> dict[str, Any]:
     """Publish, validate, then point the binding at ``asset_id``.
@@ -1391,6 +1403,8 @@ def activate_asset(
             reason=reason,
             sidecar_dir=sidecar_dir,
             package_root=package_root,
+            mcp_entries=mcp_entries,
+            commit_binding=commit_binding,
             fault_hook=fault_hook,
         )
 
@@ -1407,6 +1421,8 @@ def _activate_asset_locked(
     reason: str | None,
     sidecar_dir: Path | str | None,
     package_root: Path | str | None,
+    mcp_entries: Mapping[str, Mapping[str, Any]] | None,
+    commit_binding: bool,
     fault_hook: Any | None,
 ) -> dict[str, Any]:
     operator = _require_actor(actor, "actor")
@@ -1452,6 +1468,24 @@ def _activate_asset_locked(
             f"asset {asset_id} must be approved to activate, got {asset.status}"
         )
 
+    if not commit_binding:
+        # Session-local adoption: the caller commits the full session snapshot
+        # (conversation + local binding) as the single linearization point.
+        # The registry asset is active and immutable; no global binding CAS is
+        # performed, so a failed session CAS cannot leave a half-updated global
+        # binding.
+        return {
+            "entry": entry,
+            "previous": previous,
+            "revision": int(store.load().get("revision", 0)),
+            "superseded": None,
+            "package_dir": str(published),
+            "cleanup": "not_required",
+            "intent_id": None,
+            "commit_record": "not_committed",
+            "binding_committed": False,
+        }
+
     # Prepared intent: written before the CAS so a crash between the commit and
     # the record can be reconciled instead of losing the adoption chain.
     intent = _prepare_intent(
@@ -1468,9 +1502,20 @@ def _activate_asset_locked(
     _call_fault_hook(fault_hook, "after_intent")
 
     # The single linearization point: one CAS commit carries both sections.
-    committed = store.commit(
-        "skills", skill_id, entry, expected_revision=intent["expected_revision"]
-    )
+    # Automatic evolution can publish an MCP policy in the same snapshot; it is
+    # still one pointer swap, never two section commits.
+    bundle: dict[str, dict[str, Any]] = {"skills": {skill_id: entry}}
+    if mcp_entries:
+        bundle["mcp"] = {str(key): dict(value) for key, value in mcp_entries.items()}
+    commit_bundle = getattr(store, "commit_bundle", None)
+    if callable(commit_bundle):
+        committed = commit_bundle(
+            bundle, expected_revision=intent["expected_revision"]
+        )
+    else:  # pragma: no cover - every supported store implements commit_bundle
+        committed = store.commit(
+            "skills", skill_id, entry, expected_revision=intent["expected_revision"]
+        )
     revision = _snapshot_revision(store, committed)
     _call_fault_hook(fault_hook, "after_commit")
 

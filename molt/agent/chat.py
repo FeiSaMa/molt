@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import threading
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -26,13 +28,15 @@ from molt.agent.errors import ErrorCode
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8080/v1"
 DEFAULT_TIMEOUT = 60.0
-MAX_RESPONSE_BYTES = 1024 * 1024
-MAX_CONTENT_CHARS = 256 * 1024
+MAX_UPSTREAM_RESPONSE_BYTES = 256 * 1024
+MAX_TRANSPORT_RESPONSE_BYTES = 1024 * 1024
 
 SYSTEM_PROMPT = (
-    "你是 molt 的本地只读实验助手。只能使用 experiments_list / experiments_get 读取"
-    "实验投影；不得编造未返回的数字。回答使用中文，说明实验的 stage、口径与 caveat，"
-    "不得把不同版本或不同分母的结果放在一起比较。"
+    "你是 molt 的通用 Agent 助手。先理解用户任务，再决定是否需要读取实验投影、"
+    "使用已暴露的 Skill/MCP 工具或直接回答。不得编造未返回的数字、工具结果或执行状态。"
+    "默认用中文，清楚区分建议、已执行动作与证据；涉及实验结果时说明 stage、口径与 caveat，"
+    "不得把不同版本或不同分母的结果放在一起比较。当前工具与执行权限以本轮暴露的 allowlist 为准，"
+    "没有工具时不要声称已经执行任务或修改代码。"
 )
 
 
@@ -51,6 +55,12 @@ class ToolCall:
 class ChatReply:
     content: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
+    # DeepSeek thinking mode requires the assistant's reasoning_content to be
+    # passed back on the next request when tool calls are involved. It is not
+    # displayed to the user and never stored in session history.
+    reasoning_content: str = ""
+    # Provider-reported usage for this call, if the provider returns it.
+    usage: dict[str, int] | None = None
 
 
 class ChatError(Exception):
@@ -102,14 +112,20 @@ class UrllibTransport:
         request = urllib.request.Request(url, data=body, headers=headers, method="POST")
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
-                raw = response.read(MAX_RESPONSE_BYTES + 1)
+                raw = response.read(MAX_TRANSPORT_RESPONSE_BYTES + 1)
+                if len(raw) > MAX_TRANSPORT_RESPONSE_BYTES:
+                    raise ChatError(
+                        ErrorCode.UPSTREAM_ERROR,
+                        "上游响应超过 1 MiB",
+                        False,
+                    )
         except urllib.error.HTTPError as exc:
             code = exc.code
             exc.close()
             raise map_http_status(code) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             raise map_transport_exception(exc) from None
-        if len(raw) > MAX_RESPONSE_BYTES:
+        if len(raw) > MAX_TRANSPORT_RESPONSE_BYTES:
             raise ChatError(ErrorCode.UPSTREAM_ERROR, "上游响应超过 1 MiB 上限", False)
         try:
             parsed = json.loads(raw.decode("utf-8"))
@@ -118,6 +134,33 @@ class UrllibTransport:
         if not isinstance(parsed, dict):
             raise ChatError(ErrorCode.UPSTREAM_ERROR, "上游响应不是对象", False)
         return parsed
+
+
+_DSML_CALL_RE = re.compile(
+    r'<｜｜DSML｜｜\s*invoke\s+name="(?P<name>[^"]+)"\s*>(?P<body>.*?)</｜｜DSML｜｜\s*invoke\s*>',
+    re.DOTALL,
+)
+_DSML_PARAM_RE = re.compile(
+    r'<｜｜DSML｜｜\s*parameter\s+name="(?P<name>[^"]+)"[^>]*>(?P<value>.*?)</｜｜DSML｜｜\s*parameter\s*>',
+    re.DOTALL,
+)
+
+
+def _parse_dsml_tool_calls(content: str) -> list[ToolCall]:
+    """Parse DeepSeek's legacy DSML tool markup when JSON tool_calls is absent."""
+    calls: list[ToolCall] = []
+    for index, match in enumerate(_DSML_CALL_RE.finditer(content)):
+        args: dict[str, str] = {}
+        for parameter in _DSML_PARAM_RE.finditer(match.group("body")):
+            args[parameter.group("name")] = parameter.group("value").strip()
+        calls.append(
+            ToolCall(
+                call_id=f"dsml-{index + 1}",
+                name=match.group("name"),
+                arguments=json.dumps(args, ensure_ascii=False),
+            )
+        )
+    return calls
 
 
 def _parse_tool_calls(raw_calls: Any) -> list[ToolCall]:
@@ -211,6 +254,35 @@ class OpenAICompatibleAdapter:
         self._api_key = api_key
         self._transport = transport or UrllibTransport()
         self._timeout = timeout
+        self._usage_local = threading.local()
+
+    def reset_usage(self) -> None:
+        self._usage_local.items = []
+        self._usage_local.calls = 0
+
+    def _record_call(self) -> None:
+        self._usage_local.calls = int(getattr(self._usage_local, "calls", 0)) + 1
+
+    def _record_usage(self, usage: dict[str, int] | None) -> None:
+        if usage:
+            items = getattr(self._usage_local, "items", None)
+            if items is None:
+                items = self._usage_local.items = []
+            items.append(dict(usage))
+
+    def usage_snapshot(self) -> dict[str, int]:
+        totals = {
+            "model_calls": int(getattr(self._usage_local, "calls", 0)),
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+        }
+        for item in getattr(self._usage_local, "items", []) or []:
+            for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+                value = item.get(key)
+                if type(value) is int and value >= 0:
+                    totals[key] += value
+        return totals
 
     def _headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -228,6 +300,7 @@ class OpenAICompatibleAdapter:
             "tool_choice": tool_choice,
             "stream": False,
         }
+        self._record_call()
         raw = self._transport.post_json(self._endpoint, self._headers(), payload, self._timeout)
         if not isinstance(raw, dict):
             raise ChatError(ErrorCode.UPSTREAM_ERROR, "上游响应不是对象", False)
@@ -243,9 +316,35 @@ class OpenAICompatibleAdapter:
         content = message.get("content") or ""
         if not isinstance(content, str):
             raise ChatError(ErrorCode.UPSTREAM_ERROR, "上游 content 不是字符串", False)
-        if len(content) > MAX_CONTENT_CHARS:
-            raise ChatError(ErrorCode.UPSTREAM_ERROR, "上游 content 超过 256 KiB 上限", False)
-        return ChatReply(content=content, tool_calls=_parse_tool_calls(message.get("tool_calls")))
+        if len(content.encode("utf-8")) > MAX_UPSTREAM_RESPONSE_BYTES:
+            raise ChatError(ErrorCode.UPSTREAM_ERROR, "上游 content 超过 256 KiB", False)
+        reasoning = message.get("reasoning_content") or ""
+        if not isinstance(reasoning, str):
+            reasoning = ""
+        tool_calls = _parse_tool_calls(message.get("tool_calls"))
+        if not tool_calls and content and "<｜｜DSML｜｜" in content:
+            tool_calls = _parse_dsml_tool_calls(content)
+            if tool_calls:
+                content = ""
+        usage = raw.get("usage")
+        if not isinstance(usage, dict):
+            usage = None
+        else:
+            clean = {
+                key: value
+                for key, value in usage.items()
+                if key in {"prompt_tokens", "completion_tokens", "total_tokens"}
+                and type(value) is int
+                and value >= 0
+            }
+            usage = clean or None
+        self._record_usage(usage)
+        return ChatReply(
+            content=content,
+            tool_calls=tool_calls,
+            reasoning_content=reasoning,
+            usage=usage,
+        )
 
 
 def build_adapter(provider: str) -> MockAdapter | OpenAICompatibleAdapter:

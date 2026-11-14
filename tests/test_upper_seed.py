@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from molt.upper.seed import (
 from molt.upper.types import UpperAsset
 
 REPO = Path(__file__).resolve().parents[1]
-BASE = Path("/home/feisama/feisama-base")
+BASE = Path(os.environ.get("MOLT_SEED_BASE", "~/feisama-base")).expanduser()
 
 
 def _git_status() -> str:

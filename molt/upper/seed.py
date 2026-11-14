@@ -21,6 +21,7 @@ for graph context nodes/manifests (``graph.compute_context_hash``).
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -33,7 +34,7 @@ from .types import (
 )
 
 IMPORTER_VERSION = "seed-1"
-DEFAULT_BASE = Path("/home/feisama/feisama-base")
+DEFAULT_BASE = Path(os.environ.get("MOLT_SEED_BASE", "~/feisama-base")).expanduser()
 
 LESSON_SELECTION: dict[str, tuple[str, ...]] = {
     "ops": (

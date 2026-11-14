@@ -72,7 +72,6 @@ from molt.upper.registry import UpperRegistry, UpperRegistryError
 from molt.upper.storage import StatePathError, ensure_outside_repo
 from molt.upper.types import UpperAsset, utc_now
 
-MAX_TOOL_OUTPUT_BYTES = 64 * 1024
 MCP_TOOL_PREFIX = "mcp__"
 MCP_TOKEN_PREFIX = "mcp:"
 _ASSET_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$")
@@ -297,14 +296,30 @@ class AgentRuntime:
         return self.enabled and self.mode_for(session_id) == "active"
 
     # -- turn scope --------------------------------------------------------
-    def begin_turn(self, task_text: str) -> TurnSnapshot:
-        """Read binding once, validate profiles, and freeze the turn scope."""
+    def begin_turn(
+        self,
+        task_text: str,
+        *,
+        binding_snapshot: dict[str, Any] | None = None,
+        strategy_tools: tuple[str, ...] | list[str] | None = None,
+    ) -> TurnSnapshot:
+        """Freeze one turn's binding and MCP surface.
+
+        ``binding_snapshot`` lets a session use its own immutable snapshot
+        instead of the shared current binding. It is validated with the same
+        shape rules as ``BindingStore`` and is never re-read inside the turn.
+        ``strategy_tools`` only narrows the exposed MCP tool set; it can never
+        add a server, a tool, or a permission.
+        """
 
         if not isinstance(task_text, str):
             raise AgentRuntimeError("bad_task_text")
-        snapshot, error = self._binding_snapshot_safe()
-        if snapshot is None:
-            raise AgentRuntimeError(error or "binding_invalid")
+        if binding_snapshot is None:
+            snapshot, error = self._binding_snapshot_safe()
+            if snapshot is None:
+                raise AgentRuntimeError(error or "binding_invalid")
+        else:
+            snapshot = self._validate_binding_snapshot(binding_snapshot)
         packages, revision = self._load_bound_packages(snapshot)
         skill: LoadedSkill | None = None
         if packages:
@@ -327,7 +342,14 @@ class AgentRuntime:
                     binding_revision=revision,
                     system_block=render_system_block(package),
                 )
-        surface = self._mcp_surface_from_snapshot(snapshot, skill)
+        narrow = None
+        if strategy_tools is not None:
+            narrow = {
+                item
+                for item in strategy_tools
+                if isinstance(item, str) and item.startswith(MCP_TOOL_PREFIX)
+            }
+        surface = self._mcp_surface_from_snapshot(snapshot, skill, allowed_tools=narrow)
         allowed = tuple(spec["function"]["name"] for spec in surface.specs)
         turn = TurnSnapshot(
             revision=revision,
@@ -653,6 +675,12 @@ class AgentRuntime:
                 if asset.asset_id == asset_id and asset.version == version
             ]
             if not matches:
+                # The operator-configured baseline id is deliberately not a
+                # registry asset; it is the explicit fallback when an evolved
+                # profile exists for the same server. Other missing ids stay
+                # fail-closed.
+                if asset_id == f"mcp-profile-{server_id}" and version == "1.0.0":
+                    return None
                 raise AgentRuntimeError(
                     "mcp_asset_not_found", f"{server_id}:{asset_id}@{version}"
                 )
@@ -844,8 +872,29 @@ class AgentRuntime:
                 pairs.add((parts[1], parts[2]))
         return pairs
 
+    def _validate_binding_snapshot(self, snapshot: Any) -> dict[str, Any]:
+        if (
+            not isinstance(snapshot, dict)
+            or type(snapshot.get("revision")) is not int
+            or snapshot["revision"] < 0
+            or not isinstance(snapshot.get("skills"), dict)
+            or not isinstance(snapshot.get("mcp"), dict)
+        ):
+            raise AgentRuntimeError("binding_invalid")
+        # A session snapshot may carry the full BindingStore envelope, but only
+        # the three fields below are execution inputs.
+        return {
+            "revision": snapshot["revision"],
+            "skills": snapshot["skills"],
+            "mcp": snapshot["mcp"],
+        }
+
     def _mcp_surface_from_snapshot(
-        self, snapshot: dict[str, Any], skill: LoadedSkill | None
+        self,
+        snapshot: dict[str, Any],
+        skill: LoadedSkill | None,
+        *,
+        allowed_tools: set[str] | None = None,
     ) -> McpSurface:
         allowlist = self._allowlist
         if allowlist is None:
@@ -880,6 +929,9 @@ class AgentRuntime:
                 }
                 for tool_name in spec.tools:
                     if (server_id, tool_name) not in pairs:
+                        continue
+                    namespaced = f"{MCP_TOOL_PREFIX}{server_id}__{tool_name}"
+                    if allowed_tools is not None and namespaced not in allowed_tools:
                         continue
                     tool = by_name.get(tool_name)
                     if tool is None:
@@ -1056,11 +1108,6 @@ class AgentRuntime:
             self._drop_client(server_id)
             return ToolOutcome(status="error", reason="internal")
 
-        size = len(json.dumps(result, ensure_ascii=False, default=str).encode("utf-8"))
-        if size > MAX_TOOL_OUTPUT_BYTES:
-            raise AgentRuntimeError(
-                "tool_budget_exceeded", f"{size} > {MAX_TOOL_OUTPUT_BYTES}"
-            )
         return ToolOutcome(status="ok", result=result)
 
     def call_mcp_tool(
@@ -1101,12 +1148,6 @@ class AgentRuntime:
             if self._is_dead_error(exc):
                 self._drop_client(server_id)
             raise AgentRuntimeError(exc.code or "mcp_error", exc.detail) from None
-        size = len(json.dumps(result, ensure_ascii=False, default=str).encode("utf-8"))
-        if size > MAX_TOOL_OUTPUT_BYTES:
-            self._drop_client(server_id)
-            raise AgentRuntimeError(
-                "tool_budget_exceeded", f"{size} > {MAX_TOOL_OUTPUT_BYTES}"
-            )
         return result
 
     # -- snapshot ----------------------------------------------------------

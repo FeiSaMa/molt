@@ -42,7 +42,7 @@ import hashlib
 import json
 import os
 import re
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
@@ -292,17 +292,51 @@ class BindingStore:
         *,
         expected_revision: int,
     ) -> dict[str, Any]:
-        """Write a whole new snapshot at ``revision + 1`` if the CAS matches."""
-        section = _require_section(section)
-        key = _require_key(key)
+        """Write a whole new snapshot at ``revision + 1`` if the CAS matches.
+
+        Kept as the single-section convenience wrapper; the actual linearization
+        point is :meth:`commit_bundle`, so a caller that changes both skills and
+        MCP can still use exactly one CAS pointer swap.
+        """
+
+        return self.commit_bundle({section: {key: entry}}, expected_revision=expected_revision)
+
+    def commit_bundle(
+        self,
+        updates: Mapping[str, Mapping[str, Mapping[str, Any]]],
+        *,
+        expected_revision: int,
+    ) -> dict[str, Any]:
+        """Atomically update several sections/entries in one CAS commit.
+
+        ``updates`` is ``{section: {key: entry}}`` with at least one entry for
+        each named section. Every entry is validated before the lock, then the
+        current snapshot is re-read *inside* the lock; the history file and the
+        single ``current.json`` pointer are written once. There is no partial
+        section commit.
+        """
+
+        if not isinstance(updates, Mapping) or not updates:
+            raise BindingError("updates must be a non-empty mapping")
+        normalized_updates: dict[str, dict[str, dict[str, Any]]] = {}
+        for section, entries in updates.items():
+            section = _require_section(section)
+            if not isinstance(entries, Mapping) or not entries:
+                raise BindingError(f"updates[{section!r}] must be a non-empty mapping")
+            checked: dict[str, dict[str, Any]] = {}
+            for key, entry in entries.items():
+                key = _require_key(key)
+                normalized = _validate_entry(section, entry)
+                entry_id = normalized[SECTION_ID_KEY[section]]
+                if entry_id != key:
+                    raise BindingError(
+                        f"{section} binding key {key!r} must match "
+                        f"{SECTION_ID_KEY[section]} {entry_id!r}"
+                    )
+                checked[key] = normalized
+            normalized_updates[section] = checked
         if isinstance(expected_revision, bool) or not isinstance(expected_revision, int):
             raise BindingError("expected_revision must be an integer")
-        normalized = _validate_entry(section, entry)
-        entry_id = normalized[SECTION_ID_KEY[section]]
-        if entry_id != key:
-            raise BindingError(
-                f"{section} binding key {key!r} must match {SECTION_ID_KEY[section]} {entry_id!r}"
-            )
         with self._locked():
             # Re-read *inside* the lock: a value read before locking cannot be
             # trusted as the CAS base.
@@ -317,7 +351,9 @@ class BindingStore:
                 "mcp": _copy(current["mcp"]),
                 "updated_at": _utc_now(),
             }
-            snapshot[section][key] = dict(normalized)
+            for section, entries in normalized_updates.items():
+                for key, entry in entries.items():
+                    snapshot[section][key] = dict(entry)
             digest = snapshot_sha256(snapshot)
             snapshot[SNAPSHOT_HASH_FIELD] = digest
             # History first: a crash after this line leaves an orphan file that

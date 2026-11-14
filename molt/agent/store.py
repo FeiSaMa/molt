@@ -40,6 +40,7 @@ class Message:
     created_at: str
     turn_id: str
     experiment_refs: list[str] | None = None
+    usage: dict[str, int] | None = None
 
     def public(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -51,6 +52,8 @@ class Message:
         }
         if self.experiment_refs:
             payload["experiment_refs"] = list(self.experiment_refs)
+        if self.usage:
+            payload["usage"] = dict(self.usage)
         return payload
 
 
@@ -74,6 +77,7 @@ class Session:
     condition: threading.Condition = field(default_factory=threading.Condition)
     closed: bool = False
     active_turn_id: str | None = None
+    cancel_requested_turn: str | None = None
 
     # ---- 读取 -------------------------------------------------------------
     def public(self) -> dict[str, Any]:

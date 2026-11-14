@@ -132,3 +132,72 @@ def load_task_results(data_dir: Path | str) -> dict[str, Any]:
             }
         )
     return {"results": results}
+
+
+def _probe_cost(row: dict[str, Any], task_id: str, rep: int) -> float:
+    value = row.get("cost_usd")
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+        raise _fail(f"probe cost_usd invalid for {task_id} rep {rep}")
+    return float(value)
+
+
+def _probe_solved(row: dict[str, Any], task_id: str, rep: int) -> bool:
+    value = row.get("solved")
+    if value not in (0, 1, True, False):
+        raise _fail(f"probe solved invalid for {task_id} rep {rep}")
+    return bool(value)
+
+
+def load_probe_task_results(repo_root: Path | str) -> dict[str, Any]:
+    """Build page4 pairs from real probe 2c baseline vs memory-v3 rows.
+
+    These are historical real-Pi rows, not a fresh model run. The page labels
+    this source explicitly; the fixture/replay demo remains the default.
+    """
+
+    root = Path(repo_root)
+    baseline_doc = _load_json(root / "probes" / "report" / "2c", "rows.json")
+    candidate_doc = _load_json(
+        root / "probes" / "report" / "2c" / "memory-v3", "rows.json"
+    )
+    baseline_rows = baseline_doc.get("runs") if isinstance(baseline_doc, dict) else None
+    candidate_rows = candidate_doc.get("runs") if isinstance(candidate_doc, dict) else None
+    if not isinstance(baseline_rows, list) or not isinstance(candidate_rows, list):
+        raise _fail("probe rows 缺少 runs 数组")
+
+    baseline_index: dict[tuple[str, int], dict[str, Any]] = {}
+    for row in baseline_rows:
+        if not isinstance(row, dict) or row.get("group") != "baseline":
+            continue
+        task_id, rep = row.get("task_id"), row.get("rep")
+        if isinstance(task_id, str) and isinstance(rep, int):
+            baseline_index.setdefault((task_id, rep), row)
+    candidate_index: dict[tuple[str, int], dict[str, Any]] = {}
+    for row in candidate_rows:
+        if not isinstance(row, dict):
+            continue
+        task_id, rep = row.get("task_id"), row.get("rep")
+        if isinstance(task_id, str) and isinstance(rep, int):
+            candidate_index.setdefault((task_id, rep), row)
+
+    results: list[dict[str, Any]] = []
+    for (task_id, rep), baseline in sorted(baseline_index.items()):
+        candidate = candidate_index.get((task_id, rep))
+        if candidate is None:
+            raise _fail(f"probe candidate missing for {task_id} rep {rep}")
+        results.append(
+            {
+                "id": f"{task_id}-r{rep}",
+                "cost_first": _probe_cost(baseline, task_id, rep),
+                "passed_first": _probe_solved(baseline, task_id, rep),
+                "cost_second": _probe_cost(candidate, task_id, rep),
+                "passed_second": _probe_solved(candidate, task_id, rep),
+            }
+        )
+    if not results:
+        raise _fail("probe rows 为空")
+    return {
+        "results": results,
+        "source": "probe-2c-memory-v3",
+        "note": "historical real Pi rows; not a new model run",
+    }

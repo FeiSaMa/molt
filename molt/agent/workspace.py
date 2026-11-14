@@ -411,7 +411,10 @@ class Workspace:
     ) -> RunResult:
         """Run the fixed stdlib test command inside the sandbox."""
 
-        command = sandbox_command(self.root, [_python(), "-m", "unittest", "-q"])
+        # -B: round1 would otherwise leave __pycache__ whose timestamp+size can
+        # match a same-size patch applied within the same second, making round2
+        # import stale bytecode and fail even when the fix is correct.
+        command = sandbox_command(self.root, [_python(), "-B", "-m", "unittest", "-q"])
         started = time.monotonic()
         timed_out = False
         with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:

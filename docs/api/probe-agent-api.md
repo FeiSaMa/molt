@@ -230,3 +230,14 @@ PYTHONDONTWRITEBYTECODE=1 python probes/build_probe_experiments.py --out /tmp/pr
 `/api/lab/**` 是独立的执行工作台契约，见
 [`docs/api/chat-lab-api.md`](chat-lab-api.md) 与 `contracts/openapi-lab-v1.json`。
 它不改变本文件描述的 11 条 agent API 路由；执行端点要求隔离后端可用，否则 fail closed。
+
+## 取消进行中的 turn（会话控制扩展）
+
+`POST /api/sessions/{session_id}/cancel`
+
+- 需要 Bearer token；body 可为空，或 `{"turn_id": "turn-..."}`。
+- 202：`{"turn_id": "...", "status": "cancelling"}`；服务端记录 `cancel_requested_turn`，并发出 `turn.cancel_requested`。
+- 409 `no_active_turn` / `turn_mismatch`：没有进行中的 turn，或 turn_id 不匹配。
+- 取消是协作式的：当前 provider 调用返回后才停止后续工具、候选轮与进化提交；不会立刻掐断已经发出的 HTTP 请求。
+- 真正取消时发 `turn.cancelled` + `done`，**不写入本轮 user/assistant 历史**；已完成的 turn 不受影响。
+- 该路由放在 `SESSION_CONTROL_ROUTES` 扩展表，不改变冻结的 11 条 legacy `ROUTES` 与主 OpenAPI 契约。

@@ -32,6 +32,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 from molt.agent.chat import adapter_health, build_adapter
 from molt.agent.errors import ApiError, ErrorCode
+from molt.agent.evolution import EvolutionManager, EvolutionRejected, public_snapshot
 from molt.agent.lab import LabBusy, LabError, LabManager, LabTaskNotFound, LabUnavailable
 from molt.agent.probe import (
     ProbeIndexError,
@@ -40,10 +41,12 @@ from molt.agent.probe import (
     index_public_view,
     load_index,
 )
+from molt.agent.probe_evolution import ProbeConflict, ProbeEvolutionManager
 from molt.agent.runtime import AgentRuntime, AgentRuntimeError
+from molt.agent.session_snapshot import SnapshotConflict, SnapshotInvalid
 from molt.agent.skill_admin import SkillAdmin, SkillAdminError
 from molt.agent.store import MAX_MESSAGES, TERMINAL_EVENTS, Session, SessionStore, new_id
-from molt.agent.tasks import TaskResultsError, load_task_results
+from molt.agent.tasks import TaskResultsError, load_probe_task_results, load_task_results
 from molt.agent.turn import TurnRunner
 from molt.agent.upper import UpperApiError, UpperService, parse_strict_body
 
@@ -73,13 +76,39 @@ class AgentApp:
     runtime: AgentRuntime | None = None
     skill_admin: SkillAdmin | None = None
     skill_mcp_openapi: dict[str, Any] | None = None
+    evolution_root: Path | None = None
+    evolution: EvolutionManager | None = None
+    probe_evolution: ProbeEvolutionManager | None = None
 
     def __post_init__(self) -> None:
         self.store = SessionStore(provider=self.adapter.name)
-        self.runner = TurnRunner(self.store, self.index, self.adapter, runtime=self.runtime)
         if self.lab is None:
             self.lab = LabManager(self.adapter, lab_root=self.lab_root)
-
+        if self.probe_evolution is None and self.evolution_root is not None:
+            self.probe_evolution = ProbeEvolutionManager(
+                self.evolution_root / "probe-runs",
+                self.root or REPO_ROOT,
+            )
+        if self.evolution is None and self.evolution_root is not None:
+            self.evolution = EvolutionManager(
+                self.evolution_root,
+                self.adapter,
+                self.runtime,
+                self.skill_admin,
+                lab=self.lab,
+                upper=self.upper,
+                index=self.index,
+                probe_evolution=self.probe_evolution,
+            )
+        if self.evolution is not None:
+            self.evolution.restore_sessions(self.store)
+        self.runner = TurnRunner(
+            self.store,
+            self.index,
+            self.adapter,
+            runtime=self.runtime,
+            evolution=self.evolution,
+        )
     def health(self) -> dict[str, Any]:
         return adapter_health(self.adapter)
 
@@ -157,6 +186,46 @@ SKILL_MCP_ROUTES: tuple[Route, ...] = (
         "session_runtime",
     ),
     ("GET", re.compile(r"^/api/skill-mcp/openapi\.json$"), "skill_mcp_openapi"),
+    ("GET", re.compile(r"^/api/sessions/(?P<session_id>[^/]+)/snapshots$"), "session_snapshots"),
+    (
+        "GET",
+        re.compile(r"^/api/sessions/(?P<session_id>[^/]+)/snapshots/diff$"),
+        "session_snapshot_diff",
+    ),
+    (
+        "POST",
+        re.compile(r"^/api/sessions/(?P<session_id>[^/]+)/snapshots/rollback$"),
+        "session_snapshot_rollback",
+    ),
+    ("GET", re.compile(r"^/api/evolution/catalog$"), "evolution_catalog"),
+    ("POST", re.compile(r"^/api/probe/runs$"), "probe_runs_create"),
+    ("POST", re.compile(r"^/api/tasks/run$"), "tasks_run_create"),
+    ("GET", re.compile(r"^/api/probe/runs$"), "probe_runs_list"),
+    ("GET", re.compile(r"^/api/probe/runs/(?P<run_id>[^/]+)$"), "probe_run_detail"),
+    (
+        "POST",
+        re.compile(r"^/api/probe/runs/(?P<run_id>[^/]+)/revert$"),
+        "probe_run_revert",
+    ),
+)
+
+# Session control extensions live outside the frozen legacy ``ROUTES`` tuple.
+SESSION_CONTROL_ROUTES: tuple[Route, ...] = (
+    (
+        "POST",
+        re.compile(r"^/api/sessions/(?P<session_id>[^/]+)/cancel$"),
+        "session_cancel",
+    ),
+    (
+        "POST",
+        re.compile(r"^/api/evolution/assets/(?P<asset_id>[^/]+)/rollback$"),
+        "evolution_asset_rollback",
+    ),
+    (
+        "POST",
+        re.compile(r"^/api/evolution/assets/(?P<asset_id>[^/]+)/restore$"),
+        "evolution_asset_restore",
+    ),
 )
 
 
@@ -199,7 +268,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
     # ---- 入口 -------------------------------------------------------------
     def _handle(self, method: str) -> None:
         path = urlsplit(self.path).path
-        routes = (*ROUTES, *SKILL_MCP_ROUTES)
+        routes = (*ROUTES, *SKILL_MCP_ROUTES, *SESSION_CONTROL_ROUTES)
         matches = [(route_method, match, name) for route_method, pattern, name in routes
                    if (match := pattern.match(path))]
         if not matches:
@@ -492,13 +561,48 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_tasks(self, match: re.Match[str]) -> None:
         del match
+        query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+        run_ids = query.get("probe_run_id") or []
+        data_dir = self.server.app.data_dir
+        if run_ids:
+            if len(run_ids) != 1 or not run_ids[0]:
+                raise ApiError(ErrorCode.BAD_REQUEST, "probe_run_id 只能出现一次")
+            manager = self._probe_evolution()
+            run = manager.get(run_ids[0])
+            if run is None:
+                raise ApiError(ErrorCode.NOT_FOUND, "probe run 不存在")
+            if run.status != "completed" or not run.out_dir:
+                raise ApiError(
+                    ErrorCode.CONFLICT,
+                    "probe run 尚未完成",
+                    {"reason": "probe_run_not_ready", "status": run.status},
+                )
+            data_dir = Path(run.out_dir)
+        sources = query.get("source") or []
+        source = sources[0] if sources else ""
         try:
-            payload = load_task_results(self.server.app.data_dir)
+            if source == "probe2c":
+                payload = load_probe_task_results(self.server.app.root or REPO_ROOT)
+            else:
+                payload = load_task_results(data_dir)
         except TaskResultsError:
             raise ApiError(
                 ErrorCode.DATA_UNAVAILABLE, "任务结果数据不可用"
             ) from None
         self._send_json(200, payload)
+
+    def _handle_tasks_run_create(self, match: re.Match[str]) -> None:
+        del match
+        payload = self._read_json_body(allow_empty=True)
+        force = payload.get("force", False)
+        if type(force) is not bool:
+            raise ApiError(ErrorCode.BAD_REQUEST, "force 必须是布尔值")
+        manager = self._probe_evolution()
+        try:
+            run = manager.create_detached(force=force)
+        except RuntimeError as exc:
+            raise ApiError(ErrorCode.CONFLICT, str(exc), {"reason": "probe_busy"}) from None
+        self._send_json(202, run.public())
 
     # ---- lab -------------------------------------------------------------
     def _lab_run(self, match: re.Match[str]) -> Any:
@@ -536,18 +640,23 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         if lab is None:  # pragma: no cover
             raise ApiError(ErrorCode.ADAPTER_UNAVAILABLE, "执行工作台未初始化")
         payload = self._read_json_body()
-        unknown = sorted(set(payload) - {"task_id"})
+        unknown = sorted(set(payload) - {"task_id", "session_id"})
         if unknown:
             raise ApiError(
                 ErrorCode.BAD_REQUEST,
-                "只接受 task_id 字段",
+                "只接受 task_id / session_id 字段",
                 {"unknown_fields": unknown},
             )
         task_id = payload.get("task_id")
         if not isinstance(task_id, str) or not task_id.strip():
             raise ApiError(ErrorCode.BAD_REQUEST, "task_id 必须是非空字符串")
+        session_id = payload.get("session_id")
+        if session_id is not None and (
+            not isinstance(session_id, str) or not session_id.startswith("sess-")
+        ):
+            raise ApiError(ErrorCode.BAD_REQUEST, "session_id 不合法")
         try:
-            run = lab.create(task_id.strip())
+            run = lab.create(task_id.strip(), session_id=session_id)
         except LabUnavailable as exc:
             raise ApiError(
                 ErrorCode.ADAPTER_UNAVAILABLE,
@@ -993,6 +1102,16 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         if payload:
             raise ApiError(ErrorCode.BAD_REQUEST, "POST /api/sessions 只接受 {}")
         session = self.server.app.store.create()
+        if self.server.app.evolution is not None:
+            try:
+                self.server.app.evolution.create(session)
+            except SnapshotInvalid:
+                self.server.app.store.delete(session.session_id)
+                raise ApiError(
+                    ErrorCode.ADAPTER_UNAVAILABLE,
+                    "会话快照无法创建",
+                    {"reason": "snapshot_unavailable"},
+                ) from None
         self._send_json(201, session.public())
 
     def _handle_sessions_list(self, match: re.Match[str]) -> None:
@@ -1003,6 +1122,224 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
     def _handle_session_detail(self, match: re.Match[str]) -> None:
         self._send_json(200, self._session(match).public())
 
+    def _evolution(self) -> EvolutionManager:
+        manager = self.server.app.evolution
+        if manager is None:
+            raise ApiError(
+                ErrorCode.ADAPTER_UNAVAILABLE,
+                "会话快照/进化未启用",
+                {"reason": "evolution_disabled"},
+            )
+        return manager
+
+    def _handle_session_snapshots(self, match: re.Match[str]) -> None:
+        session = self._session(match)
+        manager = self._evolution()
+        try:
+            payload = manager.history_public(session.session_id)
+        except SnapshotInvalid:
+            raise ApiError(ErrorCode.NOT_FOUND, "session 快照不存在") from None
+        self._send_json(200, payload)
+
+    def _handle_session_snapshot_diff(self, match: re.Match[str]) -> None:
+        session = self._session(match)
+        query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+        values = {}
+        for key in ("from_snapshot", "to_snapshot"):
+            items = query.get(key) or []
+            if len(items) != 1 or not items[0]:
+                raise ApiError(ErrorCode.BAD_REQUEST, "from_snapshot / to_snapshot 必须各出现一次")
+            values[key] = items[0]
+        manager = self._evolution()
+        try:
+            diff = manager.diff_public(
+                session.session_id, values["from_snapshot"], values["to_snapshot"]
+            )
+        except SnapshotInvalid:
+            raise ApiError(ErrorCode.NOT_FOUND, "快照不存在或不属于本会话历史链") from None
+        self._send_json(200, {"diff": diff})
+
+    def _handle_session_snapshot_rollback(self, match: re.Match[str]) -> None:
+        session = self._session(match)
+        body = self._read_strict_body(
+            ("snapshot_id", "expected_revision"), optional=("target_revision",)
+        )
+        snapshot_id = body["snapshot_id"]
+        expected = body["expected_revision"]
+        target_revision = body.get("target_revision")
+        if (
+            not isinstance(snapshot_id, str)
+            or not snapshot_id
+            or type(expected) is not int
+            or expected < 0
+        ):
+            raise ApiError(ErrorCode.BAD_REQUEST, "snapshot_id / expected_revision 不合法")
+        if target_revision is not None and (
+            type(target_revision) is not int or target_revision < 0
+        ):
+            raise ApiError(ErrorCode.BAD_REQUEST, "target_revision 必须是非负整数")
+        manager = self._evolution()
+        with session.condition:
+            if session.status == "in_progress":
+                raise ApiError(
+                    ErrorCode.CONFLICT,
+                    "turn 进行中，不能回退 session 快照",
+                    {"reason": "turn_in_progress"},
+                )
+            try:
+                state = manager.rollback(
+                    session,
+                    snapshot_id,
+                    expected,
+                    target_revision=target_revision,
+                )
+            except SnapshotConflict as exc:
+                raise ApiError(
+                    ErrorCode.CONFLICT,
+                    "快照 revision 已变化或目标就是当前快照",
+                    {"reason": str(exc)},
+                ) from None
+            except SnapshotInvalid as exc:
+                raise ApiError(
+                    ErrorCode.CONFLICT,
+                    "目标快照不在本会话历史链内",
+                    {"reason": str(exc)},
+                ) from None
+            session.append_event(
+                "snapshot.rolled_back",
+                {
+                    "turn_id": session.active_turn_id or "",
+                    **public_snapshot(state),
+                    "history_retained": True,
+                },
+            )
+        self._send_json(
+            200,
+            {
+                "current": public_snapshot(state),
+                "history_retained": True,
+                **state["pointer"],
+            },
+        )
+
+    def _handle_evolution_catalog(self, match: re.Match[str]) -> None:
+        del match
+        query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+        values = query.get("include_rolled_back") or []
+        include_rolled_back = bool(values) and values[-1].lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        self._send_json(
+            200,
+            self._evolution().catalog_public(
+                include_rolled_back=include_rolled_back
+            ),
+        )
+
+    def _handle_evolution_asset_rollback(self, match: re.Match[str]) -> None:
+        asset_id = match.group("asset_id")
+        body = self._read_strict_body(("reason", "rolled_back_by"))
+        reason = body["reason"]
+        rolled_back_by = body["rolled_back_by"]
+        if not isinstance(reason, str) or not reason.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "reason 必须是非空字符串")
+        if not isinstance(rolled_back_by, str) or not rolled_back_by.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "rolled_back_by 必须是非空字符串")
+        try:
+            payload = self._evolution().rollback_asset(
+                asset_id,
+                reason=reason,
+                rolled_back_by=rolled_back_by,
+            )
+        except EvolutionRejected as exc:
+            raise ApiError(
+                ErrorCode.CONFLICT,
+                "资产不能从复用池移除",
+                {"reason": str(exc)},
+            ) from None
+        self._send_json(200, payload)
+
+    def _handle_evolution_asset_restore(self, match: re.Match[str]) -> None:
+        asset_id = match.group("asset_id")
+        body = self._read_strict_body(("reason", "restored_by"))
+        reason = body["reason"]
+        restored_by = body["restored_by"]
+        if not isinstance(reason, str) or not reason.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "reason 必须是非空字符串")
+        if not isinstance(restored_by, str) or not restored_by.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "restored_by 必须是非空字符串")
+        try:
+            payload = self._evolution().restore_asset(
+                asset_id,
+                reason=reason,
+                restored_by=restored_by,
+            )
+        except EvolutionRejected as exc:
+            raise ApiError(
+                ErrorCode.CONFLICT,
+                "资产不能恢复到复用池",
+                {"reason": str(exc)},
+            ) from None
+        self._send_json(200, payload)
+
+    def _probe_evolution(self) -> ProbeEvolutionManager:
+        manager = self.server.app.probe_evolution
+        if manager is None:
+            raise ApiError(
+                ErrorCode.ADAPTER_UNAVAILABLE,
+                "probe 实验未启用",
+                {"reason": "probe_evolution_disabled"},
+            )
+        return manager
+
+    def _handle_probe_runs_create(self, match: re.Match[str]) -> None:
+        del match
+        body = self._read_strict_body(("session_id",))
+        session_id = body["session_id"]
+        if not isinstance(session_id, str) or not session_id:
+            raise ApiError(ErrorCode.BAD_REQUEST, "session_id 必须是非空字符串")
+        if self.server.app.store.get(session_id) is None:
+            raise ApiError(ErrorCode.NOT_FOUND, "session 不存在")
+        try:
+            run = self._probe_evolution().create(session_id)
+        except RuntimeError as exc:
+            raise ApiError(ErrorCode.CONFLICT, str(exc), {"reason": "probe_busy"}) from None
+        except ValueError as exc:
+            raise ApiError(ErrorCode.BAD_REQUEST, str(exc)) from None
+        self._send_json(202, run.public())
+
+    def _handle_probe_runs_list(self, match: re.Match[str]) -> None:
+        del match
+        query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+        session_ids = query.get("session_id") or []
+        session_id = session_ids[0] if session_ids else None
+        manager = self._probe_evolution()
+        if session_id is not None:
+            items = manager.runs_for_session(session_id)
+        else:
+            items = []
+        self._send_json(200, {"items": items, "calls_model": False})
+
+    def _handle_probe_run_detail(self, match: re.Match[str]) -> None:
+        run = self._probe_evolution().get(match.group("run_id"))
+        if run is None:
+            raise ApiError(ErrorCode.NOT_FOUND, "probe run 不存在")
+        self._send_json(200, run.public())
+
+    def _handle_probe_run_revert(self, match: re.Match[str]) -> None:
+        body = self._read_strict_body(("expected_generation",))
+        expected = body["expected_generation"]
+        if type(expected) is not int or expected < 0:
+            raise ApiError(ErrorCode.BAD_REQUEST, "expected_generation 必须是非负整数")
+        try:
+            run = self._probe_evolution().revert(match.group("run_id"), expected)
+        except ProbeConflict as exc:
+            status = ErrorCode.NOT_FOUND if exc.code == "probe_not_found" else ErrorCode.CONFLICT
+            raise ApiError(status, str(exc), {"reason": exc.code}) from None
+        self._send_json(200, run.public())
+
     def _handle_session_delete(self, match: re.Match[str]) -> None:
         session = self._session(match)
         with session.condition:
@@ -1012,6 +1349,13 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
                     "turn 进行中，不能删除 session",
                     {"reason": "turn_in_progress"},
                 )
+        if self.server.app.store.get(session.session_id) is None:
+            raise ApiError(ErrorCode.NOT_FOUND, "session 不存在")
+        if self.server.app.evolution is not None:
+            try:
+                self.server.app.evolution.delete(session.session_id)
+            except SnapshotInvalid:
+                pass
         if not self.server.app.store.delete(session.session_id):
             raise ApiError(ErrorCode.NOT_FOUND, "session 不存在")
         self.send_response(204)
@@ -1025,16 +1369,24 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
     def _handle_messages_create(self, match: re.Match[str]) -> None:
         session = self._session(match)
         payload = self._read_json_body()
-        unknown = sorted(set(payload) - {"content"})
+        unknown = sorted(set(payload) - {"content", "mode"})
         if unknown:
             raise ApiError(
                 ErrorCode.BAD_REQUEST,
-                "只接受 content 字段",
+                "只接受 content / mode 字段",
                 {"unknown_fields": unknown},
             )
         content = payload.get("content")
         if not isinstance(content, str):
             raise ApiError(ErrorCode.BAD_REQUEST, "content 必须是字符串")
+        mode = payload.get("mode")
+        if mode is None:
+            if content.startswith("【实验问答模式】"):
+                mode = "experiment"
+            else:
+                mode = "general"
+        if mode not in ("general", "experiment"):
+            raise ApiError(ErrorCode.BAD_REQUEST, "mode 只接受 general / experiment")
         size = len(content.encode("utf-8"))
         if size < 1 or size > MAX_CONTENT_BYTES:
             raise ApiError(
@@ -1060,11 +1412,49 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
                 )
             cursor = session.last_event_id
             turn_id = new_id("turn")
+            session.cancel_requested_turn = None
             session.status = "in_progress"
             session.active_turn_id = turn_id
 
         self._send_json(202, {"turn_id": turn_id, "event_cursor": cursor or None})
-        self.server.app.runner.start(session, turn_id, content)
+        self.server.app.runner.start(session, turn_id, content, mode)
+
+    def _handle_session_cancel(self, match: re.Match[str]) -> None:
+        session = self._session(match)
+        payload = self._read_json_body(allow_empty=True)
+        unknown = sorted(set(payload) - {"turn_id"})
+        if unknown:
+            raise ApiError(
+                ErrorCode.BAD_REQUEST,
+                "只接受 turn_id 字段",
+                {"unknown_fields": unknown},
+            )
+        requested = payload.get("turn_id")
+        if requested is not None and (not isinstance(requested, str) or not requested):
+            raise ApiError(ErrorCode.BAD_REQUEST, "turn_id 必须是非空字符串")
+        with session.condition:
+            if session.status != "in_progress" or not session.active_turn_id:
+                raise ApiError(
+                    ErrorCode.CONFLICT,
+                    "没有正在进行的 turn",
+                    {"reason": "no_active_turn"},
+                )
+            if requested is not None and requested != session.active_turn_id:
+                raise ApiError(
+                    ErrorCode.CONFLICT,
+                    "turn_id 不匹配",
+                    {"reason": "turn_mismatch"},
+                )
+            turn_id = session.active_turn_id
+            session.cancel_requested_turn = turn_id
+            session.append_event(
+                "turn.cancel_requested",
+                {
+                    "turn_id": turn_id,
+                    "note": "取消已送达；当前模型调用返回后停止后续步骤",
+                },
+            )
+        self._send_json(202, {"turn_id": turn_id, "status": "cancelling"})
 
     def _handle_events(self, match: re.Match[str]) -> None:
         session = self._session(match)
@@ -1261,6 +1651,7 @@ def run_server(
     skill_state: Path | None = None,
     mcp_allowlist: Path | None = None,
     operator_identity: str | None = None,
+    evolution_root: Path | None = None,
 ) -> int:
     """启动服务；成功时阻塞在 ``serve_forever``，返回进程退出码。"""
 
@@ -1357,6 +1748,7 @@ def run_server(
         upper=upper,
         runtime=runtime_obj,
         skill_admin=skill_admin_obj,
+        evolution_root=(evolution_root or (skill_state_resolved / "session-evolution")),
     )
     try:
         server = create_server(app, host, port)

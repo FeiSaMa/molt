@@ -388,6 +388,7 @@ def two_phase_evaluate(
     evaluator: SkillEvaluator | None = None,
     driver: str = "molt.skills.eval_runner",
     asset_id: str | None = None,
+    require_transfer_gain: bool = True,
 ) -> dict[str, Any]:
     """Run transfer + regression, mirror the gate, write one evidence record.
 
@@ -422,6 +423,28 @@ def two_phase_evaluate(
     transfer_verdict, transfer_reason = mirror_gate("transfer", transfer["metrics"])
     regression_verdict, regression_reason = mirror_gate("regression", regression["metrics"])
 
+    # Automatic evolution starts from a saturated baseline on the fixed task
+    # set (repo-evidence already passes it). Requiring a strict transfer gain
+    # there would make every candidate ineligible even when the current task
+    # evidence improved. In that mode the fixed phases are a regression guard:
+    # candidate must not lose any task and must not lower the pass rate.
+    if not require_transfer_gain:
+        metrics = transfer["metrics"]
+        candidate_rate = metrics["candidate"]["pass_rate"]
+        baseline_rate = metrics["baseline"]["pass_rate"]
+        if candidate_rate >= baseline_rate and not metrics["tasks_regressed"]:
+            transfer_verdict = "keep"
+            transfer_reason = (
+                f"no_transfer_regression:{candidate_rate:.3f}>={baseline_rate:.3f};"
+                "gate=regression_only"
+            )
+        else:
+            transfer_verdict = "reject"
+            transfer_reason = (
+                f"transfer_regression:{candidate_rate:.3f}<{baseline_rate:.3f}"
+                f";regressed={metrics['tasks_regressed']};gate=regression_only"
+            )
+
     if transfer_verdict == "reject":
         final = "reject"
     elif regression_verdict == "rollback":
@@ -443,6 +466,7 @@ def two_phase_evaluate(
     )
     record["transfer"]["verdict"] = transfer_verdict
     record["transfer"]["reason"] = transfer_reason
+    record["gate_mode"] = "transfer_gain" if require_transfer_gain else "regression_only"
     record["regression"]["verdict"] = regression_verdict
     record["regression"]["reason"] = regression_reason
     evidence_path = _write_evidence(state_dir, eval_id, record)

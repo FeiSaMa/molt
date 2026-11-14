@@ -21,7 +21,6 @@ ALLOWED_ENV_KEYS = frozenset({"PATH", "PYTHONPATH", "PYTHONDONTWRITEBYTECODE", "
 ALLOWED_MODULE_PREFIX = "mcp_servers."
 ALLOWED_COMMAND_HEAD = ("python3", "-m")
 MAX_TIMEOUT_S = 120.0
-MAX_OUTPUT_BYTES = 1024 * 1024
 
 # Known tools per server module. A module absent from this table grants nothing.
 KNOWN_TOOLS: dict[str, tuple[str, ...]] = {
@@ -49,7 +48,7 @@ class McpServerSpec:
     tools: tuple[str, ...] = ()
     corpus: str = ""
     timeout_s: float = 10.0
-    max_output_bytes: int = 65536
+    max_output_bytes: int = 65536  # retained for provenance; runtime no longer enforces it
 
     def allows(self, tool: str) -> bool:
         return tool in self.tools
@@ -139,7 +138,7 @@ def _parse_entry(entry: Any, root: Path) -> McpServerSpec:
         "tools",
         "corpus",
         "timeout_s",
-        "max_output_bytes",
+        "max_output_bytes",  # legacy field accepted but no longer enforced
     }
     if unknown:
         raise McpAllowlistError("server_entry_unknown_fields", ",".join(sorted(unknown)))
@@ -198,9 +197,6 @@ def _parse_entry(entry: Any, root: Path) -> McpServerSpec:
     if not 0 < timeout_s <= MAX_TIMEOUT_S:
         raise McpAllowlistError("timeout_out_of_range", server_id)
     budget = _number(entry, "max_output_bytes", 65536)
-    if not 0 < budget <= MAX_OUTPUT_BYTES:
-        raise McpAllowlistError("max_output_bytes_out_of_range", server_id)
-
     return McpServerSpec(
         server_id=server_id,
         command=command,
