@@ -1390,7 +1390,7 @@ var PROJECT_FIXTURES = {
   }
 
   function sessionLine2(node) { return node.messages.length + " 条消息"; }
-  function configLine2(node) { return node.skills.length + " skill · " + (node.mcp.length + node.memory.length) + " 附件"; }
+  function configLine2(node) { return node.skills.length + " skill · " + node.mcp.length + " MCP · " + node.memory.length + " mem"; }
 
   function configSummary(id) {
     var node = state.config.byId[id];
