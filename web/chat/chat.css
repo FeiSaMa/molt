@@ -1503,11 +1503,13 @@ body.connected .provider-chip.is-mock { border-color: #e6dcc4; color: #8a6a1f; b
 .demo-side .text-button { padding: 4px 7px; font-size: .62rem; }
 .demo-delta { margin-top: 8px; padding: 7px 10px; border: 1px solid var(--chat-line); border-radius: 5px; background: #fbfcfe; }
 .demo-delta-title { margin: 0 0 4px; color: var(--chat-muted); font: 600 .56rem var(--font-num); letter-spacing: .05em; text-transform: uppercase; }
-.demo-delta-row { display: flex; align-items: baseline; gap: 8px; color: var(--chat-ink); font: .66rem var(--font-num); line-height: 1.5; }
-.demo-delta-row span { min-width: 62px; color: var(--chat-muted); }
-.demo-delta-row i { color: #aab2bc; font-style: normal; }
-.demo-delta-row b { font-weight: 600; }
+.demo-delta-head, .demo-delta-row { display: grid; grid-template-columns: 52px 1fr 1.25fr; gap: 6px; align-items: baseline; }
+.demo-delta-head { margin-top: 2px; color: var(--chat-muted); font: 600 .52rem var(--font-num); letter-spacing: .04em; }
+.demo-delta-row { color: var(--chat-ink); font: .62rem var(--font-num); line-height: 1.55; }
+.demo-delta-row > span { color: var(--chat-muted); }
+.demo-delta-row b { font-weight: 600; color: var(--chat-muted); overflow-wrap: anywhere; }
 .demo-delta-row b.is-on { color: var(--chat-blue); }
+.demo-delta-path { margin: 5px 0 0; color: var(--chat-muted); font: .55rem var(--font-num); overflow-wrap: anywhere; }
 .demo-delta-note { margin: 4px 0 0; color: var(--chat-muted); font-size: .62rem; line-height: 1.5; }
 .demo-callout { margin: 10px 0 0; padding: 9px 10px; border: 1px solid #d7e1ee; border-radius: 5px; background: #f5f8fc; color: var(--chat-muted); font-size: .7rem; line-height: 1.65; }
 .demo-callout b { color: var(--chat-ink); }

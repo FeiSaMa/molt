@@ -330,11 +330,16 @@
                   <button type="button" class="text-button" data-demo-session="sess-a25e06acf349417c">打开进化会话</button>
                 </article>
               </div>
-              <div class="demo-delta" aria-label="两侧配置差异">
-                <p class="demo-delta-title">配置差异</p>
-                <div class="demo-delta-row"><span>runtime</span><b>off</b><i>→</i><b class="is-on">active</b></div>
-                <div class="demo-delta-row"><span>evidence</span><b>未启用</b><i>→</i><b class="is-on">repo-evidence</b></div>
-                <p class="demo-delta-note">结论仍是 4/4；差的 4 分全在证据栏。</p>
+              <div class="demo-delta" id="demo-delta" aria-label="配置变化">
+                <p class="demo-delta-title">配置变化</p>
+                <div class="demo-delta-head"><span>项</span><span>基线</span><span>进化</span></div>
+                <div class="demo-delta-row"><span>runtime</span><b>off</b><b class="is-on">active</b></div>
+                <div class="demo-delta-row"><span>Skill</span><b>—</b><b class="is-on" id="demo-delta-skill">repo-evidence</b></div>
+                <div class="demo-delta-row"><span>MCP</span><b>—</b><b class="is-on" id="demo-delta-mcp">project_kb</b></div>
+                <div class="demo-delta-row"><span>工具面</span><b>—</b><b class="is-on" id="demo-delta-tools">4 个只读工具</b></div>
+                <div class="demo-delta-row"><span>权限</span><b>—</b><b class="is-on" id="demo-delta-perms">无网络 · 无文件写</b></div>
+                <p class="demo-delta-path" id="demo-delta-skill-path">skills/repo-evidence/SKILL.md · v1.0.1794…</p>
+                <p class="demo-delta-note" id="demo-delta-note">binding r6 · 基线 runtime off 不加载这些资产，证据栏因此 0/4</p>
               </div>
               <p class="demo-callout"><b>进化不在结论，在证据。</b> 两边都能说“不可比”；只有进化后的回答能给出 <code>scenario-versions</code> / <code>claims</code> / <code>evidence-chain</code> 和检索记录。</p>
               <table class="demo-checks" aria-label="8 项硬检查">

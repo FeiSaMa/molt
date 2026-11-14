@@ -540,6 +540,7 @@
       rt.loading = false;
       if (runtimeStillCurrent(identity)) {
         renderRuntime();
+        renderDemoBinding();
         /* General Agent is the default: once the capability catalog is loaded,
          * enter the server-confirmed active tool loop automatically. Users
          * can still turn it off or choose the experiment-only mode. */
@@ -4747,6 +4748,43 @@
   $("context-preview").addEventListener("click", previewSnapshot);
 
   var PANES = ["branch", "lab", "runtime", "skills", "mcp", "catalog", "archive", "demo", "history"];
+  function demoShortHash(value) {
+    var text = String(value || "");
+    var marker = "sha256:";
+    var index = text.indexOf(marker);
+    return index >= 0 ? text.slice(index + marker.length, index + marker.length + 12) : text.slice(0, 12);
+  }
+  function renderDemoBinding() {
+    if (!$("demo-delta")) return;
+    var rt = state.runtime || {}, status = rt.status || {}, binding = status.binding || {};
+    var skills = binding.skills || {}, mcps = binding.mcp || {};
+    var skillIds = Object.keys(skills), mcpIds = Object.keys(mcps);
+    var setText = function (id, text) { var node = $(id); if (node) node.textContent = text; };
+    if (binding.revision !== undefined) {
+      setText("demo-delta-note", "binding r" + binding.revision + " · 基线 runtime off 不加载这些资产，证据栏因此 0/4");
+    }
+    if (skillIds.length) {
+      var skillId = skillIds[0], skill = skills[skillId] || {};
+      setText("demo-delta-skill", skillId + " v" + String(skill.version || "").slice(0, 10));
+      setText("demo-delta-skill-path", "skills/" + skillId + "/SKILL.md · " + demoShortHash(skill.package_hash));
+    }
+    if (mcpIds.length) {
+      var mcpId = mcpIds[0], profile = mcps[mcpId] || {};
+      setText("demo-delta-mcp", mcpId + " v" + (profile.version || "—"));
+    }
+    var catalogSkills = (rt.catalog && rt.catalog.skills) || [];
+    var bound = null;
+    for (var i = 0; i < catalogSkills.length; i++) {
+      if (catalogSkills[i] && catalogSkills[i].bound) { bound = catalogSkills[i]; break; }
+    }
+    if (bound && bound.permissions) {
+      var tools = bound.permissions.tools || [], perms = [];
+      if (tools.length) setText("demo-delta-tools", tools.length + " 个只读工具");
+      perms.push(bound.permissions.network ? "可联网" : "无网络");
+      perms.push(bound.permissions.filesystem === "none" ? "无文件写" : ("filesystem " + bound.permissions.filesystem));
+      setText("demo-delta-perms", perms.join(" · "));
+    }
+  }
   function selectPane(name) {
     PANES.forEach(function (pane) {
       var tab = $("tab-" + pane), section = $("pane-" + pane), on = pane === name;
@@ -4758,6 +4796,7 @@
     });
     if (name === "archive") window.dispatchEvent(new Event("resize"));
     if (name === "catalog" && state.session) loadCatalog();
+    if (name === "demo") renderDemoBinding();
   }
   var menuItems = Array.prototype.slice.call(document.querySelectorAll(".menu-item"));
   menuItems.forEach(function (item) {
