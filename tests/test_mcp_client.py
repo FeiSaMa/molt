@@ -645,7 +645,11 @@ def test_oversized_frame_trips_frame_budget(tmp_path):
         client.close()
 
 
-def test_byte_budget_is_enforced(tmp_path):
+def test_byte_budget_is_enforced(tmp_path, monkeypatch):
+    # 走真实的 16 MiB 阈值要洪泛 ~18 MB，慢 runner 上读取耗时可能超过
+    # wait_for_failure 的默认超时。把会话预算压到 1 MiB：单帧 400 KB
+    # （仍远小于 MAX_FRAME_BYTES），3 帧即确定越界，与墙钟无关。
+    monkeypatch.setattr(client_module, "MAX_SESSION_BYTES", 1024 * 1024)
     body = (
         "import json, sys\n"
         "for line in sys.stdin:\n"
@@ -658,8 +662,8 @@ def test_byte_budget_is_enforced(tmp_path):
         " + '\\n')\n"
         "    sys.stdout.flush()\n"
         "    chunk = json.dumps({'jsonrpc': '2.0', 'method': 'notifications/message',"
-        " 'params': {'data': 'x' * 900000}})\n"
-        "    for _ in range(20):\n"
+        " 'params': {'data': 'x' * 400000}})\n"
+        "    for _ in range(4):\n"
         "        sys.stdout.write(chunk + '\\n')\n"
         "        sys.stdout.flush()\n"
     )
@@ -668,7 +672,8 @@ def test_byte_budget_is_enforced(tmp_path):
     client.start()
     try:
         client.initialize()
-        failure = wait_for_failure(client)
+        # 超时只是慢机器的兜底，正确性由 1 MiB 阈值 + 1.6 MB 洪泛保证。
+        failure = wait_for_failure(client, timeout=15.0)
         assert isinstance(failure, McpBudgetError)
         assert failure.code == "byte_budget_exceeded"
         with pytest.raises(McpBudgetError):
