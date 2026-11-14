@@ -13,6 +13,7 @@ import shutil
 import socket
 import threading
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -109,8 +110,22 @@ def bound_evidence(
         "candidate_package_hash": package_hash or pkg.content_hash,
         "baseline_package_hash": pkg.content_hash,
         "final": final,
-        "transfer": {"metrics": {"task_count": 3}},
-        "regression": {"metrics": {"task_count": 2}},
+        "transfer": {
+            "phase": "transfer",
+            "metrics": {
+                "candidate": {"attempts": 3, "passed": 3, "pass_rate": 1.0},
+                "baseline": {"attempts": 3, "passed": 2, "pass_rate": 2 / 3},
+                "tasks_regressed": [],
+            },
+        },
+        "regression": {
+            "phase": "regression",
+            "metrics": {
+                "candidate": {"attempts": 2, "passed": 2, "pass_rate": 1.0},
+                "baseline": {"attempts": 2, "passed": 2, "pass_rate": 1.0},
+                "tasks_regressed": [],
+            },
+        },
         "tool_trace": [],
         "tools": [],
         "provenance": {"kind": "manual", "calls_model": False, "driver": "test"},
@@ -306,7 +321,14 @@ def test_mirror_gate_rejects_unknown_phase():
 def _run_two_phase(tmp_path, responses, final_expected):
     baseline = base_pkg()
     candidate = make_candidate(tmp_path)
-    adapter = ScriptedAdapter(responses=responses)
+    if isinstance(responses, ScriptedAdapter):
+        adapter = responses
+    elif isinstance(responses, Mapping):
+        adapter = ScriptedAdapter(responses=dict(responses))
+    else:
+        raise TypeError(
+            f"responses must be ScriptedAdapter or Mapping, got {type(responses).__name__}"
+        )
     state_dir = tmp_path / "state"
     result = two_phase_evaluate(
         baseline,
@@ -353,12 +375,13 @@ def test_two_phase_keep(tmp_path):
     assert evidence["provenance"]["created_at"]
     assert evidence["final"] == "keep"
     assert adapter.real_model is False
-    # every row carries the provenance labels and an explicit empty tool trace
+    # every row carries the provenance labels; the tool trace lives on each side
     for row in evidence["transfer"]["rows"]:
         assert row["mode"] == "manual"
         assert row["calls_model"] is False
-        assert row["tool_trace"] == []
-        assert row["tools"] == []
+        for side in ("baseline", "candidate"):
+            assert row[side]["tool_trace"] == []
+            assert row[side]["tools"] == []
 
 
 def test_two_phase_reject_without_transfer_gain(tmp_path):
@@ -955,18 +978,10 @@ def test_mark_evaluated_requires_two_phases_and_honest_provenance(tmp_path):
     asset = register_asset(registry, pkg, sidecar_dir=sidecars, declared_origin="manual")
     good = bound_evidence(pkg)
 
-    with pytest.raises(SkillEvolutionError):
-        mark_evaluated_from_evidence(
-            registry,
-            asset.asset_id,
-            {**good, "transfer": None},
-        )
-    with pytest.raises(SkillEvolutionError):
-        mark_evaluated_from_evidence(
-            registry,
-            asset.asset_id,
-            {**good, "regression": None},
-        )
+    for override in ({"transfer": None}, {"regression": None}):
+        with pytest.raises(SkillEvolutionError) as excinfo:
+            mark_evaluated_from_evidence(registry, asset.asset_id, {**good, **override})
+        assert "evidence_invalid_phase_record" in str(excinfo.value)
     with pytest.raises(SkillEvolutionError):
         mark_evaluated_from_evidence(
             registry,
@@ -1768,3 +1783,156 @@ def test_reconcile_skips_live_and_remote_young_intents(tmp_path):
     assert state_by_id["remote-old"]["reason_detail"] == "prepared_timeout"
     assert store.load()["revision"] == 1
     assert _commit_files(state) == ["1.json"]
+
+
+def _phase_record(**overrides: Any) -> dict[str, Any]:
+    record = {
+        "phase": "transfer",
+        "metrics": {
+            "candidate": {"attempts": 1, "passed": 1, "pass_rate": 1.0},
+            "baseline": {"attempts": 1, "passed": 1, "pass_rate": 1.0},
+            "tasks_regressed": [],
+        },
+    }
+    record.update(overrides)
+    return record
+
+
+def test_mark_evaluated_rejects_invalid_phase_records(tmp_path):
+    state = tmp_path / "state"
+    registry = UpperRegistry(state)
+    sidecars = tmp_path / "sidecars"
+    candidate = make_candidate(tmp_path)
+    pkg = _pkg_for(candidate)
+    asset = register_asset(registry, pkg, sidecar_dir=sidecars, declared_origin="manual")
+    good = bound_evidence(pkg)
+    valid = _phase_record()
+
+    invalid_transfer = {
+        "transfer_none": {"transfer": None},
+        "transfer_empty_object": {"transfer": {}},
+        "metrics_missing": {"transfer": {"phase": "transfer"}},
+        "metrics_not_mapping": {"transfer": _phase_record(metrics=[])},
+        "candidate_not_mapping": {
+            "transfer": _phase_record(
+                metrics={
+                    "candidate": [],
+                    "baseline": {"attempts": 1, "passed": 1, "pass_rate": 1.0},
+                    "tasks_regressed": [],
+                }
+            )
+        },
+        "baseline_not_mapping": {
+            "transfer": _phase_record(
+                metrics={
+                    "candidate": {"attempts": 1, "passed": 1, "pass_rate": 1.0},
+                    "baseline": None,
+                    "tasks_regressed": [],
+                }
+            )
+        },
+        "pass_rate_not_number": {
+            "transfer": _phase_record(
+                metrics={
+                    "candidate": {"attempts": 1, "passed": 1, "pass_rate": "1.0"},
+                    "baseline": {"attempts": 1, "passed": 1, "pass_rate": 1.0},
+                    "tasks_regressed": [],
+                }
+            )
+        },
+        "pass_rate_bool": {
+            "transfer": _phase_record(
+                metrics={
+                    "candidate": {"attempts": 1, "passed": 1, "pass_rate": True},
+                    "baseline": {"attempts": 1, "passed": 1, "pass_rate": 1.0},
+                    "tasks_regressed": [],
+                }
+            )
+        },
+        "tasks_regressed_missing": {
+            "transfer": _phase_record(
+                metrics={
+                    "candidate": {"attempts": 1, "passed": 1, "pass_rate": 1.0},
+                    "baseline": {"attempts": 1, "passed": 1, "pass_rate": 1.0},
+                }
+            )
+        },
+        "phase_mismatch": {"transfer": _phase_record(phase="regression")},
+        "regression_none": {"regression": None},
+        "regression_bad_record": {"regression": []},
+    }
+
+    for name, override in invalid_transfer.items():
+        evidence = {**good, **override}
+        if name == "transfer_none":
+            evidence["regression"] = valid
+        elif name == "regression_none":
+            evidence["transfer"] = valid
+        with pytest.raises(SkillEvolutionError) as excinfo:
+            mark_evaluated_from_evidence(registry, asset.asset_id, evidence)
+        assert "evidence_invalid_phase_record" in str(excinfo.value), name
+        assert registry.get(asset.asset_id).status == "draft", name
+
+
+def test_rollback_evidence_can_be_evaluated_but_not_approved(tmp_path):
+    state = tmp_path / "state"
+    registry = UpperRegistry(state)
+    sidecars = tmp_path / "sidecars"
+    candidate = make_candidate(tmp_path)
+    pkg = _pkg_for(candidate)
+    asset = register_asset(registry, pkg, sidecar_dir=sidecars, declared_origin="manual")
+    rollback_evidence = bound_evidence(pkg, final="rollback")
+
+    mark_evaluated_from_evidence(registry, asset.asset_id, rollback_evidence)
+    assert registry.get(asset.asset_id).status == "evaluated"
+
+    with pytest.raises(SkillEvolutionError) as excinfo:
+        approve_asset(
+            registry,
+            asset.asset_id,
+            approved_by="operator",
+            note="rollback evidence must not approve",
+            evidence=rollback_evidence,
+        )
+    assert "evidence_not_keep" in str(excinfo.value)
+    assert registry.get(asset.asset_id).status == "evaluated"
+
+
+def test_approve_rejects_incomplete_keep_evidence(tmp_path):
+    state = tmp_path / "state"
+    registry = UpperRegistry(state)
+    sidecars = tmp_path / "sidecars"
+    candidate = make_candidate(tmp_path)
+    pkg = _pkg_for(candidate)
+    asset = register_asset(registry, pkg, sidecar_dir=sidecars, declared_origin="manual")
+
+    good = bound_evidence(pkg, final="keep")
+    mark_evaluated_from_evidence(registry, asset.asset_id, good)
+    assert registry.get(asset.asset_id).status == "evaluated"
+
+    bad_keeps = {
+        "transfer_none": ({**good, "transfer": None}, "evidence_invalid_phase_record"),
+        "regression_none": ({**good, "regression": None}, "evidence_invalid_phase_record"),
+        "transfer_empty": ({**good, "transfer": {}}, "evidence_invalid_phase_record"),
+        "live_without_call": (
+            {
+                **good,
+                "mode": "live",
+                "calls_model": False,
+                "provenance": {"kind": "live", "calls_model": False, "driver": "test"},
+            },
+            "evidence_invalid_provenance",
+        ),
+    }
+
+    for name, (evidence, expected) in bad_keeps.items():
+        with pytest.raises(SkillEvolutionError) as excinfo:
+            approve_asset(
+                registry,
+                asset.asset_id,
+                approved_by="operator",
+                note="incomplete keep evidence",
+                evidence=evidence,
+            )
+        assert expected in str(excinfo.value), name
+        assert registry.get(asset.asset_id).status == "evaluated", name

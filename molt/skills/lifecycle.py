@@ -71,6 +71,8 @@ LIFECYCLE_LOCK_NAME = ".lifecycle.lock"
 INTENT_STALE_AFTER_S = 300
 EVIDENCE_ASSET_MISMATCH = "evidence_asset_mismatch"
 EVIDENCE_NOT_KEEP = "evidence_not_keep"
+EVIDENCE_INVALID_PHASE_RECORD = "evidence_invalid_phase_record"
+EVIDENCE_INVALID_PROVENANCE = "evidence_invalid_provenance"
 ROLLBACK_TARGET_MISSING = "rollback_target_missing"
 BASELINE_KIND = "operator_baseline"
 
@@ -750,6 +752,64 @@ def _assert_evidence_binding(
     return asset
 
 
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _validate_phase_record(phase: str, record: Any) -> None:
+    """Fail-closed structure check for one phase record (D5.9 evidence).
+
+    A record that merely *has* ``transfer``/``regression`` keys (even ``null``)
+    must not mark an asset evaluated: the metrics are what the verdict was
+    computed from, so their shape is validated before the state transition.
+    """
+    if not isinstance(record, Mapping):
+        raise SkillEvolutionError(EVIDENCE_INVALID_PHASE_RECORD)
+    declared_phase = record.get("phase")
+    if declared_phase is not None and declared_phase != phase:
+        raise SkillEvolutionError(EVIDENCE_INVALID_PHASE_RECORD)
+    metrics = record.get("metrics")
+    if not isinstance(metrics, Mapping):
+        raise SkillEvolutionError(EVIDENCE_INVALID_PHASE_RECORD)
+    for side in ("candidate", "baseline"):
+        side_metrics = metrics.get(side)
+        if not isinstance(side_metrics, Mapping):
+            raise SkillEvolutionError(EVIDENCE_INVALID_PHASE_RECORD)
+        if not _is_number(side_metrics.get("pass_rate")):
+            raise SkillEvolutionError(EVIDENCE_INVALID_PHASE_RECORD)
+        for counter in ("attempts", "passed"):
+            if counter in side_metrics and (
+                not isinstance(side_metrics[counter], int)
+                or isinstance(side_metrics[counter], bool)
+            ):
+                raise SkillEvolutionError(EVIDENCE_INVALID_PHASE_RECORD)
+    if not isinstance(metrics.get("tasks_regressed"), list):
+        raise SkillEvolutionError(EVIDENCE_INVALID_PHASE_RECORD)
+
+
+def _validate_evidence_provenance(payload: Mapping[str, Any]) -> str:
+    """Fail-closed mode/provenance check shared by evaluate and approve.
+
+    ``mode`` (top level) and ``provenance.kind`` must agree when both are
+    present; ``live`` requires an actual model call, ``manual`` forbids one.
+    """
+    provenance = payload.get("provenance")
+    if not isinstance(provenance, Mapping):
+        raise SkillEvolutionError("evidence.provenance must be an object")
+    kind = provenance.get("kind")
+    mode = payload.get("mode", kind)
+    calls_model = payload.get("calls_model", provenance.get("calls_model"))
+    if mode not in ("live", "manual"):
+        raise SkillEvolutionError(EVIDENCE_INVALID_PROVENANCE)
+    if mode == "live" and calls_model is not True:
+        raise SkillEvolutionError(EVIDENCE_INVALID_PROVENANCE)
+    if mode == "manual" and calls_model is not False:
+        raise SkillEvolutionError(EVIDENCE_INVALID_PROVENANCE)
+    if kind is not None and kind != mode:
+        raise SkillEvolutionError(EVIDENCE_INVALID_PROVENANCE)
+    return str(mode)
+
+
 def mark_evaluated_from_evidence(
     registry: Any,
     asset_id: str,
@@ -759,34 +819,29 @@ def mark_evaluated_from_evidence(
 ) -> UpperAsset:
     """Move a draft asset to ``evaluated`` after a two-phase evaluation.
 
-    Requires ``final ∈ {keep, reject, rollback}``, both phase records, honest
-    provenance (``kind="live"`` needs ``calls_model=True``) and — per D5.9 —
-    that the evidence names this asset and its package hash. A record produced
-    for another asset/hash is rejected and nothing is marked.
+    Order matters: (1) asset/hash binding, (2) verdict + phase-record structure
+    (fail closed), (3) provenance honesty, (4) ``mark_evaluated``. A record
+    produced for another asset/hash, or the wrong shape, is rejected and nothing
+    is marked.
 
     ``UpperAsset.eval_state`` is deliberately not rewritten: ``molt/upper/types.py``
     forbids ``eval_state != "not_evaluated"`` for ``synthetic``/``seed_import``
     origins, and this module does not touch ``molt/upper/**``.
     """
     payload = _load_evidence(evidence)
+    # 1. D5.9: evidence must belong to this asset and this package hash.
+    _assert_evidence_binding(registry, asset_id, payload, package_hash=package_hash)
+    # 2. Verdict and phase structure; null/empty records are not evidence.
     final = payload.get("final")
     if final not in EVIDENCE_FINALS:
         raise SkillEvolutionError(
             f"evidence final must be one of {EVIDENCE_FINALS}, got {final!r}"
         )
-    missing = [phase for phase in ("transfer", "regression") if phase not in payload]
-    if missing:
-        raise SkillEvolutionError(
-            f"evidence is missing phase records: {', '.join(missing)}"
-        )
-    provenance = payload.get("provenance")
-    if not isinstance(provenance, dict):
-        raise SkillEvolutionError("evidence.provenance must be an object")
-    if provenance.get("kind") == "live" and provenance.get("calls_model") is not True:
-        raise SkillEvolutionError(
-            "evidence claims kind=live without calls_model=true"
-        )
-    _assert_evidence_binding(registry, asset_id, payload, package_hash=package_hash)
+    for phase in ("transfer", "regression"):
+        _validate_phase_record(phase, payload.get(phase))
+    # 3. Provenance honesty: mode/provenance must agree and live needs a call.
+    _validate_evidence_provenance(payload)
+    # 4. Only now is the state transition allowed.
     return registry.mark_evaluated(asset_id)
 
 
@@ -810,9 +865,19 @@ def approve_asset(
     if evidence is None:
         raise SkillEvolutionError(EVIDENCE_NOT_KEEP)
     payload = _load_evidence(evidence)
+    # Same validation ladder as mark_evaluated_from_evidence, and all of it runs
+    # before the registry transition: a rejected approval must leave the asset
+    # ``evaluated`` (never partially approved).
+    # 1. D5.9 binding: the record must name this asset and package hash.
+    _assert_evidence_binding(registry, asset_id, payload)
+    # 2. Phase records must carry real metrics, not just keys.
+    _validate_phase_record("transfer", payload.get("transfer"))
+    _validate_phase_record("regression", payload.get("regression"))
+    # 3. Provenance honesty (live ↔ calls_model, manual ↔ no model call).
+    _validate_evidence_provenance(payload)
+    # 4. Only a keep verdict may be promoted.
     if not evidence_allows_approval(payload):
         raise SkillEvolutionError(EVIDENCE_NOT_KEEP)
-    _assert_evidence_binding(registry, asset_id, payload)
     return registry.approve(asset_id, approved_by=approver)
 
 
