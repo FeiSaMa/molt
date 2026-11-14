@@ -1323,7 +1323,7 @@ var PROJECT_FIXTURES = {
   }
 
   function sessionLine2(node) { return node.messages.length + " 条消息"; }
-  function configLine2(node) { return node.skills.length + " skill · " + (node.mcp.length + node.memory.length) + " 附件"; }
+  function configLine2(node) { return node.skills.length + " skill · " + node.mcp.length + " MCP · " + node.memory.length + " mem"; }
 
   function configSummary(id) {
     var node = state.config.byId[id];
@@ -1797,7 +1797,8 @@ var PROJECT_FIXTURES = {
 
   function appendRollbackControl(foot, status, node, token) {
     if (node.id === state.currentId) return;
-    var button = el("button", "rollback-btn", "回退到此节点");
+    var armed = state.armedNode === node.id;
+    var button = el("button", "rollback-btn" + (armed ? " is-armed" : ""), armed ? "确认回退" : "回退到此节点");
     button.type = "button";
     button.addEventListener("click", function () {
       if (state.writing) return;
@@ -1811,9 +1812,11 @@ var PROJECT_FIXTURES = {
         state.armTimer = setTimeout(function () {
           if (state.armedNode !== node.id) return;
           state.armedNode = null;
-          button.textContent = "回退到此节点";
-          button.classList.remove("is-armed");
-          if (!status.classList.contains("is-done")) status.textContent = "已取消确认。";
+          if (button.isConnected) {
+            button.textContent = "回退到此节点";
+            button.classList.remove("is-armed");
+          }
+          if (status.isConnected && !status.classList.contains("is-done")) status.textContent = "已取消确认。";
         }, 6000);
         return;
       }
