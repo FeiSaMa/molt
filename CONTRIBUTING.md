@@ -43,15 +43,17 @@ feat(shell): 新增 svc-config shell 的三端口实现
 - 一个提交只做一件事；格式化与逻辑改动分开提交，便于回滚。
 - 涉及冻结面（§五）时，标题正文必须写明新 `scenario_version`。
 
-## 四、评审矩阵
+## 四、评审矩阵（建议，非合并门禁）
 
-| 变更面 | 最少 approve | 附加要求 |
+| 变更面 | 建议评审 | 附加要求 |
 | --- | --- | --- |
-| 契约域：`schemas/**`、`molt/core/ports.py`、`docs/protocol.md`、`docs/decisions/**` | 2 | 必须有 ADR；至少 1 位 @FeiSaMa |
-| 其余：shell / bench / adapter / web / docs / CI | 1 | — |
+| 契约域：`schemas/**`、`molt/core/ports.py`、`docs/protocol.md`、`docs/decisions/**` | 1–2 人 | 必须有 ADR；建议至少 1 位 @FeiSaMa |
+| 其余：shell / bench / adapter / web / docs / CI | 1 人（建议） | — |
 
-- 契约 PR 单人 approve 不得合并（这是 B2-D6 的硬要求；规则由分支保护 + CODEOWNERS 承载，
-  `molt doctor --repo-policy` 可做只读自检：协作文件、冻结面、契约域缺失即退出 1）。
+- 仓库不设 approve 数量门禁：两个 active ruleset（`main-protection` / `protect-main`）只有删除保护与
+  禁 non-fast-forward，未登记 required approvals 或必需状态检查，approve 数量不构成合并条件。
+- `.github/CODEOWNERS` 的作用是**自动请求 reviewer**，不是合并门禁；
+  `molt doctor --repo-policy` 仍可做只读自检（协作文件、冻结面、契约域缺失即退出 1）。
 - 评审意见未解决不合并；作者自己不能作为自己的 reviewer。
 - 合并方式用 squash，保留一条可读的提交信息。
 
@@ -96,7 +98,7 @@ feat(shell): 新增 svc-config shell 的三端口实现
 ## 八、PR checklist（模板里的同一份）
 
 - [ ] 写清影响的 **D 编号**（如 B2-D6），以及本次改动对应的验收方式。
-- [ ] 标注**契约影响**：有 / 无。有则附 ADR 链接与 2 位 reviewer。
+- [ ] 标注**契约影响**：有 / 无。有则附 ADR 链接；评审为建议，仓库不设 approve 数量门禁。
 - [ ] 标注是否触碰 **holdout**（`bench/holdout/**`、report 流、双分数）。
 - [ ] 标注是否触碰 **verifier / scenario_version 构件**（冻结面，见 AGENTS §六）。
 - [ ] **零写入**：`git status --porcelain` 为空；`tests/test_zero_write.py` 通过。
