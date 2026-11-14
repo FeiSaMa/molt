@@ -274,14 +274,58 @@
     if (text) { var pre = document.createElement("pre"); pre.textContent = text; row.appendChild(pre); }
     root.appendChild(row);
   }
+  function parseLabChanges(text) {
+    var files = [], current = null;
+    String(text || "").split(/\r?\n/).forEach(function (line) {
+      if (/^--- /.test(line)) return;
+      if (/^\+\+\+ /.test(line)) {
+        var path = line.slice(4).trim();
+        if (path.indexOf("b/") === 0) path = path.slice(2);
+        current = { path: path, add: 0, del: 0 };
+        files.push(current);
+        return;
+      }
+      if (!current || /^@@/.test(line)) return;
+      if (/^\+/.test(line)) current.add += 1;
+      else if (/^-/.test(line)) current.del += 1;
+    });
+    return files;
+  }
+  function renderLabChanges(text) {
+    var panel = $("lab-changes");
+    if (!panel) return;
+    empty(panel);
+    var files = parseLabChanges(text);
+    if (!files.length) { panel.hidden = true; return; }
+    var add = 0, del = 0;
+    files.forEach(function (file) { add += file.add; del += file.del; });
+    panel.appendChild(element("p", "lab-change-head", "变更 " + files.length + " 个文件 · 共 +" + add + " −" + del));
+    var list = element("div", "lab-change-list");
+    files.forEach(function (file) {
+      var chip = element("span", "lab-change-file");
+      chip.appendChild(element("b", "", file.path));
+      chip.appendChild(element("i", "is-add", "+" + file.add));
+      chip.appendChild(element("i", "is-del", "−" + file.del));
+      list.appendChild(chip);
+    });
+    panel.appendChild(list);
+    panel.hidden = false;
+  }
   function renderLabDiff(text, improved) {
+    renderLabChanges(text);
     var panel = $("lab-diff"), code = $("lab-diff-code");
     if (!panel || !code) return;
     empty(code);
     String(text || "").split(/\r?\n/).forEach(function (line) {
+      if (/^--- /.test(line)) return;
+      if (/^\+\+\+ /.test(line)) {
+        var path = line.slice(4).trim();
+        if (path.indexOf("b/") === 0) path = path.slice(2);
+        code.appendChild(element("span", "lab-diff-line is-file", path));
+        return;
+      }
       var row = element("span", "lab-diff-line", line || " ");
-      if (/^\+\+\+|^---/.test(line)) row.classList.add("is-file");
-      else if (/^\+/.test(line)) {
+      if (/^\+/.test(line)) {
         row.classList.add("is-add");
         if (improved) row.classList.add("is-improved");
       } else if (/^-/.test(line)) row.classList.add("is-del");
@@ -394,7 +438,7 @@
   function startLab() {
     var lab = state.lab;
     if (!lab.caps || !lab.caps.execution || !lab.caps.execution.available || lab.busy) return;
-    lab.busy = true; lab.runId = null; lab.cursor = 0; lab.round1 = null; lab.round2 = null; lab.diff = ""; $("lab-rounds").textContent = ""; $("lab-outcome").hidden = true; $("lab-outcome").textContent = ""; $("lab-diff").hidden = true; empty($("lab-diff-code")); $("lab-provenance").textContent = ""; setLabError(""); setLabStatus("提交…"); $("lab-run").disabled = true; $("lab-cancel").disabled = false;
+    lab.busy = true; lab.runId = null; lab.cursor = 0; lab.round1 = null; lab.round2 = null; lab.diff = ""; $("lab-rounds").textContent = ""; $("lab-outcome").hidden = true; $("lab-outcome").textContent = ""; $("lab-changes").hidden = true; empty($("lab-changes")); $("lab-diff").hidden = true; empty($("lab-diff-code")); $("lab-provenance").textContent = ""; setLabError(""); setLabStatus("提交…"); $("lab-run").disabled = true; $("lab-cancel").disabled = false;
     api("/api/lab/runs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task_id: ($("lab-task-select") && $("lab-task-select").value) || "calc-v1", session_id: state.session && state.session.session_id }) }).then(function (accepted) {
       lab.runId = accepted.run_id; setLabStatus("运行中"); lab.abort = new AbortController();
       return fetch(state.base + "/api/lab/runs/" + encodeURIComponent(lab.runId) + "/events?since=0", { headers: { "Authorization": "Bearer " + state.token, "Accept": "text/event-stream" }, signal: lab.abort.signal }).then(function (response) { if (!response.ok) throw new Error("执行事件流连接失败（" + response.status + "）"); return readLabSse(response, handleLabEvent); });

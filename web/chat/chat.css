@@ -1036,6 +1036,14 @@ body.connected .provider-chip.is-mock { border-color: #e6dcc4; color: #8a6a1f; b
 .lab-diff-line.is-add { color: #1d6b3f; background: #eef8f1; }
 .lab-diff-line.is-del { color: #9c3a30; background: #fdf1ef; }
 .lab-diff-line.is-improved { font-weight: 600; }
+.lab-changes { margin: 10px 0 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: #f7f9fc; }
+.lab-change-head { margin: 0; color: var(--ink-2); font: 600 .66rem var(--font-num); }
+.lab-change-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.lab-change-file { display: inline-flex; align-items: baseline; gap: 5px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 3px; background: #fff; font: .6rem var(--font-num); }
+.lab-change-file b { font-weight: 600; color: var(--ink-2); }
+.lab-change-file i { font-style: normal; }
+.lab-change-file i.is-add { color: #1d6b3f; }
+.lab-change-file i.is-del { color: #9c3a30; }
 
 /* ---------- 功能面板：标签 / 说明类小字改用微软雅黑 Light ---------- */
 .side-panes { --font-panel: "Microsoft YaHei Light", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif; }
@@ -1493,6 +1501,14 @@ body.connected .provider-chip.is-mock { border-color: #e6dcc4; color: #8a6a1f; b
 .demo-side-split .is-bad { color: var(--chat-red); }
 .demo-side-split .is-good { color: #1e7a46; }
 .demo-side .text-button { padding: 4px 7px; font-size: .62rem; }
+.demo-delta { margin-top: 8px; padding: 7px 10px; border: 1px solid var(--chat-line); border-radius: 5px; background: #fbfcfe; }
+.demo-delta-title { margin: 0 0 4px; color: var(--chat-muted); font: 600 .56rem var(--font-num); letter-spacing: .05em; text-transform: uppercase; }
+.demo-delta-row { display: flex; align-items: baseline; gap: 8px; color: var(--chat-ink); font: .66rem var(--font-num); line-height: 1.5; }
+.demo-delta-row span { min-width: 62px; color: var(--chat-muted); }
+.demo-delta-row i { color: #aab2bc; font-style: normal; }
+.demo-delta-row b { font-weight: 600; }
+.demo-delta-row b.is-on { color: var(--chat-blue); }
+.demo-delta-note { margin: 4px 0 0; color: var(--chat-muted); font-size: .62rem; line-height: 1.5; }
 .demo-callout { margin: 10px 0 0; padding: 9px 10px; border: 1px solid #d7e1ee; border-radius: 5px; background: #f5f8fc; color: var(--chat-muted); font-size: .7rem; line-height: 1.65; }
 .demo-callout b { color: var(--chat-ink); }
 .demo-checks { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: .64rem; }

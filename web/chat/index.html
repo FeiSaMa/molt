@@ -176,6 +176,7 @@
               <p class="evolution-note lab-scope">固定 coding fixture，与历史 demo/probe 数据分离；不是通用 Agent，也不是 genome evolution。</p>
               <div id="lab-rounds" class="lab-rounds" aria-live="polite"></div>
               <p class="lab-outcome" id="lab-outcome" hidden></p>
+              <div id="lab-changes" class="lab-changes" hidden></div>
               <pre id="lab-diff" class="lab-diff" hidden><code id="lab-diff-code"></code></pre>
               <p class="lab-provenance" id="lab-provenance"></p>
               <p class="settings-error" id="lab-error" role="alert" hidden></p>
@@ -328,6 +329,12 @@
                   <p class="demo-side-split">结论 <b class="is-good">4/4</b> · 证据 <b class="is-good">4/4</b></p>
                   <button type="button" class="text-button" data-demo-session="sess-a25e06acf349417c">打开进化会话</button>
                 </article>
+              </div>
+              <div class="demo-delta" aria-label="两侧配置差异">
+                <p class="demo-delta-title">配置差异</p>
+                <div class="demo-delta-row"><span>runtime</span><b>off</b><i>→</i><b class="is-on">active</b></div>
+                <div class="demo-delta-row"><span>evidence</span><b>未启用</b><i>→</i><b class="is-on">repo-evidence</b></div>
+                <p class="demo-delta-note">结论仍是 4/4；差的 4 分全在证据栏。</p>
               </div>
               <p class="demo-callout"><b>进化不在结论，在证据。</b> 两边都能说“不可比”；只有进化后的回答能给出 <code>scenario-versions</code> / <code>claims</code> / <code>evidence-chain</code> 和检索记录。</p>
               <table class="demo-checks" aria-label="8 项硬检查">
