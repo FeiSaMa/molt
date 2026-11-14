@@ -67,21 +67,21 @@
 
     var rc = scan.recomputed;
     var c = scan.counts;
-    var head = "扫描级（ADR-0008）的候选侧成本/墙钟未随数据面导出：";
+    var head = "扫描级（ADR-0008）：候选侧成本与墙钟未随数据面导出。";
 
     if (c.candReplay + c.candLive <= 0) {
-      return head + "数据面没有候选侧 run 可复算，扫描级取 ADR 常量 $" +
+      return head + "没有候选侧 run 可复算，取 ADR 常量 $" +
         fmt.usd(SCAN_CLAIM.candCostUsd) + " / " + fmt.sec(SCAN_CLAIM.candWallS) + "s";
     }
 
     return head +
-      "数据面候选侧只有 " + c.candReplay + " 条 replay + " + c.candLive + " 条 closure live，" +
+      "候选侧只有 " + c.candReplay + " 条 replay + " + c.candLive + " 条 closure live，" +
       "合计 $" + fmt.usd(rc.candPairCostUsd) + " / " + fmt.sec(rc.candPairWallMs) +
       "s 属 gate 级配对口径，不等于扫描级的 $" +
       fmt.usd(SCAN_CLAIM.candCostUsd) + " / " + fmt.sec(SCAN_CLAIM.candWallS) + "s";
   }
 
-  var SUM_NOTE = "不得对 runs.cost_usd 直接求和作为页面成本结论：closure 与 scan10 各含同一条 smoke-add";
+  var SUM_NOTE = "runs.cost_usd 不能直接求和：closure 与 scan10 各含同一条 smoke-add";
 
   /* ==========================================================================
    * 基础类型工具（ES5，避免老 WebView 翻车）
@@ -318,6 +318,15 @@
       fixture: 0,
       total: 0,
       byDemoGroup: { closure: 0, scan10: 0, "candidate-scan": 0, none: 0 },
+      /* 分组 × kind 的交叉计数：页面要按 demo_group 分别说明「closure 几条 live 候选 /
+         几条 replay 基线」「scan10 / candidate-scan 各几条 replay」，不能把整表
+         说成两条运行。值为 null 表示该分组在数据面里没有记录（不是 0）。 */
+      byGroupKind: {
+        closure: { live: 0, replay: 0, fixture: 0 },
+        scan10: { live: 0, replay: 0, fixture: 0 },
+        "candidate-scan": { live: 0, replay: 0, fixture: 0 },
+        none: { live: 0, replay: 0, fixture: 0 }
+      },
       basis: "runs",
       searchOnly: true,
       reportRunsTotal: null,
@@ -340,6 +349,12 @@
         g = r.demo_group === null || r.demo_group === undefined ? "none" : String(r.demo_group);
         if (out.byDemoGroup[g] === undefined) out.byDemoGroup[g] = 0;
         out.byDemoGroup[g] += 1;
+        if (out.byGroupKind[g] === undefined) {
+          out.byGroupKind[g] = { live: 0, replay: 0, fixture: 0 };
+        }
+        if (kind === "live" || kind === "replay" || kind === "fixture") {
+          out.byGroupKind[g][kind] += 1;
+        }
       }
       out.total = runs.length;
       out.basis = "runs";
@@ -1113,7 +1128,7 @@
     var pair = pickPair(results, genomeBase, genomeCand, "holdout");
 
     if (pair.inferred && genomeBase && genomeCand) {
-      warnings.push("holdout 报告结果与门禁 genome 未对齐，按 holdout 成本降序推断基线/候选");
+      warnings.push("holdout 报告与门禁 genome 未对齐，按成本降序推断基线/候选");
     }
     if (pair.reason === "insufficient") return out;
 

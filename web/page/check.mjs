@@ -139,6 +139,8 @@ for (const key of Object.keys(DATA_FILES)) {
   if (!fs.existsSync(file)) die("数据文件缺失：" + file);
   DATA[key] = readJson(file);
 }
+const PROBE_TASK_DATA = fs.existsSync(path.join(ARGS.dataDir, "probe", "tasks.js"))
+  ? fs.readFileSync(path.join(ARGS.dataDir, "probe", "tasks.js"), "utf8") : "";
 
 const INDEX_JSON = (() => {
   const file = path.join(ARGS.dataDir, "index.json");
@@ -908,16 +910,17 @@ const IS_ADR_SCAN = !(SCAN && SCAN.source === "data");
         ">= " + M.meta.searchTaskCount, scan.coverage.runs);
     }
 
-    /* index.html 不得把「gate 级配对的 0.010684」和「−72%」写在同一屏 */
-    const idx = SRC["index.html"];
-    const hasRecomputedLiteral = idx.includes("0.010684");
-    const has72 = idx.includes("−72") || idx.includes("-72");
-    g.ok(
-      !(hasRecomputedLiteral && has72),
-      "index.html 不同屏出现 0.010684 与 −72/-72",
-      "二者不同时出现",
-      { "0.010684": hasRecomputedLiteral, "−72": has72 }
-    );
+    /* 升级（D7）：从「整个 index.html 不同时出现」收紧到按 <section> 逐屏检查。
+       渲染后的逐屏断言在 A19，这里先用静态源码把「同屏」这一层钉死。 */
+    const html = SRC["index.html"];
+    const sections = html.split(/<section\b/i).slice(1);
+    const gateLit = ["0.010684", "42.6"];
+    const scanLit = ["−72", "-72", "0.009978"];
+    const mixedStatic = sections.filter((sec) =>
+      gateLit.some((l) => sec.indexOf(l) !== -1) &&
+      scanLit.some((l) => sec.indexOf(l) !== -1));
+    g.eq(mixedStatic.length, 0,
+      "按 <section> 检查：没有任何一屏的静态标记同时含 gate 级与扫描级数字");
 
     /* 更强的结构性检查：扫描级 KPI 只允许取 display，不允许直连 recomputed */
     const scanBinds = SLOTS.filter((s) => s.indexOf("s1.scan") === 0);
@@ -1254,9 +1257,12 @@ function maxFontRem(decl, rootBody) {
 /** 取某个选择器（精确匹配）最后一条 font-size 声明 */
 function fontSizeDecl(selList, rules) {
   const hits = rules.filter((r) => selList.indexOf(r.sel) !== -1);
-  if (hits.length === 0) return null;
-  const m = /font-size\s*:\s*([^;]+);/.exec(hits[hits.length - 1].body);
-  return m ? { sel: hits[hits.length - 1].sel, decl: m[1].trim() } : null;
+  /* 从后往前找第一条真的带 font-size 的规则：媒体查询里可能只改别的属性 */
+  for (let i = hits.length - 1; i >= 0; i--) {
+    const m = /font-size\s*:\s*([^;]+);/.exec(hits[i].body);
+    if (m) return { sel: hits[i].sel, decl: m[1].trim() };
+  }
+  return null;
 }
 
 /** JS 函数体（花括号配平）。header 传 "function onScroll(" 这种前缀。 */
@@ -1298,10 +1304,17 @@ function durationsMs(body, prop) {
   const deck = doc.querySelector("main.deck");
 
   g.ok(!!deck, '存在 <main class="deck"> 滚动容器', true, !!deck);
-  g.eq(slides.length, 9, "section.slide 数量");
+  g.eq(slides.length, 11, "section.slide 数量");
   g.eqJson(slides.map((s) => s.id),
-    ["s1", "s2", "s3", "s6", "s5", "s7", "s8", "s9", "s10"],
-    "屏顺序：封面 / 宗旨 / 背景 / 实时 / 成本 / 门禁 / 回退 / 证据 / 收尾");
+    ["s1", "s2", "s3", "s6", "s5", "s10", "s12", "s7", "s8", "s9", "s11"],
+    "屏顺序：封面 / 宗旨 / 背景 / 评测对比 / 成本 / 规则迁移 / 迁移评测 / 门禁 / 回退 / 底层证据 / 收尾");
+  const noList = (SRC["index.html"].match(/<span class="slide-no"[^>]*>(\d\d)<\/span>/g) || [])
+    .map((t) => t.replace(/[^\d]/g, ""));
+  g.eqJson(noList, ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11"],
+    "屏号 01–11 与 DOM 顺序逐一对应（成本屏排到第 5 屏）");
+  g.ok(/<div class="probe-title">\s*<h2 id="s12-title">[^<]*<\/h2>\s*<p class="mini-label probe-label">C1b[^<]*<\/p>\s*<\/div>/
+    .test(SRC["index.html"]),
+    "s12：C1b 徽标移到标题右侧同一行（标题在前、小字在后）", true, null);
   g.ok(slides.every((s) => !!deck && s.parentNode === deck),
     "8 屏都是 main.deck 的直接子节点", true,
     slides.map((s) => s.parentNode ? s.parentNode.className : null));
@@ -1370,7 +1383,7 @@ function durationsMs(body, prop) {
       headBad.push(s.id + " 的 aria-labelledby 未指向自己的标题 id");
     }
   }
-  g.eqJson(headCount, [1, 1, 1, 1, 1, 1, 1, 1, 1], "每屏标题数（恰好 1 个）");
+  g.eqJson(headCount, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "每屏标题数（恰好 1 个）");
   g.eqJson(headBad, [], "标题层级 / aria-labelledby 与屏一一对应");
 
   /* 3) 白底黑字：--paper 浅、--ink 深（从 :root 令牌算相对亮度） */
@@ -1428,7 +1441,7 @@ function durationsMs(body, prop) {
   g.ok(footTotal >= 1, "全页脚注元素数（非空，否则上一条空转）", ">= 1", footTotal);
   g.ok(footTotal <= 10, "全页脚注元素总数", "<= 10", footTotal);
   g.eqJson(footPerSlide.filter((x) => x.foot + x.aside === 0).map((x) => x.id),
-    ["s1", "s6", "s10"],
+    ["s1", "s6", "s10", "s12", "s11"],
     "S1（封面）与 S8（收尾）不挂脚注");
   g.eqJson(footPerSlide.filter((x) => x.aside > 0).map((x) => x.id), ["s9"],
     "只有 S7 用 .aside（留出集「仅聚合」标注）");
@@ -1836,7 +1849,8 @@ function durationsMs(body, prop) {
   const gateIds = gateScreens.map((c) => c.id);
   g.eqJson(scanIds.filter((id) => gateIds.indexOf(id) !== -1), [],
     "屏面正文里扫描级数字与 gate 级数字不落在同一屏");
-  g.eqJson(scanIds, ["s5"], "屏面正文里的扫描级数字只在 S5（单题成本 · 扫描级脚注）");
+  /* D5：扫描级 claim / 复算证据迁到「留出集与证据」屏（s9）；s5 只留 gate 级摘要 */
+  g.eqJson(scanIds, ["s9"], "屏面正文里的扫描级数字只在 s9（留出集与证据 · 扫描级块）");
   g.eqJson(gateScreens.filter((c) => c.text.indexOf("gate 级") === -1).map((c) => c.id), [],
     "每个屏面含 0.010684 / 42.6 的屏都写明「gate 级」");
   g.eqJson(scanScreens.filter((c) => c.text.indexOf("扫描级") === -1).map((c) => c.id), [],
@@ -1845,15 +1859,51 @@ function durationsMs(body, prop) {
   /* 排除范围受控（W-22 结构变更后的新锚点）：
      ① index.html 里不再有 <details>（口径说明是常显正文，不是可展开附录）；
      ② 被跳过的只有「口径说明块」这一个块，且它必须同时给出两个口径 + 各自来源。 */
-  g.eq(countLit(SRC["index.html"], "<details"), 0,
-    "index.html 不含 <details（口径说明常显，不再是折叠块）");
+  /* D7 新契约：允许「证据说明 / 连接（可选）/ 演示选项」的 <details>，
+     但只允许出现在 s6 / s9 的证据与连接区域，以及 #demo-hud 的演示选项。
+     展开层内不得出现 token 值、search 逐题 id 或 holdout 逐题字段名。 */
+  const detailNodes = doc.querySelectorAll("details");
+  function detailArea(node) {
+    let n = node;
+    while (n) {
+      if (n.id === "demo-hud") return "demo-hud";
+      if (n.classList && n.classList.contains("slide")) return n.id;
+      n = n.parentNode;
+    }
+    return null;
+  }
+  const detailAreas = detailNodes.map(detailArea);
+  g.eq(detailNodes.length, 4,
+    "<details> 只用于证据 / 连接 / 演示选项（probe 数据直接展示）");
+  g.eqJson([...new Set(detailAreas)].sort(), ["demo-hud", "s6", "s9"],
+    "<details> 只出现在 s6 / s9 / 演示选项区域");
+  const summaryTexts = detailNodes.map((n) => {
+    const sum = doc._findAll(n, (x) => x.tagName === "SUMMARY")[0];
+    return sum ? textOf(sum) : "";
+  });
+  g.ok(summaryTexts.every((t) => t.length >= 4),
+    "每个 <details> 都有可读 summary（>= 4 字）", ">= 4", summaryTexts);
+  g.eqJson(summaryTexts.filter((t) => t.indexOf("证据说明") === -1 &&
+      t.indexOf("连接（可选）") === -1 && t.indexOf("演示选项") === -1), [],
+    "summary 文案限定为 证据说明 / 连接（可选）/ 演示选项");
+  const detailsText = detailNodes.map((n) => textOf(n)).join(" ");
+  const searchTaskIds = (DATA.scenario.task_sets && DATA.scenario.task_sets.search) || [];
+  g.eqJson(searchTaskIds.filter((id) => detailsText.indexOf(id) !== -1), [],
+    "展开层内不出现 search 逐题 id");
+  g.eqJson(["task_id", "run_id", "task_ids"].filter((k) => detailsText.indexOf(k) !== -1), [],
+    "展开层内不出现 holdout 逐题字段名");
+  const tokenInput = doc.getElementById("live-token");
+  g.eq(tokenInput ? tokenInput.getAttribute("value") : null, null,
+    "展开层里的 token 输入框没有预置 value");
+  g.eq(SRC["index.html"].indexOf("token="), -1, "index.html 不含 token= 查询串");
+
   const scopeBox = scopeBlockOf(doc);
   g.ok(!!scopeBox, "存在口径说明块（#warnings / .colophon 下唯一非 error 的 .warnings）",
     "1 个", scopeBox ? scopeBox.tagName : null);
   g.ok(!!scopeBox && scopeBox.tagName !== "DETAILS",
     "口径说明块不是 <details>（是常显的 section）", "非 DETAILS",
     scopeBox ? scopeBox.tagName : null);
-  const s8Slide = SLIDES.filter((s) => s.id === "s10")[0] || null;
+  const s8Slide = SLIDES.filter((s) => s.id === "s11")[0] || null;
   g.eq(!!scopeBox && !!s8Slide && isDescendantOf(scopeBox, s8Slide), true,
     "口径说明块常显在 S8（作为正文，而不是附录）", true,
     scopeBox ? (scopeBox.parentNode ? scopeBox.parentNode.className : null) : null);
@@ -2049,16 +2099,20 @@ function durationsMs(body, prop) {
 
   /* ---- 扫描级 vs gate 级：按屏断言（核心口径纪律） ---- */
   if (IS_ADR_SCAN) {
-    g.ok(s3.indexOf("−72%") !== -1,
-      "S3 含扫描级降幅 −72%（引 ADR-0008，整数口径）", "含 −72%", s3);
-    g.eq(countLit(s3, "−72.0"), 0, "S3 不出现 −72.0（去掉 71.9 vs 72.0 的假精度）");
-    g.ok(s3.indexOf("0.035560") !== -1 && s3.indexOf("0.009978") !== -1,
-      "S3 含扫描级两侧金额（0.035560 → 0.009978）", "两个金额", s3);
-    g.ok(s3.indexOf("41.7") !== -1, "S3 含扫描级 claim 墙钟 41.7", "含 41.7", s3);
-    g.eqJson(["0.01068", "42.6", "0.008471"].filter((l) => s3.indexOf(l) !== -1), [],
-      "S3 不含 gate 级候选配对数字（0.01068 / 42.6 / 0.008471）");
+    g.ok(s7.indexOf("−72%") !== -1,
+      "s9 含扫描级降幅 −72%（引 ADR-0008，整数口径）", "含 −72%", s7);
+    g.eq(countLit(s7, "−72.0"), 0, "s9 不出现 −72.0（去掉 71.9 vs 72.0 的假精度）");
+    g.ok(s7.indexOf("0.035560") !== -1 && s7.indexOf("0.009978") !== -1,
+      "s9 含扫描级两侧金额（0.035560 → 0.009978）", "两个金额", s7);
+    g.ok(s7.indexOf("41.7") !== -1, "s9 含扫描级 claim 墙钟 41.7", "含 41.7", s7);
+    g.eqJson(["0.010684", "42.6", "0.01068"].filter((l) => s7.indexOf(l) !== -1), [],
+      "s9 不含 gate 级候选配对数字（0.010684 / 42.6）");
+    g.ok(s3.indexOf("扫描级") === -1 || s3.indexOf("0.009978") === -1,
+      "s5 不再承载扫描级数字（扫描级说明已迁走）", "s5 无扫描级金额", s3.slice(0, 80));
+    g.eqJson(["−72", "0.009978", "0.035560", "41.7", "106.9"].filter((l) => s3.indexOf(l) !== -1), [],
+      "s5 只留 gate 级摘要：不出现扫描级 claim 数字");
     g.eq(textOf(doc.getElementById("scan-note-basis")), "引用 ADR-0008",
-      "S3 写明扫描级口径来源「引用 ADR-0008」");
+      "s9 写明扫描级口径来源「引用 ADR-0008」");
 
     g.ok(s4.indexOf("0.010684") !== -1, "S4 含 gate 级候选配对合计 0.010684", "含 0.010684", s4.slice(0, 120));
     g.eqJson(["−72", "0.009978", "41.7"].filter((l) => s4.indexOf(l) !== -1), [],
@@ -2067,15 +2121,15 @@ function durationsMs(body, prop) {
   } else {
     const baseUsd = "$" + F.usd(dsp.baseCostUsd);
     const candUsd = "$" + F.usd(dsp.candCostUsd);
-    g.ok(s3.indexOf(baseUsd) !== -1 && s3.indexOf(candUsd) !== -1,
-      "S3 的扫描级金额 === search_results 复算", baseUsd + " / " + candUsd, s3.slice(0, 160));
-    g.ok(s3.indexOf(F.sec(dsp.baseWallMs)) !== -1 && s3.indexOf(F.sec(dsp.candWallMs)) !== -1,
-      "S3 的扫描级墙钟 === search_results 复算",
-      F.sec(dsp.baseWallMs) + " / " + F.sec(dsp.candWallMs), s3.slice(0, 200));
-    g.eqJson(["−72", "0.009978", "41.7"].filter((l) => s3.indexOf(l) !== -1), [],
-      "S3 不出现 ADR 常量（−72 / 0.009978 / 41.7）");
+    g.ok(s7.indexOf(baseUsd) !== -1 && s7.indexOf(candUsd) !== -1,
+      "s9 的扫描级金额 === search_results 复算", baseUsd + " / " + candUsd, s7.slice(0, 160));
+    g.ok(s7.indexOf(F.sec(dsp.baseWallMs)) !== -1 && s7.indexOf(F.sec(dsp.candWallMs)) !== -1,
+      "s9 的扫描级墙钟 === search_results 复算",
+      F.sec(dsp.baseWallMs) + " / " + F.sec(dsp.candWallMs), s7.slice(0, 200));
+    g.eqJson(["−72", "0.009978", "41.7"].filter((l) => s7.indexOf(l) !== -1), [],
+      "s9 不出现 ADR 常量（−72 / 0.009978 / 41.7）");
     g.eq(textOf(doc.getElementById("scan-note-basis")), "两侧由 search_results 复算",
-      "S3 写明扫描级口径来源「两侧由 search_results 复算」");
+      "s9 写明扫描级口径来源「两侧由 search_results 复算」");
 
     g.eq(countLit(pageText, "0.009978"), 0, "data 形态整页不出现 ADR 候选常量 0.009978");
   }
@@ -2092,12 +2146,17 @@ function durationsMs(body, prop) {
     }
     g.ok(critNodes.length >= 1,
       "整页确实出现 gate 级候选配对数字（否则下面两条守卫空转）", ">= 1 个段落", critNodes.length);
+    /* s6 主结论句按设计简化成一行，不带「gate 级」前缀：口径由其「证据说明」层承担 */
+    const headline = doc.getElementById("live-result");
+    const scoped = critNodes.filter((n) => n !== headline);
     g.eqJson(
-      critNodes.filter((n) => textOf(n).indexOf("gate 级") === -1)
+      scoped.filter((n) => textOf(n).indexOf("gate 级") === -1)
         .map((n) => n.tagName + "#" + n.id + " " + textOf(n).slice(0, 60)),
       [],
-      "每个含 0.01068 / 42.6 的段落都写明「gate 级」"
+      "每个含 0.01068 / 42.6 的段落都写明「gate 级」（s6 主结论句除外）"
     );
+    g.ok(!!headline && textOf(doc.getElementById("live-evidence-details")).indexOf("gate 级") !== -1,
+      "s6 主结论句省略「gate 级」时，证据说明层必须写明口径", "证据说明含 gate 级", null);
     g.eqJson(
       critNodes.filter((n) => textOf(n).indexOf("−72") !== -1)
         .map((n) => n.tagName + " " + textOf(n).slice(0, 60)),
@@ -2276,8 +2335,8 @@ function durationsMs(body, prop) {
   g.ok(/function liveSum\(/.test(appSrc) && /pBase/.test(appSrc) && /pCand/.test(appSrc),
     "app.js：合计只累加已经出现的行，成本差只算两次都有数的配对行", true, null);
   g.ok(appSrc.indexOf('"is-bad"') !== -1 && appSrc.indexOf('"is-good"') !== -1 &&
-    /pBase\s*>\s*pCand/.test(appSrc),
-    "app.js：基线 > 候选 → is-bad，否则 is-good（通过差同理）", true, null);
+    /d\s*<\s*0\s*\?\s*"is-good"/.test(appSrc),
+    "app.js：成本差为负 → is-good（绿），为正 → is-bad（红），0 → is-zero（墨色）", true, null);
   const badRule = CSS_RULES.filter((r) => r.sel === ".live-sum b.is-bad")[0];
   const goodRule = CSS_RULES.filter((r) => r.sel === ".live-sum b.is-good")[0];
   g.ok(!!badRule && /var\(--red\)/.test(badRule.body),
@@ -2286,52 +2345,180 @@ function durationsMs(body, prop) {
     "app.css：为绿时用 --good", "var(--good)", goodRule ? goodRule.body : null);
   g.ok(/--good\s*:\s*#[0-9A-Fa-f]{6}/.test(cssSrc), "app.css：定义了 --good 绿色令牌", true, null);
 
-  /* 数据接口：默认空载；?port= 才轮询真实接口；?path= 走本地模拟 */
+  /* 数据接口（D3）：同源探测 / 内存授权 / ?port= 只本地 / ?token= 停用 */
   const vm = await import("node:vm");
-  const sandbox = {
-    location: { search: "" },
-    setTimeout: setTimeout,
-    clearTimeout: clearTimeout,
-    matchMedia: function () { return { matches: false }; },
-    MOLT_AGENT_BASE: "",
-    MOLT_AGENT_PATH: "",
-    MOLT_AGENT_TOKEN: ""
-  };
-  vm.createContext(sandbox);
-  vm.runInContext(SRC["live-source.js"], sandbox);
-  const LIVE = sandbox.MOLT_LIVE;
-  g.ok(!!LIVE && typeof LIVE.start === "function" && typeof LIVE.resolve === "function" &&
-    typeof LIVE.normalize === "function" && typeof LIVE.check === "function",
-    "live-source.js：暴露 MOLT_LIVE（resolve / start / stop / normalize / check）", true, null);
-  g.eq(LIVE.isOn(), false, "数据接口：默认未启动");
 
-  const cfg0 = LIVE.resolve();
-  g.ok(!!cfg0 && cfg0.mode === "idle" && cfg0.base === "" && cfg0.path === "",
-    "数据接口：没有 ?port= 时 resolve() 为 idle（默认空载，不发请求）", "idle", cfg0);
-  g.eq(LIVE.start({}), false, "数据接口：idle 模式下 start() 返回 false");
+  function makeSandbox(protocol, hostname, search) {
+    const timers = [];
+    const reqs = [];
+    const sandbox = {
+      location: {
+        protocol: protocol,
+        hostname: hostname,
+        search: search,
+        pathname: "/page/",
+        hash: ""
+      },
+      history: { replaceState: function () {} },
+      setTimeout: function (fn, ms) {
+        timers.push({ fn: fn, ms: ms });
+        return timers.length;
+      },
+      clearTimeout: function () { timers.length = 0; },
+      matchMedia: function () { return { matches: false }; },
+      MOLT_AGENT_BASE: "",
+      MOLT_AGENT_PATH: "",
+      XMLHttpRequest: function () {
+        this.headers = {};
+        this.status = 0;
+        this.responseText = "";
+        this.open = function (m, url) { this.method = m; this.url = url; };
+        this.setRequestHeader = function (k, v) { this.headers[k] = v; };
+        this.send = function () { reqs.push(this); };
+        this.abort = function () { this.aborted = true; };
+      }
+    };
+    sandbox.__timers = timers;
+    sandbox.__reqs = reqs;
+    vm.createContext(sandbox);
+    vm.runInContext(SRC["live-source.js"], sandbox);
+    return sandbox;
+  }
 
-  sandbox.location.search = "?port=8791";
-  const cfgr = LIVE.resolve();
-  g.ok(!!cfgr && cfgr.mode === "live" && /:8791$/.test(cfgr.base) &&
-    cfgr.path === "/api/tasks",
-    "数据接口：?port=8791 → 127.0.0.1:8791/api/tasks（真实端点）", ":8791/api/tasks", cfgr);
-  g.ok(!!cfgr && cfgr.base.indexOf("//") !== -1,
-    "数据接口：base 由「协议 + 冒号 + 双斜杠」拼出（文件里不写 http 字面量）", true,
-    cfgr ? cfgr.base : null);
-  g.eq(cfgr && cfgr.interval, 500, "数据接口：实时轮询间隔 0.5s");
+  function fire(req, status, payload) {
+    req.readyState = 4;
+    req.status = status;
+    req.responseText = payload === undefined ? "" : JSON.stringify(payload);
+    if (req.onreadystatechange) req.onreadystatechange();
+  }
 
-  sandbox.location.search = "?port=8791&token=tok-abc";
-  const cfgt = LIVE.resolve();
-  g.ok(!!cfgt && cfgt.token === "tok-abc",
-    "数据接口：?token= 解析 Bearer token", "tok-abc", cfgt && cfgt.token);
-  g.ok(!!cfgt && cfgt.base.indexOf("token") === -1 && cfgt.path.indexOf("token") === -1,
-    "数据接口：token 不进 URL（只放 Authorization 请求头）", true, cfgt);
+  {
+    const box = makeSandbox("https:", "demo.example.com", "");
+    const API = box.MOLT_LIVE;
+    g.ok(!!API && typeof API.probe === "function" && typeof API.authorize === "function" &&
+      typeof API.resolve === "function" && typeof API.legacyToken === "function" &&
+      typeof API.normalize === "function" && typeof API.check === "function",
+      "live-source.js：暴露 MOLT_LIVE（probe / authorize / resolve / legacyToken / check）", true, null);
+    g.eq(API.isOn(), false, "数据接口：默认未启动");
 
-  sandbox.location.search = "?port=8791";
-  sandbox.MOLT_AGENT_TOKEN = "tok-global";
-  g.eq(LIVE.resolve().token, "tok-global",
-    "数据接口：window.MOLT_AGENT_TOKEN 可注入 token（避免写在地址栏）");
-  sandbox.MOLT_AGENT_TOKEN = "";
+    const cfg0 = API.resolve();
+    g.eq(cfg0.mode, "same-origin", "普通 HTTP(S) 访问：默认探测同源（不是 idle，也不是回环）");
+    g.eq(cfg0.base, "", "同源模式 base 为空（请求相对路径 /api/health）");
+    g.eq(cfg0.health, "/api/health", "同源模式健康路径 === /api/health");
+    g.eq(cfg0.path, "/api/tasks", "同源模式任务路径 === /api/tasks");
+    g.eq(API.start({}), false, "无 token：start() 必须 false（不得开始轮询 /api/tasks）");
+    g.eq(box.__reqs.length, 0, "无 token：start() 不发任何请求");
+
+    const got = { status: [], health: null };
+    g.eq(API.probe({
+      onStatus: function (kind, detail) { got.status.push({ kind: kind, detail: detail }); },
+      onHealth: function (h) { got.health = h; }
+    }), true, "同源探测：probe() 启动健康探测");
+    g.eq(box.__reqs.length, 1, "同源探测：只发 1 个请求");
+    const hReq = box.__reqs[0];
+    g.eq(hReq.method, "GET", "健康探测用 GET");
+    g.eq(hReq.url, "/api/health", "健康探测请求同源 /api/health");
+    g.eq(hReq.headers.Authorization === undefined, true, "健康探测不带 Authorization（公开接口）");
+    fire(hReq, 200, { status: "ok", provider: "mock", model: "mock-1", real_model: false });
+    g.ok(!!got.health && got.health.provider === "mock" && got.health.real_model === false,
+      "健康响应带回 provider / real_model（未知值不猜）", { provider: "mock", real_model: false }, got.health);
+    g.eqJson(got.status.map((x) => x.kind), ["probing", "need-auth"],
+      "健康可达但无 token：状态 = 需要授权（不发 /api/tasks）");
+    g.eq(box.__reqs.length, 1, "无 token 时只探测健康，不请求 /api/tasks");
+  }
+
+  {
+    /* 401：只提示一次并停止自动重试 */
+    const box = makeSandbox("https:", "demo.example.com", "");
+    const API = box.MOLT_LIVE;
+    const st = { kinds: [], payloads: 0 };
+    g.eq(API.authorize("tok-abc", {
+      onStatus: function (kind) { st.kinds.push(kind); },
+      onPayload: function () { st.payloads += 1; }
+    }), true, "授权：authorize(token) 启动");
+    g.eq(box.__reqs.length, 1, "授权：先探健康（1 个请求）");
+    g.eq(box.__reqs[0].headers.Authorization === undefined, true, "授权流程的健康探测仍不带 token");
+    fire(box.__reqs[0], 200, { status: "ok", provider: "openai-compatible", real_model: true });
+    g.eq(box.__reqs.length, 2, "健康成功后：有 token 才拉任务快照");
+    const tasks = box.__reqs[1];
+    g.eq(tasks.url, "/api/tasks", "任务快照请求同源 /api/tasks");
+    g.eq(tasks.headers.Authorization, "Bearer tok-abc", "任务快照带 Authorization: Bearer <token>");
+    g.eq(tasks.url.indexOf("token"), -1, "token 不进 URL（只走请求头）");
+    fire(tasks, 401, { detail: "unauthorized" });
+    g.eq(API.phase(), "need-auth", "401：状态转为需要授权");
+    g.eq(box.__reqs.length, 2, "401：停止自动重试（不再发新请求）");
+    g.eq(box.__timers.length, 0, "401：不排下一次轮询");
+    g.eq(st.kinds.filter((k) => k === "need-auth").length, 1, "401：只上报一次");
+    g.ok(API.hasToken() === true, "401：token 仍在内存，等用户重新输入或断开", true, API.hasToken());
+  }
+
+  {
+    /* 成功取数 → 轮询；断开清 token；迟到响应被丢弃 */
+    const box = makeSandbox("https:", "demo.example.com", "");
+    const API = box.MOLT_LIVE;
+    const st = { kinds: [], payloads: 0, norm: null };
+    API.authorize("tok-xyz", {
+      onStatus: function (kind) { st.kinds.push(kind); },
+      onPayload: function (norm) { st.payloads += 1; st.norm = norm; }
+    });
+    fire(box.__reqs[0], 200, { status: "ok", provider: "mock", real_model: false });
+    fire(box.__reqs[1], 200, {
+      results: [{ id: "t1", cost_first: 1, passed_first: true, cost_second: 0.5, passed_second: true }]
+    });
+    g.ok(st.kinds.indexOf("connected") !== -1, "成功取数：状态 connected", true, st.kinds);
+    g.ok(!!st.norm && st.norm.pairs.length === 1, "成功取数：payload 归一化为逐题快照", 1, st.norm && st.norm.pairs.length);
+    g.eq(box.__timers.length, 1, "成功取数：排下一次轮询");
+    g.eq(box.__timers[0].ms, 500, "轮询间隔 0.5s");
+
+    const before = st.payloads;
+    API.stop();
+    g.eq(API.hasToken(), false, "断开：token 从内存清除");
+    fire(box.__reqs[1], 200, {
+      results: [{ id: "t2", cost_first: 2, passed_first: true, cost_second: 1, passed_second: true }]
+    });
+    g.eq(st.payloads, before, "迟到响应：断开后不再落回页面（按代际丢弃）");
+  }
+
+  {
+    /* ?port= 只在本地页面 / file:// 生效；远程忽略，不请求访客回环 */
+    const local = makeSandbox("http:", "127.0.0.1", "?port=8791");
+    const cl = local.MOLT_LIVE.resolve();
+    g.eq(cl.mode, "port", "本地页面 + ?port=：显式开发配置生效");
+    g.ok(/:8791$/.test(cl.base), "本地 ?port= → 127.0.0.1:8791", ":8791", cl.base);
+    g.ok(cl.base.indexOf("//") !== -1,
+      "base 由「协议 + 冒号 + 双斜杠」拼出（文件里不写 http 字面量）", true, cl.base);
+
+    const remote = makeSandbox("https:", "demo.example.com", "?port=8791");
+    const cr = remote.MOLT_LIVE.resolve();
+    g.eq(cr.mode, "same-origin", "远程页面：?port= 被忽略，退回同源");
+    g.eq(cr.base, "", "远程页面：不构造访客回环地址");
+    g.eq(cr.portIgnored, true, "远程页面：标记 ?port= 已忽略");
+    remote.MOLT_LIVE.probe({});
+    g.eq(remote.__reqs.length, 1, "远程 ?port=：仍只探测同源");
+    g.eq(remote.__reqs[0].url, "/api/health", "远程 ?port= 不产生回环请求");
+
+    const fileBox = makeSandbox("file:", "", "");
+    g.eq(fileBox.MOLT_LIVE.resolve().mode, "file", "file://：没有同源接口，状态为 file");
+    g.eq(fileBox.MOLT_LIVE.start({}), false, "file://：start() 返回 false");
+    g.eq(fileBox.MOLT_LIVE.probe({}), false, "file://：probe() 返回 false（不发请求）");
+    g.eq(fileBox.__reqs.length, 0, "file://：不发任何请求");
+
+    const filePort = makeSandbox("file:", "", "?port=8791");
+    g.eq(filePort.MOLT_LIVE.resolve().mode, "port", "file:// + ?port=：允许显式本地开发配置");
+  }
+
+  {
+    /* ?token= 停用：只识别旧链接，不进入授权 */
+    const box = makeSandbox("https:", "demo.example.com", "?token=tok-abc");
+    g.eq(box.MOLT_LIVE.legacyToken(), "tok-abc", "?token= 只被识别为旧链接（用于清理地址）");
+    g.eq(box.MOLT_LIVE.hasToken(), false, "?token= 不再用于授权（内存里没有 token）");
+    g.eq(box.MOLT_LIVE.resolve().token === undefined, true, "resolve() 不再携带 URL token");
+    g.eq(SRC["live-source.js"].indexOf("MOLT_AGENT_TOKEN"), -1,
+      "live-source.js 不再读 window.MOLT_AGENT_TOKEN（token 只由页面 password 输入）");
+    const resolveBody = fnBodyOf(SRC["live-source.js"], "function resolve(");
+    g.eq(resolveBody.indexOf('query("token")'), -1,
+      "resolve() 体内不解析 ?token=（只有 legacyToken 识别旧链接）");
+  }
 
   /* 契约样本：内联 fixture（仓库不再附带本地假数据文件） */
   const sample = {
@@ -2343,11 +2530,13 @@ function durationsMs(body, prop) {
     ]
   };
   {
-    const chk = LIVE.check(sample);
+    const box = makeSandbox("https:", "demo.example.com", "");
+    const API = box.MOLT_LIVE;
+    const chk = API.check(sample);
     g.eq(chk.ok, true, "数据接口：与 /api/tasks 同形状的响应通过契约校验");
     g.eq(chk.reason, "results", "数据接口：契约识别为 results 数组");
 
-    const norm = LIVE.normalize(sample);
+    const norm = API.normalize(sample);
     g.eq(norm.pairs.length, sample.results.length,
       "数据接口：normalize 的逐题条数 === results 条数");
     g.eqJson(norm.pairs.map((p) => p.taskId), sample.results.map((r) => r.id),
@@ -2359,36 +2548,37 @@ function durationsMs(body, prop) {
       "数据接口：cost_first / cost_second / passed_first / passed_second 正确映射");
     g.eq(norm.pairs.filter((p) => p.basePassed === false).length, 1,
       "数据接口：passed_first=false 保留为 false（会显示 ❌）");
-  }
 
-  g.eq(LIVE.check({ results: [] }).ok, true,
-    "数据接口：空 results 合法（还没跑完，不触发回调）");
-  g.eq(LIVE.check({ nope: 1 }).ok, false, "数据接口：形状不符时 check() 返回 false");
-  g.eq(LIVE.check({ results: [{ foo: 1 }] }).ok, false,
-    "数据接口：results 里的记录缺字段时判为契约不符");
-  g.eq(LIVE.check({ results: [{ id: "t1", cost_first: 1, passed_first: true,
-    cost_second: 1, passed_second: true, extra: 1 }] }).ok, true,
-    "数据接口：真实五字段齐全即通过（额外字段不参与映射）");
-  g.eq(LIVE.check({ pairs: [{ task_id: "t1", baseline_cost_usd: 2,
-    candidate_cost_usd: 1, passed: true }] }).ok, false,
-    "数据接口：旧的 pairs 信封已删除（只认 /api/tasks 的 results）");
-  g.eq(LIVE.normalize({ pairs: [{ task_id: "t1", baseline_cost_usd: 2 }] }).pairs.length, 0,
-    "数据接口：normalize 不再兼容旧字段名");
+    g.eq(API.check({ results: [] }).ok, true,
+      "数据接口：空 results 合法（还没跑完，不触发回调）");
+    g.eq(API.check({ nope: 1 }).ok, false, "数据接口：形状不符时 check() 返回 false");
+    g.eq(API.check({ results: [{ foo: 1 }] }).ok, false,
+      "数据接口：results 里的记录缺字段时判为契约不符");
+    g.eq(API.check({ results: [{ id: "t1", cost_first: 1, passed_first: true,
+      cost_second: 1, passed_second: true, extra: 1 }] }).ok, true,
+      "数据接口：真实五字段齐全即通过（额外字段不参与映射）");
+    g.eq(API.check({ pairs: [{ task_id: "t1", baseline_cost_usd: 2,
+      candidate_cost_usd: 1, passed: true }] }).ok, false,
+      "数据接口：旧的 pairs 信封已删除（只认 /api/tasks 的 results）");
+    g.eq(API.normalize({ pairs: [{ task_id: "t1", baseline_cost_usd: 2 }] }).pairs.length, 0,
+      "数据接口：normalize 不再兼容旧字段名");
+  }
 
   /* 本地模拟：必须显式 ?path=<file>；仓库不附带任何默认样例 */
   if (HAS_MOCK) {
-    vm.runInContext(SRC["mock-source.js"], sandbox);
-    const MOCK = sandbox.MOLT_MOCK;
+    const box = makeSandbox("https:", "demo.example.com", "");
+    vm.runInContext(SRC["mock-source.js"], box);
+    const MOCK = box.MOLT_MOCK;
     g.ok(!!MOCK && typeof MOCK.start === "function" && typeof MOCK.enabled === "function" &&
       typeof MOCK.stop === "function",
       "mock-source.js：暴露 MOLT_MOCK（enabled / path / start / stop）", true, null);
-    sandbox.location.search = "";
-    g.eq(MOCK.enabled(), false, "mock-source.js：默认不启用（页面空载）");
+    box.location.search = "";
+    g.eq(MOCK.enabled(), false, "mock-source.js：默认不启用（页面显示导出证据）");
     g.eq(MOCK.start({}), false, "mock-source.js：默认不启动、不读文件");
-    sandbox.location.search = "?path";
+    box.location.search = "?path";
     g.eq(MOCK.enabled(), false,
       "mock-source.js：空 ?path 不启用（没有默认样例可读）");
-    sandbox.location.search = "?path=./other.json";
+    box.location.search = "?path=./other.json";
     g.eq(MOCK.enabled(), true, "mock-source.js：?path=<file> 启用本地模拟");
     g.eq(MOCK.path(), "./other.json", "mock-source.js：路径原样传给 XHR");
     MOCK.stop();
@@ -2400,6 +2590,7 @@ function durationsMs(body, prop) {
     !fs.existsSync(path.join(SCRIPT_DIR, "..", "api_example.json")),
     "web 不附带本地假数据（api-example.js / api_example.json 已删除）", true, null);
   if (HAS_MOCK) {
+    const mockSrc = SRC["mock-source.js"];
     g.eq(mockSrc.indexOf("api_example"), -1,
       "mock-source.js：不引用任何内置样例文件");
     g.eq(mockSrc.indexOf("MOLT_API_EXAMPLE"), -1,
@@ -2411,25 +2602,24 @@ function durationsMs(body, prop) {
   g.ok(SRC["live-source.js"].indexOf("setRequestHeader") !== -1 &&
     SRC["live-source.js"].indexOf('"Bearer "') !== -1,
     "live-source.js：实时请求带 Authorization: Bearer <token>", true, null);
-  {
-    const src = SRC["live-source.js"];
-    const openLine = /xhr\.open\([\s\S]*?\);/.exec(src)[0];
-    g.eq(openLine.indexOf("token"), -1,
-      "live-source.js：请求 URL 不拼 token（只走 Authorization 头）");
-    g.ok(/xhr\.open\("GET", S\.base \+ S\.path, true\)/.test(openLine),
-      "live-source.js：请求 <base><path>，不带查询串", true, openLine);
-  }
+  g.ok(/getJson\(S\.base \+ S\.path/.test(SRC["live-source.js"]) &&
+    /getJson\(S\.base \+ HEALTH_PATH/.test(SRC["live-source.js"]),
+    "live-source.js：任务与健康探测都请求 <base><path>，不拼查询串", true, null);
   g.eq(countLit(SRC["live-source.js"], "fetch("), 0,
     "live-source.js：不用 fetch（XHR + ES5，file:// 下也可用）");
+
   g.ok(appSrc.indexOf("liveSourceStart") !== -1 &&
     appSrc.indexOf("liveSourceStop") !== -1 &&
     appSrc.indexOf("liveReset") !== -1 &&
     appSrc.indexOf("liveApplySource") !== -1,
-    "app.js：进屏清空 + 连数据源、离屏停；收到快照落回行", true, null);
-  g.eq(appSrc.indexOf("liveSourceBoot") + appSrc.indexOf("liveHydrate"), -2,
-    "app.js：删掉开机读样例 / hydrate 的旧路径（默认空载）");
-  g.ok(/function liveReset\(/.test(appSrc) && /addClass\(L\.list, "is-live"\)/.test(appSrc),
-    "app.js：liveReset 把行藏起来并清空合计（默认不显示预置数据）", true, null);
+    "app.js：进屏探测 / 离屏暂停；收到快照整表落回", true, null);
+  g.ok(appSrc.indexOf("liveSourceBoot") === -1 && appSrc.indexOf("liveHydrate") === -1,
+    "app.js：没有旧的开机读样例 / hydrate 路径", true, null);
+  g.ok(/function liveReset\(/.test(appSrc) && appSrc.indexOf("viewModel") !== -1 &&
+    /liveFill\(pairs, false\)/.test(appSrc),
+    "app.js：liveReset 用 model 的 s2.pairs 重建导出证据（不再清空成空面板）", true, null);
+  g.eq(fnBodyOf(appSrc, "function setActive(").indexOf("liveReset("), -1,
+    "setActive 不清空逐题表（进屏 / 返回都保留有效导出证据）");
   g.ok(/id="live-note"/.test(SRC["index.html"]) && appSrc.indexOf("function liveNote") !== -1 &&
     appSrc.indexOf("file:// 不能读取本地 JSON") !== -1,
     "数据源出错时在面板里显示提示（不只控制台）", true, null);
@@ -2439,6 +2629,24 @@ function durationsMs(body, prop) {
   /* ---- S5 门禁结论行 ---- */
   g.ok(s5.indexOf(String(M.s3.verdict)) !== -1 && s5.indexOf(String(M.s3.reason)) !== -1,
     "S5 结论行显示 verdict / reason", M.s3.verdict + " / " + M.s3.reason, s5);
+
+  /* adopt 是放行：结论文字与结论节点右上角状态灯都转绿 */
+  const verdictBody = doc.querySelector(".verdict-body");
+  const isAdopt = String(M.s3.verdict).toLowerCase() === "adopt";
+  g.ok(!!verdictBody && isAdopt === /(^|\s)is-adopt(\s|$)/.test(verdictBody.className || ""),
+    "adopt 结论：.verdict-body 按 verdict 挂 is-adopt", "is-adopt", verdictBody && verdictBody.className);
+  const chainList = doc.getElementById("gate-chain");
+  const finalStep = [...((chainList && chainList.children) || [])]
+    .filter((n) => /(^|\s)is-final(\s|$)/.test(n.className || ""))[0] || null;
+  g.ok(!!finalStep && isAdopt === /(^|\s)is-adopt(\s|$)/.test(finalStep.className || ""),
+    "adopt 结论：结论节点状态灯同步 is-adopt（右上角小点转绿）", "is-adopt",
+    finalStep && finalStep.className);
+  g.ok(CSS_RULES.some((r) => r.sel === ".verdict-body.is-adopt b:first-of-type" &&
+    /var\(--good\)/.test(r.body)),
+    "app.css：adopt 时结论文字用 --good", true, null);
+  g.ok(CSS_RULES.some((r) => r.sel === ".step.is-final.is-adopt::after" &&
+    /var\(--good\)/.test(r.body)),
+    "app.css：adopt 时结论节点状态灯用 --good", true, null);
   g.eqJson(chainBadges(doc), M.s3.chain.map(() => "通过"),
     "S5 六个徽章在真实数据下全「通过」");
 
@@ -2547,6 +2755,25 @@ function durationsMs(body, prop) {
     "成本降了 " + F.pct(M.s1.cpsDropPct) + "%", s8.slice(0, 60));
   g.ok(s8.indexOf("每一次采纳都能回退") !== -1, "S8 写明每一次采纳都能回退", "含 每一次采纳都能回退", s8);
 
+  /* s10 标题：语义换行 + 不断词（1920/2560 两行，1366 不拆「上层」） */
+  const endTitle = doc.getElementById("s11-title");
+  g.ok(!!endTitle, "存在 #s11-title", true, !!endTitle);
+  const titleKids = endTitle ? endTitle.children : [];
+  const brAt = titleKids.findIndex((c) => typeof c !== "string" && c.tagName === "BR");
+  const kidText = (c) => (typeof c === "string" ? c : c.textContent);
+  g.eq(brAt >= 0 ? 1 : 0, 1, "s10 标题有且只有 1 个语义换行 <br>");
+  g.eq((brAt > 0 ? titleKids.slice(0, brAt).map(kidText).join("") : "").trim(),
+    "底层 gate 已在跑，", "s10 标题第一行以「，」收口");
+  g.eq((brAt >= 0 ? titleKids.slice(brAt + 1).map(kidText).join("") : "").trim(),
+    "上层迁移验证仍在建设中。", "s10 标题第二行从「上层」开始、以「。」收口");
+  g.eqJson((endTitle ? doc._findAll(endTitle, (n) => n.classList.contains("nw")).map(textOf) : []),
+    ["上层", "建设中。"], "「上层」与「建设中。」各自 nowrap（不被行宽拆开）");
+  const endRule = CSS_RULES.filter((r) => r.sel === ".end-line")[0] || { body: "" };
+  g.ok(/text-wrap\s*:\s*balance/.test(endRule.body), ".end-line 使用 text-wrap: balance", "balance", null);
+  const endInner = CSS_RULES.filter((r) => r.sel === ".slide--end .slide-inner")[0] || { body: "" };
+  g.ok(/max-width\s*:\s*min\(94vw,\s*1560px\)/.test(endInner.body),
+    "s10 版心放宽到 1560px（标题两行不被挤断）", "min(94vw, 1560px)", endInner.body);
+
   const metaLine = textOf(doc.querySelector(".meta-line"));
   g.ok(metaLine.indexOf("证据截至") !== -1, "S8 meta-line 含「证据截至」", "含 证据截至", metaLine);
   g.ok(metaLine.indexOf(F.iso(M.meta.generatedAt)) !== -1,
@@ -2654,8 +2881,9 @@ function durationsMs(body, prop) {
   g.eq(M.s1.costMultiplier, multCalc,
     "s1.costMultiplier === round1(基线 cps / 候选 cps)（独立复算）");
 
-  const s3Text = surfaceTextOf(SLIDES[4]);
-  const s3PlainNode = doc._findAll(SLIDES[4], (n) => n.classList.contains("plain-talk"))[0];
+  const s3Slide = SLIDES.filter((s) => s.id === "s5")[0];
+  const s3Text = surfaceTextOf(s3Slide);
+  const s3PlainNode = doc._findAll(s3Slide, (n) => n.classList.contains("plain-talk"))[0];
   const s3Plain = s3PlainNode ? textOf(s3PlainNode) : "";
   g.ok(s3Text.indexOf("倍的题") !== -1, "S3 屏面正文含「倍的题」（人话句存在）",
     "含 倍的题", s3Text.slice(0, 120));
@@ -2708,7 +2936,7 @@ function durationsMs(body, prop) {
     "报告侧配对走推断时，口径说明必须写明「与门禁 genome 未对齐 + 按成本推断」（不静默推断）");
 
   /* ---- 2. 口径说明常显（不是折叠附录，也不许被藏起来） ---- */
-  const s8Slide = SLIDES.filter((s) => s.id === "s10")[0] || null;
+  const s8Slide = SLIDES.filter((s) => s.id === "s11")[0] || null;
   const scope = scopeBlockOf(doc);
   const hiddenAncestors = [];
   for (let n = scope; n; n = n.parentNode) {
@@ -2725,7 +2953,19 @@ function durationsMs(body, prop) {
     "口径说明块在 S8 的 .slide-inner 内（正文位置）", true,
     scope && scope.parentNode ? scope.parentNode.className : null);
   const detailsNodes = doc._findAll(doc.documentElement, (n) => n.tagName === "DETAILS");
-  g.eq(detailsNodes.length, 0, "渲染后文档里没有 <details>（口径常显 + 本次无数据错误）");
+  g.eq(detailsNodes.length, 4,
+    "渲染后文档里的 <details> 只用于 4 个展开层（证据 / 连接 / 演示选项）");
+  function detailAreaOf(node) {
+    let n = node;
+    while (n) {
+      if (n.id === "demo-hud") return "demo-hud";
+      if (n.classList && n.classList.contains("slide")) return n.id;
+      n = n.parentNode;
+    }
+    return null;
+  }
+  g.eqJson(detailsNodes.map(detailAreaOf).filter((x) => x === null), [],
+    "每个 <details> 都在 s6 / s9 屏内或演示 HUD 内");
 
   /* ---- 3. S6 标题放大（只放大 S6，其余屏继续用基线字号） ---- */
   const rootBody = (CSS_RULES.filter((r) => r.sel === ":root")[0] || { body: "" }).body;
@@ -2767,13 +3007,13 @@ function durationsMs(body, prop) {
   /* ---- 4. 墨水晕染（每屏一层三团；只动 transform / opacity；可被 reduce 关掉） ---- */
   const inkLayerPerSlide = SLIDES.map((s) =>
     doc._findAll(s, (n) => n.classList.contains("ink")).length);
-  g.eqJson(inkLayerPerSlide, [1, 1, 1, 1, 1, 1, 1, 1, 1], "每屏恰好 1 个 .ink 晕染层");
-  g.eq(doc.querySelectorAll(".ink").length, 9, ".ink 总数（= 屏数）");
+  g.eqJson(inkLayerPerSlide, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "每屏恰好 1 个 .ink 晕染层");
+  g.eq(doc.querySelectorAll(".ink").length, 11, ".ink 总数（= 屏数）");
   const inkDots = doc.querySelectorAll(".ink").map((n) =>
     doc._findAll(n, (c) => c.tagName === "I").length);
-  g.eqJson(inkDots, [3, 3, 3, 3, 3, 3, 3, 3, 3], "每个 .ink 恰好 3 个 <i>（三团色斑）");
-  g.eq(doc._findAll(doc.documentElement, (c) => c.tagName === "I").length, 27,
-    "整页 <i> 总数 === 9 屏 × 3 团");
+  g.eqJson(inkDots, [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], "每个 .ink 恰好 3 个 <i>（三团色斑）");
+  g.eq(doc._findAll(doc.documentElement, (c) => c.tagName === "I").length, 33,
+    "整页 <i> 总数 === 11 屏 × 3 团");
 
   const kfs = keyframesBlocks(cssSrc);
   const inkKf = kfs.filter((b) => b.name === "ink-bloom")[0] || null;
@@ -3055,6 +3295,547 @@ function durationsMs(body, prop) {
   g.ok(countRe(keyBody2, /e\.preventDefault\(\)/g) >= 4,
     "翻页键都 e.preventDefault()（不让浏览器顺带滚屏）", ">= 4",
     countRe(keyBody2, /e\.preventDefault\(\)/g));
+}
+
+
+/* ==========================================================================
+ * E. 演示闭环 / 同源连接 / 恢复与交接（D2 / D3 / D4 / D6）
+ * ========================================================================== */
+
+/* ---- A25：演示模式：进入 / 重置 / 退出 / 页码记忆 / 动效开关 ---- */
+{
+  const g = group("A25", "演示模式：进入 / 重置 / 退出 / 页码记忆");
+  const idx = SRC["index.html"];
+  const appSrc = SRC["app.js"];
+
+  g.ok(/id="demo-launch"[^>]*aria-label="开始演示"/.test(idx), "存在可见「开始演示」入口（圆形播放键）", true, null);
+  g.ok(/id="demo-hud"[^>]*hidden/.test(idx), "演示步骤条默认隐藏", true, null);
+  g.ok(/id="demo-step"/.test(idx), "步骤条有当前步骤名槽位", true, null);
+  for (const id of ["demo-prev", "demo-next", "demo-reset", "demo-motion", "demo-exit"]) {
+    g.ok(new RegExp('id="' + id + '"').test(idx), "演示控件存在：" + id, true, null);
+  }
+  g.ok(/var DEMO_NAMES/.test(appSrc) && /受控进化/.test(appSrc),
+    "步骤名以「受控进化」开场", true, null);
+  g.ok(/function demoEnter\(/.test(appSrc) && /function demoExit\(/.test(appSrc) &&
+    /function demoReset\(/.test(appSrc), "app.js：进入 / 退出 / 重置各有单一入口", true, null);
+
+  const rememberBody = fnBodyOf(appSrc, "function remember(");
+  g.ok(/if\s*\(demoOn\)\s*return;/.test(rememberBody),
+    "演示期间不写页码记忆（molt.slide.v1 不被污染）", true, null);
+  const hashBody = fnBodyOf(appSrc, "function onHashChange(");
+  g.ok(/if\s*\(demoOn\)\s*return;/.test(hashBody), "演示期间忽略既有 hash", true, null);
+  g.ok(/stripQuery\("demo"\)/.test(fnBodyOf(appSrc, "function demoExit(")),
+    "退出演示清理 ?demo=1", true, null);
+  g.ok(/goTo\(0\)/.test(fnBodyOf(appSrc, "function demoEnter(")) &&
+    /goTo\(0\)/.test(fnBodyOf(appSrc, "function demoReset(")) &&
+    /goTo\(0\)/.test(fnBodyOf(appSrc, "function demoExit(")),
+    "进入 / 重置 / 退出都固定回 s1", true, null);
+  g.ok(/remember\(0\)/.test(fnBodyOf(appSrc, "function demoExit(")),
+    "退出后恢复正常页码记忆（固定写 s1）", true, null);
+
+  const stepBody = fnBodyOf(appSrc, "function demoStepUpdate(");
+  g.ok(/disabled\s*=\s*i\s*<=\s*0/.test(stepBody) &&
+    /disabled\s*=\s*i\s*>=\s*slides\.length\s*-\s*1/.test(stepBody),
+    "首尾边界：上一步 / 下一步在两端禁用", true, null);
+  g.ok(/aria-pressed/.test(appSrc), "动效开关有 aria-pressed 状态", true, null);
+  g.ok(/if\s*\(reduce\)\s*return;/.test(fnBodyOf(appSrc, "function motionToggle(")),
+    "系统 reduced-motion 优先（不允许手动打开动效）", true, null);
+  g.ok(/motion-off/.test(appSrc) && /\.motion-off/.test(SRC["app.css"]),
+    "手动关闭动效：html 类 + CSS 关闭 animation / transition", true, null);
+  g.ok(/"Escape"/.test(fnBodyOf(appSrc, "function onKeyDown(")) && /function closePanels\(/.test(appSrc),
+    "Escape 关闭展开面板", true, null);
+  g.ok(/isTypingTarget\(e\.target\)/.test(fnBodyOf(appSrc, "function onKeyDown(")) &&
+    /INPUT:\s*1/.test(appSrc), "输入控件内不抢方向键", true, null);
+  g.ok(/function liveSourceStart\(/.test(appSrc) && !/motionOff[\s\S]{0,120}liveSourceStop/.test(appSrc),
+    "动效开关与数据刷新解耦（关动效不停止轮询）", true, null);
+}
+
+/* ---- A26：同源连接 / 内存授权 / 状态分类 ---- */
+{
+  const g = group("A26", "同源连接 / 授权 / 状态分类");
+  const idx = SRC["index.html"];
+  const appSrc = SRC["app.js"];
+  const liveSrc = SRC["live-source.js"];
+
+  for (const id of ["live-conn-state", "live-conn-meta", "live-conn-note", "live-retry",
+    "live-disconnect", "live-export", "live-conn-form", "live-token"]) {
+    g.ok(new RegExp('id="' + id + '"').test(idx), "连接控件存在：" + id, true, null);
+  }
+  g.ok(/type="password"[^>]*id="live-token"/.test(idx), "token 输入框是 password", true, null);
+  g.ok(/id="live-conn-form"[^>]*hidden/.test(idx), "授权面板默认收起", true, null);
+  g.ok(/autocomplete="off"/.test(idx), "token 输入框关闭自动填充", true, null);
+
+  const note = textOf(PAGE_DOC.getElementById("live-conn-note"));
+  g.ok(note.indexOf("≠ 已发生执行") !== -1,
+    "连接状态旁写明「可达 / 已连接 ≠ 已发生执行」", "含 ≠ 已发生执行", note);
+  g.ok(note.indexOf("已有导出数据") !== -1,
+    "连接状态旁写明接口快照读的是已有导出数据", "含 已有导出数据", note);
+  const meta = textOf(PAGE_DOC.getElementById("live-conn-meta"));
+  g.ok(meta.indexOf("provider") !== -1 && meta.indexOf("real_model") !== -1,
+    "界面显示 provider / real_model（未知时显示未知）", true, meta);
+
+  const labels = ["未探测", "正在探测", "需要授权", "已连接", "不可达", "file://", "已暂停", "本地模拟"];
+  g.eqJson(labels.filter((t) => appSrc.indexOf(t) === -1), [],
+    "状态文案覆盖 idle / probing / 需要授权 / 已连接 / 不可达 / file / 暂停 / 模拟");
+  g.ok(/function connProbe\(/.test(appSrc) && /\/api\/health/.test(liveSrc),
+    "默认探测同源 /api/health", true, null);
+  g.ok(/function connAuthorize\(/.test(appSrc) && /api\.authorize/.test(appSrc),
+    "显式授权走 authorize（token 只在内存）", true, null);
+  g.ok(/input\.value\s*=\s*""/.test(appSrc), "token 读走即清空 password DOM", true, null);
+
+  const disBody = fnBodyOf(appSrc, "function connDisconnect(");
+  g.ok(/liveSourceStop\(\)/.test(disBody) && /liveReset\(\)/.test(disBody),
+    "断开：停源（清 token）+ 回到导出证据", true, null);
+  g.ok(/MOLT_LIVE\.stop/.test(fnBodyOf(appSrc, "function liveSourceStop(")),
+    "liveSourceStop 真的调用 MOLT_LIVE.stop（token 从内存清除）", true, null);
+  const expBody = fnBodyOf(appSrc, "function connSwitchExport(");
+  g.ok(/api\.pause/.test(expBody) && /liveReset\(\)/.test(expBody),
+    "切换导出证据：暂停刷新 + 重建静态表", true, null);
+  g.ok(/stripQuery\("token"\)/.test(fnBodyOf(appSrc, "function bindConn(")),
+    "?token= 旧链接：清理当前地址并提示重输", true, null);
+  g.ok(/无法撤回/.test(appSrc), "不声称能撤回既有泄露", true, null);
+  g.ok(/if\s*\(detail === 401 && !liveAuthWarned\)/.test(appSrc), "401 只提示一次", true, null);
+  g.eq(liveSrc.indexOf("MOLT_AGENT_TOKEN"), -1, "页面不再从全局注入 token");
+  g.ok(!/localStorage[^;\n]{0,80}tok/i.test(appSrc) && !/sessionStorage/.test(appSrc),
+    "token 不进入任何 storage", true, null);
+}
+
+/* ---- A27：s6 默认导出证据 / 来源切换 / 迟到响应 ---- */
+{
+  const g = group("A27", "s6 默认导出证据 + 接口快照切换");
+  const idx = SRC["index.html"];
+  const appSrc = SRC["app.js"];
+
+  g.ok(/<ol class="live-list" id="live-list">/.test(idx),
+    "列表默认不带 is-live（导出证据一开始就可见）", true, null);
+  g.eq(countLit(idx, 'class="live-list is-live"'), 0, "index.html 不再预置空载类");
+  const state0 = PAGE_DOC.getElementById("live-source-state");
+  g.ok(!state0 || !state0.getAttribute("hidden") === false || textOf(state0) === "",
+    "默认不再单独显示「来源：导出的回放证据」行（已在 note 首句里）", "无重复来源行",
+    state0 ? textOf(state0) : null);
+  const note = textOf(PAGE_DOC.getElementById("live-source-note"));
+  g.ok(note.indexOf("closure 闭环为") !== -1 && note.indexOf("live 候选") !== -1 &&
+    note.indexOf("replay 基线") !== -1,
+    "默认来源按 closure 组拆分 live / replay", "含 closure 闭环为 … live 候选 / replay 基线", note);
+  g.ok(note.indexOf("scan10 为") !== -1 && note.indexOf("candidate-scan 为") !== -1,
+    "默认来源分别说明 scan10 与 candidate-scan", true, note);
+  const fixed = textOf(PAGE_DOC.querySelector(".live-source-fixed"));
+  g.ok(fixed.indexOf("gate 级 10 题配对") !== -1 &&
+    fixed.indexOf("closure 组 1 live 候选 + 1 replay 基线") !== -1 &&
+    fixed.indexOf("整表不是两条运行") !== -1,
+    "s6 表头固定句（gate 级 10 题 / closure 1 live + 1 replay / 不是两条运行）", true, fixed);
+  g.eq(ROUT.counts.pairs, M.s2.pairs.length, "默认表行数 === 导出配对条数");
+  g.ok(/function liveFill\(/.test(appSrc) && /liveFill\(norm\.pairs, true\)/.test(appSrc),
+    "接口快照整表替换（行 / 图 / 合计同一份）", true, null);
+  g.ok(/function markFetchTime\(/.test(appSrc) && /最近取数/.test(appSrc),
+    "接口快照写「最近取数」时间（不是执行时间）", true, null);
+  g.ok(/stateNode\.textContent = "来源：接口快照/.test(appSrc), "来源标注随数据源切换", true, null);
+  g.ok(/if \(gen !== S\.gen\) return;/.test(SRC["live-source.js"]),
+    "迟到响应按代际丢弃（不会覆盖新来源）", true, null);
+  g.ok(/liveCandPending\(r\)/.test(fnBodyOf(appSrc, "function liveFill(")),
+    "缺第二次成本时写「—」（不补 0）", true, null);
+  g.ok(/isFinite\(p\.baseCost\) && p\.baseCost >= 0/.test(appSrc) &&
+    /isFinite\(p\.candCost\) && p\.candCost >= 0/.test(appSrc),
+    "0 成本是有效值，缺值才写 —", true, null);
+}
+
+/* ---- A28：阻断状态恢复 + chat 交接无凭据 ---- */
+{
+  const g = group("A28", "阻断状态恢复 + chat 交接无凭据");
+  const idx = SRC["index.html"];
+  const appSrc = SRC["app.js"];
+
+  g.ok(/id="data-warning-retry"/.test(idx) && /重新加载/.test(idx),
+    "数据缺失：有「重新加载」恢复按钮", true, null);
+  g.ok(/需要授权/.test(appSrc) && /不可达/.test(appSrc) && /file:\/\/ 模式/.test(appSrc),
+    "需要授权 / 不可达 / file:// 都有面向观众的提示", true, null);
+  g.ok(/token 为空/.test(appSrc) && /可重试/.test(appSrc) && /切回导出证据/.test(appSrc),
+    "提示里给出可执行下一步（重试 / 切导出证据）", true, null);
+
+  const handoff = PAGE_DOC.getElementById("handoff");
+  g.ok(!!handoff && handoff.hidden === true, "交接卡默认隐藏（先给说明再跳转）", true, !!handoff);
+  const htext = textOf(handoff);
+  g.ok(htext.indexOf("底层回路（现有）") !== -1 && htext.indexOf("上层回路（建设中）") !== -1,
+    "交接卡写清两条相连但不同的回路", true, htext.slice(0, 120));
+  g.ok(htext.indexOf("上层闭环在建设中") !== -1, "交接卡写明上层闭环仍在建设中", true, null);
+  g.ok(htext.indexOf("不继承本页的数据、参数或 token") !== -1,
+    "交接卡写明 chat 不继承数据 / 参数 / token", true, null);
+  g.ok(htext.indexOf("由 chat 的连接状态决定") !== -1,
+    "交接卡写明是否真实执行由 chat 决定", true, null);
+  g.ok(htext.indexOf("前向状态图") !== -1 && htext.indexOf("建设中；待稳定 graph API 后由 chat 展示") !== -1,
+    "交接卡写明「前向状态图」愿景 + 建设中 / 待稳定 graph API", true, null);
+  g.ok(htext.indexOf("不可变 context / 策略节点") !== -1 &&
+    htext.indexOf("current pointer 原子更新") !== -1 &&
+    htext.indexOf("回退保留历史") !== -1 && htext.indexOf("暂不做语义 merge") !== -1,
+    "交接卡的图式概念来自约定措辞（不可变节点 / 指针原子更新 / 回退留史 / 暂不 merge）", true, null);
+
+  const link = PAGE_DOC.querySelector(".handoff-link");
+  const href = link ? link.getAttribute("href") : null;
+  g.eq(href, "../chat/index.html", "交接链接保持 ../chat/index.html");
+  g.eq(!!href && href.indexOf("?") !== -1, false, "交接链接不带查询参数");
+  g.eq(!!href && /token/i.test(href), false, "交接链接不含 token");
+  g.eq(link ? link.getAttribute("target") : null, "_blank", "打开 chat 时本页仍可返回（新标签）");
+  const entry = PAGE_DOC.getElementById("agent-entry");
+  g.eq(entry ? String(entry.tagName).toUpperCase() : null, "BUTTON", "chat 入口先出交接卡（按钮）");
+  g.ok(/if \(token === ""\)/.test(appSrc), "空 token 不发请求", true, null);
+
+  /* D2/D6：交接卡是根级 fixed 覆盖层，不被 HUD 压住 / 不被舞台裁切 */
+  const handoffRule = CSS_RULES.filter((r) => r.sel === ".handoff")[0] || { body: "" };
+  const hudRule = CSS_RULES.filter((r) => r.sel === ".demo-hud")[0] || { body: "" };
+  const zOf = (body) => {
+    const m = /z-index\s*:\s*(\d+)/.exec(body);
+    return m ? Number(m[1]) : null;
+  };
+  g.ok(zOf(handoffRule.body) !== null && zOf(hudRule.body) !== null &&
+    zOf(handoffRule.body) > zOf(hudRule.body),
+    "交接卡 z-index 高于 #demo-hud", "handoff > hud", [zOf(handoffRule.body), zOf(hudRule.body)]);
+  g.ok(/max-height\s*:\s*calc\(100vh\s*-\s*2\s*\*\s*var\(--pad-y\)\)/.test(handoffRule.body),
+    "交接卡 max-height = calc(100vh - 2 * var(--pad-y))", "calc(...)", handoffRule.body);
+  g.ok(/overflow-y\s*:\s*auto/.test(handoffRule.body), "交接卡内容可滚动（overflow-y: auto）", "auto", null);
+  g.ok(/--pad-y\s*:/.test(SRC["app.css"]), "app.css 定义 --pad-y 令牌", true, null);
+  g.eq(handoff && handoff.parentNode ? String(handoff.parentNode.tagName).toUpperCase() : null, "BODY",
+    "交接卡是 body 级覆盖层（不在 main / slide 内，不被裁切）");
+  const actionsRule = CSS_RULES.filter((r) => r.sel === ".handoff-actions")[0] || { body: "" };
+  g.ok(/position\s*:\s*sticky/.test(actionsRule.body) && /bottom\s*:\s*0/.test(actionsRule.body),
+    "交接卡按钮区 sticky 在卡片底部", true, actionsRule.body);
+  g.ok(!!link && !!handoff && isDescendantOf(link, handoff),
+    "「打开 chat 页面」按钮在交接卡内", true, null);
+  const closeBtn = PAGE_DOC.getElementById("handoff-close");
+  g.ok(!!closeBtn && !!handoff && isDescendantOf(closeBtn, handoff),
+    "「留在展示页」按钮在交接卡内", true, null);
+}
+
+/* ---- A29：受控进化叙事 / REPLAY 与历史标签 ---- */
+{
+  const g = group("A29", "受控进化叙事与 REPLAY / 历史标签");
+  const text = textOf(PAGE_DOC.documentElement);
+  const s1 = textOf(SLIDES[0]);
+  const s2 = textOf(SLIDES[1]);
+  const s6 = textOf(SLIDES[3]);
+  const s9 = textOf(PAGE_DOC.getElementById("s9"));
+  const s10 = textOf(PAGE_DOC.getElementById("s10"));
+  const s12 = textOf(PAGE_DOC.getElementById("s12"));
+  const s11 = textOf(PAGE_DOC.getElementById("s11"));
+
+  g.ok(s1.indexOf("迭旧元") !== -1 && s1.indexOf("底层回路") !== -1 &&
+    s1.indexOf("上层回路") !== -1, "封面讲迭元宗旨与两条回路（不是成本报告）", true, s1.slice(0, 120));
+  g.eq(s1.indexOf("成本"), -1, "封面不出现成本诉求");
+  g.ok(s2.indexOf("不背答案") !== -1 && s2.indexOf("换题再试") !== -1 &&
+    s2.indexOf("检查副作用") !== -1, "P2 提前说明上层 probe 的评测准则");
+  g.ok(s6.indexOf("REPLAY") !== -1 && s6.indexOf("历史证据（2026-11-11）") !== -1 &&
+    s6.indexOf("非当前 chat 运行") !== -1 && s6.indexOf("底层回路") !== -1,
+    "s6 来源徽标：REPLAY / 历史证据 / 非当前 chat 运行 / 底层回路", true, null);
+  g.ok(s9.indexOf("REPLAY") !== -1 && s9.indexOf("历史 demo-6") !== -1 &&
+    s10.indexOf("历史彩排") !== -1 && s12.indexOf("离线重复验证") !== -1,
+    "底层证据、probe 彩排、离线评测分别标注来源", true, null);
+  g.ok(s10.indexOf("Run1") !== -1 && s10.indexOf("Run2") !== -1 &&
+    s10.indexOf("不同任务") !== -1 && s10.indexOf("不是这道题的输出") !== -1,
+    "probe 故事讲清失败→规则→新任务迁移", true, null);
+  g.ok(s12.indexOf("0/10") !== -1 && s12.indexOf("12/12") !== -1 &&
+    s12.indexOf("headroom 检查，不是进化结果") !== -1,
+    "主要提升、matrix 前置验证分别归因", true, null);
+  g.ok(s12.indexOf("x8 不计入提升") !== -1 && s12.indexOf("统计显著") !== -1,
+    "满分基线与小样本限制明确标注", true, null);
+  g.ok(s10.indexOf("v3_stable_all") === -1 && s9.indexOf("不是 core gate 结论") === -1,
+    "probe 内部标签不混入展示主线", true, null);
+  g.ok(s11.indexOf("不代表当前已具备上层进化能力") !== -1 || s12.indexOf("历史") !== -1,
+    "不把 probe 证据写成当前已具备上层能力", true, null);
+  g.ok(s11.indexOf("底层 gate 已在跑") !== -1 && s11.indexOf("上层迁移验证仍在建设中") !== -1,
+    "收尾先讲两层受控进化，不把成本当唯一结论", true, s11.slice(0, 100));
+  g.ok(s11.indexOf("证据之一") !== -1, "收尾把成本标为证据之一", true, null);
+  g.ok(s11.indexOf("demo-6 历史证据属于这一层") !== -1, "s11 标明 demo-6 属于底层回路", true, null);
+
+  const banned = ["当前 chat 实时进化", "新 chat 已 live 进化", "成功率提升",
+    "自动学习反馈", "每题都少花同样的钱", "两次 live"];
+  g.eqJson(banned.filter((t) => text.indexOf(t) !== -1), [],
+    "全页不出现「实时进化 / 成功率提升 / 自动学习 / 每题同额省钱」等表述");
+}
+
+/* ---- A30：演示键盘与动效开关边界 ---- */
+{
+  const g = group("A30", "演示键盘与动效开关边界");
+  const appSrc = SRC["app.js"];
+  const keyBody = fnBodyOf(appSrc, "function onKeyDown(");
+
+  for (const k of ["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown",
+    "PageUp", "PageDown", "Home", "End"]) {
+    g.ok(keyBody.indexOf('"' + k + '"') !== -1, "键盘保留 " + k, true, null);
+  }
+  g.ok(/e\.key === "Escape"/.test(appSrc), "Escape 关面板（焦点在输入框 / 按钮上也生效）", true, null);
+  const wheelBody = fnBodyOf(appSrc, "function onWheel(");
+  g.ok(/if\s*\(\s*reduce\s*\)\s*return;/.test(wheelBody) && wheelBody.indexOf("motionOff") === -1,
+    "手动关动效不改变滚轮翻页（只有系统 reduce 才让出滚轮）", true, null);
+  g.ok(/prefers-reduced-motion: reduce/.test(SRC["app.css"]) && /motion-off/.test(SRC["app.css"]),
+    "系统 reduced-motion 与手动开关是两套（系统优先）", true, null);
+}
+
+
+/* ---- A31：投影密度 / 首屏层级 / 展开层 / reduced-motion 滚动 ---- */
+{
+  const g = group("A31", "投影密度 / 首屏层级 / 展开层 / reduced-motion 滚动");
+  const cssSrc = SRC["app.css"];
+  const appSrc = SRC["app.js"];
+  const idx = SRC["index.html"];
+  const doc = PAGE_DOC;
+  const s9Text = textOf(doc.getElementById("s9"));
+
+  /* clamp(min, preferred, max) → 指定视口下的像素值 */
+  function clampAtPx(decl, vw) {
+    const m = /clamp\(([^,]+),([^,]+),([^)]+)\)/.exec(String(decl || ""));
+    if (!m) return null;
+    const toPx = (expr) => {
+      const t = String(expr).trim();
+      let hit = /^([\d.]+)rem$/.exec(t);
+      if (hit) return Number(hit[1]) * 16;
+      hit = /^([\d.]+)vw$/.exec(t);
+      if (hit) return Number(hit[1]) * vw / 100;
+      hit = /^([\d.]+)px$/.exec(t);
+      if (hit) return Number(hit[1]);
+      return null;
+    };
+    const lo = toPx(m[1]);
+    const mid = toPx(m[2]);
+    const hi = toPx(m[3]);
+    if (lo === null || mid === null || hi === null) return null;
+    return Math.max(lo, Math.min(mid, hi));
+  }
+  function sizeAt(sel, vw) {
+    const hit = fontSizeDecl([sel], CSS_RULES);
+    return hit ? clampAtPx(hit.decl, vw) : null;
+  }
+  function notInsideDetails(node) {
+    let n = node;
+    while (n) {
+      if (n.tagName === "DETAILS") return false;
+      n = n.parentNode;
+    }
+    return true;
+  }
+  function insideDetailsId(node, id) {
+    let n = node;
+    while (n) {
+      if (n.id === id) return true;
+      n = n.parentNode;
+    }
+    return false;
+  }
+
+  /* 1. 字号阶梯：1920 达标；2560 放大；1366 不低于 16px */
+  g.ok(sizeAt(".live-result", 1920) >= 28,
+    "s6 主结论 @1920 >= 28px", ">= 28", sizeAt(".live-result", 1920));
+  g.ok(sizeAt(".live-result", 2560) > sizeAt(".live-result", 1920),
+    "s6 主结论 @2560 随视口放大", "2560 > 1920",
+    [sizeAt(".live-result", 1920), sizeAt(".live-result", 2560)]);
+  for (const sel of [".live-list-head", ".lr-name", ".lr-c"]) {
+    g.ok(sizeAt(sel, 1920) >= 20, sel + " @1920 >= 20px", ">= 20", sizeAt(sel, 1920));
+    g.ok(sizeAt(sel, 1366) >= 16, sel + " @1366 >= 16px", ">= 16", sizeAt(sel, 1366));
+  }
+
+  /* 列间距随视口放大：2560 下字号 25.6–27.2px 时表头 / 金额不粘连 */
+  const rowRule = CSS_RULES.filter((r) => r.sel.indexOf(".live-list-head") !== -1 &&
+    r.sel.indexOf(".live-row") !== -1)[0] || { body: "" };
+  const gapMatch = /column-gap\s*:\s*([^;]+);/.exec(rowRule.body);
+  g.ok(!!gapMatch && /^clamp\(/.test(gapMatch[1].trim()) && gapMatch[1].indexOf("vw") !== -1,
+    "表头 / 行使用随视口放大的 column-gap", "clamp(...vw...)", gapMatch ? gapMatch[1] : null);
+  const gap2560 = gapMatch ? clampAtPx(gapMatch[1], 2560) : null;
+  g.ok(typeof gap2560 === "number" && gap2560 >= 16,
+    "列间距 @2560 >= 16px（字号放大后仍分离）", ">= 16", gap2560);
+  const colMatch = /grid-template-columns\s*:\s*[^;]*minmax\([^)]*\)\s+minmax\([^)]*\)/.exec(rowRule.body);
+  g.ok(!!colMatch, "金额两列用 minmax() 而不是固定宽度", "minmax(...) minmax(...)", rowRule.body);
+  const colRems = colMatch ? [...colMatch[0].matchAll(/([\d.]+)rem/g)].map((m) => Number(m[1])) : [];
+  g.ok(colRems.length >= 2 && Math.max.apply(null, colRems) >= 11,
+    "金额列上限 >= 11rem（2560 下 25.6px 表头不溢出）", ">= 11rem", colRems);
+  g.eq(/10rem\s+10rem/.test(rowRule.body), false,
+    "金额两列不再是固定 10rem（配合 vw gap）");
+  g.ok(sizeAt(".live-badge", 1920) >= 11, "来源徽标（标题角标小字）@1920 >= 11px", ">= 11", sizeAt(".live-badge", 1920));
+  g.ok(sizeAt(".live-badge", 1366) >= 10, "来源徽标（标题角标小字）@1366 >= 10px", ">= 10", sizeAt(".live-badge", 1366));
+  const badgeRule = CSS_RULES.filter((r) => r.sel === ".live-badge")[0] || { body: "" };
+  g.ok(/white-space\s*:\s*nowrap/.test(badgeRule.body), "来源徽标默认一行（white-space: nowrap）", "nowrap", null);
+  g.ok(sizeAt(".demo-step", 1920) >= 18, "步骤名 / 进度 @1920 >= 18px", ">= 18", sizeAt(".demo-step", 1920));
+  g.ok(sizeAt(".demo-step", 1366) >= 16, "步骤名 / 进度 @1366 >= 16px", ">= 16", sizeAt(".demo-step", 1366));
+  g.ok(sizeAt(".panel-summary", 1920) >= 16, "证据说明 summary @1920 >= 16px", ">= 16", sizeAt(".panel-summary", 1920));
+  g.ok(sizeAt(".panel-summary", 1366) >= 16, "证据说明 summary @1366 >= 16px", ">= 16", sizeAt(".panel-summary", 1366));
+  g.ok((sizeAt(".probe-showcase-lead", 1920) || 0) >= 22, "probe 迁移主张 @1920 >= 22px", ">= 22", sizeAt(".probe-showcase-lead", 1920));
+
+  /* 2. 既有字号契约不放松 */
+  const sumRule = CSS_RULES.filter((r) => r.sel === ".live-sum")[0] || { body: "" };
+  g.ok(/font-size\s*:\s*var\(--fs-foot\)/.test(sumRule.body),
+    ".live-sum 仍为 var(--fs-foot)（合计不抢主结论）", "var(--fs-foot)", null);
+  const h2Independent = ["s5", "s6", "s7", "s9"].filter((id) => {
+    const slide = SLIDES.filter((x) => x.id === id)[0];
+    const h2 = slide ? doc._findAll(slide, (n) => n.tagName === "H2")[0] : null;
+    if (!h2) return true;
+    const sels = String(h2.className || "").split(/\s+/).filter(Boolean).map((t) => "." + t);
+    return sels.length > 0 && fontSizeDecl(sels, CSS_RULES) !== null;
+  });
+  g.eqJson(h2Independent, [], "s5 / s6 / s7 / s9 的 h2 没有独立 font-size（只有 s8 放大）");
+
+  /* 3. s6 首屏层级：徽标 + 人话结果可见；技术细节在「证据说明」 */
+  const badgeText = textOf(doc.getElementById("live-badge"));
+  g.eq(badgeText, "REPLAY · 历史证据（2026-11-11）· 非当前 chat 运行",
+    "s6 徽标固定为 REPLAY · 历史证据（2026-11-11）· 非当前 chat 运行");
+  const resultText = textOf(doc.getElementById("live-result"));
+  g.ok(resultText.indexOf("通过数不变") !== -1 && resultText.indexOf("低 70.0%") !== -1 &&
+    resultText.indexOf("0.035560") !== -1 && resultText.indexOf("0.010684") !== -1,
+    "s6 人话结果由配对数据生成（通过数不变 / 低 70.0% / 两个金额）", "含四项", resultText);
+  g.ok(resultText.indexOf(" 题") === -1 && resultText.indexOf("配对：") === -1,
+    "s6 人话结果已简化（不写题数前缀与「配对：」小标题）", "无 题 / 配对：", resultText);
+  const evidence = doc.getElementById("live-evidence-details");
+  g.ok(!!evidence, "存在 s6 证据说明展开层", true, !!evidence);
+  g.ok(!!evidence && textOf(doc._findAll(evidence, (n) => n.tagName === "SUMMARY")[0]) === "证据说明",
+    "s6 展开层 summary 文案 === 证据说明", "证据说明",
+    evidence ? textOf(doc._findAll(evidence, (n) => n.tagName === "SUMMARY")[0]) : null);
+  g.ok(!!evidence && textOf(evidence).indexOf("closure 闭环为") !== -1 &&
+    textOf(evidence).indexOf("scan10") !== -1 && textOf(evidence).indexOf("demo_group") !== -1,
+    "s6 技术细节（closure / scan10 / demo_group）在展开层内", true, null);
+
+  /* 4. 底部操作区：核心按钮常显，次要按钮在「演示选项 / 连接（可选）」 */
+  for (const id of ["demo-prev", "demo-next", "demo-reset"]) {
+    const node = doc.getElementById(id);
+    g.ok(!!node && notInsideDetails(node), "核心按钮常显：" + id, "不在 details 内", !!node);
+  }
+  const options = doc.getElementById("demo-options");
+  g.ok(!!options && textOf(doc._findAll(options, (n) => n.tagName === "SUMMARY")[0]) === "演示选项",
+    "演示选项展开层 summary === 演示选项", "演示选项", options ? textOf(doc._findAll(options, (n) => n.tagName === "SUMMARY")[0]) : null);
+  for (const id of ["demo-motion", "demo-exit"]) {
+    const node = doc.getElementById(id);
+    g.ok(!!node && insideDetailsId(node, "demo-options"), "次要控制收进演示选项：" + id, "在 #demo-options 内", !!node);
+  }
+  const connDetails = doc.getElementById("live-conn-details");
+  const connSummary = connDetails ? textOf(doc._findAll(connDetails, (n) => n.tagName === "SUMMARY")[0]) : "";
+  g.ok(connSummary.indexOf("连接（可选）") !== -1, "连接展开层 summary 含「连接（可选）」", "含 连接（可选）", connSummary);
+  for (const id of ["live-conn-toggle", "live-retry", "live-disconnect", "live-export", "live-token"]) {
+    const node = doc.getElementById(id);
+    g.ok(!!node && insideDetailsId(node, "live-conn-details"), "连接控件收进连接展开层：" + id, "在 #live-conn-details 内", !!node);
+  }
+
+  /* 5. probe 独立大屏：强调不同函数间的迁移，并显示可读例子和逐题变化。 */
+  const probeSlide = doc.getElementById("s10");
+  const probeResultSlide = doc.getElementById("s12");
+  const probeLead = probeSlide ? textOf(probeSlide) : "";
+  const probeResultText = probeResultSlide ? textOf(probeResultSlide) : "";
+  g.ok(probeLead.indexOf("不是这道题的输出") !== -1 && probeLead.indexOf("Run2") !== -1,
+    "probe 大屏明确规则迁移而不是记忆答案");
+  g.eq(doc._findAll(probeSlide, (n) => n.classList.contains("probe-example")).length, 3,
+    "probe 大屏展示三个不同函数的迁移例子");
+  g.ok(probeLead.indexOf("整理名单") !== -1 && probeLead.indexOf("合并名单") !== -1 &&
+    probeLead.indexOf("最短名称") !== -1, "三个例子用不同任务动作说明迁移");
+  g.ok(probeResultText.indexOf("0/10") !== -1 && probeResultText.indexOf("12/12") !== -1 &&
+    probeResultText.indexOf("三道迁移题") !== -1, "probe 主结果展示有 headroom 题集的通过变化");
+  g.ok(probeResultText.indexOf("数不同名称") !== -1 && probeResultText.indexOf("基线原本就能通过") !== -1,
+    "满分基线题被单独标为回归检查");
+  g.ok(probeResultText.indexOf("matrix 先做的是 headroom 检查") !== -1 &&
+    probeResultText.indexOf("完整规格控制题 8/8") !== -1, "matrix 被解释为前置题目/判分器验证");
+  g.eq(doc._findAll(doc.getElementById("s12"), (n) => n.classList.contains("probe-task-rates")).length, 1,
+    "主要迁移结果按三道题分别列出");
+  const matrixReportPath = path.join(REPO_DIR, "probes/report/matrix/verdict.json");
+  const memoryReportPath = path.join(REPO_DIR, "probes/report/2c/memory-v3/verdict.json");
+  const mainProbeReportPath = path.join(REPO_DIR, "probes/report/2c/verdict.json");
+  if ([matrixReportPath, memoryReportPath, mainProbeReportPath].every(fs.existsSync)) {
+    const matrixReport = readJson(matrixReportPath);
+    const memoryReport = readJson(memoryReportPath);
+    const mainProbeReport = readJson(mainProbeReportPath);
+    const fPasses = Object.values(matrixReport.F || {});
+    const kPasses = Object.values(matrixReport.K || {});
+    const headroom = memoryReport.baseline_comparison && memoryReport.baseline_comparison.headroom_three;
+    g.eqJson(fPasses, [0, 0, 0, 0], "matrix 4 个模型配置的 C1b family pass 均为 0");
+    g.eqJson(kPasses, [2, 2, 2, 2], "matrix 控制题每个配置均为 2/2");
+    g.eqJson([matrixReport.oracle_run_passed, matrixReport.oracle_run_total], [4, 4],
+      "matrix oracle 运行通过数为 4/4");
+    g.eqJson([headroom && headroom.baseline_passes, headroom && headroom.baseline_runs,
+      headroom && headroom.v3_passes, headroom && headroom.v3_runs], [0, 10, 12, 12],
+      "P6 的 0/10 → 12/12 与 memory-v3 报告一致");
+    g.eqJson([mainProbeReport.baseline_tasks["probe-order-x8"].passes,
+      mainProbeReport.baseline_tasks["probe-order-x8"].runs,
+      memoryReport.v3["probe-order-x8"].passes,
+      memoryReport.v3["probe-order-x8"].runs], [2, 2, 4, 4],
+      "x8 基线已是 2/2，记忆侧 4/4 不计为成功率提升");
+  } else {
+    g.ok(false, "probe matrix / memory 报告存在（用于核对展示数字）", true, false);
+  }
+  g.ok(/font-size:\s*clamp\(22px/.test(SRC["app.css"]), "probe 迁移主张使用大屏字号（最小 22px）");
+  g.ok(/font-size:\s*clamp\(19px/.test(SRC["app.css"]), "逐题通过率表使用大屏字号（最小 19px）");
+  g.ok(/font-size:\s*clamp\(18px/.test(SRC["app.css"]), "迁移例子输入使用大屏字号（最小 18px）");
+  const scanBlock = doc.querySelector(".scan-block");
+  const probeBlock = doc.querySelector(".probe-showcase-inner");
+  g.ok(!!scanBlock && !!probeBlock && !isDescendantOf(probeBlock, scanBlock) &&
+    !isDescendantOf(scanBlock, probeBlock), "底层扫描证据与 probe 迁移独立分屏");
+  g.eq(doc._findAll(probeSlide, (n) => n.tagName === "CANVAS").length, 0,
+    "probe 屏不与 demo-6 拼比较曲线");
+  const probeText = probeResultText;
+  g.eqJson(["0.035560", "0.009978", "0.010684"].filter((l) => probeText.indexOf(l) !== -1), [],
+    "probe 块不夹带 demo-6 的成本数字（不做跨实验比较）");
+  g.ok(s9Text.indexOf("verified=false") !== -1, "底层 evidence 屏保留未验证标记（verified=false）", true, null);
+
+  /* 6. probe 阶段数字与 web/data/probe/example.json 一致 */
+  const probePath = path.join(ARGS.dataDir, "probe", "example.json");
+  if (fs.existsSync(probePath)) {
+    const probe = readJson(probePath);
+    const byGen = {};
+    for (const row of (Array.isArray(probe.lineage) ? probe.lineage : [])) byGen[row.gen] = row;
+    const gens = ["v0", "gen2", "gen3", "gen4"].filter((gen) => byGen[gen]);
+    const want = gens.map((gen) => gen + " " + byGen[gen].passes + "/" + byGen[gen].runs).join(" → ");
+    g.ok(want.length > 0 && probeText.indexOf(want) !== -1,
+      "阶段演进数字与 probe/example.json 的 lineage 一致", want, probeText.slice(0, 100));
+    const nt = probe.negative_transfer || {};
+    g.eq(nt.status, "restored", "probe 数据面：x8 负迁移已恢复（status=restored）");
+    g.ok(probeText.indexOf("x8") !== -1, "probe 屏写明 x8 回归题", true, null);
+  } else {
+    g.warn("probe/example.json 缺失，跳过阶段演进数字交叉核对", probePath);
+  }
+
+  /* 6b. s6 技术提示收进连接展开层；summary 有可见展开符号且可聚焦 */
+  const noteNode = doc.getElementById("live-note");
+  g.ok(!!noteNode && insideDetailsId(noteNode, "live-conn-details"),
+    "接口错误 / api-health 技术说明在「连接（可选）」details 内（默认不可见）", true, !!noteNode);
+  const connNode = doc.getElementById("live-conn-details");
+  g.eq(connNode ? connNode.getAttribute("open") : "missing", null,
+    "连接展开层默认收起（错误提示默认不可见）");
+  const listWrap = doc.querySelector(".live-list-wrap");
+  g.ok(!noteNode || !listWrap || !isDescendantOf(noteNode, listWrap),
+    "接口错误提示不在默认可见的列表区");
+  g.eq(idx.indexOf("同源没有 /api/health"), -1,
+    "index.html 不默认渲染 api/health 技术说明");
+  g.ok(appSrc.indexOf("同源没有 /api/health") !== -1 &&
+    appSrc.indexOf('getElementById("live-note")') !== -1,
+    "技术说明只在运行时写入 #live-note（位于连接展开层）", true, null);
+
+  const symRule = CSS_RULES.filter((r) => r.sel === ".panel-summary::before")[0] || { body: "" };
+  const openSymRule = CSS_RULES.filter((r) => r.sel === "details[open] > .panel-summary::before")[0] || { body: "" };
+  g.ok(/content\s*:\s*"▸"/.test(symRule.body),
+    "summary 有可见展开符号（▸，CSS 生成）", "▸", symRule.body);
+  g.ok(/rotate\(90deg\)/.test(openSymRule.body),
+    "summary 展开态符号翻转（rotate 90deg）", "rotate(90deg)", openSymRule.body);
+  const summaryNodes = doc._findAll(doc.documentElement, (n) => n.tagName === "SUMMARY");
+  g.eq(summaryNodes.length, 4, "4 个 summary（s6 证据 / s6 连接 / s9 扫描 / 演示选项）");
+  g.eq(summaryNodes.filter((n) => n.getAttribute("tabindex") !== "0").length, 0,
+    "所有 summary 显式 tabindex=0（可聚焦 / 键盘可达）");
+
+  /* 7. reduced-motion：激活后必须把当前屏滚到视口顶部 */
+  const activateBody = fnBodyOf(appSrc, "function setActive(");
+  const syncBody = fnBodyOf(appSrc, "function syncScroll(");
+  g.ok(activateBody.indexOf("syncScroll(index)") !== -1,
+    "setActive 末尾调用 syncScroll(index)（不只换类名）", true, null);
+  g.ok(syncBody.indexOf("deck.scrollTop") !== -1 && syncBody.indexOf("js-ready") !== -1 &&
+    syncBody.indexOf("reduce") !== -1, "syncScroll 在 reduced / 无 .js-ready 时写 deck.scrollTop", true, null);
+  g.ok(/if\s*\(!scrollMode\)\s*return;/.test(syncBody),
+    "syncScroll 在普通动效模式下直接返回（不改变现有换场）", true, null);
+  g.ok(/scrollMode\s*=\s*reduce\s*\|\|\s*!hasClassToken\(doc\.documentElement,\s*"js-ready"\)/.test(syncBody),
+    "滚动判定 = reduce 或缺少 .js-ready", true, null);
+
+  /* 8. 状态图只写文字愿景，不做任何假图 UI */
+  g.eq(countLit(idx, "<svg"), 0, "index.html 没有 svg 节点图 / 假分支图");
+  g.eq(doc._findAll(doc.getElementById("s11"), (n) => n.tagName === "CANVAS" || n.tagName === "SVG").length, 0,
+    "收尾屏没有状态图 / 节点图 / 假分支图");
+  g.eq(doc._findAll(doc.getElementById("s10"), (n) => n.tagName === "CANVAS" || n.tagName === "SVG").length, 0,
+    "probe 屏不放假 graph / 分支图");
+
+  /* 9. 品牌一致：封面不再用 Molt Beyond */
+  g.eq(appSrc.indexOf("Molt Beyond"), -1, "封面 tagline 不再出现 Molt Beyond");
+  g.ok(/Molt 迭元，/.test(appSrc), "封面 tagline 品牌为「Molt 迭元，」", true, null);
+  g.ok(/<title>MOLT · 迭元<\/title>/.test(idx), "<title> 保持 MOLT · 迭元", true, null);
+  g.ok(/class="hud-brand"[^>]*>\s*<img[^>]+src="Molt\.svg"/.test(idx),
+    "HUD 品牌是 Molt.svg 字标（alt 保留 MOLT · 迭元）", true, null);
 }
 
 /* ==========================================================================

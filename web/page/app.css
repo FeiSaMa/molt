@@ -43,6 +43,7 @@
 
   /* 版心 */
   --pad-x: clamp(48px, 8vw, 168px);
+  --pad-y: clamp(14px, 2.6vh, 34px);
   --measure: min(92vw, 1180px);
   --text-measure: min(92vw, 30ch);
 
@@ -167,6 +168,7 @@ summary:focus,
 }
 
 /* ---------- 4. 常驻 HUD ---------- */
+/* 品牌位是字标（Molt.svg，纯黑）：高度锁 1em，和原来的文字同高 */
 .hud-brand {
   position: fixed;
   top: clamp(20px, 3.4vh, 40px);
@@ -175,24 +177,147 @@ summary:focus,
   color: var(--ink);
   font-family: var(--font-brand);
   font-size: clamp(0.95rem, 1.1vw, 1.15rem);
-  font-weight: 300;
-  letter-spacing: 0.28em;
   line-height: 1;
-  text-transform: lowercase;
   pointer-events: none;
 }
 
-.hud-pager {
+.hud-brand-logo {
+  display: block;
+  width: auto;
+  height: 1.7em;
+}
+
+/* 右下角：页码 + 演示入口（圆形播放键在页码右侧） */
+.hud-corner {
   position: fixed;
   right: var(--pad-x);
   bottom: clamp(18px, 3vh, 34px);
   z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 0.9vw, 0.85rem);
+}
+
+.hud-pager {
   color: var(--ink-3);
   font-family: var(--font-num);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
+}
+
+/* 术语表入口：与页码同排的小号文字按钮（不抢页码，不抢播放键） */
+.glossary-launch {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ink-3);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: color 160ms var(--ease);
+}
+
+.glossary-launch:hover,
+.glossary-launch:focus-visible {
+  color: var(--indigo);
+}
+
+/* 术语表：原生 dialog 走浏览器顶层面，不参与页面 z-index 栈 */
+dialog.glossary {
+  width: min(92vw, 980px);
+  max-height: 84vh;
+  overflow: auto;
+  margin: auto;
+  padding: clamp(18px, 2.4vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+dialog.glossary::backdrop {
+  background: rgba(20, 22, 26, 0.38);
+}
+
+/* 容器自身只接收键盘滚动（tabindex=-1），焦点环留给内部的「×」按钮 */
+dialog.glossary:focus {
+  outline: none;
+}
+
+.glossary-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+  background: var(--paper);
+}
+
+.glossary-head h2 {
+  margin: 0;
+  font-size: var(--fs-title);
+}
+
+.glossary-close {
+  border: 0;
+  background: none;
+  padding: 0 0.2rem;
+  color: var(--ink-3);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.glossary-close:hover,
+.glossary-close:focus-visible {
+  color: var(--ink);
+}
+
+.glossary-lead {
+  max-width: 70ch;
+  margin: 0 0 1rem;
+  color: var(--ink-3);
+  font-size: var(--fs-foot);
+  line-height: 1.6;
+}
+
+.glossary-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.8rem, 1.4vw, 1.4rem) clamp(1.4rem, 3vw, 2.6rem);
+  margin: 0;
+}
+
+.glossary-item { min-width: 0; }
+
+.glossary-item dt {
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.glossary-item dd {
+  margin: 0.2rem 0 0;
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.glossary-item dd span {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--ink-3);
+  font-size: 0.9em;
+}
+
+@media (max-width: 760px) {
+  .glossary-list { grid-template-columns: 1fr; }
 }
 
 .hud-dots {
@@ -339,6 +464,11 @@ h2::before {
   background: var(--red);
 }
 
+/* 标题里的强调词标红：与封面 tagline 的 .hot 同色 */
+h2 .hot {
+  color: var(--red);
+}
+
 .kicker {
   margin: 0 0 clamp(1rem, 2.4vh, 2rem);
   color: var(--indigo);
@@ -441,6 +571,15 @@ h1 em {
   font-variant-numeric: tabular-nums;
 }
 
+/* 口径一行：说明「每题」怎么算，比正文淡一档，不与结论抢视线 */
+.cost-basis {
+  max-width: 60ch;
+  margin: 0.35rem 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-foot);
+  line-height: 1.6;
+}
+
 .footnote {
   max-width: min(78ch, 1180px);
   margin: clamp(1.1rem, 2.6vh, 1.9rem) 0 0;
@@ -451,6 +590,11 @@ h1 em {
 
 .footnote--tight {
   margin-top: clamp(0.8rem, 1.8vh, 1.3rem);
+}
+
+/* 整句一行：放开 ch 限宽，按版心宽度自然断行（窄屏仍可折行） */
+.footnote--fluid {
+  max-width: none;
 }
 
 .footnote b {
@@ -722,10 +866,10 @@ h1 em {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto;
-  column-gap: clamp(1.4rem, 3vw, 3.4rem);
+  column-gap: clamp(1.6rem, 3.4vw, 4.4rem);
   row-gap: clamp(0.5rem, 1.2vh, 0.9rem);
-  height: clamp(340px, 62vh, 700px);
-  margin-top: clamp(0.8rem, 2vh, 1.6rem);
+  height: clamp(340px, 58vh, 700px);
+  margin-top: clamp(1rem, 2.2vh, 1.8rem);
 }
 
 /* ---- 左：折线图（画布吃掉整栏高度，与右侧列表齐平） ---- */
@@ -772,9 +916,10 @@ h1 em {
   margin-top: 0.45rem;
 }
 
-/* 合计：字号与全片脚注一致（--fs-foot），横跨两栏居中收口 */
+/* 合计：字号与全片脚注一致（--fs-foot），落在左栏、与证据说明同一行 */
 .live-sum {
-  grid-column: 1 / -1;
+  grid-column: 1;
+  align-self: start;
   margin: 0;
   color: var(--ink-3);
   font-size: var(--fs-foot);
@@ -799,6 +944,11 @@ h1 em {
   color: var(--ink-2);
 }
 
+/* 成本差 = 0：不红不绿，回到墨色 */
+.live-sum b.is-zero {
+  color: var(--ink);
+}
+
 /* ---- 右：滚动列表（题号 / 题目 / 第一次 / 第二次） ---- */
 .live-list-wrap {
   display: flex;
@@ -810,18 +960,19 @@ h1 em {
 .live-list-head,
 .live-row {
   display: grid;
-  grid-template-columns: 2.8rem minmax(0, 1fr) 10rem 10rem;
-  gap: 0.6rem;
+  /* 金额两列随视口放大（2560 下字号 25.6px，固定 10rem 会粘连） */
+  grid-template-columns: 2.8rem minmax(0, 1fr) minmax(10rem, 11.5rem) minmax(10rem, 11.5rem);
+  column-gap: clamp(0.75rem, 1.1vw, 1.5rem);
   align-items: baseline;
 }
 
 .live-list-head {
   flex: none;
-  padding: 0 0.55rem 0.5rem;
+  padding: 0 0.55rem 0.35rem;
   border-bottom: 1px solid var(--line);
   color: var(--ink-3);
-  font-size: 0.74rem;
-  letter-spacing: 0.08em;
+  font-size: clamp(1rem, 1.1vw, 1.6rem);
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
@@ -864,7 +1015,7 @@ h1 em {
 }
 
 .live-row {
-  padding: 0.5rem 0.55rem;
+  padding: 0.38rem 0.55rem;
   border-bottom: 1px solid var(--line);
   transition: background-color 260ms var(--ease);
 }
@@ -872,7 +1023,7 @@ h1 em {
 .lr-idx {
   color: var(--indigo);
   font-family: var(--font-num);
-  font-size: 0.8rem;
+  font-size: clamp(0.95rem, 1vw, 1.4rem);
   font-variant-numeric: tabular-nums;
 }
 
@@ -882,7 +1033,7 @@ h1 em {
   align-items: baseline;
   min-width: 0;
   color: var(--ink);
-  font-size: 0.88rem;
+  font-size: clamp(1rem, 1.15vw, 1.7rem);
   white-space: nowrap;
 }
 
@@ -899,7 +1050,7 @@ h1 em {
 .lr-c {
   color: var(--ink-2);
   font-family: var(--font-num);
-  font-size: 0.86rem;
+  font-size: clamp(1rem, 1.1vw, 1.6rem);
   font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
@@ -945,11 +1096,8 @@ h1 em {
 @media (max-width: 1500px) {
   .live-list-head,
   .live-row {
-    grid-template-columns: 2.4rem minmax(0, 1fr) 8.2rem 8.2rem;
-  }
-
-  .lr-c {
-    font-size: 0.8rem;
+    grid-template-columns: 2.4rem minmax(0, 1fr) minmax(8.2rem, 9rem) minmax(8.2rem, 9rem);
+    column-gap: clamp(0.6rem, 1.1vw, 1.3rem);
   }
 }
 
@@ -1026,6 +1174,15 @@ h1 em {
 
 .step.is-final::after {
   background: var(--red);
+}
+
+/* 结论栏：adopt 是「通过」，文字与右上角状态灯一起转绿 */
+.verdict-body.is-adopt b:first-of-type {
+  color: var(--good);
+}
+
+.step.is-final.is-adopt::after {
+  background: var(--good);
 }
 
 .step-head {
@@ -1162,6 +1319,12 @@ h1 em {
 
 .slide-h-lead::before {
   margin-bottom: clamp(0.85rem, 1.7vh, 1.35rem);
+}
+
+/* 第 9 屏：标题下的小标签与标题拉开距离，避免压到标题字脚
+   （必须带 .mini-label 提高优先级，否则被后面的 .mini-label 覆盖） */
+.mini-label.rollback-tag {
+  margin: clamp(1rem, 2.3vh, 1.5rem) 0 0.55rem;
 }
 
 .lineage {
@@ -1433,6 +1596,15 @@ h1 em {
   padding-top: clamp(0.6rem, 1.4vh, 1rem);
 }
 
+/* 三数的口径：告诉读者这是运行记录条数，不是通过数 */
+.ev-note {
+  max-width: 60ch;
+  margin: 0.35rem 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-foot);
+  line-height: 1.6;
+}
+
 .ev-num {
   color: var(--ink);
   font-family: var(--font-display);
@@ -1463,7 +1635,13 @@ h1 em {
 
 /* ---------- 14. S8 收尾 ---------- */
 .slide--end .slide-inner {
-  max-width: min(88vw, 1000px);
+  /* 标题在 1920/2560 保持两行；正文仍由各自 max-width 控制行长 */
+  max-width: min(94vw, 1560px);
+}
+
+.slide--end .meta-line,
+.slide--end .source-line {
+  max-width: 62rem;
 }
 
 .end-line {
@@ -1473,6 +1651,7 @@ h1 em {
   font-weight: 700;
   line-height: 1.08;
   letter-spacing: 0.01em;
+  text-wrap: balance;
 }
 
 .end-line::before {
@@ -2014,4 +2193,1165 @@ h1 em {
   .steps {
     grid-template-columns: 1fr;
   }
+}
+
+/* 聊天入口：接 web/chat/，不是展示页数据的一部分。
+   本批改成按钮：先出交接卡，卡里才是真实链接（无参数、无 token，新标签打开）。 */
+.agent-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: clamp(1.2rem, 3vh, 2rem);
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--indigo);
+  background: rgba(255, 255, 255, .72);
+  font-family: var(--font-body);
+  font-size: .86rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color .2s ease, color .2s ease, transform .2s ease;
+}
+
+.agent-entry:hover {
+  border-color: var(--indigo);
+  color: var(--red);
+  transform: translateY(-2px);
+}
+
+.agent-entry span {
+  font-size: 1.1rem;
+}
+
+/* ---------- 21. 演示模式 / 同源连接 / 交接卡 / 扫描级证据 ----------
+   演示控件与连接控件都是普通按钮与输入框：键盘焦点可达，方向键在输入控件里
+   不抢键（app.js 的 isTypingTarget 已包含 INPUT / BUTTON / A）。
+   初始隐藏一律走 [hidden]（不是 opacity:0），无 JS 时不会留下半透明残影。 */
+
+/* 演示入口：右下角圆形播放键，站在页码右边（进入演示后隐藏） */
+.demo-launch {
+  position: static;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgba(252, 252, 253, 0.92);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: border-color 160ms var(--ease), color 160ms var(--ease);
+}
+
+/* 播放三角：纯 CSS 画，不引 <svg>（页面禁止节点图 UI） */
+.demo-launch::before {
+  content: "";
+  display: block;
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  border-top: 0.34rem solid transparent;
+  border-bottom: 0.34rem solid transparent;
+  border-left: 0.55rem solid currentColor;
+}
+
+.demo-launch:hover {
+  border-color: var(--indigo);
+  color: var(--indigo);
+}
+
+/* 步骤条：两行（步骤名 / 操作），移动端铺满底部 */
+.demo-hud {
+  position: fixed;
+  left: var(--pad-x);
+  right: calc(var(--pad-x) + 118px);
+  bottom: clamp(12px, 2.2vh, 24px);
+  z-index: 32;
+  max-width: 76rem;
+  padding: clamp(0.35rem, 0.8vh, 0.6rem) clamp(0.5rem, 0.9vw, 0.9rem);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(252, 252, 253, 0.96);
+}
+
+.demo-hud-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: clamp(0.4rem, 0.9vw, 0.9rem);
+}
+
+.demo-step {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-num);
+  font-size: clamp(1.15rem, 1.15vw, 1.6rem);
+  font-weight: 500;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.demo-nav {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.demo-options {
+  position: relative;
+  margin-left: auto;
+}
+
+.demo-options-body {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.45rem);
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  box-shadow: 0 6px 18px rgba(20, 22, 26, 0.08);
+  /* 两个控件横排：不换行、不竖排 */
+  white-space: nowrap;
+}
+
+.demo-btn {
+  padding: 0.22rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: clamp(0.95rem, 0.95vw, 1.25rem);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.demo-btn:hover:not([disabled]) {
+  border-color: var(--indigo);
+  color: var(--indigo);
+}
+
+.demo-btn[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.demo-btn--exit {
+  border-color: rgba(192, 57, 43, 0.35);
+  color: var(--red);
+}
+
+/* 演示期间给底部控件留出空间：只调内边距，不动版心与字号 */
+.is-demo .slide {
+  padding-bottom: clamp(112px, 16vh, 150px);
+}
+
+/* ---- s6 首屏层级：标题行（右侧小字来源徽标）+ 一句人话结果 ---- */
+.live-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(0.8rem, 1.6vw, 2rem);
+}
+
+.live-head {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.18rem, 0.55vh, 0.4rem);
+  margin-top: clamp(0.45rem, 1.2vh, 0.8rem);
+}
+
+/* 来源徽标是标题的角标：小字、贴标题右下角，不单独占一行 */
+.live-badge {
+  flex: none;
+  margin: 0 0 0.2em;
+  color: var(--indigo);
+  font-family: var(--font-num);
+  font-size: clamp(0.7rem, 0.66vw, 0.92rem);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.live-result {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.2vw, 3rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* P4 的阅读顺序：结果、迁移、证据；不添加新的数字或 claim。 */
+.live-result-note {
+  max-width: 78ch;
+  margin: 0.35rem 0 0;
+  color: var(--ink-2);
+  font-size: clamp(1rem, 1.05vw, 1.45rem);
+  line-height: 1.5;
+}
+
+.live-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.45rem;
+}
+.live-run {
+  appearance: none;
+  border: 1px solid var(--indigo);
+  border-radius: 4px;
+  padding: 0.42rem 0.85rem;
+  color: #fff;
+  background: var(--indigo);
+  font: 600 0.78rem var(--font-num);
+  cursor: pointer;
+}
+.live-run:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.live-run-state {
+  color: var(--ink-3);
+  font: 0.68rem var(--font-num);
+}
+.live-log {
+  min-height: 7rem;
+  max-height: 18rem;
+  margin: 0.55rem 0 0;
+  padding: 0.55rem 0.65rem;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--indigo);
+  border-radius: 4px;
+  background: #f8fafc;
+  color: var(--ink-2);
+  font: 0.62rem/1.55 var(--font-num);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.live-source-line {
+  display: block;
+}
+
+.live-source-fixed {
+  color: var(--ink-2);
+}
+
+/* 证据说明 / 连接（可选）：summary 在投影距离可读，内容默认收起 */
+.panel-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: clamp(1rem, 1vw, 1.45rem);
+  line-height: 1.4;
+  list-style: none;
+  cursor: pointer;
+}
+
+.panel-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* 可点击感：展开符号 + 展开态翻转（不是 SVG，也不引入节点图） */
+.panel-summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 1em;
+  color: var(--indigo);
+  font-family: var(--font-num);
+  font-size: 1em;
+  line-height: 1;
+  transition: transform 180ms var(--ease);
+}
+
+details[open] > .panel-summary::before {
+  transform: rotate(90deg);
+}
+
+.evidence-details {
+  margin-top: clamp(0.25rem, 0.7vh, 0.5rem);
+  color: var(--ink-3);
+}
+
+/* 证据说明挂在合计右侧：与右侧题号列同一条左边界，同一行顶边对齐 */
+.live-after {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+  margin-top: 0;
+}
+
+.live-after > .evidence-details {
+  margin-top: 0;
+}
+
+/* s6 人话结果里的强调：朱红 = 结论与降幅，绿 = 候选成本 */
+.live-result .hl-red {
+  color: var(--red);
+}
+
+.live-result .hl-good {
+  color: var(--good);
+}
+
+.evidence-body {
+  margin-top: 0.4rem;
+  max-width: 82ch;
+  font-size: clamp(0.95rem, 0.85vw, 1.1rem);
+  line-height: 1.6;
+}
+
+/* 历史证据的统一标注：每个出现历史 demo-6 数字的屏都有这一行 */
+.demo-origin {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--ink-3);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+}
+
+.demo-origin--tight {
+  margin-top: clamp(0.5rem, 1.4vh, 0.9rem);
+  font-size: 0.68rem;
+}
+
+/* ---- 连接（可选）：状态在 summary，控件在展开层 ---- */
+.live-foot {
+  margin-top: clamp(0.3rem, 0.9vh, 0.6rem);
+}
+
+.conn-details {
+  padding-top: clamp(0.2rem, 0.7vh, 0.45rem);
+  border-top: 1px solid var(--line);
+}
+
+.conn-body {
+  margin-top: 0.4rem;
+  font-size: clamp(0.95rem, 0.85vw, 1.05rem);
+}
+
+.conn-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.conn-pill {
+  flex: none;
+  padding: 0.08rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+.conn-pill.is-ok {
+  border-color: rgba(30, 122, 70, 0.4);
+  color: var(--good);
+}
+
+.conn-pill.is-warn {
+  border-color: rgba(185, 138, 47, 0.45);
+  color: var(--gold);
+}
+
+.conn-pill.is-bad {
+  border-color: rgba(192, 57, 43, 0.4);
+  color: var(--red);
+}
+
+.conn-meta {
+  color: var(--ink-3);
+  font-family: var(--font-num);
+  font-size: 0.72rem;
+}
+
+.conn-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+.conn-btn {
+  padding: 0.16rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.conn-btn:hover:not([disabled]) {
+  border-color: var(--indigo);
+  color: var(--indigo);
+}
+
+.conn-btn[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.conn-body .live-note {
+  margin: 0.45rem 0 0;
+}
+
+.conn-note {
+  margin: 0.22rem 0 0;
+  color: var(--ink-3);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.conn-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.conn-label {
+  color: var(--ink-3);
+  font-size: 0.7rem;
+}
+
+.conn-input {
+  min-width: 12rem;
+  padding: 0.18rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-num);
+  font-size: 0.78rem;
+}
+
+/* ---- 扫描级证据块（s9）：与 gate 级数字分屏，只放扫描级 claim / 复算说明 ---- */
+.scan-block {
+  margin-top: clamp(0.5rem, 1.4vh, 0.9rem);
+  padding-top: clamp(0.4rem, 1.1vh, 0.7rem);
+  border-top: 1px solid var(--line);
+}
+
+.scan-line {
+  margin: 0.2rem 0 0;
+  color: var(--ink-2);
+  font-family: var(--font-num);
+  font-size: clamp(1rem, 1.05vw, 1.4rem);
+  line-height: 1.55;
+}
+
+.scan-flag {
+  margin: 0.18rem 0 0;
+  color: var(--red);
+  font-size: clamp(1rem, 1.05vw, 1.35rem);
+  line-height: 1.5;
+}
+
+.probe-label {
+  color: var(--ink-3);
+  font-size: clamp(1rem, 1vw, 1.35rem);
+  letter-spacing: 0.04em;
+  line-height: 1.45;
+}
+
+.probe-stage {
+  margin: 0.18rem 0 0;
+  color: var(--ink-2);
+  font-family: var(--font-num);
+  font-size: clamp(1.15rem, 1.15vw, 1.5rem);
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+.probe-lead {
+  margin: 0.18rem 0 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 1.45vw, 1.8rem);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.probe-results {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--ink-2);
+  font-family: var(--font-num);
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
+.probe-results th,
+.probe-results td {
+  padding: 0.3rem 0.8rem 0.3rem 0;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.probe-results thead th {
+  color: var(--ink-3);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.probe-results tbody th {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.probe-result-pass { color: var(--good); }
+.probe-result-fail { color: var(--red); font-weight: 700; }
+.probe-result-gain { color: var(--red); font-weight: 700; }
+.probe-result-steady { color: var(--ink-3); }
+
+.probe-results-source {
+  margin: 0.45rem 0 0;
+  color: var(--ink-3);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.probe-showcase-inner { max-width: min(94vw, 1560px); }
+.probe-showcase-inner h2 { margin-bottom: 0.45rem; }
+
+/* s12：徽标移到标题右侧，底边与标题对齐（字号与颜色沿用 .probe-label）。
+   顶部留白 = 原徽标行高 + 下边距，保持整屏版式不因合并成一行而上移 */
+.probe-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.9rem;
+  padding-top: calc(clamp(1rem, 1vw, 1.35rem) * 1.45 + 0.3rem);
+  margin-bottom: 0.45rem;
+}
+
+.probe-title > h2,
+.probe-title > .mini-label {
+  margin: 0;
+}
+.probe-principles {
+  display: grid;
+  gap: 0.9rem;
+  max-width: 58rem;
+  margin: 1rem 0 1.2rem;
+  padding: 0;
+  list-style: none;
+}
+.probe-principles li { display: grid; grid-template-columns: 12rem 1fr; gap: 1rem; align-items: baseline; }
+.probe-principles b { color: var(--indigo); font-size: 1.25rem; }
+.probe-principles span { color: var(--ink-2); font-size: 1.15rem; }
+.probe-showcase-lead {
+  margin: 0.2rem 0 1rem;
+  color: var(--ink);
+  font-size: clamp(22px, 1.4vw, 30px);
+  line-height: 1.5;
+}
+.probe-origin-story {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin: 1rem 0 0.6rem;
+}
+.probe-origin-task,
+.probe-origin-rule {
+  padding-top: 0.55rem;
+  border-top: 2px solid var(--line);
+}
+.probe-origin-story h3 { margin: 0 0 0.35rem; color: var(--ink); font-size: 1.35rem; }
+.probe-origin-story p { margin: 0.3rem 0; color: var(--ink-2); font-size: 1.15rem; line-height: 1.45; }
+.probe-origin-rule p:nth-child(2) { color: var(--indigo); font-weight: 600; }
+.probe-origin-source { margin: 0.3rem 0 0.8rem; color: var(--ink-3); font-size: 1rem; line-height: 1.4; }
+.probe-categories {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  margin: 0.5rem 0 1rem;
+}
+.probe-category {
+  padding: 0.45rem 0 0.5rem;
+  border-top: 2px solid var(--line);
+}
+.probe-category h3,
+.probe-rate-title,
+.probe-example-title {
+  margin: 0 0 0.35rem;
+  color: var(--ink);
+  font-size: 1.35rem;
+  line-height: 1.35;
+}
+.probe-category p {
+  margin: 0.25rem 0;
+  color: var(--ink-2);
+  font-size: 1.1rem;
+  line-height: 1.45;
+}
+.probe-category .probe-task-list {
+  color: var(--indigo);
+  font-family: var(--font-num);
+  font-size: 1rem;
+}
+.probe-example-title { margin-top: 0.2rem; }
+.probe-examples {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin: 0.35rem 0 0.9rem;
+}
+.probe-example {
+  min-width: 0;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--line);
+}
+.probe-example h4 {
+  margin: 0 0 0.3rem;
+  color: var(--ink-3);
+  font-size: 1rem;
+  font-weight: 500;
+}
+/* 题号：和下一屏的逐题通过率用同一套编号，便于对上 */
+.probe-example-id {
+  margin: 0.15rem 0 0.35rem;
+  color: var(--indigo);
+  font-family: var(--font-num);
+  font-size: 0.78em;
+  letter-spacing: 0.04em;
+}
+.probe-example-status { margin: 0.2rem 0; color: var(--ink-3); font-size: 0.95rem; }
+.probe-example-input,
+.probe-example-output {
+  margin: 0.16rem 0;
+  color: var(--ink-2);
+  font-family: var(--font-num);
+  font-size: clamp(18px, 1.05vw, 24px);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.probe-example-output { color: var(--good); font-weight: 700; }
+.probe-rate-title { display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.2rem; }
+.probe-rate-title span { color: var(--ink-3); font-size: 1rem; font-weight: 400; }
+.slide--probe-showcase .probe-results th:first-child { color: var(--ink); font-weight: 700; }
+.slide--probe-showcase .probe-results td:last-child { font-family: var(--font-body); }
+.probe-showcase-stage { margin: 0.25rem 0 0.65rem; color: var(--ink-2); font-size: clamp(18px, 1.05vw, 24px); }
+.slide--probe-showcase .probe-results { font-size: clamp(19px, 1.2vw, 27px); }
+.probe-gain {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 2rem;
+  margin: 1rem 0 1.1rem;
+  padding: 0.8rem 0;
+  border-top: 2px solid var(--line);
+  border-bottom: 2px solid var(--line);
+}
+.probe-gain div { display: grid; justify-items: center; gap: 0.1rem; }
+.probe-gain span { color: var(--ink-2); font-size: 1.25rem; }
+.probe-gain strong { color: var(--indigo); font-family: var(--font-num); font-size: clamp(3rem, 5vw, 6rem); line-height: 1.1; }
+.probe-gain div:last-child strong { color: var(--good); }
+.probe-gain small { color: var(--ink-3); font-size: 1rem; }
+.probe-gain > b { color: var(--ink-3); font-size: 2.5rem; }
+/* 怎么读：两组次数不同，不按同分母比较 —— 放在大数字下面，一句话把口径说清 */
+.probe-read {
+  margin: 0.2rem 0 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: calc(var(--fs-body) * 0.9);
+  line-height: 1.55;
+}
+.probe-read b { color: var(--ink); }
+.probe-task-rates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.8rem; margin: 0.4rem 0 1rem; }
+.probe-task-rates div { display: grid; gap: 0.1rem; padding-top: 0.4rem; border-top: 1px solid var(--line); }
+.probe-task-rates b { color: var(--ink); font-size: 1.15rem; }
+.probe-task-rates span { color: var(--ink-3); font-size: 0.95rem; }
+.probe-task-rates strong { color: var(--good); font-family: var(--font-num); font-size: clamp(1.25rem, 1.6vw, 2rem); }
+.probe-matrix-note { margin: 0.7rem 0; padding-top: 0.5rem; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 1.1rem; line-height: 1.5; }
+.probe-matrix-note b { color: var(--indigo); }
+.probe-generation-line { margin: 0.5rem 0; color: var(--ink-2); font-family: var(--font-num); font-size: clamp(18px, 1.05vw, 24px); }
+
+.scan-basis,
+.scan-recompute,
+.scan-groups {
+  margin: 0.22rem 0 0;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.scan-recompute {
+  color: var(--ink-2);
+}
+
+/* ---- 交接卡（s10） ---- */
+.handoff {
+  position: fixed;
+  left: 50%;
+  bottom: var(--pad-y);
+  z-index: 70;
+  width: min(92vw, 46rem);
+  max-height: calc(100vh - 2 * var(--pad-y));
+  overflow-y: auto;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  box-shadow: 0 18px 48px rgba(20, 22, 26, 0.16);
+  transform: translateX(-50%);
+}
+
+.handoff-title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.handoff-list {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.handoff-vision {
+  margin: 0.5rem 0 0;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  line-height: 1.65;
+}
+
+.handoff-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.55rem 0 0;
+  padding: 0.55rem 0 0.2rem;
+  background: var(--paper);
+}
+
+.handoff-link {
+  color: var(--indigo);
+  font-size: 0.82rem;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(27, 77, 143, 0.35);
+}
+
+.handoff-link:hover {
+  color: var(--red);
+}
+
+/* 数据未加载提示里的「重新加载」 */
+.link-btn {
+  margin-left: 0.6rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid rgba(192, 57, 43, 0.4);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--red);
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+/* 手动关闭动效：系统 reduced-motion 优先；这里只是用户开关，不动数据刷新 */
+.motion-off *,
+.motion-off *::before,
+.motion-off *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+.motion-off .startrack,
+.motion-off .ink {
+  display: none !important;
+}
+
+@media (max-width: 1100px) {
+  .live-source,
+  .live-conn {
+    font-size: 0.72rem;
+  }
+
+  .conn-input {
+    min-width: 9rem;
+  }
+
+  /* 单列布局：证据说明回到「合计」下一行，占满整宽（覆盖双列时的右侧定位） */
+  .live-after {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  /* 单列 + 矮视口时，后面的 height 覆盖会重新压死行高，这里按内容高度还原 */
+  .live {
+    height: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .live-list-head,
+  .live-row {
+    grid-template-columns: 2rem minmax(0, 1fr) 7rem 7rem;
+    column-gap: 0.35rem;
+  }
+
+  /* 窄屏：标题与角标竖排，标题先占满整宽再放小字 */
+  .live-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+
+  .live-badge {
+    align-self: flex-end;
+    margin: 0;
+  }
+
+  .hud-corner {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .demo-hud {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    max-width: none;
+  }
+
+  .demo-hud-main {
+    row-gap: 0.3rem;
+  }
+
+  .demo-step {
+    flex: 1 1 100%;
+  }
+
+  .demo-btn {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .is-demo .slide {
+    padding-bottom: 132px;
+  }
+
+  .live-badge {
+    white-space: normal;
+  }
+
+  .scan-line {
+    font-size: 1rem;
+  }
+
+  .live-canvas {
+    height: 140px;
+  }
+
+  .live-list {
+    height: 160px;
+  }
+
+  .conn-meta {
+    font-size: 0.68rem;
+  }
+
+  .conn-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .handoff {
+    padding: 0.55rem 0.65rem;
+  }
+}
+
+@media (max-height: 780px) and (min-width: 761px) {
+  .live-source {
+    font-size: 0.7rem;
+    line-height: 1.4;
+  }
+
+  .live-source .demo-origin {
+    font-size: 0.66rem;
+  }
+
+  .live-conn {
+    font-size: 0.7rem;
+  }
+
+  .conn-note {
+    font-size: 0.66rem;
+  }
+
+  .scan-block {
+    margin-top: 0.4rem;
+    padding-top: 0.35rem;
+  }
+
+  .scan-basis,
+  .scan-recompute,
+  .scan-groups {
+    font-size: 0.68rem;
+  }
+}
+
+/* ---- 受控进化主线（封面链路 / 历史 probe 实验） ---- */
+.chain-line {
+  margin: clamp(0.7rem, 1.8vh, 1.2rem) 0 0;
+  color: var(--indigo);
+  font-family: var(--font-num);
+  font-size: clamp(0.78rem, 1.05vw, 0.98rem);
+  letter-spacing: 0.02em;
+  line-height: 1.7;
+}
+
+.probe-block {
+  margin-top: clamp(0.4rem, 1.1vh, 0.7rem);
+  padding-top: clamp(0.35rem, 1vh, 0.6rem);
+  border-top: 1px solid var(--line);
+}
+
+.probe-line {
+  margin: 0.18rem 0 0;
+  color: var(--ink-2);
+  font-size: clamp(0.95rem, 1vw, 1.25rem);
+  line-height: 1.5;
+}
+
+.probe-note {
+  margin: 0.22rem 0 0;
+  color: var(--ink-3);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+@media (max-height: 780px) and (min-width: 761px) {
+  .probe-line {
+    font-size: 0.68rem;
+  }
+
+  .probe-results { font-size: 1.05rem; }
+  .probe-results-source { font-size: 0.95rem; }
+
+  .probe-note {
+    font-size: 0.66rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .chain-line {
+    font-size: 0.76rem;
+  }
+
+  .probe-line {
+    font-size: 0.7rem;
+  }
+
+  .probe-categories { grid-template-columns: 1fr; gap: 0.8rem; }
+  .probe-origin-story { grid-template-columns: 1fr; gap: 0.65rem; }
+  .probe-principles li { grid-template-columns: 1fr; gap: 0.1rem; }
+  .probe-examples { grid-template-columns: 1fr; gap: 0.45rem; }
+  .probe-gain { gap: 0.45rem; }
+  .probe-gain strong { font-size: 2.5rem; }
+  .probe-gain span { font-size: 0.95rem; }
+  .probe-task-rates { grid-template-columns: 1fr; gap: 0.35rem; }
+  .probe-results { min-width: 36rem; font-size: 0.95rem; }
+  .probe-results-source { font-size: 0.9rem; }
+  .probe-showcase-inner { overflow-y: auto; max-height: 90vh; }
+
+  .probe-note {
+    font-size: 0.66rem;
+  }
+}
+
+.loop-note {
+  margin: clamp(0.5rem, 1.4vh, 0.9rem) 0 0;
+  max-width: 52rem;
+  color: var(--ink-3);
+  font-size: 0.74rem;
+  line-height: 1.6;
+}
+
+/* 720p 投影：演示步骤条保持一行，避免挡住 s9 / s10 的正文（移动端仍两行） */
+@media (max-height: 780px) and (min-width: 761px) {
+  .demo-hud {
+    padding: 0.32rem 0.55rem;
+  }
+
+  .demo-hud-main {
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+  }
+
+  .demo-btn {
+    padding: 0.18rem 0.45rem;
+    font-size: 0.85rem;
+  }
+
+  .is-demo .slide {
+    padding-bottom: 96px;
+  }
+}
+
+/* 720p 投影：证据屏字号与间距再压一档，保证 s9 / s10 正文不被步骤条挡住 */
+@media (max-height: 780px) and (min-width: 761px) {
+  .is-demo .slide {
+    padding-top: clamp(26px, 5vh, 40px);
+  }
+
+  .slide--evidence .holdout-big {
+    font-size: clamp(2rem, 4.4vw, 3rem);
+  }
+
+  .slide--evidence .evidence {
+    margin-top: 0.5rem;
+  }
+
+  .slide--evidence .evidence li {
+    padding-top: 0.35rem;
+  }
+
+  .slide--evidence .note-line {
+    margin-top: 0.35rem;
+  }
+
+  .slide--evidence .scan-block,
+  .slide--evidence .probe-block {
+    margin-top: 0.3rem;
+    padding-top: 0.3rem;
+  }
+
+  .slide--evidence .scan-basis,
+  .slide--evidence .scan-recompute,
+  .slide--evidence .scan-groups,
+  .slide--evidence .probe-line {
+    line-height: 1.4;
+  }
+
+  .slide--end .loop-note {
+    margin-top: 0.35rem;
+    font-size: 0.7rem;
+    line-height: 1.5;
+  }
+}
+
+/* 移动端演示：把舞台底部让给步骤条，当前屏内部滚动（内容再长也能读全） */
+@media (max-width: 760px) {
+  .js-ready.is-demo .slide {
+    bottom: 132px;
+    min-height: 0;
+    padding-bottom: 18px;
+  }
+
+  .js-ready.is-demo .slide.is-active {
+    justify-content: flex-start;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .is-demo .hud-corner {
+    bottom: 146px;
+  }
+}
+
+
+/* 短视口（1366×768 等）：s12 probe 结果屏限高内部滚动，1920 不生效 */
+@media (max-height: 780px) and (min-width: 761px) {
+  .slide--probe-results .probe-showcase-inner {
+    max-height: calc(100vh - 2 * clamp(56px, 9vh, 110px) - 1rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.4rem;
+  }
+}
+
+/* 超宽屏（>= 2200px）：版心与正文放大一档，避免 2560 上内容缩在中间半条 */
+@media (min-width: 2200px) {
+  :root {
+    --measure: min(86vw, 1400px);
+    --fs-title: clamp(2rem, 2vw, 2.9rem);
+    --fs-body: clamp(1.05rem, 1.1vw, 1.65rem);
+  }
+}
+
+/* ---------- S4 架构与进化回路 ---------- */
+.slide--arch .arch-inner { width: 100%; max-width: min(94vw, 1320px); }
+.arch-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+.arch-head h2 { margin: 0.25rem 0 0; font-size: var(--fs-title); line-height: 1.25; }
+.arch-lead { max-width: 72ch; margin: 0.45rem 0 0; color: var(--ink-2); font-size: var(--fs-body); line-height: 1.7; }
+.arch-replay { flex: none; margin-bottom: 0.25rem; }
+.arch-grid { display: grid; grid-template-columns: 1.55fr 0.75fr; gap: clamp(0.7rem, 1.4vw, 1.1rem); align-items: stretch; margin-top: clamp(0.6rem, 1.3vh, 0.9rem); }
+.arch-panel { min-width: 0; margin: 0; padding: 0.55rem 0.7rem 0.45rem; border: 1px solid var(--line); border-radius: 6px; background: rgba(255, 255, 255, 0.82); box-shadow: 0 10px 28px rgba(20, 22, 26, 0.045); }
+.arch-panel figcaption { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.2rem; }
+.arch-panel figcaption span { color: var(--indigo); font: 600 0.62rem var(--font-num); letter-spacing: 0.07em; }
+.arch-panel figcaption small { color: var(--ink-3); font-size: 0.64rem; text-align: right; }
+.arch-svg { display: block; width: 100%; height: auto; max-height: 48vh; }
+.arch-box { fill: rgba(27, 77, 143, 0.035); stroke: #D8E2EF; stroke-width: 1.2; }
+.arch-kicker { fill: var(--indigo); font: 600 13px var(--font-num); letter-spacing: 0.1em; }
+.arch-note { fill: var(--ink-3); font: 11px var(--font-num); }
+.arch-note--bottom { fill: var(--ink-3); font-size: 12px; }
+.arch-chip rect { fill: #fff; stroke: #D8E2EF; stroke-width: 1; }
+.arch-chip text { fill: var(--ink-2); font: 11px var(--font-num); }
+.arch-node rect { fill: #fff; stroke: #C2D0DF; stroke-width: 1.4; }
+.arch-node.is-gate rect { stroke: var(--indigo); stroke-width: 1.8; }
+.arch-node.is-snapshot rect { stroke: var(--gold); stroke-width: 1.6; }
+.arch-node.is-rollback rect { stroke: var(--gold); stroke-dasharray: 5 4; }
+.arch-title { fill: var(--ink); font: 600 15px var(--font-body); }
+.arch-sub { fill: var(--ink-3); font: 11px var(--font-num); }
+.arch-label { fill: var(--indigo); font: 10px var(--font-num); }
+.arch-label--gold { fill: var(--gold); }
+.arch-wire { fill: none; stroke: #9FB3C8; stroke-width: 1.6; }
+.arch-wire--dash { stroke: var(--gold); stroke-dasharray: 6 5; }
+.arch-loop { fill: none; stroke: var(--gold); stroke-width: 1.5; stroke-dasharray: 6 6; animation: arch-loop-flow 1.5s linear infinite; }
+.arch-signal { fill: var(--red); filter: drop-shadow(0 0 3px rgba(192, 57, 43, 0.45)); }
+.arch-signal--gold { fill: var(--gold); filter: drop-shadow(0 0 3px rgba(185, 138, 47, 0.45)); }
+.arch-foot { margin: 0.55rem 0 0; color: var(--ink-3); font-size: var(--fs-foot); line-height: 1.6; }
+.js-ready .arch-node { opacity: 0; transform: translateY(7px); }
+.js-ready .slide.is-active .arch-node { animation: arch-node-in 0.45s cubic-bezier(.2, .7, .25, 1) forwards; animation-delay: calc(var(--i, 0) * 100ms + 80ms); }
+.js-ready .slide.is-revealed .arch-node { opacity: 1; transform: none; }
+.js-ready .arch-wire:not(.arch-wire--dash) { stroke-dasharray: 1200; stroke-dashoffset: 1200; }
+.js-ready .slide.is-active .arch-wire:not(.arch-wire--dash) { animation: arch-draw 0.9s ease forwards; animation-delay: var(--d, 0s); }
+.js-ready .slide.is-revealed .arch-wire:not(.arch-wire--dash) { stroke-dasharray: none; stroke-dashoffset: 0; }
+.js-ready .arch-wire--dash { opacity: 0; }
+.js-ready .slide.is-active .arch-wire--dash { animation: arch-fade 0.55s ease forwards; animation-delay: var(--d, 0s); }
+.js-ready .slide.is-revealed .arch-wire--dash { opacity: 1; }
+@keyframes arch-draw { to { stroke-dashoffset: 0; } }
+@keyframes arch-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes arch-node-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+@keyframes arch-loop-flow { to { stroke-dashoffset: -24; } }
+@media (max-width: 1100px) {
+  .arch-grid { grid-template-columns: 1fr; }
+  .arch-svg { max-height: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arch-loop { animation: none; }
+  .arch-signal { display: none; }
+  .js-ready .arch-node, .js-ready .arch-wire { opacity: 1; transform: none; stroke-dasharray: none; stroke-dashoffset: 0; }
 }
