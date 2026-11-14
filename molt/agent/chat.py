@@ -125,7 +125,7 @@ class UrllibTransport:
             raise map_http_status(code) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             raise map_transport_exception(exc) from None
-        if len(raw) > MAX_RESPONSE_BYTES:
+        if len(raw) > MAX_TRANSPORT_RESPONSE_BYTES:
             raise ChatError(ErrorCode.UPSTREAM_ERROR, "上游响应超过 1 MiB 上限", False)
         try:
             parsed = json.loads(raw.decode("utf-8"))

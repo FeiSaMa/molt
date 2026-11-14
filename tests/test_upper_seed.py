@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-import subprocess
 import os
+import subprocess
 from pathlib import Path
 
 import pytest

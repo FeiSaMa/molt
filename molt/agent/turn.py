@@ -40,7 +40,6 @@ import hashlib
 import inspect
 import json
 import threading
-import time
 from typing import Any
 
 from molt.agent.chat import SYSTEM_PROMPT, ChatError, ChatReply, ToolCall
