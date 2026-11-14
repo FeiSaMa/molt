@@ -366,9 +366,10 @@
                 <div class="demo-layer"><span class="demo-layer-no">03</span><div><b>这条规则从哪来？</b><small>会话从同一起点分叉：r1 → r2 / r3→r4 · 21s / 23s / 35s</small></div><button type="button" class="text-button" data-demo-session="sess-86c2fcd783e8499f" data-demo-board="snapshot">打开分支</button></div>
                 <div class="demo-layer"><span class="demo-layer-no">04</span><div><b>它怎么被允许生效？</b><small>配置门禁：切 demo 返回 422 approval_required，active 保持 demo-clean</small></div><button type="button" class="text-button" data-demo-config="demo">打开门禁</button></div>
                 <div class="demo-layer"><span class="demo-layer-no">05</span><div><b>同样的规则有多少？</b><small>189 候选 · 153 lessons · 20 Skill · 10 Agent · 5 MCP</small></div><button type="button" class="primary-button" id="demo-history-open">打开树</button></div>
+                <div class="demo-layer"><span class="demo-layer-no">06</span><div><b>两个项目，各自一棵树</b><small>项目 A 与项目 B 风格不同；切换项目、回退节点、跳转查看对话</small></div><button type="button" class="primary-button" id="demo-projects-open">打开项目树</button></div>
               </div>
               <p class="settings-error" id="demo-error" role="alert" hidden></p>
-              <p class="settings-copy">如果服务重启导致彩排会话不存在，第 1–3 步需现场重跑；第 4–5 步不依赖会话。</p>
+              <p class="settings-copy">如果服务重启导致彩排会话不存在，第 1–3 步需现场重跑；第 4–6 步不依赖会话。</p>
             </section>
           </section>
 
@@ -511,6 +512,28 @@
       <footer class="snapshot-board-foot">
         <span>滚轮缩放 · 空白处拖拽 · 点领域展开 / 点候选看内容</span>
         <span>匿名别名：internal 脱敏标题 · restricted 领域·日期·短哈希</span>
+      </footer>
+    </div>
+  </div>
+
+  <div class="snapshot-board history-board" id="project-board" hidden role="dialog" aria-modal="true" aria-labelledby="project-board-title">
+    <div class="snapshot-board-frame">
+      <header class="snapshot-board-head">
+        <div class="snapshot-board-heading">
+          <p class="snapshot-board-eyebrow">PROJECT / EVOLUTION TREES</p>
+          <h2 id="project-board-title">项目树</h2>
+          <p class="snapshot-board-meta">两个项目 · 各自一棵树 · 回退只新增节点</p>
+        </div>
+        <div class="snapshot-board-toolbar">
+          <button type="button" id="project-board-close" title="关闭项目树">关闭</button>
+        </div>
+      </header>
+      <div class="snapshot-board-body history-board-body">
+        <iframe id="project-board-frame" title="项目树" src="../page/projects.html?embed=1"></iframe>
+      </div>
+      <footer class="snapshot-board-foot">
+        <span>切换项目 · 点节点回放对话 · 选中非当前节点可回退</span>
+        <span>演示数据：只读快照，不写入后端</span>
       </footer>
     </div>
   </div>

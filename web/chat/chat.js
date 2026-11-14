@@ -4542,6 +4542,35 @@
   if (historyBoardOpen) historyBoardOpen.addEventListener("click", openHistoryBoard);
   if (historyBoardClose) historyBoardClose.addEventListener("click", closeHistoryBoard);
 
+  var demoProjectsOpen = $("demo-projects-open");
+  var projectBoard = $("project-board");
+  var projectBoardFrame = $("project-board-frame");
+  var projectBoardClose = $("project-board-close");
+  var projectBoardOverflow = null;
+  function openProjectBoard() {
+    if (!projectBoard || !projectBoardFrame) return;
+    if (projectBoardFrame.getAttribute("src") === "about:blank") {
+      projectBoardFrame.src = "../page/projects.html?embed=1";
+    }
+    if (projectBoard.hidden) {
+      projectBoardOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+    }
+    projectBoard.hidden = false;
+    if (projectBoardClose) { try { projectBoardClose.focus(); } catch (err) { /* 忽略 */ } }
+  }
+  function closeProjectBoard() {
+    if (!projectBoard) return;
+    projectBoard.hidden = true;
+    if (projectBoardOverflow !== null) {
+      document.body.style.overflow = projectBoardOverflow;
+      projectBoardOverflow = null;
+    }
+    if (demoProjectsOpen) { try { demoProjectsOpen.focus(); } catch (err) { /* 忽略 */ } }
+  }
+  if (demoProjectsOpen) demoProjectsOpen.addEventListener("click", openProjectBoard);
+  if (projectBoardClose) projectBoardClose.addEventListener("click", closeProjectBoard);
+
   function demoSetError(text) {
     var node = $("demo-error");
     if (!node) return;
