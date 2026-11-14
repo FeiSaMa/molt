@@ -1,7 +1,7 @@
 # CODEOWNERS — 只保护「代码与题集」，不锁候选目录。
 # 语法：pattern owners...；**最后一条匹配的规则生效**（后面的覆盖前面的）。
 # 所以先写宽泛规则，再写契约等更具体的覆盖规则。
-# owner 语义见 AGENTS.md §五；契约域 PR 另需 2 人 approve（见 CONTRIBUTING.md §四）。
+# owner 语义见 AGENTS.md §五；CODEOWNERS 只自动请求 reviewer，approval 数量不是合并门禁（见 CONTRIBUTING.md §四）。
 
 # --- 宽泛归属 -------------------------------------------------------------
 # 非契约文档默认归集成域；契约文档在下面被更具体的规则覆盖。
@@ -19,8 +19,8 @@
 # 以及 bench/**（冻结面）。
 #
 # 注意：/shells/*/genomes/、/shells/*/prompts/、/shells/*/tools/ 故意不单独列规则。
-# 这些是候选目录，新增文件只产生新 genome_id，不应被 owner 审批锁死；
-# 它们仍由下面的 /shells/ 兜底（1 位 owner 评审即可）。
+# 这些是候选目录，新增文件只产生新 genome_id，不应被 reviewer 请求挡住（owner 只是被自动请求，不是门禁）；
+# 它们仍由下面的 /shells/ 兜底（owner 只会被自动请求，approval 数不构成门禁）。
 /shells/                 @By-Diamond
 /bench/                  @By-Diamond
 

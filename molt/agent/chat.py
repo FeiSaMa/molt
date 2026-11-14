@@ -26,6 +26,8 @@ from molt.agent.errors import ErrorCode
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8080/v1"
 DEFAULT_TIMEOUT = 60.0
+MAX_RESPONSE_BYTES = 1024 * 1024
+MAX_CONTENT_CHARS = 256 * 1024
 
 SYSTEM_PROMPT = (
     "你是 molt 的本地只读实验助手。只能使用 experiments_list / experiments_get 读取"
@@ -100,13 +102,15 @@ class UrllibTransport:
         request = urllib.request.Request(url, data=body, headers=headers, method="POST")
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
-                raw = response.read()
+                raw = response.read(MAX_RESPONSE_BYTES + 1)
         except urllib.error.HTTPError as exc:
             code = exc.code
             exc.close()
             raise map_http_status(code) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             raise map_transport_exception(exc) from None
+        if len(raw) > MAX_RESPONSE_BYTES:
+            raise ChatError(ErrorCode.UPSTREAM_ERROR, "上游响应超过 1 MiB 上限", False)
         try:
             parsed = json.loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError):
@@ -239,6 +243,8 @@ class OpenAICompatibleAdapter:
         content = message.get("content") or ""
         if not isinstance(content, str):
             raise ChatError(ErrorCode.UPSTREAM_ERROR, "上游 content 不是字符串", False)
+        if len(content) > MAX_CONTENT_CHARS:
+            raise ChatError(ErrorCode.UPSTREAM_ERROR, "上游 content 超过 256 KiB 上限", False)
         return ChatReply(content=content, tool_calls=_parse_tool_calls(message.get("tool_calls")))
 
 

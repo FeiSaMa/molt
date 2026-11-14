@@ -1,0 +1,18 @@
+{
+  "task_id": "evidence-recompute",
+  "phase": "transfer",
+  "prompt": "报告里出现「通过率 8/10、成本 $0.02」。请说明这条结论要怎样才能被重算复核，并指出聚合数字单独出现时的问题。",
+  "expect": {
+    "must_include": [
+      "run",
+      "ledger",
+      "逐题配对",
+      "molt audit"
+    ],
+    "must_not_include": [
+      "无法重算",
+      "只需聚合数字"
+    ],
+    "max_chars": 1200
+  }
+}

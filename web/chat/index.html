@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="与 molt 实验 Agent 对话，查看它引用的实验记录与证据边界。">
+  <title>molt · 实验 Agent</title>
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+  <canvas id="startrack" class="startrack" aria-hidden="true"></canvas>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="../page/index.html" aria-label="返回 molt 展示页"><span class="brand-mark">m</span><span>molt</span></a>
+      <div class="topbar-label"><span class="topbar-kicker">RESEARCH CONSOLE</span>实验 Agent <span class="live-dot" id="connection-dot"></span></div>
+      <button class="settings-button" id="settings-open" type="button" aria-label="连接设置">连接设置</button>
+    </header>
+
+    <section class="chat-layout" aria-label="Agent 对话">
+      <aside class="context-panel">
+        <p class="eyebrow"><span class="eyebrow-line"></span> MOLT / RESEARCH ASSISTANT</p>
+        <h1>把实验记录，<br><em>变成可讨论的证据。</em></h1>
+        <p class="intro">询问实验设计、结果与限制。Agent 会读取项目提供的实验摘要，并标明证据来自哪里。</p>
+        <section class="flow-panel" aria-label="实验数据流示意">
+          <div class="flow-head"><span>EXPERIMENT FLOW</span><span class="flow-index">01 / 04</span></div>
+          <div class="flow-visual"><canvas id="evidence-canvas" aria-hidden="true"></canvas><div class="flow-node node-a"><i>01</i><b>场景</b><small>scenario</small></div><div class="flow-node node-b"><i>02</i><b>运行</b><small>run</small></div><div class="flow-node node-c"><i>03</i><b>验证</b><small>verifier</small></div><div class="flow-node node-d"><i>04</i><b>证据</b><small>ledger</small></div></div>
+          <div class="flow-foot"><span><i class="tiny-dot blue"></i> 可复算记录</span><span><i class="tiny-dot red"></i> 门禁决策</span><span class="flow-scan">FRAME · <b id="trace-count">0000</b></span></div>
+        </section>
+        <div class="capability-card">
+          <span class="capability-icon" aria-hidden="true">⌕</span>
+          <div><b>实验只读，执行隔离</b><p>实验工具只读；代码只在独立临时 workspace 里跑，隔离不可用时执行端点关闭。</p></div>
+        </div>
+
+        <section class="lab-panel" id="lab-panel" aria-labelledby="lab-title">
+          <div class="evolution-heading">
+            <div><p class="eyebrow">EXECUTION / LAB</p><h2 id="lab-title">两轮修复工作台</h2></div>
+            <span class="lab-status" id="lab-status">未连接</span>
+          </div>
+          <p class="evolution-note" id="lab-capabilities">连接后读取 provider 与隔离状态。</p>
+          <div class="lab-meta">
+            <span id="lab-provider">provider —</span>
+            <span id="lab-isolation">isolation —</span>
+            <span id="lab-evolution">evolution —</span>
+          </div>
+          <div class="lab-actions">
+            <button type="button" class="primary-button" id="lab-run" disabled>运行两轮修复实验</button>
+            <button type="button" class="text-button" id="lab-cancel" disabled>取消</button>
+          </div>
+          <label class="lab-task-picker" for="lab-task-select">任务
+            <select id="lab-task-select" aria-label="选择执行任务"></select>
+          </label>
+          <p class="evolution-note" id="lab-task">calc-v1 · 修复 calc.add；round1 真实失败，patch 后 round2 真实通过</p>
+          <p class="evolution-note lab-scope">固定 coding fixture，与历史 demo/probe 数据分离；不是通用 Agent，也不是 genome evolution。</p>
+          <div id="lab-rounds" class="lab-rounds" aria-live="polite"></div>
+          <pre id="lab-diff" class="lab-diff" hidden></pre>
+          <p class="lab-provenance" id="lab-provenance"></p>
+          <p class="settings-error" id="lab-error" role="alert" hidden></p>
+        </section>
+
+        <section class="upper-panel" id="upper-panel" aria-labelledby="upper-title">
+          <div class="evolution-heading">
+            <div><p class="eyebrow">UPPER / CONTEXT GRAPH</p><h2 id="upper-title">上层上下文图谱</h2></div>
+            <span class="lab-status" id="upper-status">未连接</span>
+          </div>
+          <p class="evolution-note" id="upper-scope">只读图谱；切换与回退需要 CAS 与审批。REPLAY 只复算记录解法，不调用模型。</p>
+          <div class="upper-branches" id="upper-branches" role="tablist" aria-label="上层分支"></div>
+          <div class="upper-active" id="upper-active"></div>
+          <div class="upper-path" id="upper-path"></div>
+          <div class="upper-assets" id="upper-assets"></div>
+          <div class="upper-eval" id="upper-eval"></div>
+          <div class="upper-actions">
+            <button type="button" class="primary-button" id="upper-replay" disabled>运行 REPLAY</button>
+            <button type="button" class="secondary-button" id="upper-switch" disabled>切换分支</button>
+            <button type="button" class="text-button" id="upper-rollback" disabled>回退</button>
+          </div>
+          <p class="settings-error" id="upper-error" role="alert" hidden></p>
+          <details class="upper-evidence"><summary>查看证据与边界</summary><div id="upper-evidence"></div></details>
+        </section>
+
+        <div class="context-links">
+          <span>可以试试</span>
+          <button type="button" class="prompt-chip" data-prompt="memory v3 的迁移实验说明了什么？有哪些限制？">memory v3 的迁移实验说明了什么？</button>
+          <button type="button" class="prompt-chip" data-prompt="有哪些实验结果不能直接互相比较？为什么？">哪些结果不能直接比较？</button>
+        </div>
+        <section class="evolution-panel" aria-labelledby="evolution-title">
+          <div class="evolution-heading"><div><p class="eyebrow">EVOLUTION / EVIDENCE</p><h2 id="evolution-title">进化实验档案</h2></div><button type="button" id="refresh-experiments" class="text-button" disabled>刷新</button></div>
+          <p id="experiments-status" class="evolution-note" role="status">连接后读取真实实验记录</p>
+          <div id="experiment-list" class="experiment-list"></div>
+          <div id="experiment-detail"></div>
+          <section class="task-evolution" aria-labelledby="task-evolution-title"><div class="evolution-heading"><div><p class="eyebrow">BASELINE → CANDIDATE</p><h2 id="task-evolution-title">逐题进化对照</h2></div><span class="task-count" id="task-count">—</span></div><p class="evolution-note">同一题集逐项比较；通过标记与成本均取自任务 API。</p><div class="task-legend"><span>基线</span><span>候选</span><span>通过状态</span></div><div id="task-comparison" class="task-comparison"></div></section>
+        </section>
+        <p class="privacy-note"><span aria-hidden="true">●</span> 对话只发送到你配置的 Agent 服务</p>
+      </aside>
+
+      <section class="conversation" aria-label="对话内容">
+        <div class="conversation-head"><div class="conversation-title"><span class="conversation-glyph" aria-hidden="true">✳</span><div><b>研究对话</b><span id="session-label">尚未连接</span></div></div><div class="head-actions"><span class="provider-chip" id="provider-chip">MOCK / OFFLINE</span><span class="provider-chip" id="isolation-chip">ISOLATION ?</span><button id="new-chat" type="button" class="text-button" disabled><span aria-hidden="true">＋</span> 新对话</button></div></div>
+        <div class="turn-track" aria-label="Agent 处理阶段"><span class="track-step" data-stage="thinking"><i>1</i>理解</span><b></b><span class="track-step" data-stage="tool"><i>2</i>检索</span><b></b><span class="track-step" data-stage="responding"><i>3</i>回答</span></div>
+        <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions text">
+          <div class="welcome" id="welcome">
+            <div class="agent-avatar" aria-hidden="true">m</div>
+            <h2>你好，我是 molt 的实验助手。</h2>
+            <p>我可以帮你读实验摘要、解释指标，并指出哪些结论受题集、版本或证据覆盖限制。</p>
+            <p class="welcome-hint">连接服务后，选择一个问题开始。</p>
+          </div>
+        </div>
+        <form class="composer" id="composer">
+          <label class="sr-only" for="message-input">发送消息</label>
+          <textarea id="message-input" rows="1" maxlength="8000" placeholder="问问实验结果、设计或限制…" disabled></textarea>
+          <div class="composer-bottom"><div class="status-wrap"><span class="status-pulse" id="status-pulse"></span><span id="composer-status">请先配置并连接 Agent 服务</span></div><span class="key-hint">Enter 发送 · Shift+Enter 换行</span><button id="send-button" type="submit" disabled><span>发送</span><span aria-hidden="true">↑</span></button></div>
+        </form>
+        <p class="disclaimer">Agent 的回答基于可读取的实验投影；重要结论请回到原始报告核对。</p>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <form method="dialog" class="dialog-close-row"><button class="icon-button" aria-label="关闭设置">×</button></form>
+    <p class="eyebrow">CONNECTION</p><h2 id="settings-title">连接 Agent 服务</h2>
+    <p class="settings-copy">连接信息只保存在此浏览器的当前标签页内存中，关闭页面后清除。</p>
+    <form id="settings-form">
+      <label for="api-url">API 地址</label><input id="api-url" name="api-url" type="url" placeholder="https://agent.example.com" required autocomplete="url">
+      <label for="api-token">Bearer token</label><input id="api-token" name="api-token" type="password" placeholder="粘贴服务端 token" required autocomplete="off">
+      <p class="settings-error" id="settings-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button type="button" id="settings-cancel" class="secondary-button">取消</button><button type="submit" class="primary-button" id="connect-button">测试并连接</button></div>
+    </form>
+  </dialog>
+  <script src="chat.js"></script>
+</body>
+</html>

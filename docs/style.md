@@ -7,7 +7,8 @@
 
 - **Python 3.11+**（`requires-python = ">=3.11"`，ruff `target-version = "py311"`）。
   可以用 `X | None`、`match`、`tomllib`；不要用 3.12+ 语法。
-  CI 的 `unit` 只跑 3.12；3.11 仅做语法/本地兼容检查（不跑全量，原因见 CONTRIBUTING §九）。
+  pytest 不在 CI 内（手动 / 集中执行）；3.11 下全量 pytest 有 4 例浮点差异，
+  手动全量请在 3.12 下跑（原因见 CONTRIBUTING §九）。
 - **行长 100**（`[tool.ruff] line-length = 100`，但 `E501` 被 ignore：
   长 URL / 长字符串可以超，代码行不要随意超）。
 - 规则集 `E,F,I,UP,B`。提交前 `uv run ruff check .` 必须干净；不要用 `# noqa` 掩盖逻辑问题。
