@@ -7,6 +7,10 @@
   ``reason="not_found"``（仍会进入第二次上游调用，见 ``turn.py``）。
 
 工具不读文件、不碰网络、不返回敏感字段；索引在启动时已校验并冻结。
+
+``build_tool_specs`` / ``execute_tool_dispatch`` 是 Skill/MCP 运行时的接缝：
+旧工具名仍走 :func:`execute_tool`，``mcp__<server>__<tool>`` 交给 runtime 处理，
+未知名称仍是 ``denied/unknown_tool``。
 """
 
 from __future__ import annotations
@@ -110,3 +114,27 @@ def execute_tool(name: str, arguments: Any, index: dict[str, Any]) -> ToolOutcom
         return ToolOutcome(status="ok", result=experiment)
     except Exception:  # noqa: BLE001 - 工具内部错误必须收敛成 reason=internal
         return ToolOutcome(status="error", reason="internal")
+
+
+def build_tool_specs(runtime_specs: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    """``TOOLS`` + runtime specs; the legacy list is returned untouched when empty."""
+
+    if not runtime_specs:
+        return TOOLS
+    return [*TOOLS, *runtime_specs]
+
+
+def execute_tool_dispatch(
+    name: str,
+    arguments: Any,
+    index: dict[str, Any],
+    runtime: Any | None,
+    snapshot: Any | None = None,
+) -> ToolOutcome:
+    """Route legacy names through :func:`execute_tool`, runtime names through ``runtime``."""
+
+    if name in TOOL_NAMES:
+        return execute_tool(name, arguments, index)
+    if runtime is not None:
+        return runtime.execute_tool(snapshot, name, arguments)
+    return ToolOutcome(status="denied", reason="unknown_tool")

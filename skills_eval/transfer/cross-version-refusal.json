@@ -1,0 +1,16 @@
+{
+  "task_id": "cross-version-refusal",
+  "phase": "transfer",
+  "prompt": "有人把 demo-5 的通过率和 demo-6 的通过率放进同一张对比表并宣称「提升」。请判断这个做法是否成立，并说明正确的比较域。",
+  "expect": {
+    "must_include": [
+      "scenario_version",
+      "incomparable"
+    ],
+    "must_not_include": [
+      "可以比较",
+      "跨版本对比有效"
+    ],
+    "max_chars": 900
+  }
+}

@@ -20,6 +20,7 @@ class ErrorCode(StrEnum):
 
     BAD_REQUEST = "bad_request"
     UNAUTHORIZED = "unauthorized"
+    FORBIDDEN = "forbidden"
     FORBIDDEN_ORIGIN = "forbidden_origin"
     NOT_FOUND = "not_found"
     METHOD_NOT_ALLOWED = "method_not_allowed"
@@ -39,11 +40,15 @@ class ErrorCode(StrEnum):
     UPSTREAM_ERROR = "upstream_error"
     TOOL_DENIED = "tool_denied"
     TOO_MANY_TOOL_CALLS = "too_many_tool_calls"
+    TOOL_BUDGET_EXCEEDED = "tool_budget_exceeded"
+    SKILL_INTEGRITY_MISMATCH = "skill_integrity_mismatch"
+    MCP_UNAVAILABLE = "mcp_unavailable"
 
 
 HTTP_STATUS: dict[ErrorCode, int] = {
     ErrorCode.BAD_REQUEST: 400,
     ErrorCode.UNAUTHORIZED: 401,
+    ErrorCode.FORBIDDEN: 403,
     ErrorCode.FORBIDDEN_ORIGIN: 403,
     ErrorCode.NOT_FOUND: 404,
     ErrorCode.METHOD_NOT_ALLOWED: 405,
@@ -65,6 +70,9 @@ SSE_ONLY: frozenset[ErrorCode] = frozenset(
         ErrorCode.UPSTREAM_ERROR,
         ErrorCode.TOOL_DENIED,
         ErrorCode.TOO_MANY_TOOL_CALLS,
+        ErrorCode.TOOL_BUDGET_EXCEEDED,
+        ErrorCode.SKILL_INTEGRITY_MISMATCH,
+        ErrorCode.MCP_UNAVAILABLE,
     }
 )
 

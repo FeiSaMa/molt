@@ -49,6 +49,24 @@ EXPECTED_PATHS = {
     "/api/sessions/{session_id}/events",
 }
 
+EXPECTED_LAB_PATHS = {
+    "/api/lab/openapi.json",
+    "/api/lab/capabilities",
+    "/api/lab/tasks",
+    "/api/lab/runs",
+    "/api/lab/runs/{run_id}",
+    "/api/lab/runs/{run_id}/events",
+}
+
+EXPECTED_UPPER_PATHS = {
+    "/api/upper/graph",
+    "/api/upper/assets",
+    "/api/upper/replay",
+    "/api/upper/evaluations/{evaluation_id}",
+    "/api/upper/branches/{branch_id}/switch",
+    "/api/upper/rollback",
+}
+
 
 def _tree_snapshot():
     spec = importlib.util.spec_from_file_location(
@@ -625,6 +643,16 @@ def test_error_code_enum_matches_contract() -> None:
 def test_openapi_paths_and_refs() -> None:
     document = json.loads((ROOT / "contracts" / "openapi-v1.json").read_text(encoding="utf-8"))
     assert set(document["paths"]) == EXPECTED_PATHS
+    lab = json.loads(
+        (ROOT / "contracts" / "openapi-lab-v1.json").read_text(encoding="utf-8")
+    )
+    assert set(lab["paths"]) == EXPECTED_LAB_PATHS
+    upper = json.loads(
+        (ROOT / "contracts" / "openapi-upper-v1.json").read_text(encoding="utf-8")
+    )
+    assert set(upper["paths"]) == EXPECTED_UPPER_PATHS
+    assert lab["openapi"].startswith("3.")
+    assert upper["openapi"].startswith("3.")
     assert document["openapi"].startswith("3.")
     refs: list[str] = []
 
@@ -641,8 +669,8 @@ def test_openapi_paths_and_refs() -> None:
     walk(document)
     assert refs
     assert all(ref.startswith("#/") for ref in refs)
-    # 服务路由集合与契约 path 集合相等（模板参数名一致）
-    assert len(ROUTES) == 11
+    # 服务路由集合 = agent 11 + lab 7 + upper 6（同一 path 可有多个方法）。
+    assert len(ROUTES) == 11 + 7 + len(EXPECTED_UPPER_PATHS)
 
 
 def test_examples_validate_against_schemas() -> None:
@@ -765,6 +793,56 @@ def test_run_server_rejects_out_of_contract_origin(capsys: pytest.CaptureFixture
     )
     assert code == 2
     assert "invalid_origin" in capsys.readouterr().err
+
+
+def test_serve_parser_exposes_upper_state(capsys: pytest.CaptureFixture[str]) -> None:
+    from molt.cli import build_parser
+
+    parser = build_parser()
+    assert parser.parse_args(["serve"]).upper_state is None
+    parsed = parser.parse_args(["serve", "--upper-state", "/tmp/opencode/upper-state"])
+    assert parsed.upper_state == Path("/tmp/opencode/upper-state")
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["serve", "--help"])
+    assert "--upper-state" in capsys.readouterr().out
+
+
+def test_run_server_keeps_upper_disabled_for_repo_local_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def _stop_before_listen(*_args: object, **_kwargs: object) -> None:
+        raise OSError("stop-before-listen")
+
+    monkeypatch.setattr("molt.agent.server.create_server", _stop_before_listen)
+    code = run_server(root=ROOT, state=ROOT / "state", token_file=tmp_path / "token")
+    assert code == 2
+    assert "upper_disabled" in capsys.readouterr().err
+
+
+def test_run_server_accepts_external_upper_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def _stop_before_listen(*_args: object, **_kwargs: object) -> None:
+        raise OSError("stop-before-listen")
+
+    monkeypatch.setattr("molt.agent.server.create_server", _stop_before_listen)
+    upper_state = tmp_path / "upper-state"
+    code = run_server(
+        root=ROOT,
+        state=ROOT / "state",
+        upper_state=upper_state,
+        token_file=tmp_path / "token",
+    )
+    assert code == 2
+    assert "upper_disabled" not in capsys.readouterr().err
+    assert (upper_state / "upper").is_dir()
+    assert (upper_state.stat().st_mode & 0o777) == 0o700
+    assert ((upper_state / "upper").stat().st_mode & 0o777) == 0o700
 
 
 # ---------------------------------------------------------------------------

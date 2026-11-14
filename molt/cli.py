@@ -209,6 +209,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_serve.add_argument("--host", default="127.0.0.1", help="只允许 127.0.0.1 / localhost")
     p_serve.add_argument("--port", type=int, default=0, help="监听端口；默认 0（临时端口）")
     p_serve.add_argument("--state", type=Path, default=Path("state"), help="state 根（token 默认落这里）")
+    p_serve.add_argument(
+        "--upper-state",
+        type=Path,
+        default=None,
+        help="上层图谱 state（必须在仓库外）；缺省沿用 --state，仓库内则禁用 /api/upper",
+    )
     p_serve.add_argument("--token-file", type=Path, default=None, help="token 输出路径；默认 <state>/token")
     p_serve.add_argument(
         "--allow-origin",
@@ -234,6 +240,36 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="只读任务结果数据目录；默认 <repo>/web/data（不写入）",
+    )
+    p_serve.add_argument(
+        "--lab-root",
+        type=Path,
+        default=Path("/tmp/molt-lab"),
+        help="隔离执行 workspace 的临时根目录（默认 /tmp/molt-lab）",
+    )
+    p_serve.add_argument(
+        "--skills-root",
+        type=Path,
+        default=None,
+        help="技能包根目录（默认 <repo>/skills）；显式给出即启用 runtime",
+    )
+    p_serve.add_argument(
+        "--skill-state",
+        type=Path,
+        default=None,
+        help="技能绑定 state（默认 <state>，binding 位于 <state>/skills）；必须在仓库外；显式给出即启用 runtime",
+    )
+    p_serve.add_argument(
+        "--mcp-allowlist",
+        type=Path,
+        default=None,
+        help="MCP allowlist 路径；默认关闭，给出路径才启用 MCP",
+    )
+    p_serve.add_argument(
+        "--operator",
+        default=None,
+        metavar="IDENTITY",
+        help="服务器审批主体（单一身份，非密钥）；未配置时 /api/skills/approve 一律 403",
     )
 
     return parser
@@ -1282,11 +1318,17 @@ def cmd_serve(args: argparse.Namespace) -> int:
         host=args.host,
         port=args.port,
         state=args.state,
+        upper_state=args.upper_state,
         token_file=args.token_file,
         allowed_origins=args.allow_origin,
         provider=args.provider,
         probe_index=args.probe_index,
         data_dir=args.data_dir or (root / "web" / "data"),
+        lab_root=args.lab_root,
+        skills_root=args.skills_root,
+        skill_state=args.skill_state,
+        mcp_allowlist=args.mcp_allowlist,
+        operator_identity=args.operator,
     )
 
 

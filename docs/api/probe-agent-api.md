@@ -138,7 +138,9 @@ stderr 打印人读的 `listening on ...` 与 `token file: ...`。任何日志�
 以下**只作 SSE `error` 事件的 code，永不作为 HTTP 响应**（HTTP 不会出现 502/504）：
 
 `upstream_timeout`、`upstream_unavailable`、`upstream_auth_failed`、`upstream_rate_limited`、
-`upstream_error`、`tool_denied`、`too_many_tool_calls`。
+`upstream_error`、`tool_denied`、`too_many_tool_calls`、`tool_budget_exceeded`、
+`skill_integrity_mismatch`、`mcp_unavailable`。后三者仅在 runtime 模式下出现，详见
+[`skill-mcp-runtime.md`](skill-mcp-runtime.md)。
 
 ## SSE 事件
 
@@ -222,3 +224,20 @@ PYTHONDONTWRITEBYTECODE=1 python probes/build_probe_experiments.py --out /tmp/pr
 
 `--out` 必须显式且位于仓库外；源文件 bytes/sha256 不符、JSON 非法或 verdict 交叉核对失败
 都会非零退出且不写文件。`generated_at` 来自 manifest（不读时钟），两次构建字节一致。
+
+## 相关：聊天执行工作台
+
+`/api/lab/**` 是独立的执行工作台契约，见
+[`docs/api/chat-lab-api.md`](chat-lab-api.md) 与 `contracts/openapi-lab-v1.json`。
+它不改变本文件描述的 11 条 agent API 路由；执行端点要求隔离后端可用，否则 fail closed。
+
+## 取消进行中的 turn（会话控制扩展）
+
+`POST /api/sessions/{session_id}/cancel`
+
+- 需要 Bearer token；body 可为空，或 `{"turn_id": "turn-..."}`。
+- 202：`{"turn_id": "...", "status": "cancelling"}`；服务端记录 `cancel_requested_turn`，并发出 `turn.cancel_requested`。
+- 409 `no_active_turn` / `turn_mismatch`：没有进行中的 turn，或 turn_id 不匹配。
+- 取消是协作式的：当前 provider 调用返回后才停止后续工具、候选轮与进化提交；不会立刻掐断已经发出的 HTTP 请求。
+- 真正取消时发 `turn.cancelled` + `done`，**不写入本轮 user/assistant 历史**；已完成的 turn 不受影响。
+- 该路由放在 `SESSION_CONTROL_ROUTES` 扩展表，不改变冻结的 11 条 legacy `ROUTES` 与主 OpenAPI 契约。

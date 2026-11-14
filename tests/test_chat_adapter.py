@@ -467,3 +467,30 @@ def test_build_chat_messages_uses_2n_history(index: dict) -> None:
     assert messages[0]["role"] == "system"
     assert messages[-1] == {"role": "user", "content": "next"}
     assert len(messages[1:-1]) == 6
+
+
+def test_upstream_content_size_limit() -> None:
+    transport = FakeTransport([_completion("x" * (256 * 1024 + 1))])
+    adapter = OpenAICompatibleAdapter("http://127.0.0.1:8080/v1", "m", transport=transport)
+    with pytest.raises(ChatError) as excinfo:
+        adapter.complete([{"role": "user", "content": "u"}], [], "none")
+    assert excinfo.value.code is ErrorCode.UPSTREAM_ERROR
+    assert "256 KiB" in excinfo.value.message
+
+
+def test_urllib_transport_rejects_oversized_body(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self, size=-1):
+            return b"x" * (size if size and size > 0 else 1)
+
+    monkeypatch.setattr(urllib.request, "urlopen", lambda *_args, **_kwargs: Response())
+    with pytest.raises(ChatError) as excinfo:
+        UrllibTransport().post_json("http://127.0.0.1/x", {}, {}, 1)
+    assert excinfo.value.code is ErrorCode.UPSTREAM_ERROR
+    assert "1 MiB" in excinfo.value.message

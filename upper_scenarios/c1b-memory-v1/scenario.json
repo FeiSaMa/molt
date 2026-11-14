@@ -1,0 +1,314 @@
+{
+  "schema_version": "1.0.0",
+  "upper_scenario_id": "c1b-memory-v1",
+  "upper_scenario_version": "upper-c1b-1",
+  "title": "B1 upper-layer C1b policy-memory transfer / regression REPLAY",
+  "mode": "replay",
+  "lower_comparison_domain": {
+    "scenario_id": "probe",
+    "scenario_version": "probe-7",
+    "note": "Lower ids are references only. Upper metrics never rewrite or merge core gate verdicts; the historical 2c gate is probe-4 and is not used as an upper decision."
+  },
+  "family": {
+    "family_id": "c1b-memory",
+    "title": "C1b undetermined-convention memory family",
+    "task_sets": {
+      "transfer": [
+        "probe-order-x5",
+        "probe-order-x6",
+        "probe-order-x7"
+      ],
+      "regression": [
+        "probe-order-x8"
+      ]
+    }
+  },
+  "baselines": {
+    "transfer": {
+      "baseline_id": "v0-pro-max",
+      "version": "v0-pro-max",
+      "lower_genome_ref": "shells/probe/genomes/v0-pro-max.json",
+      "historical": {
+        "runs": 10,
+        "passed": 0
+      },
+      "sources": [
+        {
+          "kind": "rows",
+          "path": "probes/report/2c/rows.json",
+          "group": "baseline",
+          "task_ids": [
+            "probe-order-x5",
+            "probe-order-x6",
+            "probe-order-x7"
+          ],
+          "solution_pattern": "probes/report/2c/solutions/baseline/{task_id}-r{rep}.py.txt"
+        },
+        {
+          "kind": "nested",
+          "path": "probes/report/2c/followup.json",
+          "pointer": "x5_x6_replication",
+          "group": "baseline"
+        }
+      ]
+    },
+    "regression": {
+      "baseline_id": "v0-pro-max",
+      "version": "v0-pro-max",
+      "lower_genome_ref": "shells/probe/genomes/v0-pro-max.json",
+      "historical": {
+        "runs": 2,
+        "passed": 2
+      },
+      "sources": [
+        {
+          "kind": "rows",
+          "path": "probes/report/2c/rows.json",
+          "group": "baseline",
+          "task_ids": [
+            "probe-order-x8"
+          ],
+          "solution_pattern": "probes/report/2c/solutions/baseline/{task_id}-r{rep}.py.txt"
+        }
+      ]
+    }
+  },
+  "assets": [
+    {
+      "asset_id": "mem-c1b-gen2",
+      "kind": "policy_memory",
+      "name": "C1b memory gen2",
+      "version": "gen2",
+      "source": "probes/report/2c/rows.json#group=memory; probes/report/2c/followup.json",
+      "created_by": "molt-lab-custom/probes",
+      "evidence_refs": [
+        "probes/report/2c/rows.json",
+        "probes/report/2c/followup.json",
+        "probes/report/2c/solutions/memory",
+        "probes/report/2c/solutions/followup",
+        "shells/probe/memory/gen2.md",
+        "shells/probe/genomes/gen2.json"
+      ],
+      "content": {
+        "memory_ref": "shells/probe/memory/gen2.md",
+        "retrieval_keys": [
+          "probe-order-x5",
+          "probe-order-x6",
+          "probe-order-x7",
+          "probe-order-x8"
+        ],
+        "note": "stub asset; recorded solutions are re-scored, memory text is not injected in B1"
+      },
+      "implementation_status": "stub",
+      "approval_level": "standard",
+      "origin": "real_run",
+      "eval_state": "replayed",
+      "lower_genome_ref": "shells/probe/genomes/gen2.json",
+      "evaluate": true,
+      "sources": {
+        "transfer": [
+          {
+            "kind": "rows",
+            "path": "probes/report/2c/rows.json",
+            "group": "memory",
+            "task_ids": [
+              "probe-order-x5",
+              "probe-order-x6",
+              "probe-order-x7"
+            ],
+            "solution_pattern": "probes/report/2c/solutions/memory/{task_id}-r{rep}.py.txt"
+          },
+          {
+            "kind": "nested",
+            "path": "probes/report/2c/followup.json",
+            "pointer": "x5_x6_replication",
+            "group": "memory"
+          },
+          {
+            "kind": "nested",
+            "path": "probes/report/2c/followup.json",
+            "pointer": "x7_replication",
+            "group": "gen2-replicate"
+          }
+        ],
+        "regression": [
+          {
+            "kind": "rows",
+            "path": "probes/report/2c/rows.json",
+            "group": "memory",
+            "task_ids": [
+              "probe-order-x8"
+            ],
+            "solution_pattern": "probes/report/2c/solutions/memory/{task_id}-r{rep}.py.txt"
+          },
+          {
+            "kind": "nested",
+            "path": "probes/report/2c/followup.json",
+            "pointer": "x8_signature_constraint",
+            "group": "memory"
+          }
+        ]
+      }
+    },
+    {
+      "asset_id": "mem-c1b-gen4",
+      "kind": "policy_memory",
+      "name": "C1b memory gen4 (v3 reflection)",
+      "version": "gen4",
+      "source": "probes/report/2c/memory-v3/rows.json#memory=gen4",
+      "created_by": "molt-lab-custom/probes",
+      "evidence_refs": [
+        "probes/report/2c/memory-v3/rows.json",
+        "probes/report/2c/memory-v3/verdict.json",
+        "probes/report/2c/memory-v3/reflection.json",
+        "probes/report/2c/memory-v3/solutions",
+        "shells/probe/memory/gen4.md",
+        "shells/probe/genomes/gen4.json"
+      ],
+      "content": {
+        "memory_ref": "shells/probe/memory/gen4.md",
+        "retrieval_keys": [
+          "probe-order-x5",
+          "probe-order-x6",
+          "probe-order-x7",
+          "probe-order-x8"
+        ],
+        "note": "stub asset; recorded solutions are re-scored, memory text is not injected in B1"
+      },
+      "implementation_status": "stub",
+      "approval_level": "standard",
+      "origin": "real_run",
+      "eval_state": "replayed",
+      "lower_genome_ref": "shells/probe/genomes/gen4.json",
+      "evaluate": true,
+      "sources": {
+        "transfer": [
+          {
+            "kind": "rows",
+            "path": "probes/report/2c/memory-v3/rows.json",
+            "memory": "gen4",
+            "task_ids": [
+              "probe-order-x5",
+              "probe-order-x6",
+              "probe-order-x7"
+            ]
+          }
+        ],
+        "regression": [
+          {
+            "kind": "rows",
+            "path": "probes/report/2c/memory-v3/rows.json",
+            "memory": "gen4",
+            "task_ids": [
+              "probe-order-x8"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "asset_id": "skill-c1b-reflection",
+      "kind": "skill",
+      "name": "C1b reflection memory builder",
+      "version": "skill-1",
+      "source": "probes/build_memory.py; probes/run_memory_v3.py",
+      "created_by": "molt-lab-custom/probes",
+      "evidence_refs": [
+        "probes/build_memory.py",
+        "probes/run_memory_v3.py",
+        "probes/report/2c/memory-v3/reflection.json"
+      ],
+      "content": {
+        "entrypoint": "probes/build_memory.py",
+        "note": "stub skill; B1 never executes it"
+      },
+      "implementation_status": "stub",
+      "approval_level": "standard",
+      "evaluate": false
+    },
+    {
+      "asset_id": "mcp-c1b-probe-read",
+      "kind": "mcp_profile",
+      "name": "C1b probe read-only MCP profile",
+      "version": "mcp-1",
+      "source": "upper_scenarios/c1b-memory-v1/scenario.json",
+      "created_by": "molt-lab-custom/macro",
+      "evidence_refs": [
+        "upper_scenarios/c1b-memory-v1/scenario.json"
+      ],
+      "content": {
+        "server": "stub://probe-read",
+        "tools": [
+          "read_rows"
+        ],
+        "note": "stub MCP profile; B1 makes no MCP calls"
+      },
+      "implementation_status": "stub",
+      "permission_scope": "read:probes/report/2c",
+      "approval_level": "strict",
+      "evaluate": false
+    }
+  ],
+  "governance": {
+    "replay_approver": "demo-replay-approver",
+    "replay_operator": "demo-replay-operator",
+    "approval_note": "Synthetic replay identities only; this is not a real approval and no asset is executed.",
+    "permission_change": {
+      "asset_id": "mcp-c1b-probe-read",
+      "requested_scope": "read:probes/report/2c,read:bench/probe",
+      "reason": "show strict independent approval is pending; not applied in B1"
+    }
+  },
+  "metrics": {
+    "transfer": [
+      "candidate.pass_rate",
+      "baseline.pass_rate",
+      "transfer_delta",
+      "tasks_improved",
+      "tasks_regressed",
+      "regression_count"
+    ],
+    "regression": [
+      "candidate.pass_rate",
+      "baseline.pass_rate",
+      "regression_count",
+      "negative_transfer"
+    ],
+    "retrieval": [
+      "hits",
+      "misses",
+      "sources"
+    ],
+    "cost": "0 (REPLAY, no model calls; cost_source=none)",
+    "latency": "measured outer replay wall time in ms",
+    "permission": "executed=false, mcp_calls=0, skill_executions=0"
+  },
+  "telemetry": {
+    "context_tokens_estimate": "len(memory_text)//4, method=chars_div_4; rough only",
+    "repeated_prefix_tokens": "null with reason=replay_no_model_context",
+    "retrieval": "per-task deterministic exact/prefix hits with source",
+    "errors": "verifier invalid/checker/timed_out/worker_error counts",
+    "cost_usd": "0 with cost_source=none",
+    "latency_ms": "measured replay wall time"
+  },
+  "future_capabilities": [
+    {
+      "name": "context_budget",
+      "status": "unimplemented",
+      "interface_version": "future-1",
+      "note": "Only trigger with real long-context tasks, max_context > 200k, window failures, or a dedicated SoL-Pi reproduction; C1b has a few short rules and no window pressure."
+    },
+    {
+      "name": "compaction",
+      "status": "unimplemented",
+      "interface_version": "future-1",
+      "note": "No compaction execution in B1; C1b has no window-pressure or compaction-benefit data."
+    },
+    {
+      "name": "vector_rag",
+      "status": "unimplemented",
+      "interface_version": "future-1",
+      "note": "Retrieval remains deterministic exact/prefix; no embedding model or vector index is introduced."
+    }
+  ]
+}
