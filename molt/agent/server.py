@@ -9,7 +9,8 @@
 5. 缺/错 Bearer → 401
 6. 合法 token 后未知 id → 404
 
-``GET /api/health`` 与 ``GET /api/openapi.json`` 免鉴权；已知 path 的 OPTIONS 免鉴权。
+``GET /api/health``、``GET /api/openapi.json``、``GET /api/lab/openapi.json`` 与
+``GET /api/skill-mcp/openapi.json`` 免鉴权；已知 path 的 OPTIONS 免鉴权。
 SSE 的 ``error`` 事件只使用 SSE-only 错误码，HTTP 层不会返回 502/504。
 """
 
@@ -39,6 +40,7 @@ from molt.agent.probe import (
     index_public_view,
     load_index,
 )
+from molt.agent.runtime import AgentRuntime, AgentRuntimeError
 from molt.agent.store import MAX_MESSAGES, TERMINAL_EVENTS, Session, SessionStore, new_id
 from molt.agent.tasks import TaskResultsError, load_task_results
 from molt.agent.turn import TurnRunner
@@ -67,15 +69,21 @@ class AgentApp:
     lab: LabManager | None = None
     lab_openapi: dict[str, Any] | None = None
     upper: UpperService | None = None
+    runtime: AgentRuntime | None = None
+    skill_mcp_openapi: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         self.store = SessionStore(provider=self.adapter.name)
-        self.runner = TurnRunner(self.store, self.index, self.adapter)
+        self.runner = TurnRunner(self.store, self.index, self.adapter, runtime=self.runtime)
         if self.lab is None:
             self.lab = LabManager(self.adapter, lab_root=self.lab_root)
 
     def health(self) -> dict[str, Any]:
         return adapter_health(self.adapter)
+
+    def close(self) -> None:
+        if self.runtime is not None:
+            self.runtime.close()
 
 
 # ---------------------------------------------------------------------------
@@ -118,7 +126,25 @@ ROUTES: tuple[Route, ...] = (
     ("GET", re.compile(r"^/api/sessions/(?P<session_id>[^/]+)/events$"), "events"),
 )
 
-PUBLIC_HANDLERS = frozenset({"health", "openapi", "lab_openapi"})
+PUBLIC_HANDLERS = frozenset({"health", "openapi", "lab_openapi", "skill_mcp_openapi"})
+
+# Skill/MCP routes are kept in a separate table so the legacy ``ROUTES`` tuple
+# (and its count) stays untouched for existing contract tests.
+SKILL_MCP_ROUTES: tuple[Route, ...] = (
+    ("GET", re.compile(r"^/api/runtime/status$"), "runtime_status"),
+    ("GET", re.compile(r"^/api/skills/catalog$"), "skills_catalog"),
+    ("GET", re.compile(r"^/api/skills/effective$"), "skills_effective"),
+    ("POST", re.compile(r"^/api/skills/select$"), "skills_select"),
+    ("POST", re.compile(r"^/api/skills/context-check$"), "skills_context_check"),
+    ("GET", re.compile(r"^/api/mcp/tools$"), "mcp_tools"),
+    ("POST", re.compile(r"^/api/mcp/call$"), "mcp_call"),
+    (
+        "POST",
+        re.compile(r"^/api/sessions/(?P<session_id>[^/]+)/runtime$"),
+        "session_runtime",
+    ),
+    ("GET", re.compile(r"^/api/skill-mcp/openapi\.json$"), "skill_mcp_openapi"),
+)
 
 
 # ---------------------------------------------------------------------------
@@ -160,7 +186,8 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
     # ---- 入口 -------------------------------------------------------------
     def _handle(self, method: str) -> None:
         path = urlsplit(self.path).path
-        matches = [(route_method, match, name) for route_method, pattern, name in ROUTES
+        routes = (*ROUTES, *SKILL_MCP_ROUTES)
+        matches = [(route_method, match, name) for route_method, pattern, name in routes
                    if (match := pattern.match(path))]
         if not matches:
             self._send_error(ApiError(ErrorCode.NOT_FOUND, "未知路径"))
@@ -345,6 +372,65 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         if session is None:
             raise ApiError(ErrorCode.NOT_FOUND, "session 不存在")
         return session
+
+    def _read_strict_body(
+        self, required: tuple[str, ...], optional: tuple[str, ...] = ()
+    ) -> dict[str, Any]:
+        payload = self._read_json_body()
+        allowed = set(required) | set(optional)
+        unknown = sorted(set(payload) - allowed)
+        if unknown:
+            raise ApiError(
+                ErrorCode.BAD_REQUEST,
+                "请求体包含未知字段",
+                {"unknown_fields": unknown},
+            )
+        missing = [name for name in required if name not in payload]
+        if missing:
+            raise ApiError(
+                ErrorCode.BAD_REQUEST,
+                "请求体缺少必填字段",
+                {"missing_fields": missing},
+            )
+        return payload
+
+    def _runtime(self) -> AgentRuntime:
+        runtime = self.server.app.runtime
+        if runtime is None:
+            raise ApiError(
+                ErrorCode.ADAPTER_UNAVAILABLE,
+                "技能/MCP 运行时未初始化",
+                {"reason": "runtime_unavailable"},
+            )
+        return runtime
+
+    @staticmethod
+    def _runtime_api_error(exc: AgentRuntimeError) -> ApiError:
+        mapping = {
+            "runtime_disabled": ErrorCode.CONFLICT,
+            "skill_integrity_mismatch": ErrorCode.CONFLICT,
+            "skill_binding_invalid": ErrorCode.ADAPTER_UNAVAILABLE,
+            "binding_invalid": ErrorCode.ADAPTER_UNAVAILABLE,
+            "skill_unavailable": ErrorCode.ADAPTER_UNAVAILABLE,
+            "mcp_not_configured": ErrorCode.ADAPTER_UNAVAILABLE,
+            "mcp_unavailable": ErrorCode.ADAPTER_UNAVAILABLE,
+            "mcp_timeout": ErrorCode.ADAPTER_UNAVAILABLE,
+            "mcp_error": ErrorCode.ADAPTER_UNAVAILABLE,
+            "mcp_tool_missing": ErrorCode.ADAPTER_UNAVAILABLE,
+            "allowlist_invalid": ErrorCode.ADAPTER_UNAVAILABLE,
+            "mcp_binding_missing": ErrorCode.CONFLICT,
+            "mcp_binding_incomplete": ErrorCode.CONFLICT,
+            "mcp_binding_mismatch": ErrorCode.CONFLICT,
+            "mcp_asset_not_found": ErrorCode.CONFLICT,
+            "mcp_registry_ambiguous": ErrorCode.CONFLICT,
+            "mcp_integrity_mismatch": ErrorCode.CONFLICT,
+            "mcp_profile_invalid": ErrorCode.CONFLICT,
+            "mcp_registry_invalid": ErrorCode.CONFLICT,
+            "tool_budget_exceeded": ErrorCode.PAYLOAD_TOO_LARGE,
+            "output_limit_exceeded": ErrorCode.PAYLOAD_TOO_LARGE,
+        }
+        code = mapping.get(exc.code, ErrorCode.BAD_REQUEST)
+        return ApiError(code, "技能/MCP 请求失败", {"reason": exc.code})
 
     # ---- 端点 -------------------------------------------------------------
     def _handle_health(self, match: re.Match[str]) -> None:
@@ -547,6 +633,160 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             ),
         )
 
+    # ---- skill / mcp -----------------------------------------------------
+    def _handle_runtime_status(self, match: re.Match[str]) -> None:
+        del match
+        runtime = self.server.app.runtime
+        if runtime is not None:
+            self._send_json(200, runtime.health())
+            return
+        adapter = self.server.app.adapter
+        self._send_json(
+            200,
+            {
+                "enabled": False,
+                "skills": {"available": False, "reason": "runtime_unavailable"},
+                "mcp": {
+                    "available": False,
+                    "reason": "runtime_unavailable",
+                    "approval_source": None,
+                    "approved": False,
+                },
+                "provider": {
+                    "kind": "real" if getattr(adapter, "real_model", False) else "mock"
+                },
+                "binding": {"revision": 0, "skills": {}, "mcp": {}},
+            },
+        )
+
+    def _handle_skills_catalog(self, match: re.Match[str]) -> None:
+        del match
+        try:
+            payload = self._runtime().catalog()
+        except AgentRuntimeError as exc:
+            raise self._runtime_api_error(exc) from None
+        self._send_json(200, payload)
+
+    def _handle_skills_effective(self, match: re.Match[str]) -> None:
+        del match
+        try:
+            payload = self._runtime().binding_public()
+        except AgentRuntimeError as exc:
+            raise self._runtime_api_error(exc) from None
+        self._send_json(200, payload)
+
+    def _handle_skills_select(self, match: re.Match[str]) -> None:
+        del match
+        body = self._read_strict_body(("task_text",))
+        task_text = body["task_text"]
+        if not isinstance(task_text, str) or not task_text.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "task_text 必须是非空字符串")
+        if len(task_text.encode("utf-8")) > MAX_CONTENT_BYTES:
+            raise ApiError(
+                ErrorCode.BAD_REQUEST,
+                "task_text 超过 16384 UTF-8 字节",
+                {"limit_bytes": MAX_CONTENT_BYTES},
+            )
+        try:
+            payload = self._runtime().preview_selection(task_text)
+        except AgentRuntimeError as exc:
+            raise self._runtime_api_error(exc) from None
+        self._send_json(200, payload)
+
+    def _handle_skills_context_check(self, match: re.Match[str]) -> None:
+        del match
+        body = self._read_strict_body(("task_text",))
+        task_text = body["task_text"]
+        if not isinstance(task_text, str) or not task_text.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "task_text 必须是非空字符串")
+        if len(task_text.encode("utf-8")) > MAX_CONTENT_BYTES:
+            raise ApiError(
+                ErrorCode.BAD_REQUEST,
+                "task_text 超过 16384 UTF-8 字节",
+                {"limit_bytes": MAX_CONTENT_BYTES},
+            )
+        try:
+            payload = self._runtime().context_check(task_text)
+        except AgentRuntimeError as exc:
+            raise self._runtime_api_error(exc) from None
+        self._send_json(200, payload)
+
+    def _handle_mcp_tools(self, match: re.Match[str]) -> None:
+        del match
+        try:
+            payload = self._runtime().mcp_tool_catalog()
+        except AgentRuntimeError as exc:
+            raise self._runtime_api_error(exc) from None
+        self._send_json(200, {"servers": payload["servers"], "calls_model": False})
+
+    def _handle_mcp_call(self, match: re.Match[str]) -> None:
+        del match
+        body = self._read_strict_body(("server_id", "tool"), optional=("arguments",))
+        server_id = body["server_id"]
+        tool = body["tool"]
+        if not isinstance(server_id, str) or not server_id.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "server_id 必须是非空字符串")
+        if not isinstance(tool, str) or not tool.strip():
+            raise ApiError(ErrorCode.BAD_REQUEST, "tool 必须是非空字符串")
+        arguments = body.get("arguments", {})
+        if not isinstance(arguments, dict):
+            raise ApiError(ErrorCode.BAD_REQUEST, "arguments 必须是 JSON 对象")
+        try:
+            result = self._runtime().call_mcp_tool(server_id, tool, arguments)
+        except AgentRuntimeError as exc:
+            raise self._runtime_api_error(exc) from None
+        self._send_json(
+            200,
+            {
+                "server_id": server_id,
+                "tool": tool,
+                "status": "ok",
+                "result": result,
+                "calls_model": False,
+            },
+        )
+
+    def _handle_session_runtime(self, match: re.Match[str]) -> None:
+        session = self._session(match)
+        body = self._read_strict_body(("mode",))
+        mode = body["mode"]
+        if mode not in ("off", "active"):
+            raise ApiError(
+                ErrorCode.BAD_REQUEST,
+                "mode 只接受 off / active",
+                {"allowed": ["off", "active"]},
+            )
+        runtime = self.server.app.runtime
+        if runtime is None:
+            raise ApiError(
+                ErrorCode.ADAPTER_UNAVAILABLE,
+                "技能/MCP 运行时未初始化",
+                {"reason": "runtime_unavailable"},
+            )
+        if mode == "active" and not runtime.enabled:
+            raise ApiError(
+                ErrorCode.CONFLICT,
+                "runtime 未启用；启动时需提供技能/MCP flags",
+                {"reason": "runtime_disabled"},
+            )
+        runtime.set_mode(session.session_id, mode)
+        self._send_json(
+            200,
+            {
+                "session_id": session.session_id,
+                "mode": mode,
+                "runtime_enabled": runtime.enabled,
+            },
+        )
+
+    def _handle_skill_mcp_openapi(self, match: re.Match[str]) -> None:
+        del match
+        app = self.server.app
+        if app.skill_mcp_openapi is None:
+            app.skill_mcp_openapi = load_skill_mcp_openapi(app.root or REPO_ROOT)
+        self._send_json(200, app.skill_mcp_openapi)
+
+    # ---- sessions --------------------------------------------------------
     def _handle_sessions_create(self, match: re.Match[str]) -> None:
         del match
         payload = self._read_json_body(allow_empty=True)
@@ -759,6 +999,19 @@ def load_lab_openapi(root: Path) -> dict[str, Any]:
     return payload
 
 
+def load_skill_mcp_openapi(root: Path) -> dict[str, Any]:
+    path = root / "contracts" / "openapi-skill-mcp-v1.json"
+    try:
+        payload = json.loads(path.read_bytes().decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise StartupError(
+            "contracts_invalid", f"无法加载 skill/MCP OpenAPI 契约: {exc}"
+        ) from None
+    if not isinstance(payload, dict):
+        raise StartupError("contracts_invalid", "skill/MCP OpenAPI 契约必须是对象")
+    return payload
+
+
 def prepare_token(token_file: Path) -> str:
     token = secrets.token_urlsafe(32)
     try:
@@ -804,6 +1057,9 @@ def run_server(
     probe_index: Path | None = None,
     data_dir: Path | None = None,
     lab_root: Path | None = None,
+    skills_root: Path | None = None,
+    skill_state: Path | None = None,
+    mcp_allowlist: Path | None = None,
 ) -> int:
     """启动服务；成功时阻塞在 ``serve_forever``，返回进程退出码。"""
 
@@ -871,10 +1127,20 @@ def run_server(
         root=root,
         lab_root=(lab_root or Path("/tmp/molt-lab")),
         upper=upper,
+        runtime=AgentRuntime(
+            root,
+            (skills_root or (root / "skills")).resolve(),
+            (skill_state or state_root).resolve(),
+            mcp_allowlist,
+            adapter,
+            enabled=any(item is not None for item in (skills_root, skill_state, mcp_allowlist)),
+            mcp_registry_state=(upper_state or state_root),
+        ),
     )
     try:
         server = create_server(app, host, port)
     except OSError as exc:
+        app.close()
         print(f"listen_failed: {exc.strerror or exc}", file=sys.stderr)
         return 2
 
@@ -889,6 +1155,7 @@ def run_server(
         pass
     finally:
         server.server_close()
+        app.close()
     return 0
 
 
@@ -907,6 +1174,24 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--probe-index", type=Path, default=None)
     parser.add_argument("--data-dir", type=Path, default=None)
     parser.add_argument("--lab-root", type=Path, default=Path("/tmp/molt-lab"))
+    parser.add_argument(
+        "--skills-root",
+        type=Path,
+        default=None,
+        help="技能包根目录（默认 <root>/skills）；显式给出即启用 runtime",
+    )
+    parser.add_argument(
+        "--skill-state",
+        type=Path,
+        default=None,
+        help="技能绑定 state（默认 <state>，binding 位于 <state>/skills）；必须在仓库外；显式给出即启用 runtime",
+    )
+    parser.add_argument(
+        "--mcp-allowlist",
+        type=Path,
+        default=None,
+        help="MCP allowlist 路径；默认关闭，给出路径才启用 MCP",
+    )
     return parser
 
 
@@ -924,6 +1209,9 @@ def main(argv: list[str] | None = None) -> int:
         probe_index=args.probe_index,
         data_dir=args.data_dir,
         lab_root=args.lab_root,
+        skills_root=args.skills_root,
+        skill_state=args.skill_state,
+        mcp_allowlist=args.mcp_allowlist,
     )
 
 

@@ -247,6 +247,24 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("/tmp/molt-lab"),
         help="隔离执行 workspace 的临时根目录（默认 /tmp/molt-lab）",
     )
+    p_serve.add_argument(
+        "--skills-root",
+        type=Path,
+        default=None,
+        help="技能包根目录（默认 <repo>/skills）；显式给出即启用 runtime",
+    )
+    p_serve.add_argument(
+        "--skill-state",
+        type=Path,
+        default=None,
+        help="技能绑定 state（默认 <state>，binding 位于 <state>/skills）；必须在仓库外；显式给出即启用 runtime",
+    )
+    p_serve.add_argument(
+        "--mcp-allowlist",
+        type=Path,
+        default=None,
+        help="MCP allowlist 路径；默认关闭，给出路径才启用 MCP",
+    )
 
     return parser
 
@@ -1301,6 +1319,9 @@ def cmd_serve(args: argparse.Namespace) -> int:
         probe_index=args.probe_index,
         data_dir=args.data_dir or (root / "web" / "data"),
         lab_root=args.lab_root,
+        skills_root=args.skills_root,
+        skill_state=args.skill_state,
+        mcp_allowlist=args.mcp_allowlist,
     )
 
 

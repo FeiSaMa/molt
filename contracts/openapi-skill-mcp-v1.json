@@ -1,0 +1,645 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "molt skill/MCP runtime API",
+    "version": "1.0.0",
+    "description": "Read-only skill catalog/binding projections, deterministic selection evidence, manual MCP tool listing/calls, and a per-session runtime switch. Independent from the agent v1, lab v1 and upper v1 contracts. All routes require Bearer except OPTIONS and GET /api/skill-mcp/openapi.json. No route accepts a server command, environment value, URL or filesystem location; tool calls are limited to the approved allowlist. context-check proves only that a reviewed skill block entered the captured messages (calls_model=false); it never claims task improvement."
+  },
+  "servers": [{ "url": "/" }],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/api/runtime/status": {
+      "get": {
+        "summary": "Runtime availability and effective binding revision",
+        "description": "Read-only projection. Reports whether the runtime is enabled, whether a bound skill package is loadable, whether an MCP allowlist is configured, the adapter kind, and the current binding sections. Never returns filesystem locations, environment values, server commands or model endpoints.",
+        "responses": {
+          "200": {
+            "description": "Runtime status",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RuntimeStatus" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" }
+        }
+      }
+    },
+    "/api/skills/catalog": {
+      "get": {
+        "summary": "Bound skills with safe package metadata",
+        "description": "Read-only. One entry per skills binding, enriched with manifest metadata (family, triggers, permissions, source summary). Raw skill bodies, source locators and filesystem locations are never returned. A package whose hash no longer matches its binding is reported as available=false with reason=skill_integrity_mismatch.",
+        "responses": {
+          "200": {
+            "description": "Skill catalog",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SkillCatalog" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/skills/effective": {
+      "get": {
+        "summary": "Current skill and MCP binding snapshot",
+        "description": "Read-only. Returns the binding revision and both sections. Entries contain exactly skill_id/server_id, version, asset_id and package_hash. The revision is the compare-and-swap base a future approval or evaluation slice must pass back to the binding store; this route itself never writes.",
+        "responses": {
+          "200": {
+            "description": "Effective binding",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Binding" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/skills/select": {
+      "post": {
+        "summary": "Deterministic selection preview",
+        "description": "Selects at most one bound skill for task_text with exact-keyword/prefix matching. Does not load the body into a model, does not start MCP and does not execute anything.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TaskTextRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Selection result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SelectionResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/skills/context-check": {
+      "post": {
+        "summary": "Capture context_loaded evidence",
+        "description": "Selects and renders the reviewed skill block, sends system + block + user through a CaptureAdapter, and reports the exact captured shape. calls_model is always false and no improvement, gain or score field exists. This is manual evidence, not a live model run.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TaskTextRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "context_loaded evidence",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ContextCheckResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/mcp/tools": {
+      "get": {
+        "summary": "Approved MCP tools and input schemas",
+        "description": "Read-only. Lists only allowlist-approved tool names and their MCP input schemas. When the sandbox cannot start, available=false plus a stable reason is returned and input_schema is null; nothing is faked.",
+        "responses": {
+          "200": {
+            "description": "Approved tools",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/McpTools" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/mcp/call": {
+      "post": {
+        "summary": "Manual MCP tool call",
+        "description": "Calls one allowlist-approved tool in a fresh sandboxed MCP session. The allowlist is the only gate for this manual route; the model is not involved (calls_model=false). A denied server/tool returns 400 with details.reason; sandbox/timeout failures return 503 with a stable reason.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/McpCallRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/McpCallResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/sessions/{session_id}/runtime": {
+      "post": {
+        "summary": "Set the per-session runtime mode",
+        "description": "Switches one session between off (legacy single-tool path) and active (skill context + bounded multi-round loop). The mode is read once at turn start, so a running turn cannot change scope midway. This does not alter POST /api/sessions/{session_id}/messages; the message body still accepts only content.",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "minLength": 1, "maxLength": 160 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SessionRuntimeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session mode",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SessionRuntimeResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/skill-mcp/openapi.json": {
+      "get": {
+        "summary": "This contract",
+        "description": "Public contract document. No Bearer token is required for this route only.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OpenAPI document",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "opaque"
+      }
+    },
+    "schemas": {
+      "Availability": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["available", "reason"],
+        "properties": {
+          "available": { "type": "boolean" },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "not_configured",
+              "no_servers",
+              "no_binding",
+              "runtime_unavailable",
+              "binding_invalid",
+              "skill_integrity_mismatch",
+              "skill_unavailable",
+              "allowlist_invalid",
+              "mcp_binding_missing",
+              "mcp_binding_incomplete",
+              "mcp_binding_mismatch",
+              "mcp_asset_not_found",
+              "mcp_registry_ambiguous",
+              "mcp_integrity_mismatch",
+              "mcp_profile_invalid",
+              "mcp_registry_invalid",
+              "mcp_unavailable",
+              "mcp_timeout",
+              "mcp_error",
+              "mcp_tool_missing"
+            ]
+          },
+          "approval_source": {
+            "type": ["string", "null"],
+            "enum": ["registry", "manual_operator_config", null]
+          },
+          "approved": { "type": "boolean" }
+        }
+      },
+      "Provider": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["real", "mock"] }
+        }
+      },
+      "SkillBindingEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skill_id", "version", "asset_id", "package_hash"],
+        "properties": {
+          "skill_id": { "type": "string" },
+          "version": { "type": "string" },
+          "asset_id": { "type": "string" },
+          "package_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+        }
+      },
+      "McpBindingEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["server_id", "version", "asset_id", "package_hash"],
+        "properties": {
+          "server_id": { "type": "string" },
+          "version": { "type": "string" },
+          "asset_id": { "type": "string" },
+          "package_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+        }
+      },
+      "Binding": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["revision", "skills", "mcp"],
+        "properties": {
+          "revision": { "type": "integer", "minimum": 0 },
+          "skills": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#/components/schemas/SkillBindingEntry" }
+          },
+          "mcp": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#/components/schemas/McpBindingEntry" }
+          },
+          "error": {
+            "type": "string",
+            "enum": ["binding_invalid"]
+          }
+        }
+      },
+      "RuntimeStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["enabled", "skills", "mcp", "provider", "binding"],
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "skills": { "$ref": "#/components/schemas/Availability" },
+          "mcp": { "$ref": "#/components/schemas/Availability" },
+          "provider": { "$ref": "#/components/schemas/Provider" },
+          "binding": { "$ref": "#/components/schemas/Binding" }
+        }
+      },
+      "Triggers": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["keywords", "task_families"],
+        "properties": {
+          "keywords": { "type": "array", "items": { "type": "string" } },
+          "task_families": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Permissions": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tools", "network", "filesystem"],
+        "properties": {
+          "tools": { "type": "array", "items": { "type": "string" } },
+          "network": { "type": "boolean" },
+          "filesystem": { "type": "string", "enum": ["none", "read_only", "workspace"] }
+        }
+      },
+      "SourceSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["count", "available_content", "revisions"],
+        "properties": {
+          "count": { "type": "integer", "minimum": 0 },
+          "available_content": { "type": "array", "items": { "type": "string" } },
+          "revisions": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "CatalogEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skill_id", "version", "asset_id", "content_hash", "bound", "available"],
+        "properties": {
+          "skill_id": { "type": "string" },
+          "version": { "type": "string" },
+          "asset_id": { "type": "string" },
+          "content_hash": { "type": "string" },
+          "bound": { "const": true },
+          "available": { "type": "boolean" },
+          "reason": {
+            "type": "string",
+            "enum": ["skill_integrity_mismatch", "skill_unavailable"]
+          },
+          "family": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "triggers": { "$ref": "#/components/schemas/Triggers" },
+          "permissions": { "$ref": "#/components/schemas/Permissions" },
+          "source": { "$ref": "#/components/schemas/SourceSummary" }
+        }
+      },
+      "SkillCatalog": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["revision", "skills"],
+        "properties": {
+          "revision": { "type": "integer", "minimum": 0 },
+          "skills": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CatalogEntry" }
+          }
+        }
+      },
+      "TaskTextRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_text"],
+        "properties": {
+          "task_text": { "type": "string", "minLength": 1, "maxLength": 16384 }
+        }
+      },
+      "Selection": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skill_id", "version", "content_hash", "reason", "matched_terms", "mode"],
+        "properties": {
+          "skill_id": { "type": "string" },
+          "version": { "type": "string" },
+          "content_hash": { "type": "string" },
+          "reason": { "type": "string" },
+          "matched_terms": { "type": "array", "items": { "type": "string" } },
+          "mode": { "const": "deterministic-exact-prefix" }
+        }
+      },
+      "SelectionResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["binding_revision", "selected", "selection", "mode"],
+        "properties": {
+          "binding_revision": { "type": "integer", "minimum": 0 },
+          "selected": { "type": "boolean" },
+          "selection": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/Selection" },
+              { "type": "null" }
+            ]
+          },
+          "mode": { "const": "deterministic-exact-prefix" }
+        }
+      },
+      "ContextCheckResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["selected", "calls_model", "mode"],
+        "properties": {
+          "selected": { "type": "boolean" },
+          "calls_model": { "const": false },
+          "mode": { "const": "manual" },
+          "task_text": { "type": "string" },
+          "reason": { "type": "string" },
+          "evidence_kind": { "const": "context_loaded" },
+          "skill_id": { "type": "string" },
+          "version": { "type": "string" },
+          "content_hash": { "type": "string" },
+          "system_block_sha256": { "type": "string" },
+          "captured_message_count": { "type": "integer", "minimum": 0 },
+          "contains_body": { "type": "boolean" },
+          "matched_terms": { "type": "array", "items": { "type": "string" } },
+          "binding_revision": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "McpTool": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "namespaced_name", "description", "input_schema"],
+        "properties": {
+          "name": { "type": "string" },
+          "namespaced_name": { "type": "string", "pattern": "^mcp__[a-z][a-z0-9_]*__[A-Za-z0-9_]+$" },
+          "description": { "type": ["string", "null"] },
+          "input_schema": { "type": ["object", "null"] }
+        }
+      },
+      "McpServerTools": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "server_id",
+          "available",
+          "reason",
+          "binding_revision",
+          "approval_source",
+          "approved",
+          "approved_by",
+          "approval_note",
+          "tools"
+        ],
+        "properties": {
+          "server_id": { "type": "string" },
+          "available": { "type": "boolean" },
+          "reason": { "type": ["string", "null"] },
+          "binding_revision": { "type": "integer", "minimum": 0 },
+          "approval_source": {
+            "type": ["string", "null"],
+            "enum": ["registry", "manual_operator_config", null]
+          },
+          "approved": { "type": "boolean" },
+          "approved_by": { "type": ["string", "null"] },
+          "approval_note": { "type": ["string", "null"] },
+          "tools": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/McpTool" }
+          }
+        }
+      },
+      "McpTools": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["servers", "calls_model"],
+        "properties": {
+          "servers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/McpServerTools" }
+          },
+          "calls_model": { "const": false }
+        }
+      },
+      "McpCallRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["server_id", "tool"],
+        "properties": {
+          "server_id": { "type": "string", "minLength": 1 },
+          "tool": { "type": "string", "minLength": 1 },
+          "arguments": { "type": "object" }
+        }
+      },
+      "McpCallResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["server_id", "tool", "status", "result", "calls_model"],
+        "properties": {
+          "server_id": { "type": "string" },
+          "tool": { "type": "string" },
+          "status": { "const": "ok" },
+          "result": { "type": "object" },
+          "calls_model": { "const": false }
+        }
+      },
+      "SessionRuntimeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["mode"],
+        "properties": {
+          "mode": { "type": "string", "enum": ["off", "active"] }
+        }
+      },
+      "SessionRuntimeResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["session_id", "mode", "runtime_enabled"],
+        "properties": {
+          "session_id": { "type": "string" },
+          "mode": { "type": "string", "enum": ["off", "active"] },
+          "runtime_enabled": { "type": "boolean" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "bad_request",
+                  "unauthorized",
+                  "forbidden_origin",
+                  "not_found",
+                  "method_not_allowed",
+                  "conflict",
+                  "payload_too_large",
+                  "unsupported_media_type",
+                  "internal",
+                  "adapter_unavailable",
+                  "data_unavailable",
+                  "upstream_timeout",
+                  "upstream_unavailable",
+                  "upstream_auth_failed",
+                  "upstream_rate_limited",
+                  "upstream_error",
+                  "tool_denied",
+                  "too_many_tool_calls",
+                  "tool_budget_exceeded",
+                  "skill_integrity_mismatch",
+                  "mcp_unavailable"
+                ]
+              },
+              "message": { "type": "string", "minLength": 1 },
+              "details": { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Malformed request",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid Bearer token",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "ForbiddenOrigin": {
+        "description": "Origin not allowed",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "Unknown session",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Conflict": {
+        "description": "Binding integrity mismatch, runtime disabled, or CAS conflict",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "PayloadTooLarge": {
+        "description": "Body exceeds 64 KiB or tool output exceeds 64 KiB",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "UnsupportedMediaType": {
+        "description": "Non-empty body whose Content-Type is not application/json",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unavailable": {
+        "description": "Runtime, allowlist or sandbox unavailable",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    }
+  }
+}

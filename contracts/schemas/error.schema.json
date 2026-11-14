@@ -33,7 +33,10 @@
             "upstream_rate_limited",
             "upstream_error",
             "tool_denied",
-            "too_many_tool_calls"
+            "too_many_tool_calls",
+            "tool_budget_exceeded",
+            "skill_integrity_mismatch",
+            "mcp_unavailable"
           ]
         },
         "message": { "type": "string", "minLength": 1 },

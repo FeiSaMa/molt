@@ -138,7 +138,9 @@ stderr 打印人读的 `listening on ...` 与 `token file: ...`。任何日志�
 以下**只作 SSE `error` 事件的 code，永不作为 HTTP 响应**（HTTP 不会出现 502/504）：
 
 `upstream_timeout`、`upstream_unavailable`、`upstream_auth_failed`、`upstream_rate_limited`、
-`upstream_error`、`tool_denied`、`too_many_tool_calls`。
+`upstream_error`、`tool_denied`、`too_many_tool_calls`、`tool_budget_exceeded`、
+`skill_integrity_mismatch`、`mcp_unavailable`。后三者仅在 runtime 模式下出现，详见
+[`skill-mcp-runtime.md`](skill-mcp-runtime.md)。
 
 ## SSE 事件
 

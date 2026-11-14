@@ -39,6 +39,9 @@ class ErrorCode(StrEnum):
     UPSTREAM_ERROR = "upstream_error"
     TOOL_DENIED = "tool_denied"
     TOO_MANY_TOOL_CALLS = "too_many_tool_calls"
+    TOOL_BUDGET_EXCEEDED = "tool_budget_exceeded"
+    SKILL_INTEGRITY_MISMATCH = "skill_integrity_mismatch"
+    MCP_UNAVAILABLE = "mcp_unavailable"
 
 
 HTTP_STATUS: dict[ErrorCode, int] = {
@@ -65,6 +68,9 @@ SSE_ONLY: frozenset[ErrorCode] = frozenset(
         ErrorCode.UPSTREAM_ERROR,
         ErrorCode.TOOL_DENIED,
         ErrorCode.TOO_MANY_TOOL_CALLS,
+        ErrorCode.TOOL_BUDGET_EXCEEDED,
+        ErrorCode.SKILL_INTEGRITY_MISMATCH,
+        ErrorCode.MCP_UNAVAILABLE,
     }
 )
 
