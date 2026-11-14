@@ -85,6 +85,7 @@ class SkillAdmin:
         binding_store: BindingStore | None,
         *,
         tasks_root: Path | str | None = None,
+        operator_identity: str | None = None,
     ) -> None:
         self.repo_root = Path(repo_root).resolve()
         self.skills_root = Path(skills_root).expanduser()
@@ -110,6 +111,11 @@ class SkillAdmin:
         )
         self.adapter = adapter
         self.binding_store = binding_store
+        self.operator_identity = (
+            operator_identity.strip()
+            if isinstance(operator_identity, str) and operator_identity.strip()
+            else None
+        )
 
     # -- helpers -----------------------------------------------------------
     def _binding(self) -> BindingStore:
@@ -510,6 +516,26 @@ class SkillAdmin:
         }
         return func(*args, **filtered)
 
+    def _require_approval_principal(self, claimed_by: str | None) -> str:
+        principal = self.operator_identity
+        if not principal:
+            raise SkillAdminError(
+                "operator_not_configured",
+                403,
+                "未配置服务器审批主体（--operator）",
+                {"reason": "operator_not_configured"},
+            )
+        if claimed_by is not None:
+            claimed = claimed_by.strip() if isinstance(claimed_by, str) else ""
+            if claimed != principal:
+                raise SkillAdminError(
+                    "operator_not_authorized",
+                    403,
+                    "approved_by 与服务器配置的审批主体不一致",
+                    {"reason": "operator_not_authorized"},
+                )
+        return principal
+
     def approve(
         self,
         asset_id: str,
@@ -518,6 +544,8 @@ class SkillAdmin:
         evidence_id: str,
         note: str | None = None,
     ) -> dict[str, Any]:
+        # The recorded actor is server-derived; the body value is only a consistency claim.
+        approver = self._require_approval_principal(approved_by)
         asset = self._skill_asset(asset_id)
         if asset.status != "evaluated":
             raise SkillAdminError(
@@ -525,7 +553,7 @@ class SkillAdmin:
                 {"reason": "skill_state_conflict", "status": asset.status},
             )
         evidence, evidence_path = self._evidence_for_asset(evidence_id, asset)
-        kwargs: dict[str, Any] = {"approved_by": approved_by, "note": note or ""}
+        kwargs: dict[str, Any] = {"approved_by": approver, "note": note or ""}
         kwargs["evidence_id"] = evidence_id
         kwargs["evidence"] = evidence
         kwargs["evidence_path"] = str(evidence_path)

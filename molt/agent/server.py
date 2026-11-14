@@ -460,6 +460,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
     def _skill_admin_api_error(exc: SkillAdminError) -> ApiError:
         mapping = {
             400: ErrorCode.BAD_REQUEST,
+            403: ErrorCode.FORBIDDEN,
             404: ErrorCode.NOT_FOUND,
             409: ErrorCode.CONFLICT,
             503: ErrorCode.ADAPTER_UNAVAILABLE,
@@ -1259,6 +1260,7 @@ def run_server(
     skills_root: Path | None = None,
     skill_state: Path | None = None,
     mcp_allowlist: Path | None = None,
+    operator_identity: str | None = None,
 ) -> int:
     """启动服务；成功时阻塞在 ``serve_forever``，返回进程退出码。"""
 
@@ -1336,6 +1338,7 @@ def run_server(
             skill_state_resolved / "skill-registry",
             adapter,
             runtime_obj.binding_store,
+            operator_identity=operator_identity,
         )
     except (SkillAdminError, OSError, ValueError) as exc:
         code = getattr(exc, "code", "skill_admin_unavailable")
@@ -1410,6 +1413,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="MCP allowlist 路径；默认关闭，给出路径才启用 MCP",
     )
+    parser.add_argument(
+        "--operator",
+        default=None,
+        metavar="IDENTITY",
+        help="服务器审批主体（单一身份，非密钥）；未配置时 /api/skills/approve 一律 403",
+    )
     return parser
 
 
@@ -1430,6 +1439,7 @@ def main(argv: list[str] | None = None) -> int:
         skills_root=args.skills_root,
         skill_state=args.skill_state,
         mcp_allowlist=args.mcp_allowlist,
+        operator_identity=args.operator,
     )
 
 

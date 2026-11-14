@@ -343,7 +343,9 @@ def _register_operator_baseline(
     ``UpperRegistry.register`` only accepts ``draft`` and there is no
     operator-baseline transition, so the asset is persisted through the
     registry's own writer after being marked ``active``; no other asset is
-    touched. The sidecar records ``review.status="not_reviewed"``.
+    touched. The sidecar records ``review.status="not_reviewed"``. The record is
+    deliberately not an approval: approved_by/approved_at stay null and
+    provenance is carried by approval_source="operator_baseline".
     """
     content = {
         "package_hash": pkg.content_hash,
@@ -353,6 +355,8 @@ def _register_operator_baseline(
         "source_refs": [ref.to_dict() for ref in pkg.manifest.source_refs],
         "package_dir": str(pkg.package_dir),
         "baseline_kind": BASELINE_KIND,
+        "approval_source": "operator_baseline",
+        "keep_evidence_id": None,
     }
     asset = UpperAsset(
         asset_id=asset_id,
@@ -367,8 +371,8 @@ def _register_operator_baseline(
         status="draft",
         implementation_status="implemented",
         content=content,
-        approved_by="operator-config",
-        approved_at=utc_now(),
+        approved_by=None,
+        approved_at=None,
         status_reason=note,
     )
     registered = registry.register(asset)
@@ -391,7 +395,9 @@ def _register_operator_baseline(
             "reviewed_at": None,
             "note": note,
         },
-        "approved_by": "operator-config",
+        "approved_by": None,
+        "approval_source": "operator_baseline",
+        "keep_evidence_id": None,
         "approval_note": note,
         "created_at": utc_now(),
         "created_by": actor,
@@ -461,6 +467,10 @@ def _bootstrap_baseline_locked(
         "from": None,
         "to": _entry_summary(entry),
         "at": utc_now(),
+        "approval_source": "operator_baseline",
+        "keep_evidence_id": None,
+        "review_status": "not_reviewed",
+        "adopted": False,
     }
     return {
         "asset": registered,
@@ -1364,6 +1374,9 @@ def activate_asset(
     commit record, ``reconcile_commits`` adopts the intent and re-writes the
     record. ``fault_hook`` is test-only and is called at ``"after_intent"``,
     ``"after_commit"`` and ``"after_record"``.
+
+    A bootstrapped operator baseline is not an adoption (no keep evidence), so
+    it is rejected here and can only be restored through ``rollback_asset``.
     """
     state_dir = _state_dir_for(store)
     with _lifecycle_lock(state_dir):
@@ -1402,14 +1415,19 @@ def _activate_asset_locked(
     asset = registry.get(asset_id)
     if asset.kind != "skill":
         raise SkillEvolutionError(f"asset {asset_id} is not a skill")
-    # ``active`` is accepted alongside ``approved``: it still means "approved and
-    # allowed to use". Without this, one stale CAS retry (or a re-forward after a
-    # rollback) would permanently lock a version out, because ``UpperRegistry``
-    # has no active→approved transition.
+    # ``active`` is accepted alongside ``approved`` so a stale CAS retry (or a
+    # re-forward after a rollback) does not permanently lock a version out,
+    # because ``UpperRegistry`` has no active→approved transition. Bootstrapped
+    # operator baselines are also active, so the two guards below decide whether
+    # the asset was actually approved.
     if asset.status not in REUSABLE_STATUSES:
         raise SkillEvolutionError(
             f"asset {asset_id} must be approved to activate, got {asset.status}"
         )
+    if asset.content.get("baseline_kind") == BASELINE_KIND:
+        raise SkillEvolutionError("baseline_not_approved")
+    if not asset.approved_by:
+        raise SkillEvolutionError("asset_not_approved")
     entry = _entry_for(asset)
     if not entry["package_hash"]:
         raise SkillEvolutionError(f"asset {asset_id} has no package_hash")

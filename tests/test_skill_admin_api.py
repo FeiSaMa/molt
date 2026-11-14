@@ -42,7 +42,11 @@ MANUAL_BODY = """# 仓库证据与零写入验收（修订版）
 """
 
 
-def _admin(tmp_path: Path, adapter: Any | None = None) -> tuple[SkillAdmin, BindingStore]:
+def _admin(
+    tmp_path: Path,
+    adapter: Any | None = None,
+    operator_identity: str | None = "ops-reviewer",
+) -> tuple[SkillAdmin, BindingStore]:
     skill_state = tmp_path / "skill-state"
     binding = BindingStore(skill_state, repo_root=ROOT)
     admin = SkillAdmin(
@@ -52,6 +56,7 @@ def _admin(tmp_path: Path, adapter: Any | None = None) -> tuple[SkillAdmin, Bind
         skill_state / "skill-registry",
         adapter if adapter is not None else MockAdapter(),
         binding,
+        operator_identity=operator_identity,
     )
     return admin, binding
 
@@ -63,6 +68,14 @@ def _propose(admin: SkillAdmin, *, version: str | None = None) -> dict[str, Any]
         manual_body=MANUAL_BODY,
         version=version,
     )
+
+
+def _evaluated_keep(
+    admin: SkillAdmin, *, version: str | None = None
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    candidate = _propose(admin, version=version)
+    evidence = admin.evaluate(candidate["asset_id"], manual_outputs=_manual_outputs("keep"))
+    return candidate, evidence
 
 
 def _good(task: Any) -> str:
@@ -324,6 +337,97 @@ def test_http_rollback_reconciles_missing_commit(tmp_path: Path) -> None:
         )
     finally:
         harness.close()
+
+
+def test_approve_requires_configured_operator(tmp_path: Path) -> None:
+    admin, _ = _admin(tmp_path, operator_identity=None)
+    candidate, evidence = _evaluated_keep(admin)
+
+    with pytest.raises(SkillAdminError) as excinfo:
+        admin.approve(
+            candidate["asset_id"], "ops-reviewer", evidence_id=evidence["evidence_id"]
+        )
+    assert excinfo.value.code == "operator_not_configured"
+    assert excinfo.value.status == 403
+    assert admin.registry.get(candidate["asset_id"]).status == "evaluated"
+
+
+def test_approve_rejects_forged_operator_identity(tmp_path: Path) -> None:
+    admin, _ = _admin(tmp_path, operator_identity="ops-reviewer")
+    candidate, evidence = _evaluated_keep(admin)
+
+    with pytest.raises(SkillAdminError) as excinfo:
+        admin.approve(
+            candidate["asset_id"], "mallory", evidence_id=evidence["evidence_id"]
+        )
+    assert excinfo.value.code == "operator_not_authorized"
+    assert excinfo.value.status == 403
+    assert admin.registry.get(candidate["asset_id"]).status == "evaluated"
+    assert admin.registry.get(candidate["asset_id"]).approved_by is None
+
+    approved = admin.approve(
+        candidate["asset_id"], "ops-reviewer", evidence_id=evidence["evidence_id"]
+    )
+    assert approved["status"] == "approved"
+    assert admin.registry.get(candidate["asset_id"]).approved_by == "ops-reviewer"
+
+
+def test_approve_denies_forged_or_unconfigured_operator_over_http(tmp_path: Path) -> None:
+    unconfigured, _ = _admin(tmp_path / "unconfigured", operator_identity=None)
+    candidate, evidence = _evaluated_keep(unconfigured)
+    harness = _Harness(unconfigured)
+    try:
+        status, raw = harness.request(
+            "POST",
+            "/api/skills/approve",
+            body={
+                "asset_id": candidate["asset_id"],
+                "approved_by": "ops-reviewer",
+                "evidence_id": evidence["evidence_id"],
+            },
+        )
+        assert status == 403
+        payload = json.loads(raw)
+        assert payload["error"]["code"] == "forbidden"
+        assert payload["error"]["details"]["reason"] == "operator_not_configured"
+        assert unconfigured.registry.get(candidate["asset_id"]).status == "evaluated"
+    finally:
+        harness.close()
+
+    configured, _ = _admin(tmp_path / "configured", operator_identity="ops-reviewer")
+    candidate2, evidence2 = _evaluated_keep(configured)
+    harness2 = _Harness(configured)
+    try:
+        status, raw = harness2.request(
+            "POST",
+            "/api/skills/approve",
+            body={
+                "asset_id": candidate2["asset_id"],
+                "approved_by": "mallory",
+                "evidence_id": evidence2["evidence_id"],
+            },
+        )
+        assert status == 403
+        payload = json.loads(raw)
+        assert payload["error"]["code"] == "forbidden"
+        assert payload["error"]["details"]["reason"] == "operator_not_authorized"
+        asset = configured.registry.get(candidate2["asset_id"])
+        assert asset.status == "evaluated"
+        assert asset.approved_by is None
+
+        status, raw = harness2.request(
+            "POST",
+            "/api/skills/approve",
+            body={
+                "asset_id": candidate2["asset_id"],
+                "approved_by": "ops-reviewer",
+                "evidence_id": evidence2["evidence_id"],
+            },
+        )
+        assert status == 200
+        assert configured.registry.get(candidate2["asset_id"]).approved_by == "ops-reviewer"
+    finally:
+        harness2.close()
 
 
 def test_approve_rejects_non_keep_and_mismatched_evidence(tmp_path: Path) -> None:

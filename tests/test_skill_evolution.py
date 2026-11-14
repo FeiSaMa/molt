@@ -886,6 +886,10 @@ def test_bootstrap_baseline_enables_rollback(tmp_path):
     assert baseline_asset.status == "active"
     assert baseline_asset.implementation_status == "implemented"
     assert baseline_asset.eval_state == "not_evaluated"
+    assert baseline_asset.approved_by is None
+    assert baseline_asset.approved_at is None
+    assert baseline_asset.content["approval_source"] == "operator_baseline"
+    assert baseline_asset.content["keep_evidence_id"] is None
     assert boot["revision"] == 1
     assert store.get_section("skills", SKILL_ID)["asset_id"] == baseline_asset.asset_id
 
@@ -896,11 +900,19 @@ def test_bootstrap_baseline_enables_rollback(tmp_path):
     )
     assert sidecar["declared_origin"] == "operator_baseline"
     assert sidecar["authorship"] == "operator"
-    assert sidecar["approved_by"] == "operator-config"
+    assert sidecar["approved_by"] is None
+    assert sidecar["approval_source"] == "operator_baseline"
+    assert sidecar["keep_evidence_id"] is None
     assert sidecar["review"]["status"] == "not_reviewed"
     assert "not model-evaluated" in sidecar["approval_note"]
-    assert _commits(state)[0]["action"] == "activate"
-    assert _commits(state)[0]["from"] is None
+    commit = _commits(state)[0]
+    assert commit["action"] == "activate"
+    assert commit["approval_source"] == "operator_baseline"
+    assert commit["keep_evidence_id"] is None
+    assert commit["review_status"] == "not_reviewed"
+    assert commit["adopted"] is False
+    assert commit["evidence_id"] is None
+    assert commit["from"] is None
 
     _, v1 = ready_asset(registry, sidecars, version="1.0.1", root=tmp_path)
     _activate(registry, store, v1.asset_id, revision=1, sidecars=sidecars)
@@ -920,6 +932,63 @@ def test_bootstrap_baseline_enables_rollback(tmp_path):
     assert binding["package_hash"] == pkg.content_hash
     # the registry target is real and resolvable
     assert registry.get(baseline_asset.asset_id).status == "active"
+
+
+def test_activate_rejects_unreviewed_baseline_as_adoption(tmp_path):
+    state = tmp_path / "state"
+    registry = UpperRegistry(state)
+    store = BindingStore(state)
+    sidecars = tmp_path / "sidecars"
+
+    boot = bootstrap_baseline(registry, store, base_pkg(), actor="operator")
+    before = store.get_section("skills", SKILL_ID)
+
+    with pytest.raises(SkillEvolutionError) as excinfo:
+        activate_asset(
+            registry,
+            store,
+            boot["asset"].asset_id,
+            expected_revision=boot["revision"],
+            actor="operator",
+            evidence_id="not-a-keep-evidence",
+            sidecar_dir=sidecars,
+        )
+    assert "baseline_not_approved" in str(excinfo.value)
+    assert store.load()["revision"] == boot["revision"]
+    assert store.get_section("skills", SKILL_ID) == before
+    assert registry.get(boot["asset"].asset_id).status == "active"
+
+
+def test_activate_rejects_active_asset_without_approval(tmp_path):
+    state = tmp_path / "state"
+    registry = UpperRegistry(state)
+    store = BindingStore(state)
+    sidecars = tmp_path / "sidecars"
+
+    candidate = make_candidate(tmp_path)
+    asset = register_asset(
+        registry,
+        _pkg_for(candidate),
+        sidecar_dir=sidecars,
+        declared_origin="manual",
+    )
+    asset.status = "active"
+    asset.updated_at = utc_now()
+    registry._save()
+
+    with pytest.raises(SkillEvolutionError) as excinfo:
+        activate_asset(
+            registry,
+            store,
+            asset.asset_id,
+            expected_revision=0,
+            actor="operator",
+            evidence_id="not-a-keep-evidence",
+            sidecar_dir=sidecars,
+        )
+    assert "asset_not_approved" in str(excinfo.value)
+    assert store.load()["revision"] == 0
+    assert store.get_section("skills", SKILL_ID) is None
 
 
 def test_orphan_history_is_ignored_for_rollback_target(tmp_path):
@@ -1141,7 +1210,9 @@ def test_migration_apply_binds_target_and_preserves_mcp(tmp_path):
     )
     assert sidecar["declared_origin"] == "operator_baseline"
     assert sidecar["authorship"] == "operator"
-    assert sidecar["approved_by"] == "operator-config"
+    assert sidecar["approved_by"] is None
+    assert sidecar["approval_source"] == "operator_baseline"
+    assert sidecar["keep_evidence_id"] is None
     assert sidecar["review"]["status"] == "not_reviewed"
     assert "migrated existing operator binding" in sidecar["approval_note"]
 

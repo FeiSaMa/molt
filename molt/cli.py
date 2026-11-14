@@ -265,6 +265,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="MCP allowlist 路径；默认关闭，给出路径才启用 MCP",
     )
+    p_serve.add_argument(
+        "--operator",
+        default=None,
+        metavar="IDENTITY",
+        help="服务器审批主体（单一身份，非密钥）；未配置时 /api/skills/approve 一律 403",
+    )
 
     return parser
 
@@ -1322,6 +1328,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
         skills_root=args.skills_root,
         skill_state=args.skill_state,
         mcp_allowlist=args.mcp_allowlist,
+        operator_identity=args.operator,
     )
 
 

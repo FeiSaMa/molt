@@ -20,6 +20,7 @@ class ErrorCode(StrEnum):
 
     BAD_REQUEST = "bad_request"
     UNAUTHORIZED = "unauthorized"
+    FORBIDDEN = "forbidden"
     FORBIDDEN_ORIGIN = "forbidden_origin"
     NOT_FOUND = "not_found"
     METHOD_NOT_ALLOWED = "method_not_allowed"
@@ -47,6 +48,7 @@ class ErrorCode(StrEnum):
 HTTP_STATUS: dict[ErrorCode, int] = {
     ErrorCode.BAD_REQUEST: 400,
     ErrorCode.UNAUTHORIZED: 401,
+    ErrorCode.FORBIDDEN: 403,
     ErrorCode.FORBIDDEN_ORIGIN: 403,
     ErrorCode.NOT_FOUND: 404,
     ErrorCode.METHOD_NOT_ALLOWED: 405,

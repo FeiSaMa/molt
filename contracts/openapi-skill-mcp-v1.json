@@ -195,7 +195,7 @@
     "/api/skills/approve": {
       "post": {
         "summary": "Approve an evaluated skill asset",
-        "description": "Explicit operator approval. Requires an evidence_id whose asset_id and candidate hash match the asset and whose final is keep; reject/rollback evidence returns 409 skill_not_keep. No silent override exists; an explicit override_reason is not implemented.",
+        "description": "Explicit operator approval. Requires an evidence_id whose asset_id and candidate hash match the asset and whose final is keep; reject/rollback evidence returns 409 skill_not_keep. No silent override exists; an explicit override_reason is not implemented. approved_by is a consistency claim only: it must equal the single server-configured --operator principal, or the request fails closed with 403 forbidden (details.reason=operator_not_configured|operator_not_authorized). The persisted approver is always the server principal, never the request value. The server uses one shared Bearer token, so every client holding it is authorized as that principal; there is no per-human attribution.",
         "requestBody": {
           "required": true,
           "content": {
@@ -215,7 +215,7 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "$ref": "#/components/responses/ForbiddenOrigin" },
+          "403": { "$ref": "#/components/responses/ForbiddenOperator" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "413": { "$ref": "#/components/responses/PayloadTooLarge" },
@@ -1012,6 +1012,7 @@
                 "enum": [
                   "bad_request",
                   "unauthorized",
+                  "forbidden",
                   "forbidden_origin",
                   "not_found",
                   "method_not_allowed",
@@ -1051,6 +1052,10 @@
       },
       "ForbiddenOrigin": {
         "description": "Origin not allowed",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "ForbiddenOperator": {
+        "description": "Approval principal is not configured, or approved_by does not match the server-configured principal",
         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
       },
       "NotFound": {

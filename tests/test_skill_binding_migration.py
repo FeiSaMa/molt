@@ -209,7 +209,13 @@ def test_runtime_loads_migrated_baseline_via_turn_runner(tmp_path: Path) -> None
         assert package.body.strip() in adapter.calls[0]["messages"][0]["content"]
 
         admin = SkillAdmin(
-            ROOT, ROOT / "skills", state, state / "skill-registry", MockAdapter(), store
+            ROOT,
+            ROOT / "skills",
+            state,
+            state / "skill-registry",
+            MockAdapter(),
+            store,
+            operator_identity="ops-reviewer",
         )
         candidate = admin.propose(
             SKILL_ID,
@@ -316,7 +322,13 @@ def test_reconcile_only_restores_missing_commit_record(tmp_path: Path) -> None:
     assert (state / "skills" / "commits" / "3.json").is_file()
 
     admin = SkillAdmin(
-        ROOT, ROOT / "skills", state, state / "skill-registry", MockAdapter(), store
+        ROOT,
+        ROOT / "skills",
+        state,
+        state / "skill-registry",
+        MockAdapter(),
+        store,
+        operator_identity="ops-reviewer",
     )
     candidate = admin.propose(
         SKILL_ID,
@@ -370,7 +382,13 @@ def test_after_intent_crash_is_stale_and_cleanup_preserves_current(
     assert not (state / "skills" / "commits").exists()
 
     admin = SkillAdmin(
-        ROOT, ROOT / "skills", state, state / "skill-registry", MockAdapter(), store
+        ROOT,
+        ROOT / "skills",
+        state,
+        state / "skill-registry",
+        MockAdapter(),
+        store,
+        operator_identity="ops-reviewer",
     )
     with pytest.raises(SkillAdminError) as excinfo:
         admin.rollback(
