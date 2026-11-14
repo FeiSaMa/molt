@@ -20,7 +20,7 @@
 #
 # 注意：/shells/*/genomes/、/shells/*/prompts/、/shells/*/tools/ 故意不单独列规则。
 # 这些是候选目录，新增文件只产生新 genome_id，不应被 reviewer 请求挡住（owner 只是被自动请求，不是门禁）；
-# 它们仍由下面的 /shells/ 兜底（1 位 owner 评审即可）。
+# 它们仍由下面的 /shells/ 兜底（owner 只会被自动请求，approval 数不构成门禁）。
 /shells/                 @By-Diamond
 /bench/                  @By-Diamond
 
