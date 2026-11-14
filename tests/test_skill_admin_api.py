@@ -636,7 +636,7 @@ def test_new_routes_require_bearer_and_openapi_is_public(tmp_path: Path) -> None
         )
         assert status == 200
         document = json.loads(raw)
-        assert len(document["paths"]) == 16
+        assert len(document["paths"]) == 24
         assert document["paths"]["/api/skill-mcp/openapi.json"]["get"]["security"] == []
     finally:
         harness.close()

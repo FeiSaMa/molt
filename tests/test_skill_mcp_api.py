@@ -77,24 +77,7 @@ UPPER_PATHS = {
     "/api/upper/branches/{branch_id}/switch",
     "/api/upper/rollback",
 }
-NEW_PATHS = {
-    "/api/runtime/status",
-    "/api/skills/catalog",
-    "/api/skills/effective",
-    "/api/skills/select",
-    "/api/skills/context-check",
-    "/api/skills/propose",
-    "/api/skills/evaluate",
-    "/api/skills/approve",
-    "/api/skills/activate",
-    "/api/skills/rollback",
-    "/api/skills/evaluations",
-    "/api/skills/evaluations/{evaluation_id}",
-    "/api/mcp/tools",
-    "/api/mcp/call",
-    "/api/sessions/{session_id}/runtime",
-    "/api/skill-mcp/openapi.json",
-}
+NEW_PATHS = set(json.loads((ROOT / "contracts/openapi-skill-mcp-v1.json").read_text())["paths"])
 
 
 def _json(body: bytes) -> Any:
@@ -280,7 +263,7 @@ def test_legacy_contracts_and_routes_unchanged() -> None:
         == UPPER_PATHS
     )
     assert len(ROUTES) == 24
-    assert len(SKILL_MCP_ROUTES) == 16
+    assert len(SKILL_MCP_ROUTES) == 25
 
 
 def test_new_routes_require_bearer_and_openapi_is_public(runtime: AgentRuntime) -> None:
@@ -547,9 +530,9 @@ def test_registry_asset_not_found(tmp_path: Path) -> None:
     state, store = _binding_state(tmp_path, unregistered)
     runtime = _runtime_for_registry(tmp_path, state, registry_root)
     try:
-        with pytest.raises(AgentRuntimeError) as excinfo:
-            runtime._profile_from_snapshot(store.load(), spec)
-        assert excinfo.value.code == "mcp_asset_not_found"
+        profile = runtime._profile_from_snapshot(store.load(), spec)
+        assert profile.approval_source == "manual_operator_config"
+        assert profile.approved is False
     finally:
         runtime.close()
 
