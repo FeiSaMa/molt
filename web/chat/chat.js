@@ -743,17 +743,19 @@
   }
 
   function snapshotActionLabel(action) {
-    if (action === "initialize") return "init";
+    if (action === "initialize") return "起始";
+    if (action === "turn") return "对话";
+    if (action === "retain") return "保留";
     if (action === "rollback") return "回退";
-    if (action === "turn") return "turn";
-    return action || "record";
+    return action || "记录";
   }
 
   function snapshotLayout(history) {
     var asc = history.slice().sort(function (a, b) { return Number(a.revision||0) - Number(b.revision||0); });
-    var laneByRev = {}, laneLabels = ["main"], maxLane = 0;
+    var laneByRev = {}, laneLabels = ["main"], maxLane = 0, countByRev = {};
     asc.forEach(function (row) {
       var rev = Number(row.revision || 0);
+      countByRev[rev] = row.message_count;
       if (row.action === "rollback" && typeof row.target_revision === "number") {
         maxLane += 1;
         laneByRev[rev] = maxLane;
@@ -763,12 +765,26 @@
         laneByRev[rev] = parentLane === undefined ? 0 : parentLane;
       }
     });
-    return {asc: asc, laneByRev: laneByRev, laneLabels: laneLabels, maxLane: maxLane};
+    return {asc: asc, laneByRev: laneByRev, laneLabels: laneLabels, maxLane: maxLane, countByRev: countByRev};
+  }
+
+  function snapshotNodeTitle(row, current, countByRev) {
+    var rev = Number(row.revision || 0);
+    var count = Number(row.message_count || 0);
+    var text = "r" + rev + " · " + snapshotActionLabel(row.action) + " · " + count + " 条消息";
+    var prevRev = rev - 1;
+    if (prevRev >= 0 && countByRev && countByRev[prevRev] !== undefined) {
+      var diff = count - Number(countByRev[prevRev] || 0);
+      if (diff !== 0) text += "（比 r" + prevRev + " " + (diff > 0 ? "+" : "") + diff + " 条）";
+    }
+    if (row.action === "rollback" && typeof row.target_revision === "number") text += " · 从 r" + row.target_revision + " 恢复";
+    if (Number(row.revision) === Number(current.revision)) text += " · 当前";
+    return text;
   }
 
   function renderSnapshotGraph(history, current, rt) {
     var layout = snapshotLayout(history);
-    var asc = layout.asc, laneByRev = layout.laneByRev, laneLabels = layout.laneLabels, maxLane = layout.maxLane;
+    var asc = layout.asc, laneByRev = layout.laneByRev, laneLabels = layout.laneLabels, maxLane = layout.maxLane, countByRev = layout.countByRev;
     var rowH = 42, laneW = 96, left = 36, top = 20, nodeW = 70, nodeH = 26;
     var width = Math.max(460, left * 2 + maxLane * laneW + nodeW);
     var height = top * 2 + (asc.length ? (Number(asc[asc.length - 1].revision || 0) + 1) * rowH : rowH);
@@ -829,10 +845,10 @@
         "role": "button",
         "aria-label": "revision " + rev + " " + snapshotActionLabel(row.action) + "，messages " + (row.message_count || 0)
       });
-      group.appendChild(svgNode("title", {}, "revision " + rev + " · " + snapshotActionLabel(row.action) + " · messages " + (row.message_count || 0) + (row.action === "rollback" ? " · 从 revision " + row.target_revision + " 回退" : "")));
+      group.appendChild(svgNode("title", {}, snapshotNodeTitle(row, current, countByRev)));
       group.appendChild(svgNode("rect", {x: pos.x, y: pos.y, width: nodeW, height: nodeH, rx: 5}));
       group.appendChild(svgNode("text", {"class": "snapshot-node-rev", x: pos.x + nodeW / 2, y: pos.y + 11, "text-anchor": "middle"}, "r" + rev));
-      group.appendChild(svgNode("text", {"class": "snapshot-node-action", x: pos.x + nodeW / 2, y: pos.y + 21, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0)));
+      group.appendChild(svgNode("text", {"class": "snapshot-node-action", x: pos.x + nodeW / 2, y: pos.y + 21, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0) + " 条"));
       function choose() {
         if (isCurrent) {
           state.runtime.snapshotSelected = null;
@@ -855,7 +871,7 @@
     });
     var box = element("div", "snapshot-graph");
     box.appendChild(svg);
-    box.appendChild(element("p", "snapshot-graph-legend", "实线 = 提交链 · 虚线 = 回退产生的新分支 · 点节点选择，再点「回退到所选快照」切换"));
+    box.appendChild(element("p", "snapshot-graph-legend", "实线 = 正常提交；虚线 = 回退产生的新分支——旧节点不会删除，只是多了一条路。点节点看「这一版改了什么」。"));
     return box;
   }
 
@@ -878,6 +894,22 @@
     if (sameContent) card.appendChild(element("p", "runtime-meta-line", "与当前快照内容相同；回退不会改变会话历史。"));
     if (row.mode || row.decision) card.appendChild(element("p", "runtime-meta-line", "mode " + (row.mode || "—") + " · decision " + (row.decision || "—") + " · n " + (row.n !== undefined ? row.n : "—")));
     if (row.message_count !== undefined) card.appendChild(element("p", "runtime-meta-line", "messages " + row.message_count));
+    var prevCount = null;
+    if (rt && rt.snapshots && rt.snapshots.history) {
+      for (var hi = 0; hi < rt.snapshots.history.length; hi++) {
+        if (Number(rt.snapshots.history[hi].revision) === Number(row.revision) - 1) {
+          prevCount = rt.snapshots.history[hi].message_count;
+          break;
+        }
+      }
+    }
+    if (prevCount !== null && prevCount !== undefined && Number(prevCount) !== Number(row.message_count)) {
+      var delta = Number(row.message_count || 0) - Number(prevCount || 0);
+      card.appendChild(element("p", "runtime-meta-line", "比上一版 " + (delta > 0 ? "+" : "") + delta + " 条消息"));
+    }
+    if (row.action === "rollback" && typeof row.target_revision === "number") {
+      card.appendChild(element("p", "runtime-meta-line", "回退不删除旧节点：r" + (Number(row.revision) - 1) + " 仍在，可再切回。"));
+    }
     if (row.skill_asset_id) card.appendChild(element("p", "runtime-meta-line", "Skill " + row.skill_asset_id));
     if (row.mcp_asset_id) card.appendChild(element("p", "runtime-meta-line", "MCP " + row.mcp_asset_id));
     if (row.probe_run_ids && row.probe_run_ids.length) card.appendChild(element("p", "runtime-meta-line", "底层证据 probe run " + row.probe_run_ids.join(", ")));
@@ -1046,13 +1078,17 @@
       return;
     }
     var history = payload.history || [], current = payload.current || {};
-    if (meta) meta.textContent = "session " + shortHash(state.session.session_id || "—") + " · revision " + (current.revision !== undefined ? current.revision : "—") + " · " + history.length + " 条记录";
+    if (meta) {
+      var rollbackCount = history.filter(function (row) { return row.action === "rollback"; }).length;
+      meta.textContent = "session " + shortHash(state.session.session_id || "—") + " · revision " + (current.revision !== undefined ? current.revision : "—") + " · " + history.length + " 条记录" + (rollbackCount ? " · 回退 " + rollbackCount + " 次" : "");
+    }
     if (!history.length) {
       svg.appendChild(svgNode("text", {x: 40, y: 60, "class": "board-lane-label"}, "还没有快照记录，先发送一轮消息。"));
       renderSnapshotBoardSide();
       return;
     }
     var layout = snapshotLayout(history);
+    var countByRev = layout.countByRev;
     var metrics = snapshotBoardMetrics(layout);
     board.contentW = metrics.width;
     board.contentH = metrics.height;
@@ -1124,10 +1160,10 @@
         "role": "button",
         "aria-label": "revision " + rev + " " + snapshotActionLabel(row.action) + "，messages " + (row.message_count || 0)
       });
-      group.appendChild(svgNode("title", {}, "revision " + rev + " · " + snapshotActionLabel(row.action) + " · messages " + (row.message_count || 0) + (row.action === "rollback" ? " · 从 revision " + row.target_revision + " 回退" : "")));
+      group.appendChild(svgNode("title", {}, snapshotNodeTitle(row, current, countByRev)));
       group.appendChild(svgNode("rect", {x: pos.x, y: pos.y, width: metrics.nodeW, height: metrics.nodeH, rx: 8}));
       group.appendChild(svgNode("text", {"class": "board-node-rev", x: pos.x + metrics.nodeW / 2, y: pos.y + 21, "text-anchor": "middle"}, "r" + rev));
-      group.appendChild(svgNode("text", {"class": "board-node-action", x: pos.x + metrics.nodeW / 2, y: pos.y + 39, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0)));
+      group.appendChild(svgNode("text", {"class": "board-node-action", x: pos.x + metrics.nodeW / 2, y: pos.y + 39, "text-anchor": "middle"}, snapshotActionLabel(row.action) + " · " + (row.message_count || 0) + " 条"));
       function choose() {
         board.selected = row.snapshot_id;
         board.selectedRevision = rev;
