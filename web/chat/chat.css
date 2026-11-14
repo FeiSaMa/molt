@@ -1473,6 +1473,10 @@ body.connected .provider-chip.is-mock { border-color: #e6dcc4; color: #8a6a1f; b
 /* 项目树：全屏演示（iframe 复用 /page/projects.html?embed=1） */
 #project-board .history-board-body { display: block; padding: 0; overflow: hidden; background: var(--paper); }
 #project-board iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--paper); }
+/* 项目树：iframe 自带页头与页脚，隐藏父层重复的一对 */
+#project-board .snapshot-board-head,
+#project-board .snapshot-board-foot { display: none; }
+#project-board .snapshot-board-body { flex: 1 1 auto; }
 
 /* 现场演示：步骤卡 */
 .demo-steps { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
