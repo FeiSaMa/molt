@@ -238,6 +238,10 @@
   .tree-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
   .tree-scroll::-webkit-scrollbar-thumb { background: #CDD5DE; border-radius: 4px; }
   .tree-scroll::-webkit-scrollbar-track { background: transparent; }
+  #config-scroll { padding-left: 4px; padding-right: 4px; }
+  #config-lane-head .lane-head-track { left: 4px; }
+  .config-node .node-line { font-size: 8px; }
+  .config-node .node-line.sub { font-size: 7.5px; }
   .graph-svg { display: block; margin: 0; opacity: 0; transition: opacity .2s ease; }
   .graph-svg.is-visible { opacity: 1; }
 
@@ -1228,13 +1232,12 @@ var PROJECT_FIXTURES = {
 
   var LEFT = 24;
   var TOP = 12;
-  var LANE_GAP = 150;
   var DEPTH_GAP = 56;
-  var NODE_W = 132;
   var NODE_H = 34;
   var RIGHT = 24;
   var BOTTOM = 24;
-  var BAND_PAD = (LANE_GAP - NODE_W) / 2;
+  var SESSION_METRICS = { laneGap: 150, nodeW: 132, bandPad: 9 };
+  var CONFIG_METRICS = { laneGap: 126, nodeW: 118, bandPad: 4 };
 
   var state = {
     projectId: null,
@@ -1446,10 +1449,11 @@ var PROJECT_FIXTURES = {
 
   function renderGraph(svg, nodes, lanes, byId, options) {
     clear(svg);
+    var metrics = options.metrics || SESSION_METRICS;
 
     var maxDepth = 0;
     nodes.forEach(function (node) { maxDepth = Math.max(maxDepth, nodeDepth(node, byId)); });
-    var width = LEFT + (lanes.length - 1) * LANE_GAP + NODE_W + RIGHT;
+    var width = LEFT + (lanes.length - 1) * metrics.laneGap + metrics.nodeW + RIGHT;
     var height = TOP + maxDepth * DEPTH_GAP + NODE_H + BOTTOM;
 
     svg.setAttribute("viewBox", "0 0 " + width + " " + height);
@@ -1460,12 +1464,12 @@ var PROJECT_FIXTURES = {
 
     var laneLayer = svgEl("g", { class: "lane-layer" });
     lanes.forEach(function (lane, index) {
-      var laneX = LEFT + index * LANE_GAP;
+      var laneX = LEFT + index * metrics.laneGap;
       laneLayer.appendChild(svgEl("rect", {
         class: "lane-band" + (index % 2 === 1 ? " alt" : ""),
-        x: String(laneX - BAND_PAD),
+        x: String(laneX - metrics.bandPad),
         y: "0",
-        width: String(LANE_GAP),
+        width: String(metrics.laneGap),
         height: String(height)
       }));
     });
@@ -1476,9 +1480,9 @@ var PROJECT_FIXTURES = {
       nodeParents(node).forEach(function (parentId) {
         var parent = byId[parentId];
         if (!parent) return;
-        var x1 = LEFT + parent.lane * LANE_GAP + NODE_W / 2;
+        var x1 = LEFT + parent.lane * metrics.laneGap + metrics.nodeW / 2;
         var y1 = TOP + nodeDepth(parent, byId) * DEPTH_GAP + NODE_H;
-        var x2 = LEFT + node.lane * LANE_GAP + NODE_W / 2;
+        var x2 = LEFT + node.lane * metrics.laneGap + metrics.nodeW / 2;
         var y2 = TOP + nodeDepth(node, byId) * DEPTH_GAP - 2;
         var mid = y1 + Math.max(10, (y2 - y1) / 2);
         var d = "M" + x1 + " " + y1 + " C" + x1 + " " + mid + " " + x2 + " " + mid + " " + x2 + " " + y2;
@@ -1521,10 +1525,10 @@ var PROJECT_FIXTURES = {
       tip.textContent = nodeName(node) + " · " + node.label + " · " + node.note;
       group.appendChild(tip);
 
-      var x = LEFT + node.lane * LANE_GAP;
+      var x = LEFT + node.lane * metrics.laneGap;
       var y = TOP + nodeDepth(node, byId) * DEPTH_GAP;
       group.appendChild(svgEl("rect", {
-        class: "node-card", x: String(x), y: String(y), width: String(NODE_W), height: String(NODE_H), rx: "4", ry: "4"
+        class: "node-card", x: String(x), y: String(y), width: String(metrics.nodeW), height: String(NODE_H), rx: "4", ry: "4"
       }));
       group.appendChild(svgEl("rect", {
         class: "node-accent", x: String(x + 1), y: String(y + 5), width: "3", height: String(NODE_H - 10), rx: "1.5",
@@ -1543,7 +1547,7 @@ var PROJECT_FIXTURES = {
         var badgeW = 27;
         group.appendChild(svgEl("rect", {
           class: "merge-badge",
-          x: String(x + NODE_W - badgeW - 3),
+          x: String(x + metrics.nodeW - badgeW - 3),
           y: String(y - 9),
           width: String(badgeW),
           height: "10",
@@ -1551,7 +1555,7 @@ var PROJECT_FIXTURES = {
         }));
         var badgeText = svgEl("text", {
           class: "merge-badge-text",
-          x: String(x + NODE_W - badgeW / 2 - 3),
+          x: String(x + metrics.nodeW - badgeW / 2 - 3),
           y: String(y - 2)
         });
         badgeText.textContent = "合并";
@@ -1560,7 +1564,7 @@ var PROJECT_FIXTURES = {
 
       if (isCurrent) {
         group.appendChild(svgEl("circle", {
-          class: "node-dot", cx: String(x + NODE_W - 8), cy: String(y + 8), r: "2.6"
+          class: "node-dot", cx: String(x + metrics.nodeW - 8), cy: String(y + 8), r: "2.6"
         }));
       }
 
@@ -1576,15 +1580,15 @@ var PROJECT_FIXTURES = {
     svg.appendChild(nodeLayer);
   }
 
-  function renderLaneHead(trackId, lanes) {
+  function renderLaneHead(trackId, lanes, metrics) {
     var track = $(trackId);
     if (!track) return;
     clear(track);
-    var width = LEFT + (lanes.length - 1) * LANE_GAP + NODE_W + RIGHT;
+    var width = LEFT + (lanes.length - 1) * metrics.laneGap + metrics.nodeW + RIGHT;
     track.style.width = width + "px";
     lanes.forEach(function (lane, index) {
       var label = el("span", "lane-head-label", lane.name);
-      label.style.left = (LEFT + index * LANE_GAP + NODE_W / 2) + "px";
+      label.style.left = (LEFT + index * metrics.laneGap + metrics.nodeW / 2) + "px";
       track.appendChild(label);
     });
     var scroll = trackId === "session-lane-track" ? $("tree-scroll") : $("config-scroll");
@@ -1604,6 +1608,7 @@ var PROJECT_FIXTURES = {
     renderGraph($("tree"), state.nodes, state.lanes, state.byId, {
       markerPrefix: "session",
       nodeClass: "tree-node",
+      metrics: SESSION_METRICS,
       ariaLabel: "会话树",
       currentId: state.currentId,
       selectedId: state.selectedId,
@@ -1613,7 +1618,7 @@ var PROJECT_FIXTURES = {
       line2: sessionLine2,
       onSelect: selectSession
     });
-    renderLaneHead("session-lane-track", state.lanes);
+    renderLaneHead("session-lane-track", state.lanes, SESSION_METRICS);
     state.newNodeId = null;
   }
 
@@ -1621,6 +1626,7 @@ var PROJECT_FIXTURES = {
     renderGraph($("config-tree"), state.config.nodes, state.config.lanes, state.config.byId, {
       markerPrefix: "config",
       nodeClass: "config-node",
+      metrics: CONFIG_METRICS,
       ariaLabel: "配置树",
       currentId: state.config.currentId,
       selectedId: state.config.selectedId,
@@ -1629,7 +1635,7 @@ var PROJECT_FIXTURES = {
       line2: configLine2,
       onSelect: selectConfig
     });
-    renderLaneHead("config-lane-track", state.config.lanes);
+    renderLaneHead("config-lane-track", state.config.lanes, CONFIG_METRICS);
   }
 
   function refreshSessionSelection() {
