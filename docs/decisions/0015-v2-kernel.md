@@ -30,7 +30,7 @@ Unix socket 权限 0600，同 UID 校验；JSON-RPC 2.0，四字节大端长度�
 
 ## 迁移及风险
 
-M0 只记录基线和范围，M1 在独立 PR 建立内核，M2 feature flag 双路径并做 fixture/replay parity，M3 dry-run、幂等迁移和默认切换。v1 原样保留，迁移记录来源与哈希，报告舍入；不跨 scenario_version 比较。每阶段可回滚代码，v2 数据不可用旧写入器修改。主要风险为断电顺序、日志尾部与提交判定、无外部锚点的完整性边界、Python 隐藏写路径、跨语言编码差异、secret 扫描漏报及实验模块对 CLI 的依赖。必须用崩溃/篡改矩阵及端到端测试验证，不能以文档替代。
+M0 记录基线并按已确认范围物理归档实验面、断开入口和同步测试/构建，M1 在独立 PR 建立内核，M2 feature flag 双路径并做 fixture/replay parity，M3 dry-run、幂等迁移和默认切换。v1 原样保留，迁移记录来源与哈希，报告舍入；不跨 scenario_version 比较。每阶段可回滚代码，v2 数据不可用旧写入器修改。主要风险为断电顺序、日志尾部与提交判定、无外部锚点的完整性边界、Python 隐藏写路径、跨语言编码差异、secret 扫描漏报及实验模块对 CLI 的依赖。必须用崩溃/篡改矩阵及端到端测试验证，不能以文档替代。
 
 ## 检查点与发布
 
@@ -48,3 +48,11 @@ M0 只记录基线和范围，M1 在独立 PR 建立内核，M2 feature flag 双
 | unknown | 客户端断线或写入结果不明 | 查询持久 request ID/恢复后判定；禁止声称未提交或用新 ID 盲目重试。 |
 
 对象后、manifest 后、journal 后崩溃恢复旧态；提交日志后、pointer 替换前后恢复新态。日志追加和 fsync 边界必须区分未确认尾部与已确认记录，具体确认标记和故障矩阵在 M1 定稿。先用 UDS 打通 init → object.put → record.append → generation.commit → current → audit，再完善恢复、回退、审计、GC 和检查点。
+
+## M0 范围审阅结论（2026-11-15）
+
+管理员确认 probe/probe-c2 整体属于实验面：shell、bench、scenario 与 probes、upper_scenarios 一起归档。
+保留 code-repair/svc-config、search/holdout、demo/svc-config、core 与适配器。
+agent runtime 依赖实验 API，不是通用 runtime，随 agent 归档；contracts 是实验 API 契约，不是 v1 协议事实源。
+web/export 和实验模块物理移到 attic；先断开 CLI/demo 入口，再移动资产与对应测试，最后排除构建和检查。
+不修改 harness/verifier 内容，不改变 v1 schema 或 gate。M0 完成仅表示 ready-for-review，不表示合并或允许开始 M1。

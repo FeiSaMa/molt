@@ -5,6 +5,10 @@
 > 字段级事实源是 `schemas/v1/*.schema.json` 与 `molt/core/types.py`，
 > 生成物是 [docs/protocol.md](docs/protocol.md)（禁止手改）。三者冲突时以 schema 为准。
 
+当前阶段为 M0；只做范围收敛、基线和评审材料，不进入 Rust/M1。
+以下演示数字为 v1 历史口径；展示路径已归档，当前 demo 不输出页面数据。
+Python 命令统一 `PYTHONDONTWRITEBYTECODE=1`，基线解释器固定 3.12.13。
+
 ## 一、定位与 claim
 
 molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → 执行题集 → 判分 → 门禁 → 采纳 / 回退」
@@ -12,7 +16,7 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 
 **claim（只允许这样说）**
 
-> 模型能力已经碾压这 10 道题；molt 证明的是：在成功率不降的约束下，进化可以发生在成本与墙钟上——high/full → low/full，cost −72%、wall −61%，gate adopt，1 live + 1 replay；tracked 证据（run/result/gate 与 `web/data` 数据面）可复算，历史候选扫描的原始 run 未随仓库导出（见下三层）。
+> 模型能力已经碾压这 10 道题；molt 证明的是：在成功率不降的约束下，进化可以发生在成本与墙钟上——high/full → low/full，cost −72%、wall −61%，gate adopt，1 live + 1 replay；tracked 证据（run/result/gate 与 `attic/web/data` 数据面）可复算，历史候选扫描的原始 run 未随仓库导出（见下三层）。
 
 - **题目饱和**：真实 Pi 基线 **10/10**，成功率维度没有 headroom。fixture `3/10`
   只是 `molt calibrate` 的校准口径，**不代表真实难度**，不得写成真实基线。
@@ -26,9 +30,9 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
      候选侧第 10 条扫描 run 未随仓库导出（被 closure live 顶替，只剩 9 条 replay），
      不能表述为当前 tracked 数据已完整复算。
   2. **当前 tracked 扫描级复算**：`$0.010684 / 42.6s`，**−70.0% / −60.1%**
-     （`web/data/search_results.json` + `web/data/runs.json` 的逐 run 墙钟）；
+     （`attic/web/data/search_results.json` + `attic/web/data/runs.json` 的逐 run 墙钟）；
      页面对候选 cost/wall 与历史 claim 的一致性标 `verified=false`。
-  3. **gate 级**：cps `$0.003556022… → $0.001068401`（**−70.0%**，`web/data/gate.json`）。
+  3. **gate 级**：cps `$0.003556022… → $0.001068401`（**−70.0%**，`attic/web/data/gate.json`）。
      扫描总成本与墙钟不是 gate 级复算。
   holdout `5/5 → 5/5`，gate `adopt / lower_cost_per_solved`。
   这是**选定的高→低起点**，不是搜索空间最优性声称。
@@ -45,8 +49,8 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 - 不跨 `scenario_version` 比较（当前 `demo-6`）。跨版本数字不可比，也不得放进同一张表。
 - 不声称成功率提升或搜索空间最优：10 题已饱和（真实基线 10/10），demo 只是选定的
   high→low 高成本起点；也没有候选比 low/full 更便宜。
-- 不声称 `web/page/` 是 molt 的产物或新增证据：它是零构建静态展示页（`file://` 直开、
-  只读 `web/data`），`molt export` 仍只产出数据面；页面必须按 `demo_group` + `provenance`
+- 不声称 `attic/web/page/` 是 molt 的产物或新增证据：它是零构建静态展示页（`file://` 直开、
+  只读 `attic/web/data`），已归档的 v1 `molt export` 只产出数据面；页面必须按 `demo_group` + `provenance`
   分开标注（closure 的 1 live + 1 replay，scan10 的 10 条 replay），不得把 replay/fixture
   说成 live。
 - 不把 `demo` 的证据表述成「两次 live 运行」：现场闭环只有 1 条 live 候选 + 1 条 replay 基线，
@@ -61,14 +65,14 @@ molt 是自进化 agent 引擎的**外层编排器**：把「搜索候选 → �
 - `molt demo`：1 live + 1 replay 闭环、10 题扫描回放、180s 硬上限（ADR-0008）；
   选定 `high/full → low/full` 的真实高→低起点，gate `adopt`（10/10；
   扫描级 cost −72% / wall −61%，gate 级 cps −70.0%，holdout 5/5 → 5/5）。
-  仓库交付 `web/data` 数据面；`web/page/` 为零构建展示页，不是导出产物。
+  仓库交付 `attic/web/data` 数据面；`attic/web/page/` 为零构建展示页，不是导出产物。
 - `molt doctor --repo-policy`：只读检查协作文件、冻结面与契约域。
 
 **范围与冗余（ADR-0009）**
 
 - not claimed 包含所有**未实现 / 按需**的冗余项：6 开关 / SoL-Pi、compaction 维度、
   本地 9B/双模型、LLM proposer 主路径、memory/RAG、skill evolving、multi-agent、
-  模型维度、escalation/routing、git tag 回滚、HTML 页面（指导出产物；`web/page/` 已落地为消费方页面，不是导出产物）。
+  模型维度、escalation/routing、git tag 回滚、HTML 页面（指导出产物；`attic/web/page/` 已落地为消费方页面，不是导出产物）。
 - 实现原则：只在现有**端口 / adapter / shell** 边界内扩展；不改 core 协议。
   确需改 core 时先写 ADR，并按新 major 走（`schemas/vN/`）。
 - 详见 [ADR-0009](docs/decisions/0009-scope-and-redundancy.md)。
@@ -114,18 +118,18 @@ run → result → gate_decision → archive → snapshot → event → redactio
 **比较域是 `scenario_version`**（当前 `demo-6`）。每次 run 与 gate decision 带
 `shell_version` 与 `verifier_hash`；版本不同即 `incomparable`，禁止比较。
 `live` 与 `replay` 必须在 `run.ext` 中如实标注：`live` 需 `model` 或 `pi*` runtime，
-`replay` 需 `ext.replay_of_run_id`，否则导出 fail closed。**不得把 fixture 结果标成 live。**
+`replay` 需 `ext.replay_of_run_id`，否则审计应拒绝。**不得把 fixture 结果标成 live。**
 
 ## 四、常用命令
 
 ```bash
 uv sync --extra dev                                  # 装 dev 依赖（pytest / ruff / jsonschema）
 uv run ruff check .                                  # lint（line-length 100）
-uv run pytest -q                                     # 516 passed / 2 skipped；pi 标记默认 skip
-uv run python -m molt schema validate --all          # 68 条记录通过
+uv run pytest -q                                     # 保留范围基线见 docs/research/v2-baseline.md；pi 默认 skip
+uv run python -m molt schema validate --all          # 校验保留范围记录
 uv run python -m molt scenario validate --scenario scenarios/demo/scenario.json  # validate 的 --scenario 是路径
 # 注意：scenario validate 的 --scenario 是 scenario.json 路径；
-# search/propose/audit/export/demo 的 --scenario 是 id（或 shell_id 别名）。
+# search/propose/audit/demo 的 --scenario 是 id（或 shell_id 别名）。
 uv run python -m molt calibrate --scenario demo --min-pass 3   # fixture 基线 solved=3
 uv run python -m molt search --runtime fixture       # 搜索集（fixture 确定性、零成本）
 uv run python -m molt search --runtime pi            # 真实 Pi：需本地 pi + bwrap，受预算约束
@@ -134,8 +138,7 @@ uv run python -m molt gate --fixture tests/fixtures/gate/   # G1–G8 夹具
 uv run python -m molt adopt --state /tmp/molt-state --genome shells/code-repair/genomes/v0.json
 uv run python -m molt revert --state /tmp/molt-state --to <archive_id>
 uv run python -m molt audit --scenario demo          # 只读重算
-uv run python -m molt export --scenario demo --out /tmp/molt-ci-web
-uv run python -m molt demo --mode replay --state /tmp/molt-demo --out /tmp/molt-demo-web
+uv run python -m molt demo --mode replay --state /tmp/molt-demo 
 uv run python -m molt demo --max-wall 180            # 现场：1 live + 1 replay + 10 题回放
 uv run python -m molt doctor --deps                  # core 依赖边界
 uv run python -m molt doctor --repo-policy           # 协作文件 / 冻结面 / 契约域自检
@@ -155,7 +158,7 @@ uv run python -m molt doctor --recover --state state # 事务兜底恢复（幂�
 | --- | --- | --- |
 | 契约域 | @FeiSaMa | `molt/core/**`、`schemas/**`、`docs/protocol.md`、`docs/decisions/**`（ADR） |
 | 场景域 | @By-Diamond | `shells/**`、`bench/**`、verifier 语义、题集与 holdout |
-| 集成域 | @dong856 | `molt/adapters/**`、`web/**`、`.github/**`、CI、非契约文档 |
+| 集成域 | @dong856 | `molt/adapters/**`、`attic/**`、`.github/**`、CI、非契约文档 |
 
 可按领域调整，但调整必须同时改 `.github/CODEOWNERS` 与本表，并走一次 PR。
 
@@ -197,31 +200,12 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 按冻结面处理。CODEOWNERS 因此只锁 `/shells/` 与 `/bench/` 的整体 owner，
 **不为 `genomes/`、`prompts/`、`tools/` 单独加锁**，避免候选迭代被拖死。
 
-### `web/data` 契约冻结（前端）
+### M0 范围收敛（管理员确认）
 
-`web/data/` 是引擎与页面的唯一接口；页面由前端 owner 维护，破坏性变更会让页面静默出错。
-
-**冻结三层**：
-
-- **Tier 1（冻结）**：`index.json`、`scenario.json`、`runs.json`、`gate.json`、`variants.json` 的字段名、类型、可空性与取值域。只允许新增字段；改名、删字段、改语义一律禁止。
-- **Tier 2（内部，页面不得依赖）**：`redaction.json`、`events/*.jsonl`、`bundle.js`、各文件的 `ext` 子对象、`web/data/probe/`。随时可变。
-- **Tier 3（聚合）**：`search_results.json`、`report_results.json` 只保证 `solved` / `total` / `cost_total_usd` / `cost_per_solved_usd` / `invalid_ratio`。
-
-`web/data/probe/` 是独立演示数据面，页面可以读取；它不属于 demo-6 的 Tier 1 契约，也不得被当作 demo-6 证据。
-
-**语义不变量**：
-
-- `runs[].provenance.kind ∈ {fixture, live, replay}`；`live` 仅指真实模型调用；`replay` 必须带 `replay_of_run_id`；`fixture` 不得标成 `live`。
-- `runs[].demo_group ∈ {closure, scan10, candidate-scan}`；`null` 表示未分组。
-- `gate.decisions[].verdict ∈ {adopt, reject, incomparable, unstable}`。
-- `holdout.detail` 固定 `"not-exported"`；页面不得展示 holdout 逐题。
-- `index.revision` 是刷新信号，不是兼容性信号；不得用它做缓存键。
-
-**版本与流程**：
-
-- `index.schema_version` 当前 `1.0.0`。Tier 1 的破坏性变更必须升 major、写 ADR、在 PR 描述里列出字段差异，并提前通知前端 owner。
-- 新增字段按 minor 处理；页面必须忽略未知键。
-- probe 数据永不进入 `web/data` 的五个 Tier 1 文件；`web/data/probe/` 是独立演示数据面（Tier 2），导出层仍只写 15 个文件，页面按需读取，不得把它当 demo-6 证据。隔离靠 state 白名单（`--state /tmp/molt-probe/...`），导出层不承担过滤职责（`molt/export.py` 不过滤 probe 记录）。
+保留 code-repair/svc-config shells、bench/search/holdout、demo/svc-config scenarios、core 与 fixture/deterministic/pi adapters。
+probe/probe-c2 家族、agent/upper/skills/mcp、耦合资产、HTTP/API 与展示功能整体移入 attic。
+`molt/agent/runtime.py` 是实验 runtime，不保留为通用接口。attic 不参与 wheel、ruff 或 pytest。
+恢复说明见 [attic/README.md](attic/README.md)。不改冻结面内容或 v1 schema。
 
 ## 七、禁止清单
 
@@ -231,7 +215,7 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 - 提交 `runs/` 原始日志、`state/`、`evidence/`、`.env`、`.pi/`。
 - 全局 `pip install`（Arch 系统 Python 会被污染）；一律 `uv`。
 - Pi 调用加 `--no-session`、`--no-tools`（argv 契约见 ADR-0006，`assert_required_flags` 会拦）。
-- 手改 `web/data/**`（导出产物，必须由 `molt export` 生成）。
+- 将历史 attic 数据作为当前 live 证据。
 - 把 `fixture` 结果标成 `live`，或把 `live` 结果写成 `fixture`。
 - 跨 `scenario_version` 比较，或把小样本描述性结论写成统计显著。
 
@@ -259,8 +243,6 @@ shells/<id>/tools/*.json       # 新增工具声明候选
       `molt scenario validate --scenario scenarios/demo/scenario.json` 通过；
       `docs/protocol.md` 无手改漂移。
 - [ ] 零写入：命令跑完仓库树不变（`tests/test_zero_write.py` + `git status --porcelain` 为空）。
-      例外：现场 `run_demo` 会写 `web/data/probe/{state,run}.json` 与 `shells/probe/memory/live.md`，
-      它们被 gitignore，属于允许的生成物；其余路径仍按零写入要求。
 - [ ] 证据可复算：涉及 run/result 的变更能在 `molt audit` 下重算出同样数字。
 - [ ] replay / live 标注：`run.ext.provenance.kind` 与实际一致，`replay_of_run_id` 存在。
 - [ ] claim 口径：措辞符合 §一（未观察到下降 + 单题成本不升，附配对表）。
@@ -282,4 +264,4 @@ shells/<id>/tools/*.json       # 新增工具声明候选
 - [docs/style.md](docs/style.md)：代码 / JSON / Markdown / 时间 / 路径 / claim 语言。
 - [docs/architecture.md](docs/architecture.md)：三层、七端口、数据流、事务。
 - [docs/protocol.md](docs/protocol.md)：11 类记录字段表（生成物）。
-- [docs/decisions/](docs/decisions/)：ADR 0001–0009。
+- [docs/decisions/](docs/decisions/)：ADR 与 v2 提议。

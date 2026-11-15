@@ -5,16 +5,16 @@ molt 的变更流程。契约与禁止清单见 [AGENTS.md](AGENTS.md)，格式�
 ## 一、环境
 
 ```bash
-uv sync --extra dev
-uv run pytest -q
-uv run ruff check .
+PYTHONDONTWRITEBYTECODE=1 uv sync --python 3.12.13 --extra dev
+PYTHONDONTWRITEBYTECODE=1 uv run pytest -q
+PYTHONDONTWRITEBYTECODE=1 uv run ruff check .
 ```
 
 - 只用 `uv`。**禁止** `pip install` / `sudo pip` / `--break-system-packages`：
   本机是 Arch，系统 Python 由 pacman 管理，全局装包会污染 `/usr/lib/python3.11`。
 - venv 在仓库内 `.venv/`（已 gitignore）；不要再建第二套解释器。
 - 需要临时工具用 `uv run --with <pkg> ...`，不要写进 `pyproject.toml` 的运行时依赖。
-- 依赖变更必须同时提交 `uv.lock`；CI 用 `uv sync --extra dev --locked`，lock 过期即失败。
+- 依赖变更必须同时提交 `uv.lock`；CI 用 `PYTHONDONTWRITEBYTECODE=1 uv sync --python 3.12.13 --extra dev --locked`，lock 过期即失败。
 
 ## 二、分支
 
@@ -22,9 +22,9 @@ uv run ruff check .
 git switch -c feat/<area>/<slug> origin/main
 ```
 
-- `<area>` ∈ `core` | `shell` | `bench` | `adapter` | `web` | `docs` | `ci`。
+- `<area>` ∈ `core` | `shell` | `bench` | `adapter` | `attic` | `docs` | `ci`。
 - `<slug>` 小写连字符，一句话说清做什么：`feat/shell/svc-config`、`fix/bench/holdout-hash`。
-- 分支从 `origin/main` 开，不基于别人的未合并分支；不允许直推 `main`，
+- 通常从 `origin/main` 开；M0 特批 stacked 分支 `refactor/v2-scope-removal` 基于 `refactor/v2-kernel`；不允许直推 `main`，
   不允许对 `main` force push（分支保护与 CI 会拦）。
 
 ## 三、提交信息
@@ -48,7 +48,7 @@ feat(shell): 新增 svc-config shell 的三端口实现
 | 变更面 | 建议评审 | 附加要求 |
 | --- | --- | --- |
 | 契约域：`schemas/**`、`molt/core/ports.py`、`docs/protocol.md`、`docs/decisions/**` | 1–2 人 | 必须有 ADR；建议至少 1 位 @FeiSaMa |
-| 其余：shell / bench / adapter / web / docs / CI | 1 人（建议） | — |
+| 其余：shell / bench / adapter / attic / docs / CI | 1 人（建议） | — |
 
 - 仓库不设 approve 数量门禁：两个 active ruleset（`main-protection` / `protect-main`）只有删除保护与
   禁 non-fast-forward，未登记 required approvals 或必需状态检查，approve 数量不构成合并条件。
@@ -89,11 +89,10 @@ feat(shell): 新增 svc-config shell 的三端口实现
 
 ## 七、证据入库
 
-- 只入库**可复算的聚合证据**：`web/data/**` 由 `molt export` 生成，`index.json` 的 sha256
-  必须与文件一致（`tests/test_export_contract.py` 会校验）。
+- 历史展示聚合证据保存在 attic，不再导出或更新；新运行的 canonical state 放仓库外。
 - **不入库**：`runs/` 原始日志、`state/`、`evidence/`、`.env`、`.pi/`。
 - 提交前脱敏：`redaction` 报告覆盖的字段不得出现在 diff 里；任何 key/token 一律走 secrets。
-- `live` 证据必须带成本与 `replay_of_run_id`（若为 replay），否则导出 fail closed。
+- `live` 证据必须带成本与 `replay_of_run_id`（若为 replay），否则证据无效。
 
 ## 八、PR checklist（模板里的同一份）
 
@@ -106,14 +105,13 @@ feat(shell): 新增 svc-config shell 的三端口实现
 - [ ] 粘贴验证命令与输出（`ruff`、`schema validate`、
       `scenario validate --scenario scenarios/demo/scenario.json`）。
 - [ ] 全量 `pytest` 手动 / 集中执行，不属于 CI，非 PR 必贴项。
-- [ ] 回滚方式：revert 提交 / `molt revert --to <archive_id>` / 重生成导出。
+- [ ] 回滚方式：revert 提交 / `molt revert --to <archive_id>`。
 
 ## 九、CI 期望
 
 `.github/workflows/ci.yml` 五个作业：`lint`、`schema`、`boundary`、`audit`、`secret-scan`；
 CI 不运行 pytest（全量为手动 / 集中执行，见 §五）。`audit` 作业同时跑
-`molt demo --mode replay`（180s 上限、产物落 `/tmp`），把 D7 的分组 / provenance / 15 文件
-导出纳入 CI。`pi-smoke` 是独立的手动工作流（`workflow_dispatch`），不是 CI 作业：
+`molt demo --mode replay`（180s 上限、state 落 `/tmp`），随后 audit 重算；不导出 web 数据。`pi-smoke` 是独立的手动工作流（`workflow_dispatch`），不是 CI 作业：
 只跑 1 条 live task，`max_cost_usd` 是**本次单 run** 的运行后验收上限（不是 scenario 总预算），
 超过即 fail。CI 只用仓库 secrets，任何 key 都不得写进工作流文件。
 
@@ -127,3 +125,9 @@ CI 不运行 pytest（全量为手动 / 集中执行，见 §五）。`audit` �
 两者求并集，严格项为准：启用的规则是删除保护与禁 non-fast-forward，
 **未登记必需状态检查**；CI 的五个作业不构成合并阻塞项。
 旧 ruleset 是否删除由用户决定，未在本批次处理。
+
+## M0 评审交接
+
+attic 已从 wheel、ruff 与 pytest 排除；历史模块不保证在新路径直接运行。
+M0 只本地提交，不推送或合并；基线采用 Python 3.12.13，详情见 docs/research/v2-baseline.md。
+恢复见 attic/README.md；不修改 v1 schema、判分、gate 或题集语义。

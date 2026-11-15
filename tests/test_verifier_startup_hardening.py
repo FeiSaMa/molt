@@ -5,7 +5,6 @@
 - 七项启动 / 发现攻击在加固版上不能改变判定；
 - benign side-file（helper / 启动 hook / 模块遮蔽 / pytest 配置）不影响正确解；
 - 非法 solution 类型、超时、启动异常与临时资源清理；
-- probe 与 probe-c2 verifier 字节相同。
 """
 
 from __future__ import annotations
@@ -426,6 +425,5 @@ def test_staging_is_cleaned_up_on_every_path(tmp_path: Path, shell_id: str) -> N
     assert _staging_dirs() == before
 
 
-# -- probe / probe-c2 字节相同 -------------------------------------------
 
 

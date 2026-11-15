@@ -13,7 +13,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, refactor/v2-kernel]
 
 permissions:
   contents: read
@@ -34,6 +34,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
+          python-version: "3.12.13"
           enable-cache: true
           cache-dependency-glob: uv.lock
       - name: 安装 dev 依赖（lock 必须新鲜）
@@ -48,6 +49,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
+          python-version: "3.12.13"
           enable-cache: true
           cache-dependency-glob: uv.lock
       - run: uv sync --extra dev --locked
@@ -70,6 +72,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
+          python-version: "3.12.13"
           enable-cache: true
           cache-dependency-glob: uv.lock
       - run: uv sync --extra dev --locked
@@ -114,6 +117,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
+          python-version: "3.12.13"
           enable-cache: true
           cache-dependency-glob: uv.lock
       - run: uv sync --extra dev --locked
@@ -121,34 +125,12 @@ jobs:
         run: uv run python -m molt gate --fixture tests/fixtures/gate/
       - name: 只读重算
         run: uv run python -m molt audit --scenario demo
-      - name: 导出数据面（产物落 /tmp）
-        run: uv run python -m molt export --scenario demo --out /tmp/molt-ci-web
       - name: demo 闭环（replay 模式：0 live，10 题扫描回放单独成组）
         run: |
           uv run python -m molt demo --mode replay \
-            --state /tmp/molt-ci-demo --out /tmp/molt-ci-demo-web --max-wall 180
-      - name: 导出文件集与 sha256 自洽
-        run: |
-          uv run python - <<'PY'
-          import hashlib
-          import json
-          import pathlib
-          import sys
-
-          from molt.export import DATA_FILES
-
-          out = pathlib.Path("/tmp/molt-ci-web")
-          index = json.loads((out / "index.json").read_text(encoding="utf-8"))
-          expected = set(DATA_FILES) - {"index.json"}
-          got = set(index["files"])
-          if got != expected:
-              sys.exit(f"导出文件集不符: 缺 {sorted(expected - got)} 多 {sorted(got - expected)}")
-          for name, meta in sorted(index["files"].items()):
-              digest = hashlib.sha256((out / name).read_bytes()).hexdigest()
-              if digest != meta["sha256"]:
-                  sys.exit(f"sha256 不一致: {name}")
-          print(f"export ok: {len(got)} files, sha256 全部一致")
-          PY
+            --state /tmp/molt-ci-demo --max-wall 180
+      - name: demo 证据重算
+        run: uv run python -m molt audit --scenario demo --state /tmp/molt-ci-demo
       - name: 零写入（仓库树不得被命令改动）
         run: |
           if [ -n "$(git status --porcelain)" ]; then
