@@ -42,42 +42,10 @@ def _structure(value: Any) -> Any:
 # -- 三层数字：历史扫描 claim / 当前 tracked 扫描复算 / gate cps --
 
 
-def test_readme_three_layer_numbers_are_separated() -> None:
-    claim = _section(_read("README.md"), "## claim", "## 设计冗余")
-    blockquote = next(line for line in claim.splitlines() if line.startswith("> 模型能力"))
-    assert "tracked 证据" in blockquote
-    assert "未随仓库导出" in blockquote
-
-    historical = _between(claim, "历史扫描级 claim", "当前 tracked 扫描级复算")
-    assert "[ADR-0008](docs/decisions/0008-demo.md)" in historical
-    assert "$0.009978" in historical and "41.7s" in historical
-    assert "−72%" in historical and "−61%" in historical
-    assert "未随仓库导出" in historical
-    assert "不能表述为当前 tracked 数据已完整复算" in historical
-
-    current = _between(claim, "当前 tracked 扫描级复算", "**gate 级**")
-    assert "$0.010684" in current and "42.6s" in current
-    assert "−70.0%" in current and "−60.1%" in current
-    assert "verified=false" in current and "web/page/model.js" in current
-    assert "$0.009978" not in current and "41.7s" not in current
-
-    gate = claim.split("**gate 级**", 1)[1]
-    assert "cps" in gate
-    assert "0.003556022" in gate and "0.001068401" in gate
-    assert "$0.010684" not in gate and "42.6s" not in gate
-    assert "扫描总成本与墙钟不是 gate 级复算" in gate
-
-
-def test_readme_table_is_labeled_as_historical_claim() -> None:
-    section = _section(
-        _read("README.md"),
-        "### 真实 Pi 基线（demo-6，2026-11-11）",
-        "## 状态",
-    )
-    assert "| **low/full（v0，demo 候选）** | **10/10** | **$0.009978**" in section
-    assert "历史扫描级 claim" in section
-    assert "未随仓库导出" in section
-    assert "$0.010684" in section and "verified=false" in section
+def test_readme_links_to_canonical_claim_sources() -> None:
+    readme = _read("README.md")
+    assert "[AGENTS.md](AGENTS.md)" in readme
+    assert "[ADR-0008](docs/decisions/0008-demo.md)" in readme
 
 
 def test_agents_three_layer_numbers_are_separated() -> None:

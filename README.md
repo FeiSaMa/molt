@@ -190,6 +190,6 @@ PYTHONDONTWRITEBYTECODE=1 uv run python -m molt serve --state /tmp/molt-agent-st
 - [CONTRIBUTING.md](CONTRIBUTING.md)：开发流程、分支、测试、schema 更新和提交要求。
 - [docs/architecture.md](docs/architecture.md)：核心架构、端口、数据流、门禁与事务细节。
 - [docs/protocol.md](docs/protocol.md)：由 schema 生成的记录字段说明。
-- [docs/decisions/](docs/decisions/)：架构决策及兼容性说明。
+- [docs/decisions/](docs/decisions/)：架构决策及兼容性说明；[ADR-0008](docs/decisions/0008-demo.md) 记录 demo 历史证据。
 - [docs/api/](docs/api/)：本地 Agent API 与网页接入文档。
 - [probes/README.md](probes/README.md)：独立 Probe 实验工具、流程及数据说明。
