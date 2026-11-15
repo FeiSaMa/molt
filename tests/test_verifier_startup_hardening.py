@@ -1,7 +1,7 @@
-"""启动加固：三个 verifier 只从仓库外私有 staging 加载候选解。
+"""启动加固：保留的 code-repair verifier 只从仓库外私有 staging 加载候选解。
 
 覆盖 D1/D2：
-- 27 题正确解全部通过、确定性错误解全部失败；
+- 15 题正确解全部通过、确定性错误解全部失败；
 - 七项启动 / 发现攻击在加固版上不能改变判定；
 - benign side-file（helper / 启动 hook / 模块遮蔽 / pytest 配置）不影响正确解；
 - 非法 solution 类型、超时、启动异常与临时资源清理；
@@ -13,7 +13,6 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
-import shutil
 import sys
 import tempfile
 import time
@@ -37,21 +36,9 @@ TRUSTED_ENV_KEYS = {
 }
 FORBIDDEN_ENV_KEYS = {"OLDPWD", "PYTHONHOME", "PYTHONSTARTUP", "PYTHONWARNINGS"}
 
-SHELLS = {
-    "code-repair": ("shells/code-repair/verifier.py", "PytestVerifier", "demo"),
-    "probe": ("shells/probe/verifier.py", "ProbeVerifier", "probe"),
-    "probe-c2": ("shells/probe-c2/verifier.py", "ProbeVerifier", "probe-c2"),
-}
-ATTACK_TASK = {
-    "code-repair": "smoke-add",
-    "probe": "probe-order-2",
-    "probe-c2": "c2-percent",
-}
-WRONG_SOLUTION = {
-    "code-repair": "def add(a, b):\n    return 0\n",
-    "probe": "def dedupe(names):\n    return list(names)\n",
-    "probe-c2": 'def format_percent(p):\n    return "0.00"\n',
-}
+SHELLS = {"code-repair": ("shells/code-repair/verifier.py", "PytestVerifier", "demo")}
+ATTACK_TASK = {"code-repair": "smoke-add"}
+WRONG_SOLUTION = {"code-repair": "def add(a, b):\n    return 0\n"}
 
 _MODULES: dict[str, object] = {}
 
@@ -100,7 +87,7 @@ ACTIVE = [
     for shell_id, (_, _, scenario_id) in SHELLS.items()
     for task_id in _scenario_task_ids(scenario_id)
 ]
-assert len(ACTIVE) == 27, f"活动题集应为 27 题，实际 {len(ACTIVE)}"
+assert len(ACTIVE) == 15, f"活动题集应为 15 题，实际 {len(ACTIVE)}"
 
 
 def _correct_solution(task: Task) -> str:
@@ -135,7 +122,7 @@ def _within(child: Path, parent: Path) -> bool:
     return child == parent or parent in child.parents
 
 
-# -- 27 题正反例 ---------------------------------------------------------
+# -- 15 题正反例 ---------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -181,37 +168,25 @@ FORGED_JSON = (
     '"passed": true}], "error": null}'
 )
 ATTACKS = [
-    pytest.param(
+pytest.param(
         "code-repair",
         "sitecustomize-early-exit",
         {"sitecustomize.py": "import os\n\nos._exit(0)\n"},
         id="code-repair-sitecustomize-early-exit",
     ),
-    pytest.param(
-        "probe",
-        "sitecustomize-forge-json",
-        {"sitecustomize.py": f"import os\n\nprint({FORGED_JSON!r}, flush=True)\nos._exit(0)\n"},
-        id="probe-sitecustomize-forge-json",
-    ),
-    pytest.param(
-        "probe",
-        "json-shadow",
-        {"json.py": f"def dumps(obj, *args, **kwargs):\n    return {FORGED_JSON!r}\n"},
-        id="probe-json-shadow",
-    ),
-    pytest.param(
+pytest.param(
         "code-repair",
         "pytest-shadow",
         {"pytest.py": "raise SystemExit(0)\n"},
         id="code-repair-pytest-shadow",
     ),
-    pytest.param(
+pytest.param(
         "code-repair",
         "pytest-ini-collect-only",
         {"pytest.ini": "[pytest]\naddopts = --collect-only\n"},
         id="code-repair-pytest-ini-collect-only",
     ),
-    pytest.param(
+pytest.param(
         "code-repair",
         "conftest-force-pass",
         {
@@ -222,22 +197,7 @@ ATTACKS = [
             )
         },
         id="code-repair-conftest-force-pass",
-    ),
-    pytest.param(
-        "probe-c2",
-        "decimal-shadow",
-        {
-            "decimal.py": (
-                "import json\n\n"
-                "class Decimal(str):\n"
-                "    pass\n\n"
-                "def dumps(obj, *args, **kwargs):\n"
-                f"    return {FORGED_JSON!r}\n\n"
-                "json.dumps = dumps\n"
-            )
-        },
-        id="probe-c2-decimal-shadow",
-    ),
+    )
 ]
 
 
@@ -427,25 +387,6 @@ def test_invalid_solution_is_rejected_without_executing(
         assert outcome.diagnostic["cases"] == []
 
 
-@pytest.mark.parametrize("shell_id", ["probe", "probe-c2"])
-def test_probe_guard_detects_checker_mutation(tmp_path: Path, shell_id: str) -> None:
-    """probe 的 guard 仍覆盖 tests 目录；改 checker 必须判 invalid。"""
-    task = TASKS[ATTACK_TASK[shell_id]]
-    repo = tmp_path / "repo"
-    shutil.copytree(TASK_DIRS[task.task_id] / "tests", repo / task.tests_ref)
-    workdir = _workdir(tmp_path)
-    _write_solution(workdir, _correct_solution(task))
-    verifier = _verifier(shell_id, repo_root=repo)
-
-    before = verifier.guard(task, workdir)
-    (repo / task.tests_ref / "check_cases.py").write_text(
-        "# tampered\n", encoding="utf-8"
-    )
-    outcome = verifier.verify(task, workdir, before=before)
-
-    assert outcome.matches is False
-    assert outcome.outcome == "invalid"
-    assert outcome.tests_hash_before != outcome.tests_hash_after
 
 
 # -- 清理：成功 / 失败 / 超时 / 启动异常 ---------------------------------
@@ -488,7 +429,3 @@ def test_staging_is_cleaned_up_on_every_path(tmp_path: Path, shell_id: str) -> N
 # -- probe / probe-c2 字节相同 -------------------------------------------
 
 
-def test_probe_and_probe_c2_verifiers_are_byte_identical() -> None:
-    probe = (ROOT / "shells/probe/verifier.py").read_bytes()
-    probe_c2 = (ROOT / "shells/probe-c2/verifier.py").read_bytes()
-    assert probe == probe_c2

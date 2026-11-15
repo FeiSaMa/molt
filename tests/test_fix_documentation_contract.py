@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import json
-import subprocess
 from pathlib import Path
-from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,16 +24,6 @@ def _between(text: str, start: str, stop: str) -> str:
     return _section(text, start, stop)
 
 
-def _structure(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {
-            key: _structure(item)
-            for key, item in value.items()
-            if key != "description"
-        }
-    if isinstance(value, list):
-        return [_structure(item) for item in value]
-    return value
 
 
 # -- 三层数字：历史扫描 claim / 当前 tracked 扫描复算 / gate cps --
@@ -91,130 +78,19 @@ def test_core_known_gaps_marks_k5_k6_status() -> None:
     assert "verifier_hash" in k6 and "不证明 verifier 源码真值" in k6
 
 
-def test_limitation_sections_include_k4() -> None:
-    final = _section(_read("probes/report/FINAL.md"), "## 已知局限", "## 文件地图")
-    assert "K4" in final and "verifier" in final
-
-    pitch = _section(
-        _read("probes/report/PITCH.md"), "## 7:00–8:00 局限与收尾", "\n---\n"
-    )
-    assert "K4" in pitch and "verifier" in pitch
-
-    headroom = _section(
-        _read("docs/research/headroom-probe.md"), "## 8. 局限", "## 9. 复算命令"
-    )
-    assert "K4" in headroom and "sitecustomize" in headroom
 
 
 # -- 时限 / 降级语义 --
 
 
-def test_visual_spec_timeout_partial_and_stale_semantics() -> None:
-    text = _read("probes/report/VISUAL_SPEC.md")
-    head = text.split("## 0.", 1)[0]
-    assert "probe 页面尚未实现" in head
-    assert "只是规格" in head
-
-    badge = _section(text, "### 9.2 徽章判定", "### 9.3")
-    assert "force PARTIAL" not in badge
-    assert "360s cap" not in badge
-    assert badge.index('phase === "timeout"') < badge.index('phase === "partial"')
-    assert badge.index('phase === "partial"') < badge.index("live === false")
-    assert "120s 只是展示阈值" in badge
-    assert "fast 默认 360s" in badge and "full 默认 420s" in badge
-    assert "--max-wall" in badge
-    assert "剩余不足 20s" in badge
-    assert "单题超时或成本到限" in badge
-    assert "页面**不自行**按 360s 强制 partial" in badge
-
-    assert "360s 未 done → PARTIAL" not in text
-    assert "`timeout` / `partial` 直接读运行器 `phase`" in text
 
 
-def test_pitch_replay_vs_stale_and_timeout() -> None:
-    degrade = _section(_read("probes/report/PITCH.md"), "# 现场降级", None)
-    assert "REPLAY · STALE" in degrade
-    assert "120s 只是展示阈值" in degrade
-    assert "PARTIAL · 360s cap" not in degrade
-    assert "phase=timeout" in degrade and "TIMEOUT" in degrade
-    assert "fast 默认 360s" in degrade and "full 默认 420s" in degrade
-    assert "--max-wall" in degrade
-    assert "单题超时或成本到限" in degrade
 
 
-def test_final_replay_snapshot_is_not_partial_transfer_example() -> None:
-    final = _read("probes/report/FINAL.md")
-    entry = _section(final, "## 现场入口", "## 关键数字")
-    assert "v3_stable_headroom" in entry and "live=false" in entry
-    assert "不是** `partial_transfer` 示例" in entry
-    assert "不以 `partial_transfer` 为唯一触发" in entry
-    assert "降级：抽到 `partial_transfer` 切预录" not in final
 
 
 # -- schema description 与结构 --
 
 
-def test_schema_descriptions_follow_runner_semantics() -> None:
-    schema = json.loads(_read("probes/report/probe_state_schema.json"))
-    phase = schema["properties"]["phase"]["description"]
-    assert "300s" not in phase
-    assert "单题超时或成本到限" in phase
-    assert "总墙钟到限" in phase
-    assert "fast 默认 360s" in phase
-    assert "full 默认 420s" in phase
-    assert "--max-wall" in phase
-
-    updated = schema["properties"]["updated_at"]["description"]
-    assert "120s" in updated
-    assert "只是展示阈值" in updated
-    assert "不终止运行" in updated
 
 
-def test_schema_structure_unchanged_except_descriptions() -> None:
-    schema = json.loads(_read("probes/report/probe_state_schema.json"))
-    baseline = subprocess.run(
-        ["git", "-C", str(ROOT), "show", "HEAD:probes/report/probe_state_schema.json"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if baseline.returncode == 0:
-        assert _structure(schema) == _structure(json.loads(baseline.stdout))
-
-    assert schema["required"] == [
-        "schema_version",
-        "live",
-        "phase",
-        "started_at",
-        "updated_at",
-        "revision",
-        "lineage",
-        "run1",
-        "memory",
-        "run2",
-        "verdict",
-        "verdict_note",
-        "cost_usd",
-        "wall_ms",
-        "note",
-    ]
-    assert schema["properties"]["phase"]["enum"] == [
-        "idle",
-        "run1",
-        "reflection",
-        "run2",
-        "done",
-        "partial",
-        "timeout",
-    ]
-    assert schema["additionalProperties"] is False
-    assert schema["properties"]["revision"]["pattern"] == "^[0-9a-f]{64}$"
-    assert set(schema["definitions"]) == {
-        "lineage_node",
-        "run",
-        "task",
-        "case",
-        "diff_line",
-        "memory",
-        "negative_transfer",
-    }

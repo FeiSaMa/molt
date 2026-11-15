@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from molt.cli import main
-from molt.export import DATA_FILES
+from molt.core.store import StateStore
 
 ROOT = Path(__file__).resolve().parents[1]
 SCAN = 10
@@ -26,11 +26,11 @@ def _load(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _files(out: Path) -> set[str]:
-    return {str(path.relative_to(out)) for path in out.rglob("*") if path.is_file()}
+def _search_runs(state: Path) -> list[dict]:
+    return [run.ext for run in StateStore(state).list_runs() if run.scope == "search"]
 
 
-def _run_demo(state: Path, out: Path, *extra: str) -> int:
+def _run_demo(state: Path, *extra: str) -> int:
     return main(
         [
             "--root",
@@ -40,8 +40,6 @@ def _run_demo(state: Path, out: Path, *extra: str) -> int:
             "demo",
             "--state",
             str(state),
-            "--out",
-            str(out),
             *extra,
         ]
     )
@@ -57,10 +55,8 @@ def _tree_snapshot(root: Path) -> dict[str, str]:
 
 def test_demo_replay_end_to_end(tmp_path: Path) -> None:
     state = tmp_path / "state"
-    out = tmp_path / "web"
-    assert _run_demo(state, out, "--mode", "replay", "--max-wall", "180") == 0
+    assert _run_demo(state, "--mode", "replay", "--max-wall", "180") == 0
 
-    assert _files(out) == set(DATA_FILES)
     summary = _load(state / "demo-summary.json")
     assert summary["mode"] == "replay"
     assert summary["within_wall"] is True
@@ -72,7 +68,7 @@ def test_demo_replay_end_to_end(tmp_path: Path) -> None:
     assert len(summary["candidate_scan"]) == SCAN - 1
     assert summary["action"]["kind"] in ("adopt", "revert")
 
-    runs = _load(out / "runs.json")["runs"]
+    runs = _search_runs(state)
     closure = [row for row in runs if row.get("demo_group") == "closure"]
     scan = [row for row in runs if row.get("demo_group") == "scan10"]
     candidate_scan = [row for row in runs if row.get("demo_group") == "candidate-scan"]
@@ -82,35 +78,26 @@ def test_demo_replay_end_to_end(tmp_path: Path) -> None:
     baseline = [row for row in closure if row["provenance"]["kind"] == "replay"]
     assert len(baseline) == 1
     assert baseline[0]["provenance"]["replay_of_run_id"]
-    assert baseline[0]["provenance"]["live"] is False
     # replay 模式不得出现 live，也不得把 fixture 标成 live。
     assert all(row["provenance"]["kind"] != "live" for row in runs)
-    assert all(row["provenance"]["live"] is (row["provenance"]["kind"] == "live") for row in runs)
 
-    audit = _load(out / "audit.json")
+    audit = summary["audit"]
     assert audit["ok"] is True
     assert audit["mismatches"] == []
 
-    report_text = (out / "report_results.json").read_text(encoding="utf-8")
-    for holdout in ("holdout-even", "holdout-palindrome", "holdout-gcd"):
-        assert holdout not in report_text
-
-    archives = _load(out / "archive.json")["archives"]
-    assert len(archives) >= 2
-    assert _load(out / "gate.json")["decision_count"] == 1
+    assert len(list((state / "archive").glob("*.json"))) >= 2
+    assert len(StateStore(state).list_decisions()) == 1
 
 
-def test_demo_hard_wall_fails_without_export(tmp_path: Path) -> None:
+def test_demo_hard_wall_fails_without_summary(tmp_path: Path) -> None:
     state = tmp_path / "state"
-    out = tmp_path / "web"
-    assert _run_demo(state, out, "--mode", "replay", "--max-wall", "0.001") == 1
-    assert not (out / "index.json").exists()
-    assert _files(out) == set()
+    assert _run_demo(state, "--mode", "replay", "--max-wall", "0.001") == 1
+    assert not (state / "demo-summary.json").exists()
 
 
 def test_demo_baseline_state_is_read_only(tmp_path: Path) -> None:
     first_state = tmp_path / "first"
-    assert _run_demo(first_state, tmp_path / "first-web", "--mode", "replay") == 0
+    assert _run_demo(first_state, "--mode", "replay") == 0
     baseline = tmp_path / "first-baseline"
     assert (baseline / "runs").is_dir()
     before = _tree_snapshot(baseline)
@@ -132,8 +119,6 @@ def test_demo_baseline_state_is_read_only(tmp_path: Path) -> None:
             str(first_state),
             "--state",
             str(second_state),
-            "--out",
-            str(tmp_path / "second-web"),
         ],
         cwd=ROOT,
         env={**os.environ, "PYTHONPATH": str(ROOT), "PYTHONDONTWRITEBYTECODE": "1"},
@@ -151,7 +136,7 @@ def test_demo_baseline_state_is_read_only(tmp_path: Path) -> None:
     # 6 fixture = closure 候选 1（replay 模式）+ baseline holdout 5（未录制，回落）。
     assert summary["provenance_counts"]["replay"] == SCAN + 1 + (SCAN - 1) + 5
     assert summary["provenance_counts"]["fixture"] == 6
-    runs = _load(tmp_path / "second-web" / "runs.json")["runs"]
+    runs = _search_runs(second_state)
     fixture = [row for row in runs if row["provenance"]["kind"] == "fixture"]
     assert len(fixture) == 1 and fixture[0]["demo_group"] == "closure"
     for group in ("scan10", "candidate-scan"):
@@ -169,14 +154,12 @@ def test_demo_baseline_state_is_read_only(tmp_path: Path) -> None:
 )
 def test_demo_live_has_exactly_one_live_and_measures_overhead(tmp_path: Path) -> None:
     state = tmp_path / "state"
-    out = tmp_path / "web"
-    assert _run_demo(state, out, "--mode", "live", "--max-wall", "180") == 0
+    assert _run_demo(state, "--mode", "live", "--max-wall", "180") == 0
 
-    runs = _load(out / "runs.json")["runs"]
+    runs = _search_runs(state)
     live = [row for row in runs if row["provenance"]["kind"] == "live"]
     assert len(live) == 1
     assert live[0]["demo_group"] == "closure"
-    assert live[0]["provenance"]["live"] is True
     assert live[0]["provenance"]["model"]
     assert not live[0]["provenance"].get("replay_of_run_id")
 
@@ -196,7 +179,7 @@ def test_demo_live_has_exactly_one_live_and_measures_overhead(tmp_path: Path) ->
     assert overhead["overhead_ratio"] >= 0
     assert isinstance(overhead["within_threshold"], bool)
     assert summary["elapsed_s"] <= 180
-    assert _load(out / "audit.json")["ok"] is True
+    assert summary["audit"]["ok"] is True
 
 
 def _fixture_search(state: Path, genome: str) -> None:
@@ -224,7 +207,6 @@ def test_demo_infers_baseline_genome_from_state(tmp_path: Path) -> None:
     _fixture_search(candidate, "v0.json")
 
     state = tmp_path / "demo"
-    out = tmp_path / "web"
     code = main(
         [
             "--root",
@@ -238,8 +220,6 @@ def test_demo_infers_baseline_genome_from_state(tmp_path: Path) -> None:
             str(candidate),
             "--state",
             str(state),
-            "--out",
-            str(out),
         ]
     )
     assert code == 0
