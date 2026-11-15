@@ -1,12 +1,11 @@
 """molt 命令行入口。
 
 命令：``schema`` / ``genome`` / ``scenario`` / ``search`` / ``propose`` / ``gate`` /
-``adopt`` / ``revert`` / ``audit`` / ``calibrate`` / ``doctor`` / ``export`` / ``demo``。
-``search`` / ``propose`` / ``audit`` / ``export`` / ``demo`` 的 ``--scenario`` 接受任意
+``adopt`` / ``revert`` / ``audit`` / ``calibrate`` / ``doctor`` / ``demo``。
+``search`` / ``propose`` / ``audit`` / ``demo`` 的 ``--scenario`` 接受任意
 ``scenarios/<id>/scenario.json``（``--shell`` 为同一参数的别名，可按 shell_id 反查）；
 ``--runtime`` 支持 ``fixture`` / ``pi`` / ``deterministic``。
-``export`` 只导出 ``web/data`` 数据，不含页面；``demo`` 是 B2-D7 的现场闭环；
-``serve`` 是 loopback-only 的本地 agent API（默认 mock provider，端口 0）。
+``demo`` 保留后端闭环与 state 内的审计摘要。
 """
 
 from __future__ import annotations
@@ -47,7 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--root", type=Path, default=None, help="仓库根，默认自动向上查找")
     sub = parser.add_subparsers(
         dest="command",
-        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,calibrate,doctor,export,demo,serve}",
+        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,calibrate,doctor,demo}",
     )
 
     p_schema = sub.add_parser("schema", help="schema 校验与文档生成")
@@ -151,22 +150,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_doctor.add_argument("--state", type=Path, default=Path("state"))
 
-    p_export = sub.add_parser("export", help="导出 web/data（静态 JSON + bundle.js，无页面）")
-    p_export.add_argument(
-        "--scenario",
-        "--shell",
-        dest="scenario",
-        default="demo",
-        help="scenario id；也接受 shell_id",
-    )
-    p_export.add_argument(
-        "--state", type=Path, default=None, help="state 根；缺省用 ./state 或临时 demo state"
-    )
-    p_export.add_argument("--out", type=Path, default=Path("web/data"))
-    p_export.add_argument(
-        "--allow-empty", action="store_true", help="允许 0 run 的 state，生成空数据面"
-    )
-
     p_demo = sub.add_parser(
         "demo",
         help="B2-D7 现场演示：1 live 候选 + 1 replay 基线 + 10 题扫描回放（180s 硬上限）",
@@ -198,79 +181,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="已录候选 state（10 题扫描）；给出时其余 9 题复制为 replay，不再跑 fixture",
     )
     p_demo.add_argument("--state", type=Path, default=Path("state/demo"))
-    p_demo.add_argument("--out", type=Path, default=Path("web/data"))
     p_demo.add_argument("--model", default="deepseek/deepseek-flash", help="live 候选的 Pi 模型")
     p_demo.add_argument("--pi-executable", default="pi")
-
-    p_serve = sub.add_parser(
-        "serve",
-        help="本地 agent API（loopback only；默认 mock provider，端口 0）",
-    )
-    p_serve.add_argument("--host", default="127.0.0.1", help="只允许 127.0.0.1 / localhost")
-    p_serve.add_argument("--port", type=int, default=0, help="监听端口；默认 0（临时端口）")
-    p_serve.add_argument("--state", type=Path, default=Path("state"), help="state 根（token 默认落这里）")
-    p_serve.add_argument(
-        "--upper-state",
-        type=Path,
-        default=None,
-        help="上层图谱 state（必须在仓库外）；缺省沿用 --state，仓库内则禁用 /api/upper",
-    )
-    p_serve.add_argument("--token-file", type=Path, default=None, help="token 输出路径；默认 <state>/token")
-    p_serve.add_argument(
-        "--allow-origin",
-        action="append",
-        default=[],
-        metavar="ORIGIN",
-        help="精确追加允许的 Origin（可重复；禁止 *）",
-    )
-    p_serve.add_argument(
-        "--provider",
-        choices=("mock", "openai-compatible"),
-        default="mock",
-        help="chat provider；openai-compatible 需要 MOLT_CHAT_MODEL",
-    )
-    p_serve.add_argument(
-        "--probe-index",
-        type=Path,
-        default=None,
-        help="只读加载已导出的 probe index；缺省从 manifest 现场构建",
-    )
-    p_serve.add_argument(
-        "--data-dir",
-        type=Path,
-        default=None,
-        help="只读任务结果数据目录；默认 <repo>/web/data（不写入）",
-    )
-    p_serve.add_argument(
-        "--lab-root",
-        type=Path,
-        default=Path("/tmp/molt-lab"),
-        help="隔离执行 workspace 的临时根目录（默认 /tmp/molt-lab）",
-    )
-    p_serve.add_argument(
-        "--skills-root",
-        type=Path,
-        default=None,
-        help="技能包根目录（默认 <repo>/skills）；显式给出即启用 runtime",
-    )
-    p_serve.add_argument(
-        "--skill-state",
-        type=Path,
-        default=None,
-        help="技能绑定 state（默认 <state>，binding 位于 <state>/skills）；必须在仓库外；显式给出即启用 runtime",
-    )
-    p_serve.add_argument(
-        "--mcp-allowlist",
-        type=Path,
-        default=None,
-        help="MCP allowlist 路径；默认关闭，给出路径才启用 MCP",
-    )
-    p_serve.add_argument(
-        "--operator",
-        default=None,
-        metavar="IDENTITY",
-        help="服务器审批主体（单一身份，非密钥）；未配置时 /api/skills/approve 一律 403",
-    )
 
     return parser
 
@@ -1122,57 +1034,6 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
-# export（B2d-0：只导出数据）
-# ---------------------------------------------------------------------------
-
-
-def cmd_export(args: argparse.Namespace) -> int:
-    from molt.demo import build_scenario_state
-    from molt.export import DATA_FILES, export_web_data
-
-    root = _repo_root(args)
-    try:
-        scenario = _load_scenario(root, args.scenario)
-    except (FileNotFoundError, ValidationError, ValueError) as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 2
-
-    state_path: Path | None = args.state
-    if state_path is None and (Path.cwd() / "state" / "runs").is_dir():
-        state_path = Path.cwd() / "state"
-    if state_path is not None:
-        store = StateStore(state_path)
-        if not (store.root / "runs").is_dir():
-            print(f"state 不存在或没有 runs: {store.root}", file=sys.stderr)
-            return 2
-        if not store.list_runs() and not args.allow_empty:
-            print(
-                f"state 为空（0 runs）: {store.root}；如需空数据面请加 --allow-empty",
-                file=sys.stderr,
-            )
-            return 2
-        index = export_web_data(root, scenario, store, args.out)
-        source = str(state_path)
-    else:
-        # 无 state 时按 scenario 重建证据链到临时目录，仓库内不落任何文件。
-        with tempfile.TemporaryDirectory(prefix=f"molt-export-{scenario.scenario_id}-") as tmp:
-            store, _, _ = build_scenario_state(root, Path(tmp), scenario=scenario)
-            index = export_web_data(root, scenario, store, args.out)
-        source = f"临时 {scenario.scenario_id} state（不写仓库）"
-
-    print(
-        f"export ok out={args.out} files={len(DATA_FILES)}（含 index.json） "
-        f"revision={index['revision']}"
-    )
-    print(
-        f"  scenario={index['scenario_id']} runs={index['counts']['runs']} "
-        f"proposals={index['counts']['proposals']} events="
-        f"{index['counts']['events_search']}/{index['counts']['events_report']} source={source}"
-    )
-    return 0
-
-
-# ---------------------------------------------------------------------------
 # demo（B2-D7：1 live 候选 + 1 replay 基线 + 10 题扫描回放）
 # ---------------------------------------------------------------------------
 
@@ -1244,7 +1105,6 @@ def cmd_demo(args: argparse.Namespace) -> int:
             root,
             scenario,
             state_root=args.state,
-            out_dir=args.out,
             mode=args.mode,
             max_wall_s=args.max_wall,
             baseline_state=args.baseline_state,
@@ -1297,8 +1157,6 @@ def cmd_demo(args: argparse.Namespace) -> int:
         f"audit ok runs={audit['runs']} results={audit['results']} "
         f"decisions={audit['decisions']} events={audit['events']}"
     )
-    export = summary["export"]
-    print(f"export out={export['out']} files={export['files']} revision={export['revision']}")
     counts = summary["provenance_counts"]
     print(f"provenance live={counts['live']} replay={counts['replay']} fixture={counts['fixture']}")
     print(f"summary {Path(summary['state']) / 'demo-summary.json'}")
@@ -1308,29 +1166,6 @@ def cmd_demo(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
-
-def cmd_serve(args: argparse.Namespace) -> int:
-    from molt.agent.server import run_server
-
-    root = _repo_root(args)
-    return run_server(
-        root=root,
-        host=args.host,
-        port=args.port,
-        state=args.state,
-        upper_state=args.upper_state,
-        token_file=args.token_file,
-        allowed_origins=args.allow_origin,
-        provider=args.provider,
-        probe_index=args.probe_index,
-        data_dir=args.data_dir or (root / "web" / "data"),
-        lab_root=args.lab_root,
-        skills_root=args.skills_root,
-        skill_state=args.skill_state,
-        mcp_allowlist=args.mcp_allowlist,
-        operator_identity=args.operator,
-    )
-
 
 HANDLERS = {
     "schema": cmd_schema,
@@ -1344,9 +1179,7 @@ HANDLERS = {
     "audit": cmd_audit,
     "calibrate": cmd_calibrate,
     "doctor": cmd_doctor,
-    "export": cmd_export,
     "demo": cmd_demo,
-    "serve": cmd_serve,
 }
 
 

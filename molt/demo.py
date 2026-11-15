@@ -595,7 +595,6 @@ def run_demo(
     scenario: Scenario,
     *,
     state_root: Path,
-    out_dir: Path | None = None,
     mode: str = "live",
     max_wall_s: float = 180.0,
     baseline_state: Path | None = None,
@@ -603,7 +602,7 @@ def run_demo(
     model: str = "deepseek/deepseek-flash",
     pi_executable: str = "pi",
 ) -> dict[str, Any]:
-    """B2-D7 闭环：replay 基线 → propose → live 候选 → gate → adopt/revert → export。
+    """B2-D7 闭环：replay 基线 → propose → live 候选 → gate → adopt/revert。
 
     - ``closure`` 组：1 条 replay 基线（``replay_of_run_id``）+ 1 条 live 候选，
       同一题（缺省 ``smoke-add``），页面与讲解词必须与 10 题扫描回放分开标注；
@@ -614,7 +613,6 @@ def run_demo(
     started = time.monotonic()
     deadline = started + float(max_wall_s)
     state_root = Path(state_root)
-    out_dir = Path(out_dir) if out_dir is not None else None
     if mode not in ("live", "replay"):
         raise ValueError(f"未知 demo mode: {mode!r}（live|replay）")
     search_ids = list(scenario.task_sets["search"])
@@ -957,14 +955,8 @@ def run_demo(
     audit_report = audit_state(store, scenario)
     _deadline_check(deadline, "audit", started)
 
-    # 9) export（15 文件）；先检查预算再写，超时命令必须失败。
-    index = None
-    if out_dir is not None:
-        from molt.export import DATA_FILES, export_web_data
-
-        index = export_web_data(Path(repo_root), scenario, store, out_dir)
     elapsed = time.monotonic() - started
-    _deadline_check(deadline, "export", started)
+    _deadline_check(deadline, "summary", started)
 
     # 10) 开销比（ADR 0001 重开条件 2）：live run 端到端 vs Pi 子进程。
     overhead: dict[str, Any] = {"measured": False, "reason": "mode=replay 无 Pi 子进程"}
@@ -1003,7 +995,6 @@ def run_demo(
         "state": str(state_root),
         "baseline_state": str(baseline_root),
         "baseline_state_recorded": mode == "live" and baseline_state is None and recorded,
-        "out": str(out_dir) if out_dir is not None else None,
         "closure": {
             "task_id": closure_task_id,
             "baseline": _run_digest(closure_baseline),
@@ -1045,12 +1036,6 @@ def run_demo(
         "action": action,
         "overhead": overhead,
         "audit": audit_report,
-        "export": {
-            "out": str(out_dir) if out_dir is not None else None,
-            "files": len(DATA_FILES) if index is not None else 0,
-            "index_entries": len(index["files"]) if index else 0,
-            "revision": index["revision"] if index else None,
-        },
     }
     (state_root / "demo-summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
