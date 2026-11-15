@@ -28,6 +28,7 @@ packages = ["molt"]
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+extend-exclude = ["attic"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
@@ -35,6 +36,9 @@ ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["pi: real Pi 1.5.0 calls; skipped by default"]
-norecursedirs = ["bench", "shells", ".venv", "runs", "state"]
+markers = [
+  "pi: Pi adapter tests; live calls require explicit opt-in",
+  "integration: requires host sandbox/socket capabilities",
+]
+norecursedirs = ["attic", "bench", "shells", ".venv", "runs", "state"]
 addopts = "-p no:cacheprovider"

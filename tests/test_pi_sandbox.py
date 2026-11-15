@@ -36,7 +36,22 @@ def call(workdir: Path, command: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_probe_reports_sandbox_available(tmp_path: Path) -> None:
+@pytest.fixture
+def sandbox_ready(tmp_path: Path) -> None:
+    """Require a working net namespace before testing sandbox isolation."""
+    workdir = tmp_path / "capability"
+    workdir.mkdir()
+    completed = call(workdir, "true")
+    if (
+        completed.returncode != 0
+        and "Failed to create NETLINK_ROUTE socket: Operation not permitted" in completed.stderr
+    ):
+        pytest.skip("env:bwrap: execution environment forbids NETLINK_ROUTE in network namespace")
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.integration
+def test_probe_reports_sandbox_available(tmp_path: Path, sandbox_ready: None) -> None:
     workdir = tmp_path / "work"
     workdir.mkdir()
     probe = run_sandbox_probe(WRAPPER, workdir=workdir, repo_root=ROOT)
@@ -54,7 +69,8 @@ def test_probe_missing_wrapper(tmp_path: Path) -> None:
     assert "wrapper_missing" in probe.errors[0]
 
 
-def test_bash_cannot_reach_provider_or_example(tmp_path: Path) -> None:
+@pytest.mark.integration
+def test_bash_cannot_reach_provider_or_example(tmp_path: Path, sandbox_ready: None) -> None:
     workdir = tmp_path / "work"
     workdir.mkdir()
     for url in ("https://api.deepseek.com", "https://example.com"):
@@ -62,7 +78,8 @@ def test_bash_cannot_reach_provider_or_example(tmp_path: Path) -> None:
         assert completed.returncode != 0, url
 
 
-def test_bash_cannot_read_holdout_or_repo(tmp_path: Path) -> None:
+@pytest.mark.integration
+def test_bash_cannot_read_holdout_or_repo(tmp_path: Path, sandbox_ready: None) -> None:
     workdir = tmp_path / "work"
     workdir.mkdir()
     completed = call(workdir, f"test -e {ROOT / 'bench/holdout/holdout-even/task.json'}")
@@ -71,7 +88,8 @@ def test_bash_cannot_read_holdout_or_repo(tmp_path: Path) -> None:
     assert repo.returncode != 0
 
 
-def test_bash_has_no_proxy_env(tmp_path: Path) -> None:
+@pytest.mark.integration
+def test_bash_has_no_proxy_env(tmp_path: Path, sandbox_ready: None) -> None:
     workdir = tmp_path / "work"
     workdir.mkdir()
     completed = call(workdir, "env | grep -iE '^(http|https|all|no)_proxy=' || true")
