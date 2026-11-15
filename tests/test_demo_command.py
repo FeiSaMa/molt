@@ -16,7 +16,9 @@ from pathlib import Path
 import pytest
 
 from molt.cli import main
+from molt.core.audit import audit_state
 from molt.core.store import StateStore
+from molt.demo import load_demo_scenario
 
 ROOT = Path(__file__).resolve().parents[1]
 SCAN = 10
@@ -81,9 +83,8 @@ def test_demo_replay_end_to_end(tmp_path: Path) -> None:
     # replay 模式不得出现 live，也不得把 fixture 标成 live。
     assert all(row["provenance"]["kind"] != "live" for row in runs)
 
-    audit = summary["audit"]
-    assert audit["ok"] is True
-    assert audit["mismatches"] == []
+    # Semantic audit raises AuditError on mismatch; its return value contains counts.
+    assert summary["audit"] == audit_state(StateStore(state), load_demo_scenario(ROOT))
 
     assert len(list((state / "archive").glob("*.json"))) >= 2
     assert len(StateStore(state).list_decisions()) == 1
@@ -179,7 +180,7 @@ def test_demo_live_has_exactly_one_live_and_measures_overhead(tmp_path: Path) ->
     assert overhead["overhead_ratio"] >= 0
     assert isinstance(overhead["within_threshold"], bool)
     assert summary["elapsed_s"] <= 180
-    assert summary["audit"]["ok"] is True
+    assert summary["audit"] == audit_state(StateStore(state), load_demo_scenario(ROOT))
 
 
 def _fixture_search(state: Path, genome: str) -> None:
