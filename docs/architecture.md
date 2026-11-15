@@ -100,9 +100,9 @@ provider / verifier / harness 按 `build_<role>()` 工厂或 `*TaskProvider` / `
   `open → permissions-only`；
 - 无法建立沙箱时降级为 `network=open` + `permissions-only`，`degraded=true`，claim 必须写
   `sandbox unavailable`，不得静默降级；
-- agent / bash 侧禁止读取 `bench/**`、`web/**`、`evidence/**`；bash 在 `sandboxed` /
+- agent / bash 侧禁止读取 `bench/**`、`attic/web/**`、`evidence/**`；bash 在 `sandboxed` /
   `provider-sandboxed` 下一律无网络；
-- archive 只存 `result_refs[]`，不内联分数；`web/` 的 holdout 只导聚合分。
+- archive 只存 `result_refs[]`，不内联分数；历史 `attic/web/` 数据面的 holdout 只导聚合分。
 
 ## 六、事务与证据
 

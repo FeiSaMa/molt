@@ -48,7 +48,7 @@ PYTHONDONTWRITEBYTECODE=1 uv run python -m molt audit --scenario demo
 
 ## 回滚方式
 
-<!-- 例：revert 本提交 / `molt revert --to <archive_id>` / 重新生成 web/data 并提交。 -->
+<!-- 例：revert 本提交 / `molt revert --to <archive_id>` / 从 attic 或 v1-final 恢复历史资产。 -->
 
 ## Checklist
 

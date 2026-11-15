@@ -25,6 +25,9 @@ molt = "molt.cli:main"
 [tool.hatch.build.targets.wheel]
 packages = ["molt"]
 
+[tool.hatch.build.targets.sdist]
+exclude = ["/attic"]
+
 [tool.ruff]
 target-version = "py311"
 line-length = 100

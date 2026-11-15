@@ -129,5 +129,5 @@ CI 不运行 pytest（全量为手动 / 集中执行，见 §五）。`audit` �
 ## M0 评审交接
 
 attic 已从 wheel、ruff 与 pytest 排除；历史模块不保证在新路径直接运行。
-M0 只本地提交，不推送或合并；基线采用 Python 3.12.13，详情见 docs/research/v2-baseline.md。
+M0 变更可推送到基于 refactor/v2-kernel 的 draft PR，不合并 main；基线采用 Python 3.12.13，详情见 docs/research/v2-baseline.md。
 恢复见 attic/README.md；不修改 v1 schema、判分、gate 或题集语义。
