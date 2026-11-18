@@ -153,6 +153,35 @@ all non-ignored repository files except this self-referential evidence file.
   restore/rollback instructions, and separate approval for a default switch.
   The production default remains v1.
 
+## Kernel-first development and repeatable recovery (2026-11-18)
+
+- README now documents an isolated kernel-primary replay/audit workflow. The
+  production default and v1 compatibility policy remain unchanged.
+- Release bundles now include the backup/restore, release checklist and service
+  procedures; the installer prints the installed recovery-document path. Backup
+  checkpoint checksum files use relative names so transfer does not retain a
+  source-machine absolute path.
+- Added `test_kernel_backup_restores_replay_evidence`: create a full replay state
+  through the primary backend, stop the service, export a checkpoint, copy the
+  state without its runtime socket, move the source offline, restore into a new
+  directory, verify the checkpoint and current generation, then run CLI and
+  direct Python semantic audits against the restored evidence. CI runs it both
+  in the UDS suite and against the extracted release kernel.
+- Local verification used Python 3.12.13: Rust fault-injection suite 26 passed;
+  Python kernel client/CLI/canonical-vector suite 9 passed; lint, 36 schema
+  records and the 15-task demo scenario passed. The extracted release kernel
+  also passed the new recovery test (1 passed). This is not a full Python-suite
+  or systemd installation rehearsal.
+- Rebuilt bundle: `/tmp/molt-v2-transition-release/molt-1.1.0rc1-linux-x86_64.tar.gz`,
+  SHA-256 `64f86dc054ac8f487fb376d3169bcba9f4f789fb44ce121512d59df339624cd3`.
+  This development rebuild includes the recovery documentation; the earlier
+  corrected candidate remains the reference for its recorded systemd and
+  filesystem failure rehearsals, which were not repeated on this rebuild.
+- Logs: `/tmp/molt-v2-transition-rust.log`,
+  `/tmp/molt-v2-transition-python.log`,
+  `/tmp/molt-v2-transition-package-recovery.log`,
+  `/tmp/molt-v2-transition-package.log`.
+
 ## Reproduction commands
 
 Commands below were run from `/home/feisama/dev/molt`; Python commands use the

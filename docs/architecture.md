@@ -1,5 +1,6 @@
 > M0 当前边界：code-repair/svc-config 与 core/adapters 保留；probe 家族、实验 API 和展示面已移入 attic。
-> 本文的 v1 事务说明仍适用。Rust 是 ADR 0015 的后续设计，尚未实现。
+> 本文的 v1 事务说明仍适用。Rust kernel 与 M3 主路径已实现，生产默认仍为 v1；
+> kernel 的职责与发布门禁见 ADR 0015，迁移行为见 research/v2-migration.md。
 > 当前 scope、基线和恢复说明分别见 research/v2-scope.md、research/v2-baseline.md、../attic/README.md。
 
 # 架构

@@ -22,8 +22,8 @@ systemctl --user stop molt-kernel.service
 cp -a "$state" "$backup/state"
 "$release/bin/molt-kernel" audit --state "$backup/state" \
   --checkpoint "$backup/checkpoint.json"
-sha256sum "$backup/checkpoint.json" > "$backup/checkpoint.json.sha256"
-sha256sum -c "$backup/checkpoint.json.sha256"
+(cd "$backup" && sha256sum checkpoint.json > checkpoint.json.sha256)
+(cd "$backup" && sha256sum -c checkpoint.json.sha256)
 ```
 
 Copy the completed backup directory to storage independent of the machine and
@@ -39,7 +39,7 @@ than overlaying the backup onto it.
 release="$HOME/.local/share/molt/releases/1.1.0rc1-linux-x86_64"
 backup="/path/to/verified/molt-backup"
 restore="$HOME/.local/share/molt/kernel-restore"
-sha256sum -c "$backup/checkpoint.json.sha256"
+(cd "$backup" && sha256sum -c checkpoint.json.sha256)
 test ! -e "$restore"
 cp -a "$backup/state" "$restore"
 "$release/bin/molt-kernel" audit --state "$restore" \

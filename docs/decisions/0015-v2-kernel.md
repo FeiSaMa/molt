@@ -56,7 +56,7 @@ M0 记录基线并按已确认范围物理归档实验面、断开入口和同�
 4. **迁移与兼容**：在隔离的真实服务进程上复验 dry-run 零写入、具名迁移幂等/冲突拒绝、源树不变、受支持 stateful 命令 parity、语义审计和 v1 只读限制；发布包须包含 kernel 可执行文件及兼容性检查。
 5. **发布检查**：CI/release checklist 验证默认选择、安装包/服务配置、健康检查、不可用时的错误合同、数据备份/恢复说明和 v1 只读期；记录版本化验收证据。全部通过后由维护者另行明确批准默认切换，单改环境变量或代码默认值不构成批准。
 
-当前状态：`1.1.0rc1` Linux x86_64 组合候选包已通过隔离安装和 persistent user unit 的启动、SIGKILL 自动恢复、停止及同 state 重启检查；证据见 [候选验收](../research/v2-candidate-evidence.md) 和[发布清单](../operations/v2-release-checklist.md)。该预发布版本不是默认版本 R。磁盘/权限失败与安装包级 unknown-request 恢复证据、发布备份恢复说明和 R 的兼容窗口仍待补齐；默认切换仍未批准，默认仍为 v1。
+当前状态：`1.1.0rc1` Linux x86_64 组合候选包已通过隔离安装和 persistent user unit 的启动、SIGKILL 自动恢复、停止及同 state 重启检查；修正后的候选包也已记录磁盘/权限失败与 unknown-request 恢复验收。证据见 [候选验收](../research/v2-candidate-evidence.md) 和[发布清单](../operations/v2-release-checklist.md)。该预发布版本不是默认版本 R。正式发布版本绑定的备份恢复说明和 R 的兼容窗口仍待补齐；默认切换仍未批准，默认仍为 v1。
 
 ## 事务状态机
 
