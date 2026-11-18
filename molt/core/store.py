@@ -19,7 +19,7 @@ from typing import Any
 
 from molt.core.archive import ArchiveStore
 from molt.core.errors import StaleRead, TxLocked, ValidationError
-from molt.core.fsutil import atomic_write_text, exclusive_lock, fsync_dir
+from molt.core.fsutil import atomic_write_text, exclusive_lock, fsync_dir, reject_v1_state_write
 from molt.core.hash import canonical_json_text, content_hash, tree_files, tree_hash_from_files
 from molt.core.snapshot import build_snapshot, copy_generation, verify_generation
 from molt.core.types import (
@@ -45,6 +45,7 @@ class StateStore:
 
     # -- 目录 ------------------------------------------------------------
     def ensure(self) -> None:
+        reject_v1_state_write()
         for sub in (
             "journal",
             "generations",
@@ -69,6 +70,7 @@ class StateStore:
         return self.root / "current.json"
 
     def lock(self, *, blocking: bool = False) -> Any:
+        reject_v1_state_write()
         return _Lock(self.lock_path, blocking=blocking)
 
     @property
@@ -77,6 +79,7 @@ class StateStore:
 
     # -- 简单记录 --------------------------------------------------------
     def _write_json(self, path: Path, data: Mapping[str, Any]) -> None:
+        reject_v1_state_write()
         atomic_write_text(path, canonical_json_text(dict(data)))
 
     def write_run(self, record: Run) -> Path:

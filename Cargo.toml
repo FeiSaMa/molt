@@ -1,0 +1,3 @@
+[workspace]
+members = ["crates/molt-kernel"]
+resolver = "2"

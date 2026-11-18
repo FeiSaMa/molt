@@ -3,8 +3,10 @@
 molt 是 agent 的外层编排器：propose → run → verify → score → gate → adopt / rollback。
 它交付协议、门禁、事务和可复算证据，不训练模型或提供 agent 能力。
 
-当前 M0 收敛保留 Python v1 后端；Rust 内核尚未实现。范围见
-[范围表](docs/research/v2-scope.md) 与 [ADR 0015](docs/decisions/0015-v2-kernel.md)。
+当前生产默认仍为 Python v1。Rust v2 kernel 与 M3 迁移路径已实现并可通过
+`MOLT_KERNEL_BACKEND=kernel` 显式启用；默认切换仍受 [ADR 0015](docs/decisions/0015-v2-kernel.md)
+的发布门禁约束。Linux systemd user service 示例见
+[kernel 运维说明](docs/operations/molt-kernel-systemd.md)。
 历史实验模块与展示资产已物理移入 [attic](attic/README.md)，不参与构建、lint 或主测试集。
 
 ## 使用

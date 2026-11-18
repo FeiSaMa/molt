@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from molt.core.errors import ValidationError
+from molt.core.fsutil import reject_v1_state_write
 from molt.core.hash import canonical_json_text
 from molt.core.types import EVENT_TYPES, SCOPES, Event
 
@@ -71,6 +72,7 @@ class EventLog:
 
     def append(self, event: Event) -> Path:
         """追加到该 scope 的 per-run 文件；不同 run 不共享写目标。"""
+        reject_v1_state_write()
         path = self.run_path(event.scope, event.run_id)
         path.parent.mkdir(parents=True, exist_ok=True)
         line = canonical_json_text(event.to_dict()) + "\n"
@@ -109,6 +111,7 @@ class EventLog:
 
     def materialize(self, scope: str) -> Path:
         """把 per-run 文件合并成 ``events/<scope>.jsonl``（单写者）。"""
+        reject_v1_state_write()
         if scope not in SCOPES:
             raise ValidationError(f"未知 scope: {scope!r}")
         self.root.mkdir(parents=True, exist_ok=True)

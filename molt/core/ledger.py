@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from molt.core.errors import ValidationError
-from molt.core.fsutil import append_line, atomic_write_text
+from molt.core.fsutil import append_line, atomic_write_text, reject_v1_state_write
 from molt.core.hash import canonical_json_text
 
 
@@ -34,6 +34,7 @@ class Ledger:
         return self.root / f"{_safe(owner_id)}.jsonl"
 
     def append(self, owner_id: str, entry: dict[str, Any]) -> None:
+        reject_v1_state_write()
         payload = dict(entry)
         kind = payload.get("kind", "execution")
         if kind not in self.KINDS:
@@ -76,6 +77,7 @@ class Ledger:
 
     def write_manifest(self, owner_id: str, manifest: dict[str, Any]) -> Path:
         """账本的 canonical 清单（脱敏字节入哈希）。"""
+        reject_v1_state_write()
         target = self.root / f"{_safe(owner_id)}.manifest.json"
         atomic_write_text(target, canonical_json_text(manifest))
         return target

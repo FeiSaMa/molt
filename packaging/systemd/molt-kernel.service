@@ -1,0 +1,19 @@
+[Unit]
+Description=molt v2 storage kernel
+After=local-fs.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/molt-kernel serve --state %h/.local/share/molt/kernel
+ExecStartPost=%h/.local/bin/molt-kernel ping --socket %h/.local/share/molt/kernel/kernel.sock
+Restart=on-failure
+RestartSec=2s
+TimeoutStopSec=10s
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=%h/.local/share/molt/kernel
+
+[Install]
+WantedBy=default.target

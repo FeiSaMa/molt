@@ -11,6 +11,25 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
+from molt.core.write_policy import v1_read_only
+
+
+def _reject_read_only_state(path: Path) -> None:
+    """Reject writes below a v1 state during a kernel-default release."""
+    if not v1_read_only():
+        return
+    resolved = path.resolve(strict=False)
+    state_dirs = {"runs", "journal", "generations", "ledger", "events", "archive", "snapshots", "results", "decisions", "proposals", "genomes"}
+    for parent in (resolved, *resolved.parents):
+        if any((parent / name).exists() for name in state_dirs):
+            raise PermissionError("v1 state is read-only during the kernel-default release")
+
+
+def reject_v1_state_write() -> None:
+    """Reject StateStore mutations even when the target tree is still empty."""
+    if v1_read_only():
+        raise PermissionError("v1 state is read-only during the kernel-default release")
+
 
 def fsync_dir(path: Path) -> None:
     """对目录调用 fsync，保证 rename 落盘。"""
@@ -24,6 +43,7 @@ def fsync_dir(path: Path) -> None:
 def atomic_write_bytes(path: Path, data: bytes) -> None:
     """同目录 temp 文件 → fsync → rename → fsync 目录。"""
     path = Path(path)
+    _reject_read_only_state(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}-{os.getpid()}")
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
@@ -45,6 +65,8 @@ def atomic_write_text(path: Path, text: str) -> None:
 
 def append_line(path: Path, line: str) -> None:
     """追加一行并 fsync；调用方保证该文件只有一个写者。"""
+    path = Path(path)
+    _reject_read_only_state(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
         handle.write(line)
@@ -55,6 +77,8 @@ def append_line(path: Path, line: str) -> None:
 @contextmanager
 def exclusive_lock(lock_path: Path, *, blocking: bool = False) -> Iterator[int]:
     """对 ``lock_path`` 取独占 flock；非阻塞失败抛 ``BlockingIOError``。"""
+    lock_path = Path(lock_path)
+    _reject_read_only_state(lock_path)
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     handle = lock_path.open("a+")
     flags = fcntl.LOCK_EX if blocking else fcntl.LOCK_EX | fcntl.LOCK_NB

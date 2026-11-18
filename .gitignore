@@ -38,3 +38,6 @@ backup/
 *.bak-*
 web/page/*.bak-*
 .playwright-mcp/
+
+# Rust build output
+/target/

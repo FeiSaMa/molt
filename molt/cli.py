@@ -13,6 +13,8 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import os
+import platform
 import sys
 import tempfile
 from collections.abc import Sequence
@@ -46,7 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--root", type=Path, default=None, help="仓库根，默认自动向上查找")
     sub = parser.add_subparsers(
         dest="command",
-        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,calibrate,doctor,demo}",
+        metavar="{schema,genome,scenario,search,propose,gate,adopt,revert,audit,calibrate,doctor,demo,migrate}",
     )
 
     p_schema = sub.add_parser("schema", help="schema 校验与文档生成")
@@ -183,6 +185,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_demo.add_argument("--state", type=Path, default=Path("state/demo"))
     p_demo.add_argument("--model", default="deepseek/deepseek-flash", help="live 候选的 Pi 模型")
     p_demo.add_argument("--pi-executable", default="pi")
+
+    p_migrate = sub.add_parser("migrate", help="预览或迁移 v1 state 到 Rust kernel")
+    p_migrate.add_argument("--state", type=Path, required=True, help="现有 v1 state 根目录")
+    p_migrate.add_argument("--apply", action="store_true", help="执行迁移；缺省仅 dry-run")
+    p_migrate.add_argument("--migration-id", default=None, help="本次迁移的稳定幂等标识")
 
     return parser
 
@@ -1033,6 +1040,37 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_migrate(args: argparse.Namespace) -> int:
+    socket_path = os.environ.get("MOLT_KERNEL_SOCKET")
+    if not socket_path:
+        print("migrate requires MOLT_KERNEL_SOCKET", file=sys.stderr)
+        return 2
+    if not args.state.is_dir():
+        print(f"v1 state directory does not exist: {args.state}", file=sys.stderr)
+        return 2
+    try:
+        from molt.kernel_mirror import mirror_state, preview_state
+
+        if args.apply:
+            if not args.migration_id:
+                print("--apply requires --migration-id", file=sys.stderr)
+                return 2
+            report = mirror_state(args.state, socket_path, migration_id=args.migration_id)
+            print(
+                "migration applied "
+                f"state_id={preview_state(args.state, socket_path)['state_id']} "
+                f"generation={report['generation']} files={report['files']} "
+                f"unchanged={str(report['unchanged']).lower()}"
+            )
+        else:
+            report = preview_state(args.state, socket_path)
+            print("migration dry-run " + json.dumps(report, sort_keys=True, ensure_ascii=False))
+        return 0
+    except (OSError, RuntimeError, ValueError, KeyError) as exc:
+        print(f"migration failed: {exc}", file=sys.stderr)
+        return 1
+
+
 # ---------------------------------------------------------------------------
 # demo（B2-D7：1 live 候选 + 1 replay 基线 + 10 题扫描回放）
 # ---------------------------------------------------------------------------
@@ -1180,6 +1218,7 @@ HANDLERS = {
     "calibrate": cmd_calibrate,
     "doctor": cmd_doctor,
     "demo": cmd_demo,
+    "migrate": cmd_migrate,
 }
 
 
@@ -1190,11 +1229,114 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.print_help()
         return 0
     try:
-        return HANDLERS[args.command](args)
+        from molt.core import write_policy
+
+        backend = os.environ.get("MOLT_KERNEL_BACKEND", write_policy.DEFAULT_BACKEND)
+        if backend not in ("v1", "kernel"):
+            print(f"unsupported MOLT_KERNEL_BACKEND: {backend}", file=sys.stderr)
+            return 2
+        socket_path = os.environ.get("MOLT_KERNEL_SOCKET")
+        if backend == "kernel" and (sys.platform != "linux" or platform.machine() != "x86_64"):
+            print(
+                "kernel backend is supported only on Linux x86_64; use v1 on this platform",
+                file=sys.stderr,
+            )
+            return 2
+        if backend == "v1" and write_policy.v1_read_only():
+            if args.command == "audit":
+                from molt.core.audit import audit_state
+
+                if args.state is None or not args.state.is_dir():
+                    print("v1 read-only audit requires an existing --state directory", file=sys.stderr)
+                    return 2
+                report = audit_state(
+                    StateStore(args.state), _load_scenario(_repo_root(args), args.scenario)
+                )
+                print("audit ok " + json.dumps(report, sort_keys=True))
+                return 0
+            if args.command != "migrate" and (
+                args.command in {"search", "propose", "adopt", "revert", "demo", "calibrate"}
+                or (args.command == "doctor" and args.recover)
+                or (hasattr(args, "state") and args.command != "doctor")
+            ):
+                print(
+                    "v1 state is read-only during the kernel-default release compatibility window; "
+                    "use audit or explicit migrate (no recovery or writes are allowed)",
+                    file=sys.stderr,
+                )
+                return 2
+        stateful = args.command in {
+            "search", "propose", "adopt", "revert", "audit", "demo", "calibrate"
+        } or (args.command == "doctor" and args.recover)
+        if backend == "kernel" and stateful:
+            if not socket_path:
+                print("MOLT_KERNEL_BACKEND=kernel requires MOLT_KERNEL_SOCKET", file=sys.stderr)
+                return 2
+            if not hasattr(args, "state") or args.state is None:
+                print("kernel backend requires an explicit --state path", file=sys.stderr)
+                return 2
+            if Path(args.state).exists():
+                print(
+                    "kernel backend refuses an existing --state path; migrate it explicitly first",
+                    file=sys.stderr,
+                )
+                return 2
+            from molt.kernel_client import KernelClient
+            from molt.kernel_mirror import materialize_current, mirror_state
+
+            state_arg = args.state
+            with tempfile.TemporaryDirectory(prefix="molt-kernel-projection-") as temporary:
+                projection_root = Path(temporary) / "projection"
+                projection_state = projection_root / "state"
+                with KernelClient(socket_path, timeout=30) as client:
+                    current = client.current()
+                if current:
+                    materialize_current(projection_root, socket_path)
+                else:
+                    projection_state.mkdir(parents=True)
+                args.state = projection_state
+                try:
+                    result = HANDLERS[args.command](args)
+                    if result == 0:
+                        try:
+                            mirror = mirror_state(projection_state, socket_path)
+                        except (OSError, RuntimeError, ValueError) as exc:
+                            print(f"kernel state commit incomplete: {exc}", file=sys.stderr)
+                            return 1
+                        print(
+                            "kernel state committed "
+                            f"generation={mirror['generation']} files={mirror['files']} "
+                            f"unchanged={str(mirror['unchanged']).lower()}"
+                        )
+                    return result
+                finally:
+                    args.state = state_arg
+        result = HANDLERS[args.command](args)
+        state_root = getattr(args, "state", None)
+        if (
+            result == 0
+            and args.command != "migrate"
+            and socket_path
+            and state_root is not None
+            and Path(state_root).is_dir()
+        ):
+            from molt.kernel_mirror import mirror_state
+
+            try:
+                mirror = mirror_state(Path(state_root), socket_path)
+            except (OSError, RuntimeError, ValueError) as exc:
+                print(f"v1 state committed; kernel mirror incomplete: {exc}", file=sys.stderr)
+                return 1
+            print(
+                "kernel mirror "
+                f"generation={mirror['generation']} files={mirror['files']} "
+                f"unchanged={str(mirror['unchanged']).lower()}"
+            )
+        return result
     except MoltError as exc:
         print(f"{exc.code}: {exc}", file=sys.stderr)
         return 1
-    except (FileNotFoundError, ValueError, KeyError) as exc:
+    except (FileNotFoundError, OSError, RuntimeError, ValueError, KeyError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 

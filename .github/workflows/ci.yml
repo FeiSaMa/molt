@@ -139,6 +139,58 @@ jobs:
             exit 1
           fi
 
+  kernel:
+    name: kernel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Rust formatting
+        run: cargo fmt --all --check
+      - name: Rust tests including fault injection
+        run: cargo test --workspace --features molt-kernel/fault-injection --quiet
+      - name: Rust lint
+        run: cargo clippy --workspace --all-targets --features molt-kernel/fault-injection -- -D warnings
+      - name: Build debug kernel for UDS integration tests
+        run: cargo build -p molt-kernel
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12.13"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install Python test dependencies
+        run: uv sync --extra dev --locked
+      - name: Kernel UDS integration and service lifecycle
+        env:
+          MOLT_KERNEL_BIN: target/debug/molt-kernel
+        run: uv run pytest -q tests/test_kernel_client.py
+      - name: Build Linux x86_64 candidate bundle
+        run: packaging/release/build-linux-x86_64.sh /tmp/molt-release
+      - name: Smoke extracted wheel and kernel bundle
+        run: |
+          mkdir -p /tmp/molt-bundle-smoke
+          tar -xzf /tmp/molt-release/molt-*-linux-x86_64.tar.gz -C /tmp/molt-bundle-smoke
+          bundle=$(find /tmp/molt-bundle-smoke -mindepth 1 -maxdepth 1 -type d)
+          uv venv /tmp/molt-bundle-venv
+          uv pip install --python /tmp/molt-bundle-venv/bin/python "$bundle"/wheels/*.whl
+          cd /tmp
+          /tmp/molt-bundle-venv/bin/molt --root "$bundle/share/molt" schema validate --all
+          /tmp/molt-bundle-venv/bin/molt --root "$bundle/share/molt" \
+            scenario validate --scenario "$bundle/share/molt/scenarios/demo/scenario.json"
+          "$bundle/bin/molt-kernel" init --state /tmp/molt-bundle-kernel-state
+          "$bundle/bin/molt-kernel" audit --state /tmp/molt-bundle-kernel-state
+          systemd-analyze verify "$bundle/molt-kernel.service"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: molt-linux-x86_64-candidate
+          path: |
+            /tmp/molt-release/molt-*-linux-x86_64.tar.gz
+            /tmp/molt-release/molt-*-linux-x86_64.tar.gz.sha256
+          if-no-files-found: error
+
   secret-scan:
     name: secret-scan
     runs-on: ubuntu-latest
