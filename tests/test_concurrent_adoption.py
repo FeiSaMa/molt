@@ -26,8 +26,10 @@ import json, sys, time
 from pathlib import Path
 sys.path.insert(0, {str(ROOT)!r})
 from molt.core.errors import TxLocked
+from molt.core import write_policy
 from molt.core.store import StateStore
 from molt.core.types import Genome
+write_policy.DEFAULT_BACKEND = 'v1'
 index = sys.argv[1]
 store = StateStore(Path({str(state)!r}))
 genome = Genome.from_dict(json.loads(Path({str(ROOT / "shells/code-repair/genomes/v0.json")!r}).read_text()))

@@ -1,12 +1,14 @@
-# v2 Release Candidate Checklist
+# v2 Release Checklist
 
 ## Candidate scope
 
-- Candidate: `1.1.0rc1` (PEP 440); this is not the default-backend release R.
+- Release R: `1.1.0` (Linux x86_64).
 - Supported installation target: Linux x86_64 with systemd user manager and `uv`.
 - Python package compatibility: Python `>=3.11`; CI and project baseline use Python `3.12.13`.
 - Other platforms remain on the v1 backend and must not install this kernel bundle.
-- The production default remains v1 until a separate maintainer release decision.
+- The default backend is kernel on the supported target; v1 is read-only for all
+  `1.1.x` releases. The approved decision and release notes are in
+  [`v2-release-1.1.0.md`](v2-release-1.1.0.md).
 
 ## Build and installation checks
 
@@ -20,16 +22,20 @@
 - [x] Restart the installed release against the same state and verify unchanged state identity.
 - [x] Verify the regular user service and its state were not changed by the rehearsal.
 
-## Remaining approval gates
+## Release gates
 
-- [x] Record release-linked failure/unknown-request recovery, disk-full and permission-error
-      checks against the corrected `1.1.0rc1` Linux x86_64 bundle. Evidence and bundle hash are
-      in [`v2-candidate-evidence.md`](../research/v2-candidate-evidence.md).
-- [ ] Bind and publish the backup, checkpoint, restore and rollback procedure for the selected
-      release; candidate procedure is in [`v2-backup-restore.md`](v2-backup-restore.md).
-- [ ] Name the exact default release R and its full v1 read-only compatibility window.
-- [ ] Obtain the separate maintainer approval required by ADR-0015 before changing the default.
+- [x] Record failure/unknown-request, disk-full and permission-error recovery checks against
+      the exact `1.1.0` archive. ENOSPC evidence:
+      `/home/feisama/.local/state/molt-r110-enospc-20261119/exact-bundle-enospc.json`.
+- [x] Rehearse persistent service install, SIGKILL recovery, clean restart and same-state audit
+      against the exact `1.1.0` archive; evidence is in
+      [`v2-candidate-evidence.md`](../research/v2-candidate-evidence.md).
+- [x] Rehearse backup, checkpoint, restore, rollback and v1 read-only migration behavior
+      against the exact `1.1.0` archive. Rollback used a wheel rebuilt from historical
+      v1.0.0 source commit `a1aaee4`; the original published v1 artifact was unavailable.
+      Full report: `/home/feisama/.local/state/molt-v1-rollback-20261119/formal-r110/rollback-rehearsal.json`.
+- [x] Record the independent formal release decision for R=`1.1.0` and the complete `1.1.x`
+      v1 read-only compatibility window in [`v2-release-1.1.0.md`](v2-release-1.1.0.md).
 
-The `1.1.0rc1` candidate evidence is recorded in
-[`v2-candidate-evidence.md`](../research/v2-candidate-evidence.md). A passing checklist is not
-authorization to change the production default.
+Earlier candidate evidence is recorded in [`v2-candidate-evidence.md`](../research/v2-candidate-evidence.md).
+It does not replace the release-bound checks above.

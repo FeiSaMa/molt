@@ -61,7 +61,7 @@ feat(shell): 新增 svc-config shell 的三端口实现
 
 - 行为变更必须带用例；只写实现不写用例的 PR 不合并。
 - 全量：`PYTHONDONTWRITEBYTECODE=1 uv run pytest -q`，**手动 / 集中执行，不属于 CI**
-  （CI 只有 `lint`、`schema`、`boundary`、`audit`、`secret-scan` 五个作业）；PR 不要求贴全量结果。
+  （CI 的 `kernel` 作业只运行 Rust、Python/kernel UDS、CLI 契约与安装包恢复子集）；PR 不要求贴全量结果。
 - 真实 Pi 调用默认跳过（`pytest.mark.pi`），只有设置 `MOLT_RUN_PI_LIVE=1` 才跑，
   且受预算约束；CI 只在手动 `pi-smoke` 工作流里跑。
 - 涉及仓库写入的测试，用文件系统树快照验收，**不要**用 `git status` 代替
@@ -109,8 +109,9 @@ feat(shell): 新增 svc-config shell 的三端口实现
 
 ## 九、CI 期望
 
-`.github/workflows/ci.yml` 五个作业：`lint`、`schema`、`boundary`、`audit`、`secret-scan`；
-CI 不运行 pytest（全量为手动 / 集中执行，见 §五）。`audit` 作业同时跑
+`.github/workflows/ci.yml` 六个作业：`lint`、`schema`、`boundary`、`audit`、`secret-scan`、`kernel`；
+`kernel` 运行 Rust 测试、Python/kernel UDS 与 CLI 契约子集，并在仓库外安装 wheel、
+使用包内数据和 release kernel 验证 replay 备份恢复；全量 Python pytest 仍为手动 / 集中执行（见 §五）。`audit` 作业同时跑
 `molt demo --mode replay`（180s 上限、state 落 `/tmp`），随后 audit 重算；不导出 web 数据。`pi-smoke` 是独立的手动工作流（`workflow_dispatch`），不是 CI 作业：
 只跑 1 条 live task，`max_cost_usd` 是**本次单 run** 的运行后验收上限（不是 scenario 总预算），
 超过即 fail。CI 只用仓库 secrets，任何 key 都不得写进工作流文件。
@@ -123,7 +124,7 @@ CI 不运行 pytest（全量为手动 / 集中执行，见 §五）。`audit` �
 
 分支保护现状：仓库有**两个 active ruleset**（`main-protection` 与旧的 `protect-main`）。
 两者求并集，严格项为准：启用的规则是删除保护与禁 non-fast-forward，
-**未登记必需状态检查**；CI 的五个作业不构成合并阻塞项。
+**未登记必需状态检查**；CI 作业不构成合并阻塞项。
 旧 ruleset 是否删除由用户决定，未在本批次处理。
 
 ## M0 评审交接

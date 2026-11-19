@@ -1,10 +1,143 @@
 # v2 kernel candidate evidence
 
-This is a validation record for the current uncommitted candidate, not approval
-to change the production default. The production backend remains v1; M4
-implementation authorization remains closed.
+This file records the formal `1.1.0` release decision and package-bound
+validation, followed by historical candidate evidence. The `1.1.0` release
+decision is approved and package acceptance passed for the archive hash recorded
+below. M4 implementation authorization remains closed.
 
-## Candidate identity
+## Formal 1.1.0 archive acceptance (2026-11-19)
+
+- Final documentation-complete archive:
+  `/home/feisama/.local/state/molt-release-1.1.0-final2-20261119/molt-1.1.0-linux-x86_64.tar.gz`.
+  SHA-256 `4d5b4a04675971480ee593dd0210a91db952288144fa9472c8e79275f51845ad`;
+  the adjacent checksum verified. The earlier accepted archive
+  `/home/feisama/.local/state/molt-release-1.1.0/molt-1.1.0-linux-x86_64.tar.gz`
+  has SHA-256 `c1861b3b30e8c442eb431444eebfe964b6caf0ac66d2a2c14d1cea95d66ab1c3`.
+  Extracted trees were compared: outside the release checklist and release plan
+  documents (and test-generated `__pycache__`), all bundle files are identical;
+  the wheel SHA-256 is `8b3bef2a702453aa8d326b584b15410a4a8c22ed107211699295678edbd38fbf`
+  in both archives. Thus the earlier exact-runtime service, failure, migration
+  and rollback rehearsals apply to the unchanged wheel and kernel payload in this
+  final archive. The final archive's own package smoke and isolated kernel tests
+  are recorded below. The extracted wheel reports version `1.1.0`
+  and `DEFAULT_BACKEND=kernel` in an isolated Python 3.12.13 environment.
+- The packaged-wheel verifier passed all 25 bundled schema records, demo
+  scenario validation, kernel init/audit, and replay backup/checkpoint/restore
+  with semantic audit (**1 passed**, 8.43s). The complete copied
+  `tests/test_kernel_client.py` suite ran against this archive's kernel binary
+  and installed wheel: **3 passed** (39.89s), including restored-state service
+  and semantic audit.
+- A transient user-manager unit ran the exact archive binary against isolated
+  state `sha256:cdc0627a85103a1b393de23ec6c9e42471d82dc590debfc36281b49787144b96`.
+  SIGKILL changed PID `28242` to `28326`, `NRestarts=1`, and retained the state
+  ID. A fresh transient unit then started against the same state; ping and
+  kernel audit passed. The regular `molt-kernel.service` remained inactive.
+- An isolated v1-format replay state passed installed-wheel semantic audit
+  (**31 runs, 4 results, 1 decision, 26 events**). Audit and migration preview
+  each left an exact directory metadata and content-hash snapshot unchanged.
+  Preview reported **254 files / 1,905,541 bytes** and generation 0; no import
+  was applied.
+- Exact-bundle failure checks passed for `permission_denied` followed by a
+  successful upload after repair, and for a deliberately discarded commit
+  response. After restart, `request.status` returned `committed`; retrying the
+  same request ID returned generation 1 without duplication. Results are in
+  `/home/feisama/.local/state/molt-r110-acceptance.vpNczn/exact-bundle-failure-paths-final.json`.
+- Final source checks on 2026-11-19 passed: Python **377 passed, 5 skipped**;
+  Rust fault-injection workspace **20 + 1 + 5 passed**; fmt, Clippy, Ruff,
+  37 source schema records, scenario, both doctor checks, systemd unit
+  validation, shell syntax, and `git diff --check`.
+- The initial host-level `pkexec` attempt could not show a dialog because no
+  authentication agent is installed or running. The exact R ENOSPC check was
+  then completed without host privileges in an unprivileged user+mount
+  namespace using an isolated 8 MiB tmpfs. After filling **8,368,128 bytes**,
+  `generation.commit` returned `io_error` / `No space left on device (os error
+  28)`. After service restart and freeing space, the same request ID committed
+  generation 1; a duplicate retry returned the same result and audit passed.
+  Evidence: `/home/feisama/.local/state/molt-r110-enospc-20261119/exact-bundle-enospc.json`.
+- The exact R wheel migrated a copied v1 snapshot into the exact R kernel
+  (254 files, generation 1). A path/content hash fingerprint confirmed the
+  source v1 snapshot was unchanged. The R checkpoint was exported, the stopped
+  kernel state was copied independently, and the copied state passed checkpoint
+  audit with state ID `sha256:3d70e232f777191907a437a78a92126b41d20e05e6174d450d11e1cc130ab71a`.
+  Rollback then used a separate copy of the original v1 snapshot with a wheel
+  rebuilt from historical source commit `a1aaee4de4acec2e8272492dcb8412ea207df4ab`
+  (`molt` 1.0.0, wheel SHA-256
+  `1d0067af151f8f16b4f171e3796166435c81f77a1d035ab663aa818b00127c64`): fixture
+  search wrote 10 runs and the old v1 audit passed. The original published v1
+  artifact/tag was not found; this is a source-reconstructed rollback rehearsal,
+  not a claim that the rebuilt wheel is byte-identical to a previously published
+  artifact. Full report: `/home/feisama/.local/state/molt-v1-rollback-20261119/formal-r110/rollback-rehearsal.json`.
+- The user's regular service was left inactive; no commit, push, public
+  publication, or migration of the user's state was performed. M4/M5 remain
+  outside this release authorization.
+- Final-archive revalidation: `packaging/release/verify-bundle.sh` passed against
+  the final SHA above (25 bundled schemas, demo scenario, kernel init/audit,
+  replay backup/restore semantic audit **1 passed**, systemd unit verification).
+  Copied package-level CLI contract tests passed **5 passed**, and the full
+  copied kernel client suite passed **3 passed** when run from the bundle data
+  root. Source revalidation passed Python **377 passed, 5 skipped**, Rust
+  fault-injection **20 + 1 + 5 passed**, Ruff, Clippy, fmt, 36 source schemas,
+  scenario, doctor deps/repo-policy, shell syntax, systemd unit verification,
+  and `git diff --check`. Logs: `/tmp/molt-r110-closeout-python.log`,
+  `/tmp/molt-r110-closeout-rust.log`, `/tmp/molt-r110-closeout-clippy.log`;
+  package verification directory:
+  `/home/feisama/.local/state/molt-release-1.1.0-final2-20261119/verification`.
+
+## Isolated wheel and CI review (2026-11-18)
+
+- Current base: `10e22e4266d285aa4dd3b2c010e77bc0e7768150`, branch
+  `refactor/v2-m1-kernel`, plus the uncommitted review changes. No commit or push
+  was made during this review; the pre-existing evidence additions were retained.
+- Current source fingerprint, excluding this evidence file:
+  `4453cb9e95ec225e805f6248f41d1e213735c05412cbc12e378aae37d9ef08f0`.
+- New development bundle:
+  `/tmp/molt-review-final-release/molt-1.1.0rc1-linux-x86_64.tar.gz`, SHA-256
+  `77845a69b969f8caaedb7e19e5b97180efc683c190e07b1599860b934e7fd09c`.
+  The adjacent checksum passed. This is rc1 development evidence, not release R.
+- Fixed the CI coverage gap where the packaged-kernel recovery test imported
+  Python from the checkout. `packaging/release/verify-bundle.sh` installs the
+  wheel and locked dependencies, copies the test outside the checkout, runs
+  isolated Python, and points CLI operations at bundled data. The observed
+  import was `/tmp/molt-wheel-final/venv/lib/python3.12/site-packages/molt/__init__.py`.
+  Conflicting `PYTHONPATH`, `PYTHONHOME` and backend/socket environment variables
+  were supplied and cleared successfully. An in-checkout output directory and
+  an existing output directory were both rejected without replacing contents.
+- Installed-wheel schema validation passed all 25 bundled records, the demo
+  scenario passed, kernel init/audit passed, and replay backup/checkpoint/restore
+  with semantic audit passed (**1 passed**, 7.39s). The service template was
+  rendered with this bundle's binary and isolated state paths before
+  `systemd-analyze verify`, avoiding any preinstalled user binary dependency.
+- Rust fault-injection workspace tests: **20 + 1 + 5 passed**. Rust fmt/clippy,
+  Ruff, shell syntax, `git diff --check`, 36 source-tree schema records, demo
+  scenario, `doctor --deps` and `doctor --repo-policy` passed.
+- Release-kernel UDS and CLI contract tests: **8 passed** (28.91s). Full Python
+  suite, run serially with its own TMPDIR: **377 passed, 5 skipped** (63.46s).
+  The initial concurrent run had one staging-cleanup assertion failure because
+  another test process changed the shared `/tmp/molt-verify-*` set; the isolated
+  cleanup test passed before the serial full rerun. No verifier or frozen task
+  content was changed to hide that failure.
+- CI now runs CLI contract tests as well as UDS tests, checks the archive digest,
+  and invokes the same isolated bundle verifier. The workflow's commands were
+  exercised locally; no remote GitHub Actions run is claimed.
+- Prepared the proposed `1.1.0` release record, all-`1.1.x` v1 read-only window,
+  and exact-release backup/restore binding in
+  [`v2-release-1.1.0.md`](../operations/v2-release-1.1.0.md), included in this bundle.
+  The package version and default remain `1.1.0rc1` and v1. Formal R acceptance,
+  publication and independent default-switch approval remain open; M4/M5
+  implementation is not authorized by this review.
+- The regular user service was observed `ActiveState=inactive`, `MainPID=0`,
+  `NRestarts=0`. This review did not install or start it. Earlier persistent
+  systemd, disk-full and permission-error rehearsals were not repeated against
+  this development archive and must not be attributed to its digest.
+- Logs: `/tmp/molt-review-20261118-build-final.log`,
+  `/tmp/molt-review-20261118-wheel-final.log`, `/tmp/molt-review-20261118-rust.log`,
+  `/tmp/molt-review-20261118-clippy.log`, `/tmp/molt-review-20261118-uds.log`,
+  `/tmp/molt-review-20261118-python-final.log`, `/tmp/molt-review-20261118-staging.log`,
+  `/tmp/molt-review-20261118-policy.log`, `/tmp/molt-review-20261118-refusal.log`,
+  `/tmp/molt-review-20261118-existing-dir.log`. The initial failed run is retained
+  in `/tmp/molt-review-20261118-python.log`.
+
+## Historical candidate identity
 
 - Base commit: `a1aaee4de4acec2e8272492dcb8412ea207df4ab`
 - Package version built: `1.1.0rc1` (pre-release candidate; not release R)
@@ -152,6 +285,46 @@ all non-ignored repository files except this self-referential evidence file.
   compatibility window, publishing release-specific backup/checkpoint/
   restore/rollback instructions, and separate approval for a default switch.
   The production default remains v1.
+
+## Kernel-first development and repeatable recovery (2026-11-18)
+
+- README now documents an isolated kernel-primary replay/audit workflow. The
+  production default and v1 compatibility policy remain unchanged.
+- Release bundles now include the backup/restore, release checklist and service
+  procedures; the installer prints the installed recovery-document path. Backup
+  checkpoint checksum files use relative names so transfer does not retain a
+  source-machine absolute path.
+- Added `test_kernel_backup_restores_replay_evidence`: create a full replay state
+  through the primary backend, stop the service, export a checkpoint, copy the
+  state without its runtime socket, move the source offline, restore into a new
+  directory, verify the checkpoint and current generation, then run CLI and
+  direct Python semantic audits against the restored evidence. CI runs it both
+  in the UDS suite and against the extracted release kernel.
+- Local verification used Python 3.12.13: Rust fault-injection suite 26 passed;
+  Python kernel client/CLI/canonical-vector suite 9 passed; lint, 36 schema
+  records and the 15-task demo scenario passed. The extracted release kernel
+  also passed the new recovery test (1 passed). This is not a full Python-suite
+  or systemd installation rehearsal.
+- Follow-up on the `refactor/v2-m1-kernel` worktree (base `6899104`): the full
+  Python suite passed (**377 passed, 5 skipped**); kernel UDS tests passed
+  (**3 passed**) and the extracted bundle recovery test passed (**1 passed**).
+  Ruff, Rust formatting/clippy, all 36 schema records, demo scenario,
+  `doctor --deps`, `doctor --repo-policy`, bundle documentation presence and
+  `systemd-analyze verify` passed. This run does not replace the earlier
+  systemd installation or filesystem failure rehearsals.
+- Rebuilt bundle: `/tmp/molt-v2-transition-release/molt-1.1.0rc1-linux-x86_64.tar.gz`,
+  SHA-256 `64f86dc054ac8f487fb376d3169bcba9f4f789fb44ce121512d59df339624cd3`.
+  This development rebuild includes the recovery documentation; the earlier
+  corrected candidate remains the reference for its recorded systemd and
+  filesystem failure rehearsals, which were not repeated on this rebuild.
+- Additional worktree bundle: `/tmp/molt-v2-worktree-release/molt-1.1.0rc1-linux-x86_64.tar.gz`,
+  SHA-256 `e7ce673ab9980062570e9c761796be647bf5b01c783d5b9148d80d10c2b52baa`.
+  It passed the extracted-kernel backup/restore test; it is a development build,
+  not a new systemd or failure-path rehearsal.
+- Logs: `/tmp/molt-v2-transition-rust.log`,
+  `/tmp/molt-v2-transition-python.log`,
+  `/tmp/molt-v2-transition-package-recovery.log`,
+  `/tmp/molt-v2-transition-package.log`.
 
 ## Reproduction commands
 

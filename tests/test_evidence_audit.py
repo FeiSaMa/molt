@@ -135,7 +135,7 @@ def test_audit_cli_demo() -> None:
     env["PYTHONPATH"] = str(ROOT)
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     completed = subprocess.run(
-        [sys.executable, "-m", "molt", "audit", "--scenario", "demo"],
+        [sys.executable, str(ROOT / "tests/run_cli.py"), "audit", "--scenario", "demo"],
         cwd=ROOT,
         env=env,
         capture_output=True,

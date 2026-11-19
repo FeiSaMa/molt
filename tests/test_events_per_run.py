@@ -30,6 +30,8 @@ from pathlib import Path
 sys.path.insert(0, {str(ROOT)!r})
 from molt.core.events import EventLog, make_event
 from molt.core.ledger import Ledger
+from molt.core import write_policy
+write_policy.DEFAULT_BACKEND = 'v1'
 run_id = sys.argv[1]
 state = Path({str(state)!r})
 ready = Path({str(tmp_path)!r}) / ('ready-' + run_id)

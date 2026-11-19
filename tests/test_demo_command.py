@@ -107,8 +107,7 @@ def test_demo_baseline_state_is_read_only(tmp_path: Path) -> None:
     second = subprocess.run(
         [
             sys.executable,
-            "-m",
-            "molt",
+            str(ROOT / "tests/run_cli.py"),
             "--root",
             str(ROOT),
             "demo",

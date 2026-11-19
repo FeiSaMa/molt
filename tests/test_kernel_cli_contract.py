@@ -31,7 +31,10 @@ def _tree_snapshot(root: Path) -> tuple[tuple[str, int, str, bytes | str], ...]:
     return tuple(entries)
 
 
-def test_default_backend_remains_v1_without_kernel_service(tmp_path: Path, monkeypatch) -> None:
+def test_default_kernel_backend_fails_without_service_and_never_falls_back(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    monkeypatch.setattr(write_policy, "DEFAULT_BACKEND", "kernel")
     monkeypatch.delenv("MOLT_KERNEL_BACKEND", raising=False)
     monkeypatch.delenv("MOLT_KERNEL_SOCKET", raising=False)
     state = tmp_path / "v1-state"
@@ -46,8 +49,9 @@ def test_default_backend_remains_v1_without_kernel_service(tmp_path: Path, monke
             "--state",
             str(state),
         ]
-    ) == 0
-    assert (state / "runs").is_dir()
+    ) == 2
+    assert "requires MOLT_KERNEL_SOCKET" in capsys.readouterr().err
+    assert not state.exists()
 
 
 def test_kernel_backend_without_service_fails_without_v1_fallback(
@@ -88,6 +92,7 @@ def test_kernel_backend_rejects_unvalidated_platform_before_state_access(
 
 
 def test_r_release_rejects_v1_writes_without_changing_source_tree(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(write_policy, "DEFAULT_BACKEND", "v1")
     source = tmp_path / "legacy-state"
     store = StateStore(source)
     store.ensure()
@@ -137,6 +142,7 @@ def test_r_release_rejects_v1_writes_without_changing_source_tree(tmp_path, monk
 def test_r_release_read_only_audit_and_migration_preview_keep_source_usable(
     tmp_path, monkeypatch, capsys
 ):
+    monkeypatch.setattr(write_policy, "DEFAULT_BACKEND", "v1")
     source = tmp_path / "legacy-state"
     StateStore(source).ensure()
     (source / "runs" / "existing.json").write_text("{}", encoding="utf-8")

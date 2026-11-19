@@ -76,7 +76,7 @@ def test_doctor_deps_exit_zero() -> None:
     env["PYTHONPATH"] = str(ROOT)
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     completed = subprocess.run(
-        [sys.executable, "-m", "molt", "doctor", "--deps"],
+        [sys.executable, str(ROOT / "tests/run_cli.py"), "doctor", "--deps"],
         cwd=ROOT,
         env=env,
         capture_output=True,

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -12,13 +13,14 @@ from pathlib import Path
 import pytest
 
 from molt.cli import main as cli_main
+from molt.core import write_policy
 from molt.core.audit import audit_state
 from molt.core.store import StateStore
 from molt.demo import load_demo_scenario
 from molt.kernel_client import KernelClient, KernelError
 from molt.kernel_mirror import materialize_current, mirror_state, preview_state, state_roots
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("MOLT_TEST_DATA_ROOT", Path(__file__).resolve().parents[1])).resolve()
 TS = "2026-11-16T00:00:00Z"
 
 
@@ -49,6 +51,65 @@ def _wait_for_server(executable: Path, state: Path, socket_path: Path) -> subpro
     server.terminate()
     server.wait(timeout=5)
     pytest.fail("kernel server startup timed out")
+
+
+@pytest.mark.integration
+def test_kernel_backup_restores_replay_evidence(tmp_path: Path, monkeypatch) -> None:
+    """A stopped-state backup must serve and semantically audit without the source."""
+    binary = os.environ.get("MOLT_KERNEL_BIN")
+    if not binary:
+        pytest.skip("set MOLT_KERNEL_BIN to a built molt-kernel executable")
+    executable = Path(binary).resolve()
+    source = tmp_path / "source"
+    subprocess.run([executable, "init", "--state", source], check=True, capture_output=True)
+    source_socket = source / "kernel.sock"
+    server = _wait_for_server(executable, source, source_socket)
+    try:
+        monkeypatch.setenv("MOLT_KERNEL_BACKEND", "kernel")
+        monkeypatch.setenv("MOLT_KERNEL_SOCKET", str(source_socket))
+        assert cli_main(
+            ["--root", str(ROOT), "demo", "--mode", "replay",
+             "--state", str(tmp_path / "logical-state")]
+        ) == 0
+        with KernelClient(str(source_socket)) as client:
+            expected = client.current()
+    finally:
+        server.terminate()
+        server.wait(timeout=5)
+
+    backup = tmp_path / "backup"
+    backup.mkdir()
+    checkpoint = backup / "checkpoint.json"
+    subprocess.run(
+        [executable, "checkpoint", "export", "--state", source,
+         "--out", checkpoint, "--created-at", TS],
+        check=True, capture_output=True,
+    )
+    # A socket is runtime state, not part of a portable backup.
+    shutil.copytree(source, backup / "state", ignore=shutil.ignore_patterns("kernel.sock"))
+    restored = tmp_path / "restored"
+    shutil.copytree(backup / "state", restored)
+    source.rename(tmp_path / "source-offline")
+    subprocess.run(
+        [executable, "audit", "--state", restored, "--checkpoint", checkpoint],
+        check=True, capture_output=True,
+    )
+    restored_socket = restored / "kernel.sock"
+    recovered_server = _wait_for_server(executable, restored, restored_socket)
+    try:
+        with KernelClient(str(restored_socket)) as client:
+            assert client.current() == expected
+        monkeypatch.setenv("MOLT_KERNEL_SOCKET", str(restored_socket))
+        assert cli_main(
+            ["--root", str(ROOT), "audit", "--scenario", "demo",
+             "--state", str(tmp_path / "restored-logical")]
+        ) == 0
+        projection = tmp_path / "restored-projection"
+        materialize_current(projection, str(restored_socket))
+        audit_state(StateStore(projection / "state"), load_demo_scenario(ROOT))
+    finally:
+        recovered_server.terminate()
+        recovered_server.wait(timeout=5)
 
 
 @pytest.mark.integration
@@ -122,6 +183,7 @@ def test_kernel_server_lock_and_stale_socket_recovery(tmp_path: Path) -> None:
 
 @pytest.mark.integration
 def test_python_client_roundtrips_real_kernel_server(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.setattr(write_policy, "DEFAULT_BACKEND", "v1")
     binary = os.environ.get("MOLT_KERNEL_BIN")
     if not binary:
         pytest.skip("set MOLT_KERNEL_BIN to a built molt-kernel executable")

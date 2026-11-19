@@ -1,11 +1,11 @@
 name: ci
 
-# 五个作业：lint / schema / boundary / audit / secret-scan；CI 不运行 pytest。
-# 全量 pytest 为手动 / 集中执行（见 CONTRIBUTING §五、§九）。
+# 六个作业：lint / schema / boundary / audit / secret-scan / kernel。
+# kernel 运行 Rust、UDS 与安装包恢复子集；全量 Python pytest 仍为手动 / 集中执行。
 # 真实 Pi 调用不在本工作流内（见 pi-smoke.yml：手动触发，只跑 1 条 live task，
 # 费用 cap 为本次单 run 的运行后验收上限）。
 #
-# 提示：作业名即 `lint`、`schema`、`boundary`、`audit`、`secret-scan`；
+# 提示：作业名即 `lint`、`schema`、`boundary`、`audit`、`secret-scan`、`kernel`；
 # 当前分支保护未登记必需状态检查（见 CONTRIBUTING §九）。
 # 3.11 浮点夹具差异见 CONTRIBUTING §九「已知兼容性缺口」：手动全量 pytest 在 3.12 下执行。
 
@@ -115,6 +115,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12.13"
@@ -123,14 +125,39 @@ jobs:
       - run: uv sync --extra dev --locked
       - name: 门禁夹具 G1–G8
         run: uv run python -m molt gate --fixture tests/fixtures/gate/
-      - name: 只读重算
-        run: uv run python -m molt audit --scenario demo
-      - name: demo 闭环（replay 模式：0 live，10 题扫描回放单独成组）
+      - name: 构建 audit 使用的 kernel
+        run: cargo build -p molt-kernel
+      - name: kernel demo 闭环与证据重算（replay 模式：0 live）
         run: |
+          set -euo pipefail
+          work=$(mktemp -d /tmp/molt-ci-audit.XXXXXX)
+          kernel="$PWD/target/debug/molt-kernel"
+          "$kernel" init --state "$work/kernel"
+          "$kernel" serve --state "$work/kernel" >"$work/kernel.log" 2>&1 &
+          kernel_pid=$!
+          trap 'kill "$kernel_pid" 2>/dev/null || true; wait "$kernel_pid" 2>/dev/null || true' EXIT
+          export MOLT_KERNEL_SOCKET="$work/kernel/kernel.sock"
+          ready=false
+          for attempt in {1..100}; do
+            if "$kernel" ping --socket "$MOLT_KERNEL_SOCKET" >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            if ! kill -0 "$kernel_pid" 2>/dev/null; then
+              cat "$work/kernel.log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          if [ "$ready" != true ]; then
+            cat "$work/kernel.log"
+            exit 1
+          fi
           uv run python -m molt demo --mode replay \
-            --state /tmp/molt-ci-demo --max-wall 180
-      - name: demo 证据重算
-        run: uv run python -m molt audit --scenario demo --state /tmp/molt-ci-demo
+            --state "$work/logical-state" --max-wall 180
+          uv run python -m molt audit --scenario demo --state "$work/logical-state"
+          "$kernel" audit --state "$work/kernel"
+          test ! -e "$work/logical-state"
       - name: 零写入（仓库树不得被命令改动）
         run: |
           if [ -n "$(git status --porcelain)" ]; then
@@ -166,23 +193,16 @@ jobs:
       - name: Kernel UDS integration and service lifecycle
         env:
           MOLT_KERNEL_BIN: target/debug/molt-kernel
-        run: uv run pytest -q tests/test_kernel_client.py
+        run: uv run pytest -q tests/test_kernel_client.py tests/test_kernel_cli_contract.py
       - name: Build Linux x86_64 candidate bundle
         run: packaging/release/build-linux-x86_64.sh /tmp/molt-release
       - name: Smoke extracted wheel and kernel bundle
         run: |
+          sha256sum -c /tmp/molt-release/molt-*-linux-x86_64.tar.gz.sha256
           mkdir -p /tmp/molt-bundle-smoke
           tar -xzf /tmp/molt-release/molt-*-linux-x86_64.tar.gz -C /tmp/molt-bundle-smoke
           bundle=$(find /tmp/molt-bundle-smoke -mindepth 1 -maxdepth 1 -type d)
-          uv venv /tmp/molt-bundle-venv
-          uv pip install --python /tmp/molt-bundle-venv/bin/python "$bundle"/wheels/*.whl
-          cd /tmp
-          /tmp/molt-bundle-venv/bin/molt --root "$bundle/share/molt" schema validate --all
-          /tmp/molt-bundle-venv/bin/molt --root "$bundle/share/molt" \
-            scenario validate --scenario "$bundle/share/molt/scenarios/demo/scenario.json"
-          "$bundle/bin/molt-kernel" init --state /tmp/molt-bundle-kernel-state
-          "$bundle/bin/molt-kernel" audit --state /tmp/molt-bundle-kernel-state
-          systemd-analyze verify "$bundle/molt-kernel.service"
+          bash packaging/release/verify-bundle.sh "$bundle" /tmp/molt-bundle-verification
       - uses: actions/upload-artifact@v4
         with:
           name: molt-linux-x86_64-candidate

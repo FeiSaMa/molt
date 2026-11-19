@@ -19,6 +19,7 @@ stage=$(mktemp -d "${TMPDIR:-/tmp}/molt-release.XXXXXX")
 trap 'rm -rf "$stage"' EXIT
 bundle="$stage/molt-$version-linux-x86_64"
 mkdir -p "$bundle/bin" "$bundle/wheels" "$bundle/share/molt"
+mkdir -p "$bundle/share/molt/docs/operations"
 
 PYTHONDONTWRITEBYTECODE=1 uv build --wheel --out-dir "$bundle/wheels" "$repo_root"
 cargo build --manifest-path "$repo_root/Cargo.toml" --release -p molt-kernel
@@ -27,6 +28,11 @@ install -m 0644 "$repo_root/packaging/systemd/molt-kernel.service" "$bundle/molt
 cp -a "$repo_root/molt" "$repo_root/schemas" "$repo_root/scenarios" \
   "$repo_root/shells" "$repo_root/bench" "$bundle/share/molt/"
 install -m 0644 "$repo_root/README.md" "$bundle/share/molt/README.md"
+install -m 0644 "$repo_root/docs/operations/v2-backup-restore.md" \
+  "$repo_root/docs/operations/v2-release-checklist.md" \
+  "$repo_root/docs/operations/v2-release-1.1.0.md" \
+  "$repo_root/docs/operations/molt-kernel-systemd.md" \
+  "$bundle/share/molt/docs/operations/"
 install -m 0755 "$repo_root/packaging/release/install-user.sh" "$bundle/install-user.sh"
 tar -C "$stage" -czf "$out_dir/molt-$version-linux-x86_64.tar.gz" "molt-$version-linux-x86_64"
 sha256sum "$out_dir/molt-$version-linux-x86_64.tar.gz" > "$out_dir/molt-$version-linux-x86_64.tar.gz.sha256"
