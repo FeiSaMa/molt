@@ -11,12 +11,12 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-from molt.core.write_policy import v1_read_only
+from molt.core.write_policy import projection_writes_allowed, v1_read_only
 
 
 def _reject_read_only_state(path: Path) -> None:
     """Reject writes below a v1 state during a kernel-default release."""
-    if not v1_read_only():
+    if not v1_read_only() or projection_writes_allowed():
         return
     resolved = path.resolve(strict=False)
     state_dirs = {"runs", "journal", "generations", "ledger", "events", "archive", "snapshots", "results", "decisions", "proposals", "genomes"}
@@ -27,7 +27,7 @@ def _reject_read_only_state(path: Path) -> None:
 
 def reject_v1_state_write() -> None:
     """Reject StateStore mutations even when the target tree is still empty."""
-    if v1_read_only():
+    if v1_read_only() and not projection_writes_allowed():
         raise PermissionError("v1 state is read-only during the kernel-default release")
 
 

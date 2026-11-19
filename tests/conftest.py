@@ -7,10 +7,12 @@ from pathlib import Path
 
 import pytest
 
+from molt.core import write_policy
 from molt.core.store import StateStore
 from molt.demo import build_demo_state
 
 ROOT = Path(__file__).resolve().parents[1]
+write_policy.DEFAULT_BACKEND = "v1"
 
 
 @pytest.fixture(scope="session")

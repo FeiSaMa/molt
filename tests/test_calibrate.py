@@ -23,7 +23,7 @@ def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
     env["PYTHONPATH"] = str(ROOT)
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     return subprocess.run(
-        [sys.executable, "-m", "molt", *args],
+        [sys.executable, str(ROOT / "tests/run_cli.py"), *args],
         cwd=ROOT,
         env=env,
         capture_output=True,

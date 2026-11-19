@@ -97,8 +97,10 @@ import os, signal, sys
 from pathlib import Path
 sys.path.insert(0, {str(ROOT)!r})
 from molt.core.store import StateStore
+from molt.core import write_policy
 from molt.core.types import Genome
 import json
+write_policy.DEFAULT_BACKEND = 'v1'
 store = StateStore(Path({str(tmp_path / "state")!r}))
 genome = Genome.from_dict(json.loads(Path({str(ROOT / "shells/code-repair/genomes/v0.json")!r}).read_text()))
 roots = {{'molt/core': Path({str(roots["molt/core"])!r}), 'shells/code-repair': Path({str(roots["shells/code-repair"])!r})}}
@@ -126,7 +128,9 @@ import os, signal, sys, json
 from pathlib import Path
 sys.path.insert(0, {str(ROOT)!r})
 from molt.core.store import StateStore
+from molt.core import write_policy
 from molt.core.types import Genome
+write_policy.DEFAULT_BACKEND = 'v1'
 store = StateStore(Path({str(tmp_path / "state")!r}))
 genome = Genome.from_dict(json.loads(Path({str(ROOT / "shells/code-repair/genomes/v0.json")!r}).read_text()))
 roots = {{'molt/core': Path({str(roots["molt/core"])!r}), 'shells/code-repair': Path({str(roots["shells/code-repair"])!r})}}

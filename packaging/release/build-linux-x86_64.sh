@@ -30,6 +30,7 @@ cp -a "$repo_root/molt" "$repo_root/schemas" "$repo_root/scenarios" \
 install -m 0644 "$repo_root/README.md" "$bundle/share/molt/README.md"
 install -m 0644 "$repo_root/docs/operations/v2-backup-restore.md" \
   "$repo_root/docs/operations/v2-release-checklist.md" \
+  "$repo_root/docs/operations/v2-release-1.1.0.md" \
   "$repo_root/docs/operations/molt-kernel-systemd.md" \
   "$bundle/share/molt/docs/operations/"
 install -m 0755 "$repo_root/packaging/release/install-user.sh" "$bundle/install-user.sh"

@@ -67,7 +67,7 @@ def test_commands_do_not_write_repository() -> None:
         ]
         for command in commands:
             completed = subprocess.run(
-                [sys.executable, "-m", "molt", *command],
+                [sys.executable, str(ROOT / "tests/run_cli.py"), *command],
                 cwd=ROOT,
                 env=env,
                 capture_output=True,

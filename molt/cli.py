@@ -1296,7 +1296,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     projection_state.mkdir(parents=True)
                 args.state = projection_state
                 try:
-                    result = HANDLERS[args.command](args)
+                    with write_policy.kernel_projection():
+                        result = HANDLERS[args.command](args)
                     if result == 0:
                         try:
                             mirror = mirror_state(projection_state, socket_path)

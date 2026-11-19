@@ -237,7 +237,8 @@ probe/probe-c2 家族、agent/upper/skills/mcp、耦合资产、HTTP/API 与展�
 一次变更合并前必须满足：
 
 - [ ] 测试：新增行为必须带用例；全量 `uv run pytest -q` 为手动 / 集中执行，
-      不属于 CI（CI 只有 `lint`、`schema`、`boundary`、`audit`、`secret-scan` 五个作业），
+      不属于 CI（六个作业：`lint`、`schema`、`boundary`、`audit`、`secret-scan`、`kernel`；
+      `kernel` 仅跑 Rust、Python/kernel UDS、CLI 契约与安装包恢复子集），
       不要求全量套件在 CI 全绿。
 - [ ] Schema：`molt schema validate --all` 与
       `molt scenario validate --scenario scenarios/demo/scenario.json` 通过；

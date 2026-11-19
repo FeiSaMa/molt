@@ -13,13 +13,14 @@ from pathlib import Path
 import pytest
 
 from molt.cli import main as cli_main
+from molt.core import write_policy
 from molt.core.audit import audit_state
 from molt.core.store import StateStore
 from molt.demo import load_demo_scenario
 from molt.kernel_client import KernelClient, KernelError
 from molt.kernel_mirror import materialize_current, mirror_state, preview_state, state_roots
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("MOLT_TEST_DATA_ROOT", Path(__file__).resolve().parents[1])).resolve()
 TS = "2026-11-16T00:00:00Z"
 
 
@@ -67,7 +68,8 @@ def test_kernel_backup_restores_replay_evidence(tmp_path: Path, monkeypatch) -> 
         monkeypatch.setenv("MOLT_KERNEL_BACKEND", "kernel")
         monkeypatch.setenv("MOLT_KERNEL_SOCKET", str(source_socket))
         assert cli_main(
-            ["demo", "--mode", "replay", "--state", str(tmp_path / "logical-state")]
+            ["--root", str(ROOT), "demo", "--mode", "replay",
+             "--state", str(tmp_path / "logical-state")]
         ) == 0
         with KernelClient(str(source_socket)) as client:
             expected = client.current()
@@ -99,7 +101,8 @@ def test_kernel_backup_restores_replay_evidence(tmp_path: Path, monkeypatch) -> 
             assert client.current() == expected
         monkeypatch.setenv("MOLT_KERNEL_SOCKET", str(restored_socket))
         assert cli_main(
-            ["audit", "--scenario", "demo", "--state", str(tmp_path / "restored-logical")]
+            ["--root", str(ROOT), "audit", "--scenario", "demo",
+             "--state", str(tmp_path / "restored-logical")]
         ) == 0
         projection = tmp_path / "restored-projection"
         materialize_current(projection, str(restored_socket))
@@ -180,6 +183,7 @@ def test_kernel_server_lock_and_stale_socket_recovery(tmp_path: Path) -> None:
 
 @pytest.mark.integration
 def test_python_client_roundtrips_real_kernel_server(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.setattr(write_policy, "DEFAULT_BACKEND", "v1")
     binary = os.environ.get("MOLT_KERNEL_BIN")
     if not binary:
         pytest.skip("set MOLT_KERNEL_BIN to a built molt-kernel executable")

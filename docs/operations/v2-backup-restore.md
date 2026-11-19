@@ -1,9 +1,10 @@
 # v2 kernel backup and restore
 
-This procedure targets the `1.1.0rc1` Linux x86_64 candidate installed with
+This procedure targets the `1.1.0` Linux x86_64 release installed with
 `packaging/release/install-user.sh`. Substitute the installed release directory
-and state path when running it. A formal default release R has not been chosen;
-this procedure must be reviewed and versioned again before that release.
+and state path when running it. R is `1.1.0`; v1 remains read-only throughout
+the `1.1.x` release line. The release binding and compatibility window are in
+[`v2-release-1.1.0.md`](v2-release-1.1.0.md).
 
 ## Backup
 
@@ -11,7 +12,7 @@ Keep the kernel state and an exported checkpoint in separate protected storage.
 The checkpoint is a chain reference, not a copy of the state contents.
 
 ```bash
-release="$HOME/.local/share/molt/releases/1.1.0rc1-linux-x86_64"
+release="$HOME/.local/share/molt/releases/1.1.0-linux-x86_64"
 state="$HOME/.local/share/molt/kernel"
 backup="$HOME/.local/state/molt-backups/$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -m 0700 -p "$backup"
@@ -36,7 +37,7 @@ Restore to an empty state path. Preserve the failed state for diagnosis rather
 than overlaying the backup onto it.
 
 ```bash
-release="$HOME/.local/share/molt/releases/1.1.0rc1-linux-x86_64"
+release="$HOME/.local/share/molt/releases/1.1.0-linux-x86_64"
 backup="/path/to/verified/molt-backup"
 restore="$HOME/.local/share/molt/kernel-restore"
 (cd "$backup" && sha256sum -c checkpoint.json.sha256)

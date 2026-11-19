@@ -53,7 +53,7 @@ def test_hash_is_stable_across_calls_and_processes() -> None:
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     for _ in range(2):
         completed = subprocess.run(
-            [sys.executable, "-m", "molt", "genome", "hash", str(GENOME)],
+            [sys.executable, str(ROOT / "tests/run_cli.py"), "genome", "hash", str(GENOME)],
             cwd=ROOT,
             env=env,
             capture_output=True,
@@ -165,8 +165,7 @@ def test_genome_verify_cli_fails_on_mutation(tmp_path: Path) -> None:
     completed = subprocess.run(
         [
             sys.executable,
-            "-m",
-            "molt",
+            str(ROOT / "tests/run_cli.py"),
             "--root",
             str(root),
             "genome",
@@ -188,7 +187,7 @@ def _run_cli(root: Path, *args: str) -> subprocess.CompletedProcess:
     env["PYTHONPATH"] = str(ROOT)
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     return subprocess.run(
-        [sys.executable, "-m", "molt", "--root", str(root), *args],
+        [sys.executable, str(ROOT / "tests/run_cli.py"), "--root", str(root), *args],
         cwd=root,
         env=env,
         capture_output=True,

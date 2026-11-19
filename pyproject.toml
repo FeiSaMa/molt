@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "molt"
-version = "1.1.0rc1"
+version = "1.1.0"
 description = "自进化 agent 引擎的外层编排器：协议、门禁、事务与 fixture runtime"
 readme = "README.md"
 requires-python = ">=3.11"

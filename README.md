@@ -6,10 +6,11 @@ molt 是 agent 工作流的外层编排器。它管理候选状态、执行证�
 
 ## 当前状态
 
-- Python v1 仍是生产默认后端。
+- `1.1.0` 在 Linux x86_64 上默认使用 Rust v2 kernel；需要已启动并配置的 systemd user service。
+- v1 state 在整个 `1.1.x` 版本线只允许读取、审计和显式迁移；写入会在持久化前拒绝。
 - Rust v2 kernel 与 Python CLI 的 primary backend、v1 state 显式迁移、Linux x86_64 候选安装包均已实现。
-- v2 可通过 `MOLT_KERNEL_BACKEND=kernel` 显式启用；服务不可用时会报错，不会静默回写 v1 state。
-- `1.1.0rc1` 是候选版本，不是默认后端切换版本。正式发布版本 R、v1 只读兼容窗口及单独维护者批准尚未确定。
+- 服务不可用时会报错，不会静默回写 v1 state。`MOLT_KERNEL_BACKEND=v1` 仅可显式用于兼容读取，不能修改 v1 state。
+- `1.1.0` 是首个 kernel 默认正式版本 R；v1 只读兼容覆盖整个 `1.1.x`，`1.2.0` 移除兼容须另行决定。
 - 主项目保留 `code-repair`、`svc-config`、对应 benchmark、core 和 fixture/deterministic/Pi adapters。历史 probe、agent、skills、MCP、web/export 等实验面在 `attic/`，不进入主 wheel、lint 和测试集。
 
 发布门禁和版本边界见 [ADR 0015](docs/decisions/0015-v2-kernel.md)、[v2 release checklist](docs/operations/v2-release-checklist.md) 与 [候选验收记录](docs/research/v2-candidate-evidence.md)。
@@ -36,7 +37,7 @@ PYTHONDONTWRITEBYTECODE=1 uv sync --python 3.12.13 --extra dev
 
 ## 使用 Python v1
 
-默认不设置 `MOLT_KERNEL_BACKEND` 时，CLI 使用 Python v1。state 放在仓库之外：
+显式设置 `MOLT_KERNEL_BACKEND=v1` 时，CLI 可读取既有 v1 state（该版本线中不可写）。state 放在仓库之外：
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 uv run python -m molt demo \
@@ -57,7 +58,7 @@ target/debug/molt-kernel init --state /tmp/molt-v2-kernel
 target/debug/molt-kernel serve --state /tmp/molt-v2-kernel
 ```
 
-在另一个终端连接该服务并运行 replay 与审计：
+在另一个终端连接该服务并运行 replay 与审计。Linux x86_64 上默认后端为 kernel：
 
 ```bash
 export MOLT_KERNEL_BACKEND=kernel
@@ -104,6 +105,16 @@ MOLT_KERNEL_BIN=target/debug/molt-kernel \
 ```
 
 CI 包含 Rust 故障注入测试、Python/kernel UDS 集成、release bundle 构建和打包 kernel 的恢复测试。全量 Python 测试是集中执行的基线检查；Pi live 测试默认跳过。
+
+本地复现安装包验收时，先构建、校验并解压组合包，再运行：
+
+```bash
+bash packaging/release/verify-bundle.sh /tmp/extracted/molt-1.1.0-linux-x86_64 /tmp/molt-bundle-check
+```
+
+第二个参数必须是仓库外尚不存在的工作目录。脚本按 `uv.lock` 安装依赖，使用独立 wheel 环境、
+包内数据和 kernel 执行 schema/scenario 校验与 replay 备份恢复，不依赖源码导入。
+正式版本与 v1 兼容窗口见 [1.1.0 发布记录](docs/operations/v2-release-1.1.0.md)。
 
 ## 不变量
 

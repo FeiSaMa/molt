@@ -1,11 +1,11 @@
 name: ci
 
-# 五个作业：lint / schema / boundary / audit / secret-scan；CI 不运行 pytest。
-# 全量 pytest 为手动 / 集中执行（见 CONTRIBUTING §五、§九）。
+# 六个作业：lint / schema / boundary / audit / secret-scan / kernel。
+# kernel 运行 Rust、UDS 与安装包恢复子集；全量 Python pytest 仍为手动 / 集中执行。
 # 真实 Pi 调用不在本工作流内（见 pi-smoke.yml：手动触发，只跑 1 条 live task，
 # 费用 cap 为本次单 run 的运行后验收上限）。
 #
-# 提示：作业名即 `lint`、`schema`、`boundary`、`audit`、`secret-scan`；
+# 提示：作业名即 `lint`、`schema`、`boundary`、`audit`、`secret-scan`、`kernel`；
 # 当前分支保护未登记必需状态检查（见 CONTRIBUTING §九）。
 # 3.11 浮点夹具差异见 CONTRIBUTING §九「已知兼容性缺口」：手动全量 pytest 在 3.12 下执行。
 
@@ -166,31 +166,16 @@ jobs:
       - name: Kernel UDS integration and service lifecycle
         env:
           MOLT_KERNEL_BIN: target/debug/molt-kernel
-        run: uv run pytest -q tests/test_kernel_client.py
+        run: uv run pytest -q tests/test_kernel_client.py tests/test_kernel_cli_contract.py
       - name: Build Linux x86_64 candidate bundle
         run: packaging/release/build-linux-x86_64.sh /tmp/molt-release
       - name: Smoke extracted wheel and kernel bundle
         run: |
+          sha256sum -c /tmp/molt-release/molt-*-linux-x86_64.tar.gz.sha256
           mkdir -p /tmp/molt-bundle-smoke
           tar -xzf /tmp/molt-release/molt-*-linux-x86_64.tar.gz -C /tmp/molt-bundle-smoke
           bundle=$(find /tmp/molt-bundle-smoke -mindepth 1 -maxdepth 1 -type d)
-          test -s "$bundle/share/molt/docs/operations/v2-backup-restore.md"
-          test -s "$bundle/share/molt/docs/operations/v2-release-checklist.md"
-          test -s "$bundle/share/molt/docs/operations/molt-kernel-systemd.md"
-          uv venv /tmp/molt-bundle-venv
-          uv pip install --python /tmp/molt-bundle-venv/bin/python "$bundle"/wheels/*.whl
-          cd /tmp
-          /tmp/molt-bundle-venv/bin/molt --root "$bundle/share/molt" schema validate --all
-          /tmp/molt-bundle-venv/bin/molt --root "$bundle/share/molt" \
-            scenario validate --scenario "$bundle/share/molt/scenarios/demo/scenario.json"
-          "$bundle/bin/molt-kernel" init --state /tmp/molt-bundle-kernel-state
-          "$bundle/bin/molt-kernel" audit --state /tmp/molt-bundle-kernel-state
-          systemd-analyze verify "$bundle/molt-kernel.service"
-      - name: Packaged kernel replay backup and recovery
-        run: |
-          bundle=$(find /tmp/molt-bundle-smoke -mindepth 1 -maxdepth 1 -type d)
-          MOLT_KERNEL_BIN="$bundle/bin/molt-kernel" uv run pytest -q \
-            tests/test_kernel_client.py::test_kernel_backup_restores_replay_evidence
+          bash packaging/release/verify-bundle.sh "$bundle" /tmp/molt-bundle-verification
       - uses: actions/upload-artifact@v4
         with:
           name: molt-linux-x86_64-candidate
