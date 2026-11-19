@@ -115,6 +115,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12.13"
@@ -123,14 +125,39 @@ jobs:
       - run: uv sync --extra dev --locked
       - name: 门禁夹具 G1–G8
         run: uv run python -m molt gate --fixture tests/fixtures/gate/
-      - name: 只读重算
-        run: uv run python -m molt audit --scenario demo
-      - name: demo 闭环（replay 模式：0 live，10 题扫描回放单独成组）
+      - name: 构建 audit 使用的 kernel
+        run: cargo build -p molt-kernel
+      - name: kernel demo 闭环与证据重算（replay 模式：0 live）
         run: |
+          set -euo pipefail
+          work=$(mktemp -d /tmp/molt-ci-audit.XXXXXX)
+          kernel="$PWD/target/debug/molt-kernel"
+          "$kernel" init --state "$work/kernel"
+          "$kernel" serve --state "$work/kernel" >"$work/kernel.log" 2>&1 &
+          kernel_pid=$!
+          trap 'kill "$kernel_pid" 2>/dev/null || true; wait "$kernel_pid" 2>/dev/null || true' EXIT
+          export MOLT_KERNEL_SOCKET="$work/kernel/kernel.sock"
+          ready=false
+          for attempt in {1..100}; do
+            if "$kernel" ping --socket "$MOLT_KERNEL_SOCKET" >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            if ! kill -0 "$kernel_pid" 2>/dev/null; then
+              cat "$work/kernel.log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          if [ "$ready" != true ]; then
+            cat "$work/kernel.log"
+            exit 1
+          fi
           uv run python -m molt demo --mode replay \
-            --state /tmp/molt-ci-demo --max-wall 180
-      - name: demo 证据重算
-        run: uv run python -m molt audit --scenario demo --state /tmp/molt-ci-demo
+            --state "$work/logical-state" --max-wall 180
+          uv run python -m molt audit --scenario demo --state "$work/logical-state"
+          "$kernel" audit --state "$work/kernel"
+          test ! -e "$work/logical-state"
       - name: 零写入（仓库树不得被命令改动）
         run: |
           if [ -n "$(git status --porcelain)" ]; then
