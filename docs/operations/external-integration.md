@@ -4,7 +4,7 @@
 客户端见 [opaque_client.py](../../examples/opaque_client.py)，CLI 见 [kernel-cli.md](kernel-cli.md)。
 例子仅为 `synthetic`，kernel 提交与外部业务成功必须分别核验。
 
-## B01：接口盘点与信任边界
+## 接口盘点与信任边界
 
 当前实现来源为 `molt/kernel_client.py`、`crates/molt-kernel/src/main.rs` 的 dispatch
 以及 `state.rs::request_status/commit`。支持 Linux 本地 UDS。
@@ -30,7 +30,7 @@ request ID 稳定关联一次 kernel 写入；业务 ID 由外部服务分配，
 | tx_locked | 未知结果先查原 ID；等待单写者可用后按原参数处理 |
 | io_error / timeout / disconnect / malformed response | 若可能已发 commit，结果 unknown；恢复连接后查原 ID，不凭错误断言失败 |
 
-## B02：关联、恢复与人工接管
+## 关联、恢复与人工接管
 
 调用者在执行前持久保存 task_ref、kernel request_id、不可变 payload 摘要和原 ts。
 每个阶段用不同但稳定的 request ID（例如 intent/result），不要把业务重试变成新操作。
@@ -46,7 +46,7 @@ not_found 且明确允许同 ID 重试时，使用原 payload、ts；查询不�
 取消是独立授权、独立 operation_id 的业务动作，必须查询取消结果；generation 回退不等于取消。
 本地与业务系统不具备共同原子事务，也不承诺业务恰好执行一次。
 
-## B03：最小记录、隐私与留存
+## 最小记录、隐私与留存
 
 以下是集成层自定义对象内容约定，不是 v1 schema 扩展，也不改变 kernel manifest 语义。
 最小摘要包含 provenance=synthetic、无敏感 task_ref/operation_id、阶段、业务结果来源类别与受控证据引用。
@@ -59,7 +59,7 @@ kernel commit 只证明这些字节被保存；业务系统查询是独立信任
 不可变 CAS 不能承诺单条即时物理删除；必要时用可撤销的外部受控引用并单独管理内容密钥。
 当前示例无自动清理/GC；测试结束是否删除独立目录也由用户确认，不自动触碰用户 state。
 
-## B04–B06：运行与限制
+## 运行与限制
 
 先安装独立候选 wheel、启动测试 kernel（均见 [kernel-cli.md](kernel-cli.md)）。
 将示例复制到仓库外，用隔离环境的解释器执行，明确 socket 与原 request ID：
@@ -74,4 +74,4 @@ PYTHONDONTWRITEBYTECODE=1 /absolute/test-venv/bin/python -I /absolute/examples/o
 示例 payload/ts 固定，因此重复调用始终使用原参数。真实调用方需要先持久化完整意图，
 并固定期望 state_id；不能把此演示直接当多租户生产 SDK。
 已有接口足以支撑有限模拟，不需修改冻结协议；缺少的是外部身份、权限、可靠业务查询、去重与运维责任，
-这些能力不进入 kernel。包/源码验收证据单列在执行清单，本文说明不替代运行验收。
+身份验证、权限与业务对账由集成方负责。

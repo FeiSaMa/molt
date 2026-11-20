@@ -34,7 +34,7 @@ cp -a "$repo_root/schemas" "$bundle/share/molt/"
 # Frozen protocol examples are compatibility fixtures, not product scenarios.
 mkdir -p "$bundle/share/molt/tests/fixtures"
 cp -a "$repo_root/tests/fixtures/records" "$bundle/share/molt/tests/fixtures/"
-install -m 0644 "$repo_root/README.md" "$bundle/share/molt/README.md"
+install -m 0644 "$repo_root/packaging/release/README.md" "$bundle/share/molt/README.md"
 install -m 0644 "$repo_root/docs/operations/kernel-cli.md" \
   "$repo_root/docs/operations/v2-backup-restore.md" \
   "$repo_root/docs/operations/v2-release-checklist.md" \

@@ -29,11 +29,18 @@ def _between(text: str, start: str, stop: str) -> str:
 # -- 三层数字：历史扫描 claim / 当前 tracked 扫描复算 / gate cps --
 
 
-def test_readme_links_to_current_scope_and_compatibility_decisions() -> None:
+def test_readme_links_to_product_operations_and_compatibility() -> None:
     readme = _read("README.md")
     assert "[AGENTS.md](AGENTS.md)" in readme
-    assert "[ADR 0015](docs/decisions/0015-v2-kernel.md)" in readme
-    assert "[ADR-0017](docs/decisions/0017-retire-competition-design.md)" in readme
+    for target in (
+        "docs/architecture.md",
+        "docs/operations/kernel-cli.md",
+        "docs/operations/kernel-cli.md#v1-只读兼容与显式迁移",
+        "docs/operations/molt-kernel-systemd.md",
+        "docs/operations/synthetic-versions.md",
+        "docs/operations/v2-backup-restore.md",
+    ):
+        assert f"]({target})" in readme
 
 
 def test_agents_preserves_transaction_and_retirement_boundaries() -> None:
@@ -49,7 +56,8 @@ def test_agents_preserves_transaction_and_retirement_boundaries() -> None:
     assert "冻结 schema 不改字段或语义" in compatibility
     retirement = _section(text, "## 五、退出与删除", "## 六、所有权与协作")
     assert "明确确认" in retirement and "gio trash" in retirement
-    assert "A08 未完成" in retirement
+    assert "完整 dry-run 清单" in retirement
+    assert "变化项重新核对" in retirement and "新增路径重新预览确认" in retirement
 
 
 # -- 已知缺口与局限段 --
@@ -58,7 +66,7 @@ def test_agents_preserves_transaction_and_retirement_boundaries() -> None:
 def test_core_known_gaps_marks_k5_k6_status() -> None:
     text = _read("docs/research/core-known-gaps.md")
     k5 = _section(text, "## K5", "## K6")
-    k6 = _section(text, "## K6", "## 为什么")
+    k6 = _section(text, "## K6", "## 兼容性")
     assert "历史缺口" in k5 and "本轮修复" in k5 and "剩余边界" in k5
     assert "invalid_ratio" in k5 and "paired_rows_from_runs" in k5
     assert "两侧 `invalid_ratio` 也从同一分侧结果重算" in k5

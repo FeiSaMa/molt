@@ -1,7 +1,7 @@
 # CODEOWNERS — 当前事务底座与保留历史资产的归属。
 # 语法：pattern owners...；**最后一条匹配的规则生效**（后面的覆盖前面的）。
 # 所以先写宽泛规则，再写契约等更具体的覆盖规则。
-# owner 语义见 AGENTS.md §六；CODEOWNERS 只自动请求 reviewer，approval 数量不是合并门禁（见 CONTRIBUTING.md §四）。
+# 归属见 AGENTS.md §六。
 
 # --- 宽泛归属 -------------------------------------------------------------
 # 非契约文档默认归集成域；契约文档在下面被更具体的规则覆盖。
@@ -17,13 +17,7 @@
 /docs/protocol.md        @FeiSaMa
 /docs/decisions/         @FeiSaMa
 
-# --- 场景域：shell / 题集 / holdout ---------------------------------------
-# 含 harness.py / verifier.py / task_provider.py / switches.schema.json（冻结面）
-# 以及 bench/**（冻结面）。
-#
-# 注意：/shells/*/genomes/、/shells/*/prompts/、/shells/*/tools/ 故意不单独列规则。
-# 这些是候选目录，新增文件只产生新 genome_id，不应被 reviewer 请求挡住（owner 只是被自动请求，不是门禁）；
-# 它们仍由下面的 /shells/ 兜底（owner 只会被自动请求，approval 数不构成门禁）。
+# --- 兼容域：历史场景路径 -------------------------------------------------
 /shells/                 @By-Diamond
 /bench/                  @By-Diamond
 

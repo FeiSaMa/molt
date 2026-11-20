@@ -17,6 +17,7 @@ work=$(cd "$work" && pwd)
 export PYTHONDONTWRITEBYTECODE=1
 unset PYTHONPATH PYTHONHOME MOLT_KERNEL_BACKEND MOLT_KERNEL_SOCKET MOLT_KERNEL_BIN
 
+test -s "$bundle/share/molt/README.md"
 for doc in kernel-cli.md v2-backup-restore.md v2-release-checklist.md v2-release-1.1.0.md molt-kernel-systemd.md; do
   test -s "$bundle/share/molt/docs/operations/$doc"
 done

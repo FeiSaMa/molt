@@ -1,8 +1,6 @@
 # 通用 kernel CLI
 
-这是当前源码的入口说明；旧 `1.1.0` 发行包的命令与证据不能替代本次源码或新包验收。
-CLI 不运行 Agent。比赛专用 `search/propose/calibrate/demo/genome/scenario/gate/adopt/revert`
-已退出命令注册；比赛资产的实际删除仍等待完整清单确认。
+此页说明 kernel CLI 的对象、事务与恢复接口。配置和工具版本示例从源码仓库运行。
 
 ## 连接、对象与提交
 

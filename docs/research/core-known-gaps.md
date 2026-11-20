@@ -1,40 +1,6 @@
-# core 已知缺口（2026-11-12）
+# v1 审计的历史修复与边界
 
-编号用 K 前缀，避免与门禁夹具 G1–G8 混淆。
-
-状态：K1–K3 已知、暂缓；K4 startup 面已加固（in-process 残余未隔离）；K5/K6 已修复（仅 `molt/core/audit.py`，不动协议、不重跑证据）。
-BoHack 2026（11/13–15）前冻结 core，赛后按 ADR 统一处理。
-范围：`molt/core/**` 与承重的 shell verifier；不包含 probe 实验的已知局限（见 `headroom-probe.md`）。
-
-## K1 成本以 float 累加与比较
-
-- 位置：`molt/core/policy.py`（`SideEval.cost_total_usd`、`decide` 的 `1e-12` 比较）、`molt/core/types.py`（`ScoreBlock` / `Budget`）。
-- 证据：`d585d2f` 的 CI 记录——3.11 因 CPython 3.12 的 `sum()` 补偿求和导致 gate 浮点夹具漂移，unit 作业因此只跑 3.12。
-- 影响：同一 `state/` 在不同解释器上 `audit` 可能得到不同 `verdict`；"证据可复算"退化为"在特定 Python 版本上可复算"。
-- 建议：成本改整数微美元（`int`，1e-6 USD），比较用整数，展示层除 1e6；`schemas/v2` + ADR。
-- 时机：赛后。
-
-## K2 `non_inferior` 也返回 `adopt`
-
-- 位置：`molt/core/policy.py` 判定阶梯最后分支。
-- 影响：成本完全相等的候选会推进 generation 并归档，archive 被零收益候选稀释；页面上出现"采纳成功、delta=0"。
-- 建议：改为 `keep`（写决策、不归档），或要求严格更低成本才 `adopt`。
-- 时机：赛后（需重跑 gate 夹具）。
-
-## K3 `k=0` 与文档不一致
-
-- 位置：`docs/plan-42h.md` §5 写"只掉 1 题时用 3 次重复判断是不是噪声"；`policy.k=0` 是一票否决，重复判定未实现。
-- 影响：评审会问；该文件已标 superseded，但这句话仍误导。
-- 建议：把该句改为"k=0 一票否决；重复判定未实现"，其余保留为取舍记录。
-- 时机：现在（纯文档）。
-
-## K4 verifier 启动面绕过（2026-11-13 部分修复）
-
-- 位置：`shells/code-repair/verifier.py`、`shells/probe/verifier.py`、`shells/probe-c2/verifier.py`。
-- 已修复：三 verifier 改为仓库外私有 staging，只复制 `solution.py`；`cwd=staging`、七键 env、`-P`、受控 pytest 配置、非法解 fail closed。真实攻击回归 5/7 复现并阻断；`pytest.ini` / `conftest.py` 2/7 在原启动方式下不可达。
-- 残余：solution 与 pytest/checker 同进程，仍可 monkeypatch、主动读文件或发现原 workdir；staging 不是完整 sandbox。真正边界是独立 judge 进程/容器。
-- 版本：`demo-7` / `probe-7` / `c2-2`（shell `1.0.1` / `0.3.1`）；旧 `probe-4` / `probe-6` / `c2-1` 证据属旧比较域，不可比较。
-- 详见 `docs/decisions/0011-verifier-startup-hardening.md`。
+以下记录适用于 v1 只读审计。字段和语义以[协议](../protocol.md)为准。
 
 ## K5 配对表曾被当作可信输入（本轮修复）
 
@@ -69,11 +35,6 @@ BoHack 2026（11/13–15）前冻结 core，赛后按 ADR 统一处理。
   缺少独立权威值，不据此宣称已完成核验（也不因缺少 decision 判错）。
 - 验证：`tests/test_evidence_audit.py` 的有/无 decision 版本篡改矩阵与错误聚合用例。
 
-## 为什么其余项现在不修
+## 兼容性
 
-- K1/K2 动 core 协议语义，会让现有 run/result/gate 证据链失效；
-- K4 startup 面已在本批加固并迁移到新比较域；in-process 残余需要独立 judge 进程/容器，另批处理；
-- K3 是纯文档措辞，可与文档批次一起改；
-- K5/K6 已在本轮修复，只改审计读取路径，不升版本、不重跑证据。
-
-K1–K3 与 K4 的 in-process 残余不影响 BoHack 的现场两次运行演示。
+v1 状态的审计与显式迁移见 [CLI 参考](../operations/kernel-cli.md#v1-只读兼容与显式迁移)。
