@@ -105,7 +105,7 @@ def test_search_event_leaking_holdout_id_fails(demo_copy) -> None:
         make_event(
             scope="search",
             event_type="custom.leak",
-            payload={"task_id": "holdout-even"},
+            payload={"task_id": scenario.task_sets["report"][0]},
         )
     )
     with pytest.raises(AuditError) as excinfo:
@@ -130,21 +130,24 @@ def test_secret_scan_blocks_audit(demo_copy) -> None:
     assert "secret scan" in str(excinfo.value)
 
 
-def test_audit_cli_demo() -> None:
+def test_audit_cli_existing_v1_state_is_read_only(demo_copy) -> None:
+    store, scenario, _ = demo_copy
+    from test_v1_compatibility import _snapshot
+
+    before = _snapshot(store.root)
     env = dict(os.environ)
     env["PYTHONPATH"] = str(ROOT)
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["MOLT_KERNEL_BACKEND"] = "v1"
+    scenario_path = store.root.parent / "synthetic-scenario.json"
+    scenario_path.write_text(json.dumps(scenario.to_dict()), encoding="utf-8")
     completed = subprocess.run(
-        [sys.executable, str(ROOT / "tests/run_cli.py"), "audit", "--scenario", "demo"],
-        cwd=ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=180,
+        [sys.executable, str(ROOT / "tests/run_cli.py"), "audit", "--scenario", str(scenario_path), "--state", str(store.root)],
+        cwd=ROOT, env=env, capture_output=True, text=True, check=False, timeout=30,
     )
     assert completed.returncode == 0, completed.stderr
-    assert "audit ok" in completed.stdout
+    assert json.loads(completed.stdout)["runs"] > 0
+    assert _snapshot(store.root) == before
 
 
 # -- D2：result / run 比较域按可取得的权威来源核验 --
@@ -227,7 +230,7 @@ def test_run_and_decision_shell_tamper_still_blocked_by_scenario(demo_copy) -> N
     with pytest.raises(AuditError) as excinfo:
         audit_state(store, scenario)
     message = str(excinfo.value)
-    assert "decision demo-decision-1.shell_version" in message
+    assert "decision synthetic-decision-1.shell_version" in message
     assert f"run {run.run_id}.shell_version" in message
 
 

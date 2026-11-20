@@ -14,11 +14,8 @@ import pytest
 
 from molt.cli import main as cli_main
 from molt.core import write_policy
-from molt.core.audit import audit_state
-from molt.core.store import StateStore
-from molt.demo import load_demo_scenario
 from molt.kernel_client import KernelClient, KernelError
-from molt.kernel_mirror import materialize_current, mirror_state, preview_state, state_roots
+from molt.kernel_mirror import mirror_state, preview_state, state_roots
 
 ROOT = Path(os.environ.get("MOLT_TEST_DATA_ROOT", Path(__file__).resolve().parents[1])).resolve()
 TS = "2026-11-16T00:00:00Z"
@@ -54,62 +51,48 @@ def _wait_for_server(executable: Path, state: Path, socket_path: Path) -> subpro
 
 
 @pytest.mark.integration
-def test_kernel_backup_restores_replay_evidence(tmp_path: Path, monkeypatch) -> None:
-    """A stopped-state backup must serve and semantically audit without the source."""
-    binary = os.environ.get("MOLT_KERNEL_BIN")
-    if not binary:
-        pytest.skip("set MOLT_KERNEL_BIN to a built molt-kernel executable")
-    executable = Path(binary).resolve()
-    source = tmp_path / "source"
-    subprocess.run([executable, "init", "--state", source], check=True, capture_output=True)
-    source_socket = source / "kernel.sock"
-    server = _wait_for_server(executable, source, source_socket)
-    try:
-        monkeypatch.setenv("MOLT_KERNEL_BACKEND", "kernel")
-        monkeypatch.setenv("MOLT_KERNEL_SOCKET", str(source_socket))
-        assert cli_main(
-            ["--root", str(ROOT), "demo", "--mode", "replay",
-             "--state", str(tmp_path / "logical-state")]
-        ) == 0
-        with KernelClient(str(source_socket)) as client:
-            expected = client.current()
-    finally:
-        server.terminate()
-        server.wait(timeout=5)
+def test_cli_backup_restores_synthetic_evidence(tmp_path: Path, monkeypatch, capsys) -> None:
+    from test_kernel_transactions import _binary, _commit, _manifest, _run, _server
 
+    executable = _binary()
+    monkeypatch.setenv("MOLT_KERNEL_BACKEND", "kernel")
+    monkeypatch.setenv("MOLT_KERNEL_BIN", str(executable))
+    source = tmp_path / "source"
+    _run(executable, "init", "--state", source)
+    with _server(executable, source) as socket:
+        monkeypatch.setenv("MOLT_KERNEL_SOCKET", socket)
+        with KernelClient(socket) as client:
+            manifest, digest = _manifest(client, b'{"provenance":"synthetic"}')
+            expected = _commit(client, "cli-backup", manifest)
+            identity = client.inspect()["state_id"]
+        assert cli_main(["audit"]) == 0
+        capsys.readouterr()
+    checkpoint = tmp_path / "checkpoint.json"
+    assert cli_main(["checkpoint", "export", "--state", str(source), "--out", str(checkpoint),
+                     "--created-at", TS]) == 0
+    capsys.readouterr()
+    before_checkpoint = checkpoint.read_bytes()
+    assert cli_main(["checkpoint", "export", "--state", str(source), "--out", str(checkpoint),
+                     "--created-at", TS]) == 1
+    assert checkpoint.read_bytes() == before_checkpoint
+    capsys.readouterr()
     backup = tmp_path / "backup"
-    backup.mkdir()
-    checkpoint = backup / "checkpoint.json"
-    subprocess.run(
-        [executable, "checkpoint", "export", "--state", source,
-         "--out", checkpoint, "--created-at", TS],
-        check=True, capture_output=True,
-    )
-    # A socket is runtime state, not part of a portable backup.
-    shutil.copytree(source, backup / "state", ignore=shutil.ignore_patterns("kernel.sock"))
+    shutil.copytree(source, backup, ignore=shutil.ignore_patterns("kernel.sock"))
     restored = tmp_path / "restored"
-    shutil.copytree(backup / "state", restored)
-    source.rename(tmp_path / "source-offline")
-    subprocess.run(
-        [executable, "audit", "--state", restored, "--checkpoint", checkpoint],
-        check=True, capture_output=True,
-    )
-    restored_socket = restored / "kernel.sock"
-    recovered_server = _wait_for_server(executable, restored, restored_socket)
-    try:
-        with KernelClient(str(restored_socket)) as client:
+    shutil.copytree(backup, restored)
+    # Original path is unavailable; restore must be independent of it.
+    monkeypatch.setenv("MOLT_KERNEL_SOCKET", str(tmp_path / "unavailable.sock"))
+    assert cli_main(["recover", "--state", str(restored)]) == 0
+    assert cli_main(["audit", "--state", str(restored), "--checkpoint", str(checkpoint)]) == 0
+    capsys.readouterr()
+    with _server(executable, restored) as socket:
+        with KernelClient(socket) as client:
             assert client.current() == expected
-        monkeypatch.setenv("MOLT_KERNEL_SOCKET", str(restored_socket))
-        assert cli_main(
-            ["--root", str(ROOT), "audit", "--scenario", "demo",
-             "--state", str(tmp_path / "restored-logical")]
-        ) == 0
-        projection = tmp_path / "restored-projection"
-        materialize_current(projection, str(restored_socket))
-        audit_state(StateStore(projection / "state"), load_demo_scenario(ROOT))
-    finally:
-        recovered_server.terminate()
-        recovered_server.wait(timeout=5)
+            assert client.inspect()["state_id"] == identity
+            assert client.get_object(digest) == b'{"provenance":"synthetic"}'
+            assert _commit(client, "cli-backup", manifest) == expected
+        monkeypatch.setenv("MOLT_KERNEL_SOCKET", socket)
+        assert cli_main(["audit"]) == 0
 
 
 @pytest.mark.integration
@@ -182,7 +165,7 @@ def test_kernel_server_lock_and_stale_socket_recovery(tmp_path: Path) -> None:
 
 
 @pytest.mark.integration
-def test_python_client_roundtrips_real_kernel_server(tmp_path: Path, monkeypatch, capsys) -> None:
+def test_python_client_roundtrips_real_kernel_server(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(write_policy, "DEFAULT_BACKEND", "v1")
     binary = os.environ.get("MOLT_KERNEL_BIN")
     if not binary:
@@ -297,167 +280,6 @@ def test_python_client_roundtrips_real_kernel_server(tmp_path: Path, monkeypatch
         assert mirror_state(legacy, str(socket_path), migration_id="changed-import")["generation"] == 4
         assert state_roots(legacy) != source_before_change
 
-        cli_state = tmp_path / "cli-state"
-        monkeypatch.setenv("MOLT_KERNEL_SOCKET", str(socket_path))
-        assert cli_main(
-            [
-                "search",
-                "--runtime",
-                "fixture",
-                "--task",
-                "smoke-add",
-                "--state",
-                str(cli_state),
-            ]
-        ) == 0
-        assert (cli_state / "runs").is_dir()
-        assert mirror_state(cli_state, str(socket_path))["unchanged"] is True
-        fixture_projection = tmp_path / "fixture-projection"
-        materialize_current(fixture_projection, str(socket_path))
-        fixture_projected_state = fixture_projection / "state"
-        assert state_roots(cli_state)[0] == state_roots(fixture_projected_state)[0]
-
-        replay_state = tmp_path / "replay-state"
-        assert cli_main(
-            ["demo", "--mode", "replay", "--state", str(replay_state), "--max-wall", "180"]
-        ) == 0
-        projected = tmp_path / "projected-state"
-        materialized = materialize_current(projected, str(socket_path))
-        assert materialized["files"] > 0
-        projected_state = projected / "state"
-        assert state_roots(replay_state)[0] == state_roots(projected_state)[0]
-        scenario = load_demo_scenario(ROOT)
-        assert audit_state(StateStore(replay_state), scenario) == audit_state(
-            StateStore(projected_state), scenario
-        )
-
-        primary_path = tmp_path / "kernel-primary-state"
-        monkeypatch.setenv("MOLT_KERNEL_BACKEND", "kernel")
-        assert cli_main(
-            [
-                "search",
-                "--runtime",
-                "fixture",
-                "--task",
-                "smoke-add",
-                "--state",
-                str(primary_path),
-            ]
-        ) == 0
-        assert cli_main(
-            [
-                "propose",
-                "--offline",
-                "--runtime",
-                "fixture",
-                "--state",
-                str(primary_path),
-            ]
-        ) == 0
-        assert cli_main(
-            [
-                "adopt",
-                "--state",
-                str(primary_path),
-                "--genome",
-                str(ROOT / "shells/code-repair/genomes/v0.json"),
-                "--at",
-                TS,
-            ]
-        ) == 0
-        adopted = capsys.readouterr().out
-        archive_id = next(
-            token.split("=", 1)[1]
-            for token in adopted.split()
-            if token.startswith("archive=")
-        )
-        assert cli_main(
-            ["revert", "--state", str(primary_path), "--to", archive_id, "--at", TS]
-        ) == 0
-        assert not primary_path.exists()
-        primary_projection = tmp_path / "primary-projection"
-        materialize_current(primary_projection, str(socket_path))
-        assert (primary_projection / "state" / "runs").is_dir()
-        assert (primary_projection / "state" / "proposals").is_dir()
-        assert (primary_projection / "state" / "archive").is_dir()
-
-        calibration_path = tmp_path / "kernel-primary-calibration"
-        assert cli_main(
-            [
-                "calibrate",
-                "--scenario",
-                "demo",
-                "--min-pass",
-                "3",
-                "--state",
-                str(calibration_path),
-            ]
-        ) == 0
-        assert not calibration_path.exists()
-        calibration_projection = tmp_path / "calibration-projection"
-        materialize_current(calibration_projection, str(socket_path))
-        assert (calibration_projection / "state" / "runs").is_dir()
-
-        recovery_path = tmp_path / "kernel-primary-recovery"
-        assert cli_main(
-            ["doctor", "--recover", "--state", str(recovery_path)]
-        ) == 0
-        assert not recovery_path.exists()
-
-        isolated_state = tmp_path / "isolated-kernel-state"
-        isolated_state.mkdir()
-        subprocess.run(
-            [executable, "init", "--state", isolated_state], check=True, capture_output=True
-        )
-        isolated_server = subprocess.Popen(
-            [executable, "serve", "--state", isolated_state],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        isolated_socket = isolated_state / "kernel.sock"
-        try:
-            deadline = time.monotonic() + 5
-            while not isolated_socket.exists():
-                if isolated_server.poll() is not None:
-                    stderr = isolated_server.stderr.read().decode() if isolated_server.stderr else ""
-                    pytest.fail(f"isolated kernel server exited during startup: {stderr}")
-                if time.monotonic() >= deadline:
-                    pytest.fail("isolated kernel server startup timed out")
-                time.sleep(0.01)
-            monkeypatch.setenv("MOLT_KERNEL_SOCKET", str(isolated_socket))
-            primary_demo_path = tmp_path / "kernel-primary-demo"
-            assert cli_main(
-                ["demo", "--mode", "replay", "--state", str(primary_demo_path)]
-            ) == 0
-            assert cli_main(
-                ["audit", "--scenario", "demo", "--state", str(primary_demo_path)]
-            ) == 0
-            primary_demo_projection = tmp_path / "kernel-primary-demo-projection"
-            materialize_current(primary_demo_projection, str(isolated_socket))
-            audit_state(
-                StateStore(primary_demo_projection / "state"),
-                load_demo_scenario(ROOT),
-            )
-        finally:
-            isolated_server.kill()
-            isolated_server.wait(timeout=5)
-
-        existing_state = tmp_path / "existing-v1-state"
-        existing_state.mkdir()
-        sentinel = existing_state / "keep.txt"
-        sentinel.write_text("v1")
-        assert cli_main(
-            [
-                "search",
-                "--runtime",
-                "fixture",
-                "--task",
-                "smoke-add",
-                "--state",
-                str(existing_state),
-            ]
-        ) == 2
-        assert sentinel.read_text() == "v1"
     finally:
         server.kill()
         server.wait(timeout=5)

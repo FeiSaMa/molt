@@ -1,61 +1,37 @@
 ## 变更摘要
 
-<!-- 做了什么、为什么；一条提交能说清就不要写三段。 -->
+<!-- 具体问题、最终行为和范围；创建 PR 必须已有用户授权。 -->
 
-## 影响的 D 编号
+## 对应任务与契约影响
 
-<!-- 例：B2-D6（协作六件套 + main 保护）；没有就写「无」。 -->
+- 任务 ID：
+- 契约影响：无 / 有（附 ADR 与兼容性说明）
+- 冻结 v1 字段、历史 scenario_version 与 provenance 语义是否保持：
+- 比赛资产退出是否依赖完整 dry-run 清单确认：
 
-- D：
+## 验证证据
 
-## 契约影响
-
-- [ ] 无
-- [ ] 有（`schemas/**` / `molt/core/ports.py` / `docs/protocol.md` / ADR）
-
-<!-- 有契约影响时：贴 ADR 链接；评审为建议，仓库不设 approve 数量门禁；冻结窗口（2026-11-12 18:00 UTC+8 后）
-     只允许 ext 新增或新增记录类型。 -->
-
-## 触碰范围
-
-- [ ] holdout（`bench/holdout/**`、report 流、双分数）
-- [ ] verifier / `scenario_version` 构件（`harness.py` / `verifier.py` / `task_provider.py` /
-      `switches.schema.json` / `bench/**`）→ 必须升 `scenario_version` 并重跑基线
-- [ ] 只新增候选文件（`genomes/` / `prompts/` / `tools/`）→ 只改 `genome_id`
-- [ ] 以上都不涉及
-
-## 验证证据（命令 + 输出）
+<!-- 记录完整命令、cwd、必要环境、退出码、日志与源码绑定；全量 Python 为手动集中执行。
+     包变更另附精确路径、SHA-256、仓库外安装位置；本地检查不能冒充远端 CI。 -->
 
 ```bash
-# 必贴
-uv run ruff check .
-PYTHONDONTWRITEBYTECODE=1 uv run python -m molt schema validate --all
-PYTHONDONTWRITEBYTECODE=1 uv run python -m molt scenario validate --scenario scenarios/demo/scenario.json
+PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 ruff check .
+PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 python -m molt schema validate --all
+PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 python -m molt doctor --deps
 ```
 
-<!-- 全量 `pytest` 为手动 / 集中执行，不属于 CI，非必贴项。 -->
-
-```
-<粘贴最后几行输出；没有输出的检查写「通过」并给出退出码>
-```
-
-涉及执行/门禁时补：
-
-```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m molt gate --fixture tests/fixtures/gate/
-PYTHONDONTWRITEBYTECODE=1 uv run python -m molt audit --scenario demo
-```
-
-## 回滚方式
-
-<!-- 例：revert 本提交 / `molt revert --to <archive_id>` / 从 attic 或 v1-final 恢复历史资产。 -->
+- 相关测试及结果：
+- 未验证项与限制：
+- 回退 / 恢复步骤：
 
 ## Checklist
 
-- [ ] 测试：新增行为有用例；全量 pytest 手动 / 集中执行，不要求 CI 全绿
-- [ ] Schema：`schema validate --all` +
-      `scenario validate --scenario scenarios/demo/scenario.json` 通过；`docs/protocol.md` 未手改
-- [ ] 零写入：`git status --porcelain` 为空；`tests/test_zero_write.py` 通过
-- [ ] Provenance：`run.ext.provenance.kind` 与实际一致（fixture 未标 live，replay 带 `replay_of_run_id`）
-- [ ] 脱敏：diff 中无 key/token/个人信息；`redaction` 报告覆盖字段未泄漏
-- [ ] claim 措辞符合 `docs/style.md` §六（描述性、附配对表、不跨 `scenario_version`）
+- [ ] 新增行为有用例，必要控制及替代覆盖保留
+- [ ] 协议生成物一致，v1 只读审计与显式迁移兼容保持
+- [ ] 零写入用文件系统树快照验证；git status 仅辅助
+- [ ] 同 request ID 幂等、unknown 查询/恢复和单写者边界保持
+- [ ] 合成证据标 synthetic；历史 fixture/live/replay 如实保留
+- [ ] 不把 kernel 提交当成业务成功，不把 generation 回退当成外部撤销
+- [ ] 脱敏通过；无凭据或敏感原文；必要控制失效时拒绝执行
+- [ ] 哈希链 / audit 未被宣称为执行真实性证明或 tamper-proof
+- [ ] handoff、TODO、实现与证据一致；未确认删除不标整体退出 DONE

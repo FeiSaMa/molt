@@ -1,8 +1,0 @@
-{
-  "proxy": "edge",
-  "upstream": {
-    "host": "10.0.0.9",
-    "port": 8443,
-    "timeout_ms": 5000
-  }
-}

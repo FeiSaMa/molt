@@ -1,6 +1,0 @@
-# stdout：恰好一行 JSON
-{"listen": "http://127.0.0.1:45123", "token_file": "/tmp/molt-agent/token"}
-
-# stderr：人读的两行（不含 token 值）
-listening on http://127.0.0.1:45123
-token file: /tmp/molt-agent/token

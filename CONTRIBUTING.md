@@ -1,134 +1,90 @@
 # CONTRIBUTING
 
-molt 的变更流程。契约与禁止清单见 [AGENTS.md](AGENTS.md)，格式约定见 [docs/style.md](docs/style.md)。
+当前路线与验收顺序见 [执行清单](docs/execution-todo.md)，协作边界见
+[AGENTS.md](AGENTS.md)，格式见 [docs/style.md](docs/style.md)。
 
-## 一、环境
+## 一、环境与本地工作
 
-```bash
-PYTHONDONTWRITEBYTECODE=1 uv sync --python 3.12.13 --extra dev
-PYTHONDONTWRITEBYTECODE=1 uv run pytest -q
-PYTHONDONTWRITEBYTECODE=1 uv run ruff check .
-```
-
-- 只用 `uv`。**禁止** `pip install` / `sudo pip` / `--break-system-packages`：
-  本机是 Arch，系统 Python 由 pacman 管理，全局装包会污染 `/usr/lib/python3.11`。
-- venv 在仓库内 `.venv/`（已 gitignore）；不要再建第二套解释器。
-- 需要临时工具用 `uv run --with <pkg> ...`，不要写进 `pyproject.toml` 的运行时依赖。
-- 依赖变更必须同时提交 `uv.lock`；CI 用 `PYTHONDONTWRITEBYTECODE=1 uv sync --python 3.12.13 --extra dev --locked`，lock 过期即失败。
-
-## 二、分支
+仓库根运行，基线 Python 3.12.13：
 
 ```bash
-git switch -c feat/<area>/<slug> origin/main
+PYTHONDONTWRITEBYTECODE=1 uv sync --python 3.12.13 --extra dev --locked
+PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 ruff check .
+PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 pytest -q
 ```
 
-- `<area>` ∈ `core` | `shell` | `bench` | `adapter` | `attic` | `docs` | `ci`。
-- `<slug>` 小写连字符，一句话说清做什么：`feat/shell/svc-config`、`fix/bench/holdout-hash`。
-- 通常从 `origin/main` 开；M0 特批 stacked 分支 `refactor/v2-scope-removal` 基于 `refactor/v2-kernel`；不允许直推 `main`，
-  不允许对 `main` force push（分支保护与 CI 会拦）。
+依赖只走 uv，不向系统 Python 装包；临时工具用 `uv run --with <pkg>`。
+依赖变更同步 `uv.lock`。构建验包使用独立 venv，不能从 checkout 冒充安装包导入。
+修改前看 `git status --short` 和目标文件定向 diff，保护既有修改；压缩恢复按 handoff 纪律。
+状态、日志、证据和候选包放仓库外；证据长期保存在 handoff 指定目录，不能仅留 `/tmp`。
 
-## 三、提交信息
+## 二、分支与提交
 
-Conventional Commits，标题英文、正文中文：
+本次执行不提交、不推送、不创建或合并 PR、不发布。后续获得明确授权后，
+默认分支名使用 `codex/<slug>`；不直推 main、不 force push、不改写已推送历史。
+提交信息用中文 Conventional Commit，例如 `docs(kernel): 对齐事务恢复说明`。
+批量移动、重命名和删除先完整 dry-run 并等明确确认；删除用 `gio trash`。
+比赛资产的实际退出及退出后的验收证据见执行清单 A08、A11。
 
+## 三、评审与所有权
+
+所有权见 `.github/CODEOWNERS` 与 AGENTS §六；CODEOWNERS 用于请求 reviewer。
+契约域建议 1–2 人评审并附 ADR，其他变更建议 1 人评审。
+旧文档记录的远端 ruleset 不视为当前事实；需要远端操作时再核验，不根据历史记录扩大权限。
+本次不修改远端保护规则，不操作第三方系统。
+
+## 四、测试与 CI
+
+新增行为必须有必要用例。先跑相关子集，修复后再扩大；全量 Python pytest 是手动集中验收。
+日志保存完整命令、cwd、环境、退出码和源码绑定，不能把 `tail` 的退出码当成测试结果。
+零写入以文件系统树快照为证据，`git status` 仅辅助；测试使用 `PYTHONDONTWRITEBYTECODE=1`。
+
+`.github/workflows/ci.yml` 有六个作业：`lint`、`schema`、`boundary`、`audit`、`secret-scan`、`kernel`。
+`audit` 跑独立 v1 synthetic 兼容、通用事务恢复和零写入；`kernel` 跑 Rust 故障注入、
+fmt/clippy、真实 UDS、CLI 契约和仓库外安装包验证。
+历史文件名 `pi-smoke.yml` 目前仅提供手动 synthetic 冒烟，不读凭据、不调用模型 API。
+本地执行等价子集不能声称远端 CI 已通过。
+
+```bash
+cargo build -p molt-kernel
+PYTHONDONTWRITEBYTECODE=1 MOLT_KERNEL_BIN=target/debug/molt-kernel uv run --python 3.12.13 pytest -q \
+  tests/test_kernel_client.py tests/test_kernel_transactions.py \
+  tests/test_kernel_cli_contract.py tests/test_v1_compatibility.py
+cargo test -p molt-kernel --features fault-injection
+cargo fmt --all -- --check
+cargo clippy -p molt-kernel --all-targets --features fault-injection -- -D warnings
 ```
-feat(shell): 新增 svc-config shell 的三端口实现
 
-- harness 渲染 svc-config prompt；verifier 跑配置漂移检查
-- switches.schema.json 仍为 6 组，tools 锁定 bash
-- scenario_version 升到 svc-1
+历史比赛测试的退出需记录覆盖映射；不能丢失幂等、冲突、断线、单写者、权限、空间不足与恢复覆盖。
+不通过改题、放宽断言或跳过控制凑通过。真实账号、校园系统及付费 API 不在当前验收范围。
+
+## 五、冻结协议与兼容
+
+先写 ADR 再考虑契约变更；本轮不修改冻结 v1 字段或语义。
+字段事实源为 `schemas/v1/*.schema.json` 与 `molt/core/types.py`，`docs/protocol.md` 必须生成。
+1.1.x 保留 v1 只读审计和显式迁移，源 state 不写入，不从 kernel 失败回落到 v1 写入。
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 python -m molt schema validate --all
+PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 python -m molt schema docs --output /tmp/molt-protocol-review.md
+PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 python -m molt doctor --deps
 ```
 
-- 类型：`feat` / `fix` / `docs` / `test` / `refactor` / `chore` / `ci`。
-- 一个提交只做一件事；格式化与逻辑改动分开提交，便于回滚。
-- 涉及冻结面（§五）时，标题正文必须写明新 `scenario_version`。
+比较生成结果与 `docs/protocol.md`，不手改生成物；兼容用例见 `tests/test_schema_compat.py`、
+`tests/test_v1_compatibility.py`。历史 shell/bench 冻结语义及 `scenario_version` 隔离继续有效，
+不能原地改写历史证据。比赛 CLI 已退出注册，不以旧 `scenario/gate/demo` 命令作为当前验收入口。
 
-## 四、评审矩阵（建议，非合并门禁）
+## 六、证据、恢复与安全
 
-| 变更面 | 建议评审 | 附加要求 |
-| --- | --- | --- |
-| 契约域：`schemas/**`、`molt/core/ports.py`、`docs/protocol.md`、`docs/decisions/**` | 1–2 人 | 必须有 ADR；建议至少 1 位 @FeiSaMa |
-| 其余：shell / bench / adapter / attic / docs / CI | 1 人（建议） | — |
+kernel 只管理不透明对象与事务，不执行 Agent 或保存业务凭据。
+保持单写者、持久日志提交点和同 request ID 幂等；unknown 先查询或恢复，禁止换 ID 盲重试。
+kernel 幂等不等于业务恰好执行一次；generation 回退不取消外部操作。
+audit 与本地哈希链不证明执行真实性，不声称 tamper-proof；外部 checkpoint 的可信保管边界需单列。
+必要生产控制失效即拒绝执行，不静默降级。
 
-- 仓库不设 approve 数量门禁：两个 active ruleset（`main-protection` / `protect-main`）只有删除保护与
-  禁 non-fast-forward，未登记 required approvals 或必需状态检查，approve 数量不构成合并条件。
-- `.github/CODEOWNERS` 的作用是**自动请求 reviewer**，不是合并门禁；
-  `molt doctor --repo-policy` 仍可做只读自检（协作文件、冻结面、契约域缺失即退出 1）。
-- 评审意见未解决不合并；作者自己不能作为自己的 reviewer。
-- 合并方式用 squash，保留一条可读的提交信息。
-
-## 五、测试要求
-
-- 行为变更必须带用例；只写实现不写用例的 PR 不合并。
-- 全量：`PYTHONDONTWRITEBYTECODE=1 uv run pytest -q`，**手动 / 集中执行，不属于 CI**
-  （CI 的 `kernel` 作业只运行 Rust、Python/kernel UDS、CLI 契约与安装包恢复子集）；PR 不要求贴全量结果。
-- 真实 Pi 调用默认跳过（`pytest.mark.pi`），只有设置 `MOLT_RUN_PI_LIVE=1` 才跑，
-  且受预算约束；CI 只在手动 `pi-smoke` 工作流里跑。
-- 涉及仓库写入的测试，用文件系统树快照验收，**不要**用 `git status` 代替
-  （pytest 自身会写 `__pycache__`）。
-- 新增题集/题面：同步更新 `scenario.bench_hash` 与 genome 的 `scenario_version`，
-  否则 `molt scenario validate --scenario scenarios/demo/scenario.json` 会失败。
-
-## 六、Schema / 协议变更步骤
-
-顺序固定，不可跳步：
-
-1. **先改 schema**：`schemas/v1/<record>.schema.json`（顶层字段冻结，新增字段只能进 `ext`；
-   major 变更才新开 `schemas/vN/`）。
-2. **同步数据类**：`molt/core/types.py` 的 dataclass 与字段校验。
-3. **生成文档**：`uv run python -m molt schema docs`，让 `docs/protocol.md` 由 schema 生成；
-   **禁止手改** `docs/protocol.md`。
-4. **双校验**：
-   ```bash
-   PYTHONDONTWRITEBYTECODE=1 uv run python -m molt schema validate --all
-   PYTHONDONTWRITEBYTECODE=1 uv run python -m molt scenario validate --scenario scenarios/demo/scenario.json
-   ```
-5. **更新 golden**：`tests/fixtures/records/` 下对应记录样例；`tests/test_schema_compat.py`
-   同时验证「删字段两侧都拒、`ext` 新增是 minor 兼容」。
-6. **ADR**：`docs/decisions/000N-*.md` 写清动机、兼容性、回滚。
-
-## 七、证据入库
-
-- 历史展示聚合证据保存在 attic，不再导出或更新；新运行的 canonical state 放仓库外。
-- **不入库**：`runs/` 原始日志、`state/`、`evidence/`、`.env`、`.pi/`。
-- 提交前脱敏：`redaction` 报告覆盖的字段不得出现在 diff 里；任何 key/token 一律走 secrets。
-- `live` 证据必须带成本与 `replay_of_run_id`（若为 replay），否则证据无效。
-
-## 八、PR checklist（模板里的同一份）
-
-- [ ] 写清影响的 **D 编号**（如 B2-D6），以及本次改动对应的验收方式。
-- [ ] 标注**契约影响**：有 / 无。有则附 ADR 链接；评审为建议，仓库不设 approve 数量门禁。
-- [ ] 标注是否触碰 **holdout**（`bench/holdout/**`、report 流、双分数）。
-- [ ] 标注是否触碰 **verifier / scenario_version 构件**（冻结面，见 AGENTS §六）。
-- [ ] **零写入**：`git status --porcelain` 为空；`tests/test_zero_write.py` 通过。
-- [ ] **provenance**：`run.ext.provenance.kind` 与实际一致，fixture 未标 live。
-- [ ] 粘贴验证命令与输出（`ruff`、`schema validate`、
-      `scenario validate --scenario scenarios/demo/scenario.json`）。
-- [ ] 全量 `pytest` 手动 / 集中执行，不属于 CI，非 PR 必贴项。
-- [ ] 回滚方式：revert 提交 / `molt revert --to <archive_id>`。
-
-## 九、CI 期望
-
-`.github/workflows/ci.yml` 六个作业：`lint`、`schema`、`boundary`、`audit`、`secret-scan`、`kernel`；
-`kernel` 运行 Rust 测试、Python/kernel UDS 与 CLI 契约子集，并在仓库外安装 wheel、
-使用包内数据和 release kernel 验证 replay 备份恢复；全量 Python pytest 仍为手动 / 集中执行（见 §五）。`audit` 作业同时跑
-`molt demo --mode replay`（180s 上限、state 落 `/tmp`），随后 audit 重算；不导出 web 数据。`pi-smoke` 是独立的手动工作流（`workflow_dispatch`），不是 CI 作业：
-只跑 1 条 live task，`max_cost_usd` 是**本次单 run** 的运行后验收上限（不是 scenario 总预算），
-超过即 fail。CI 只用仓库 secrets，任何 key 都不得写进工作流文件。
-
-已知兼容性缺口：3.11 下全量 `pytest -q` 有 4 例浮点差异——`test_gate_policy` 的 G1、G3，
-`test_gate_cli` 与 `test_zero_write`（都经 `gate --fixture`）。原因是 CPython 3.12 起内置
-`sum()` 改用 Neumaier 补偿求和，`tests/fixtures/gate/` 里 `cost_per_solved_usd` 的期望值
-按 3.12 的浮点结果固化，3.11 下差 1e-16。因此**手动 / 集中执行全量 pytest 时用 3.12**；
-修复需改 gate 夹具或引入容差，会碰 `bench/**` 或 `tests/fixtures/`，按冻结面流程另行开 PR。
-
-分支保护现状：仓库有**两个 active ruleset**（`main-protection` 与旧的 `protect-main`）。
-两者求并集，严格项为准：启用的规则是删除保护与禁 non-fast-forward，
-**未登记必需状态检查**；CI 作业不构成合并阻塞项。
-旧 ruleset 是否删除由用户决定，未在本批次处理。
-
-## M0 评审交接
-
-attic 已从 wheel、ruff 与 pytest 排除；历史模块不保证在新路径直接运行。
-M0 变更可推送到基于 refactor/v2-kernel 的 draft PR，不合并 main；基线采用 Python 3.12.13，详情见 docs/research/v2-baseline.md。
-恢复见 attic/README.md；不修改 v1 schema、判分、gate 或题集语义。
+不入库 `runs/` 原始日志、`state/`、`evidence/`、凭据、敏感原文。
+合成用例标 `synthetic`，历史 `fixture/live/replay` 标签保持原义；不能把合成结果说成真实业务成功。
+新源码与新包分别验收，记录 dirty diff/内容摘要、精确包 SHA-256 和独立安装路径；
+旧 1.1.0 证据不能替代本次验证，旧归档不得覆盖。
+命令与恢复步骤见 [通用 CLI](docs/operations/kernel-cli.md) 和
+[备份恢复](docs/operations/v2-backup-restore.md)。每个验收项先落证据、再更新 handoff、最后更新 TODO。

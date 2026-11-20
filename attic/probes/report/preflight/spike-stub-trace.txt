@@ -1,6 +1,0 @@
-FFF.                                                                     [100%]
-=========================== short test summary info ============================
-FAILED bench/probe/probe-policy-1/tests/test_policy.py::test_p1_error_message_format
-FAILED bench/probe/probe-policy-1/tests/test_policy.py::test_p3_logging_entrypoint
-FAILED bench/probe/probe-policy-1/tests/test_policy.py::test_p5_domain_errors
-3 failed, 1 passed in 0.01s

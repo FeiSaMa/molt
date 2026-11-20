@@ -1,9 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://molt.local/schemas/session-create-request.schema.json",
-  "title": "POST /api/sessions request",
-  "description": "只接受空对象 {}；provider 由服务启动参数决定，不能在请求里指定。",
-  "type": "object",
-  "maxProperties": 0,
-  "additionalProperties": false
-}

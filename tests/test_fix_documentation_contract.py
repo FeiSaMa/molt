@@ -29,35 +29,27 @@ def _between(text: str, start: str, stop: str) -> str:
 # -- 三层数字：历史扫描 claim / 当前 tracked 扫描复算 / gate cps --
 
 
-def test_readme_links_to_canonical_claim_sources() -> None:
+def test_readme_links_to_current_scope_and_compatibility_decisions() -> None:
     readme = _read("README.md")
     assert "[AGENTS.md](AGENTS.md)" in readme
-    assert "[ADR-0008](docs/decisions/0008-demo.md)" in readme
+    assert "[ADR 0015](docs/decisions/0015-v2-kernel.md)" in readme
+    assert "[ADR-0017](docs/decisions/0017-retire-competition-design.md)" in readme
 
 
-def test_agents_three_layer_numbers_are_separated() -> None:
-    section = _section(_read("AGENTS.md"), "**claim（只允许这样说）**", "**not claimed**")
-    blockquote = next(line for line in section.splitlines() if line.startswith("> 模型能力"))
-    assert "tracked 证据" in blockquote
-    assert "未随仓库导出" in blockquote
-
-    historical = _between(section, "历史扫描级 claim", "当前 tracked 扫描级复算")
-    assert "[ADR-0008](docs/decisions/0008-demo.md)" in historical
-    assert "$0.009978" in historical and "41.7s" in historical
-    assert "−72%" in historical and "−61%" in historical
-    assert "不能表述为当前 tracked 数据已完整复算" in historical
-
-    current = _between(section, "当前 tracked 扫描级复算", "**gate 级**")
-    assert "$0.010684" in current and "42.6s" in current
-    assert "−70.0%" in current and "−60.1%" in current
-    assert "verified=false" in current
-    assert "$0.009978" not in current and "41.7s" not in current
-
-    gate = section.split("**gate 级**", 1)[1]
-    assert "cps" in gate
-    assert "0.003556022" in gate and "0.001068401" in gate
-    assert "$0.010684" not in gate and "42.6s" not in gate
-    assert "不是 gate 级复算" in gate
+def test_agents_preserves_transaction_and_retirement_boundaries() -> None:
+    text = _read("AGENTS.md")
+    boundaries = _section(text, "## 二、边界与不变量", "## 三、协议与兼容")
+    for required in (
+        "不透明对象", "单写者", "持久日志提交点", "同 request ID", "unknown",
+        "禁止换新 ID 盲重试", "不等于取消外部预约", "不证明执行真实性", "synthetic",
+    ):
+        assert required in boundaries
+    compatibility = _section(text, "## 三、协议与兼容", "## 四、本地执行与证据")
+    assert "1.1.x" in compatibility and "只读审计与显式迁移" in compatibility
+    assert "冻结 schema 不改字段或语义" in compatibility
+    retirement = _section(text, "## 五、退出与删除", "## 六、所有权与协作")
+    assert "明确确认" in retirement and "gio trash" in retirement
+    assert "A08 未完成" in retirement
 
 
 # -- 已知缺口与局限段 --

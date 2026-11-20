@@ -1,6 +1,0 @@
-实验：2a validity（scenario probe-1）
-实验目的：确认题族对 blind agent 可失败，同时控制题和 oracle 正常；该批是探索口径，权威矩阵在后续实验。
-
-结果：16/16 runs，缺失 0、无效 0；族题 0/8（probe-order-1、probe-order-2 各 0/4）；控制题 4/4；oracle 4/4。verdict=green，cost $0.79813552，wall 1694232 ms。
-来源：probes/report/validity/verdict.json、runs.json；scenario_version=probe-1，bench_hash=b43be223…。
-结论边界：green 表示 validity 条件成立，不表示 agent 成功率高，也不是 memory 迁移结果。不要与 probe-4/7 或 C2 直接比较。

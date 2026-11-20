@@ -1,120 +1,29 @@
-name: pi-smoke
-
-# 真实 Pi 1.5.0 冒烟：手动触发，只跑 1 条 live task（`pytest -m pi`）。
-# 不属于必需检查，不进入 PR 门禁；跑在装了 pi + bwrap 的自托管 runner 上。
-# 凭据只从仓库 secrets 注入，工作流文件里不出现任何 key。
-#
-# 费用口径（重要）：
-#   `max_cost_usd` 是**本次单 run**的验收上限（运行后判定），不是 scenario 总预算。
-#   前置硬顶由 `scenario.policy.budget.execution_budget_usd` 与 Pi 单次预算控制；
-#   本工作流在 run 结束后读 run 记录的 `usage.cost_usd`，超过 cap 即 fail。
-#   因此首次 dispatch 不会因为「scenario 预算 > cap」直接红。
+# Historical filename retained until the separately confirmed asset retirement.
+# This workflow no longer runs Pi or accepts credentials/model budgets.
+name: synthetic-smoke
 
 on:
   workflow_dispatch:
-    inputs:
-      max_cost_usd:
-        description: "本次单 run 的费用上限（美元，0 < x <= 1.0；运行后判定）"
-        required: true
-        default: "1.0"
-      reason:
-        description: "为什么现在跑 live（留档用）"
-        required: false
-        default: "手动冒烟"
 
 permissions:
   contents: read
 
-concurrency:
-  group: pi-smoke
-  cancel-in-progress: false
-
 env:
   PYTHONDONTWRITEBYTECODE: "1"
-  PYTHONUNBUFFERED: "1"
-  MOLT_RUN_PI_LIVE: "1"
 
 jobs:
-  pi-smoke:
-    name: pi-smoke
-    # 需要预装：pi CLI、bwrap、uv；且能出网到模型 provider。
-    runs-on: [self-hosted, pi]
-    timeout-minutes: 45
+  synthetic-smoke:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12.13"
-          enable-cache: true
-          cache-dependency-glob: uv.lock
       - run: uv sync --extra dev --locked
-
-      - name: 解析 cap（只做输入合法性检查）
+      - run: cargo build -p molt-kernel
+      - name: Synthetic transactions and v1 compatibility over real UDS
         env:
-          MAX_COST_USD: ${{ inputs.max_cost_usd }}
-          REASON: ${{ inputs.reason }}
-        run: |
-          uv run python - <<'PY'
-          import os
-          import sys
-
-          raw = os.environ.get("MAX_COST_USD", "1.0").strip()
-          try:
-              cap = float(raw)
-          except ValueError:
-              sys.exit(f"max_cost_usd 不是数字: {raw!r}")
-          if not (0 < cap <= 1.0):
-              sys.exit("max_cost_usd 必须落在 (0, 1.0]：这是单次冒烟，不是压测")
-          print(f"reason = {os.environ.get('REASON', '')}")
-          print(f"cap = {cap} USD（本次单 run 的运行后验收上限，不是 scenario 总预算）")
-          print(f"PI_SMOKE_CAP={cap}")
-          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
-              handle.write(f"PI_SMOKE_CAP={cap}\n")
-          PY
-
-      - name: Pi live 冒烟（1 条 task，保留 state 供校验）
-        env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        run: |
-          if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
-            echo "::error::缺少 DEEPSEEK_API_KEY secret"
-            exit 1
-          fi
-          rm -rf /tmp/molt-pi-smoke
-          uv run pytest -q -m pi --basetemp=/tmp/molt-pi-smoke
-
-      - name: 运行后费用校验（run cost <= cap）
-        run: |
-          uv run python - <<'PY'
-          import json
-          import os
-          import pathlib
-          import sys
-
-          raw = os.environ.get("PI_SMOKE_CAP", "").strip()
-          if not raw:
-              sys.exit("缺少 PI_SMOKE_CAP（上一步解析 cap 失败？）")
-          cap = float(raw)
-          runs = sorted(pathlib.Path("/tmp/molt-pi-smoke").rglob("runs/*.json"))
-          if len(runs) != 1:
-              sys.exit(f"期望恰好 1 条 run，实际 {len(runs)}：{[str(p) for p in runs]}")
-
-          record = json.loads(runs[0].read_text(encoding="utf-8"))
-          cost = float(record["usage"]["cost_usd"])
-          runtime = record.get("ext", {}).get("runtime", {})
-          provenance = runtime.get("provenance")
-          print(f"run={record['run_id']} outcome={record['outcome']} cost={cost} USD provenance={provenance}")
-          print(f"cap={cap} USD")
-
-          if provenance != "live":
-              sys.exit(f"冒烟必须产生 live 证据，实际 provenance={provenance!r}")
-          if cost > cap:
-              sys.exit(f"单 run 成本 {cost} USD 超过 cap {cap} USD")
-          print("cost guard ok")
-          PY
-
-      - name: 清理本地凭据残留
-        if: always()
-        run: |
-          rm -rf .pi .env || true
-          git status --porcelain
+          MOLT_KERNEL_BIN: target/debug/molt-kernel
+        run: uv run pytest -q tests/test_kernel_transactions.py tests/test_v1_compatibility.py tests/test_kernel_cli_contract.py

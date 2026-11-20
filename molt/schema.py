@@ -17,10 +17,6 @@ from molt.core.errors import SchemaError, ValidationError
 from molt.core.types import RECORD_CLASSES, RECORD_TYPES, parse_record
 
 SCHEMA_SUBDIR = Path("schemas") / "v1"
-RECORD_ARTIFACTS: tuple[tuple[str, str], ...] = (("shells/*/manifest.json", "shell_manifest"),)
-GENOME_GLOB = "shells/*/genomes/*.json"
-TASK_GLOB = "bench/**/task.json"
-SCENARIO_GLOB = "scenarios/*/scenario.json"
 
 
 def find_repo_root(start: Path | None = None) -> Path:
@@ -79,18 +75,8 @@ def validate_artifact(path: Path, kind: str, root: Path | None = None) -> Any:
 
 
 def artifact_paths(root: Path) -> list[tuple[Path, str]]:
-    """仓库内全部需要校验的记录文件。"""
+    """保留的 v1 协议兼容夹具；不再自动装载比赛配置。"""
     found: list[tuple[Path, str]] = []
-    for pattern, kind in RECORD_ARTIFACTS:
-        for path in sorted(root.glob(pattern)):
-            found.append((path, kind))
-    for pattern, kind in (
-        (GENOME_GLOB, "genome"),
-        (TASK_GLOB, "task"),
-        (SCENARIO_GLOB, "scenario"),
-    ):
-        for path in sorted(root.glob(pattern)):
-            found.append((path, kind))
     for path in sorted((root / "tests" / "fixtures" / "records").glob("*.json")):
         kind = path.stem
         if kind in RECORD_CLASSES:

@@ -1,13 +1,8 @@
 name: ci
 
 # 六个作业：lint / schema / boundary / audit / secret-scan / kernel。
-# kernel 运行 Rust、UDS 与安装包恢复子集；全量 Python pytest 仍为手动 / 集中执行。
-# 真实 Pi 调用不在本工作流内（见 pi-smoke.yml：手动触发，只跑 1 条 live task，
-# 费用 cap 为本次单 run 的运行后验收上限）。
-#
-# 提示：作业名即 `lint`、`schema`、`boundary`、`audit`、`secret-scan`、`kernel`；
-# 当前分支保护未登记必需状态检查（见 CONTRIBUTING §九）。
-# 3.11 浮点夹具差异见 CONTRIBUTING §九「已知兼容性缺口」：手动全量 pytest 在 3.12 下执行。
+# 仅 synthetic 协议与事务验证，不访问模型 API 或校园系统。
+# kernel 包含 Rust 故障注入、真实 UDS 与仓库外安装包验证。
 
 on:
   push:
@@ -55,8 +50,8 @@ jobs:
       - run: uv sync --extra dev --locked
       - name: 记录 schema 校验（11 类 / 仓库内全部记录）
         run: uv run python -m molt schema validate --all
-      - name: scenario / genome / bench_hash 一致性
-        run: uv run python -m molt scenario validate
+      - name: 独立 v1 synthetic 兼容夹具校验
+        run: uv run pytest -q tests/test_schema_compat.py tests/test_schema_docs_output.py
       - name: docs/protocol.md 无手改漂移
         run: |
           uv run python -m molt schema docs --output /tmp/protocol.md
@@ -123,48 +118,16 @@ jobs:
           enable-cache: true
           cache-dependency-glob: uv.lock
       - run: uv sync --extra dev --locked
-      - name: 门禁夹具 G1–G8
-        run: uv run python -m molt gate --fixture tests/fixtures/gate/
-      - name: 构建 audit 使用的 kernel
+      - name: 构建 synthetic audit 使用的 kernel
         run: cargo build -p molt-kernel
-      - name: kernel demo 闭环与证据重算（replay 模式：0 live）
-        run: |
-          set -euo pipefail
-          work=$(mktemp -d /tmp/molt-ci-audit.XXXXXX)
-          kernel="$PWD/target/debug/molt-kernel"
-          "$kernel" init --state "$work/kernel"
-          "$kernel" serve --state "$work/kernel" >"$work/kernel.log" 2>&1 &
-          kernel_pid=$!
-          trap 'kill "$kernel_pid" 2>/dev/null || true; wait "$kernel_pid" 2>/dev/null || true' EXIT
-          export MOLT_KERNEL_SOCKET="$work/kernel/kernel.sock"
-          ready=false
-          for attempt in {1..100}; do
-            if "$kernel" ping --socket "$MOLT_KERNEL_SOCKET" >/dev/null 2>&1; then
-              ready=true
-              break
-            fi
-            if ! kill -0 "$kernel_pid" 2>/dev/null; then
-              cat "$work/kernel.log"
-              exit 1
-            fi
-            sleep 0.1
-          done
-          if [ "$ready" != true ]; then
-            cat "$work/kernel.log"
-            exit 1
-          fi
-          uv run python -m molt demo --mode replay \
-            --state "$work/logical-state" --max-wall 180
-          uv run python -m molt audit --scenario demo --state "$work/logical-state"
-          "$kernel" audit --state "$work/kernel"
-          test ! -e "$work/logical-state"
-      - name: 零写入（仓库树不得被命令改动）
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            git status --porcelain
-            echo "::error::命令改动了仓库；零写入约定见 AGENTS.md §九"
-            exit 1
-          fi
+      - name: v1 语义审计与 kernel 事务恢复（synthetic）
+        env:
+          MOLT_KERNEL_BIN: target/debug/molt-kernel
+        run: uv run pytest -q tests/test_v1_compatibility.py tests/test_kernel_transactions.py
+      - name: 零写入（文件系统树快照）
+        env:
+          MOLT_KERNEL_BIN: target/debug/molt-kernel
+        run: uv run pytest -q tests/test_zero_write.py
 
   kernel:
     name: kernel
@@ -193,7 +156,7 @@ jobs:
       - name: Kernel UDS integration and service lifecycle
         env:
           MOLT_KERNEL_BIN: target/debug/molt-kernel
-        run: uv run pytest -q tests/test_kernel_client.py tests/test_kernel_cli_contract.py
+        run: uv run pytest -q tests/test_kernel_client.py tests/test_kernel_cli_contract.py tests/test_kernel_transactions.py tests/test_v1_compatibility.py
       - name: Build Linux x86_64 candidate bundle
         run: packaging/release/build-linux-x86_64.sh /tmp/molt-release
       - name: Smoke extracted wheel and kernel bundle

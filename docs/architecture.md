@@ -1,12 +1,40 @@
-> M0 当前边界：code-repair/svc-config 与 core/adapters 保留；probe 家族、实验 API 和展示面已移入 attic。
-> 本文的 v1 事务说明仍适用。Rust kernel 与 M3 主路径已实现，生产默认仍为 v1；
-> kernel 的职责与发布门禁见 ADR 0015，迁移行为见 research/v2-migration.md。
-> 当前 scope、基线和恢复说明分别见 research/v2-scope.md、research/v2-baseline.md、../attic/README.md。
-
 # 架构
 
-molt 把"搜索候选 → 执行题集 → 判分 → 门禁 → 采纳 / 回退"做成一条可复算的流水线。
-本文件描述 B1 + B2a + B2b + B2c 的实际分层；字段级契约以 [`protocol.md`](protocol.md) 与 `schemas/v1/` 为准。
+当前默认 backend 是 `kernel`，源码与 CLI 已从比赛编排转向状态事务、审计、迁移和恢复。
+获批清单里的比赛资产已退出当前工作树。wheel 和 bundle 的范围为通用运行时与 v1 兼容。
+范围见 [ADR-0017](decisions/0017-retire-competition-design.md) 和 [执行清单](execution-todo.md)。
+
+## 当前运行边界
+
+调用者 → Python CLI / `KernelClient` → 本机 UDS → Rust kernel。
+Python 提供通用对象上传、manifest、generation 提交、查询与 v1 兼容；
+kernel 只管理不透明对象、单写者事务、持久日志、恢复和一致性审计。
+它不运行 Agent、不判业务成功、不理解校园业务、不持有业务凭据。
+API 与操作步骤见 [通用 CLI](operations/kernel-cli.md)、[ADR 0015](decisions/0015-v2-kernel.md)
+和 [备份恢复](operations/v2-backup-restore.md)。
+
+提交使用调用者固定的 request ID、manifest 与时间；持久日志提交点和恢复语义不能改变。
+响应丢失时结果保持 unknown，先按原 ID 查询或恢复；不能换 ID 盲重试。
+同 ID 相同参数返回原提交，不同参数产生冲突。socket 指向具体实例，状态查询不是业务授权。
+checkpoint 不包含对象数据；备份应停服务后复制完整 state，再在独立目录恢复与审计。
+
+本地和外部系统没有共同原子事务。kernel 幂等不等于外部业务恰好执行一次，
+generation 回退不等于取消外部预约。业务执行、查询、确认和补偿属于外部集成的责任。
+本地哈希链不证明执行真实性，不声称 tamper-proof；外部可信主体与 checkpoint 保管边界单列。
+模型输出、自报执行结果、工具返回均不能自动当成可信事实；必要生产控制失效时拒绝执行。
+合成数据标 `synthetic`，凭据与敏感原文不进入模型、仓库或不必要的证据。
+
+## v1 兼容与历史边界
+
+1.1.x 保留 v1 只读语义审计与显式迁移，迁移源 state 零写入，kernel 失败不回落到 v1 写路径。
+`schemas/v1/`、`molt/core/types.py` 的字段与语义冻结，`protocol.md` 从 schema 生成。
+保留 audit/policy/records 等兼容依赖，不按文件名盲删 core；core 仍只依赖 stdlib 与 core。
+历史证据的 `scenario_version`、逐题配对和 provenance 语义不变。
+
+以下各节保留为 **v1 比赛实现历史说明**，用于解释已有记录及兼容审计，不是当前产品入口或运行授权。
+其中 `search/demo/adopt/revert/doctor --recover` 等旧 CLI 已退出，使用当前命令见上方链接。
+历史沙箱降级策略不适用于当前生产控制；当前无真实模型、校园或生产运行授权。
+M4/M5、多 Agent 平台和通用插件平台不在本轮实现范围。
 
 ## 一、三层与依赖方向
 
@@ -201,7 +229,8 @@ gate，并断言 search 流零 holdout id、report 流至少一条 `holdout.acce
   跨 runtime（svc-config 只允许 `deterministic`；demo 允许 `fixture`/`pi`），避免静默 0 分。
 - **可迁移性**：`tests/test_adapter_conformance.py` 对「两 shell × 两 runtime」做协议与端到端检查；
   两 shell 的证据都由同一个 `molt audit` 重算通过。详见
-  [ADR-0007](decisions/0007-svc-config.md)。
+  历史 ADR-0007；该场景及其 ADR 的退出范围见
+  [ADR-0017](decisions/0017-retire-competition-design.md)。
 
 ## 十一、已知缺口
 

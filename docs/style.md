@@ -7,8 +7,8 @@
 
 - **Python 3.11+**（`requires-python = ">=3.11"`，ruff `target-version = "py311"`）。
   可以用 `X | None`、`match`、`tomllib`；不要用 3.12+ 语法。
-  全量 Python pytest 不在 CI 内（手动 / 集中执行）；kernel 子集在 CI 运行。3.11 下全量 pytest 有 4 例浮点差异，
-  手动全量请在 3.12 下跑（原因见 CONTRIBUTING §九）。
+  全量 Python pytest 不在 CI 内（手动 / 集中执行）；kernel 子集在 CI 运行。历史比赛夹具曾有 3.11 浮点差异；
+  当前验收基线固定 3.12.13，不由旧结果推断当前通过状态。
 - **行长 100**（`[tool.ruff] line-length = 100`，但 `E501` 被 ignore：
   长 URL / 长字符串可以超，代码行不要随意超）。
 - 规则集 `E,F,I,UP,B`。提交前 `uv run ruff check .` 必须干净；不要用 `# noqa` 掩盖逻辑问题。
@@ -54,28 +54,24 @@
 - 时间一律 **UTC ISO 8601**、带 `Z`：`2026-11-10T16:20:00Z`。
   需要本地时间时在正文注明时区（`2026-11-12 18:00 UTC+8`），但存储值仍是 UTC。
 - 文档里的路径**相对仓库根**，用 `/`：`shells/code-repair/verifier.py`。
-  不写绝对路径、不写 `~/`。
+  普通源码链接不写绝对路径；handoff 与验收证据应记录可定位的绝对路径。
 - 命令示例必须**可直接执行**：给出工作目录前提（默认仓库根）、必要环境变量、
   以及会写文件的参数（`--state` / `--out` 指向 `/tmp/...`）。
 
 ## 五、示例与证据
 
 - 示例命令要能跑通，且**默认零写入**：`--state`、`--out` 指到仓库外。
-- 涉及执行的示例标注 runtime：
-
-  ```bash
-  uv run python -m molt search --runtime fixture    # 确定性、零成本
-  uv run python -m molt search --runtime pi         # 真实调用，需 pi + bwrap，有成本
-
-  # 测试里的 live 用例默认跳过，需显式放行：
-  MOLT_RUN_PI_LIVE=1 uv run pytest -q -m pi
-  ```
-
-- 引用结果时必须标注 provenance：`fixture` / `live` / `replay`。
-  **fixture 结果不得写成 live**；replay 必须给出 `replay_of_run_id`。
-- 引用数字时给出比较域（`scenario_version=demo-5`）与样本量（`n=10`）。跨版本数字不并列。
+- 当前示例使用通用 CLI 或无模型 synthetic 客户端；不再提供比赛 `search/demo/gate` 命令入口。
+  Python 示例显式设置 `PYTHONDONTWRITEBYTECODE=1`，状态与输出指向独立测试目录。
+- 合成对象与模拟业务结果标 `synthetic`；不得声称真实校园或真实模型成功。
+- 历史记录保留 `fixture` / `live` / `replay` 原义；fixture 不得标 live，replay 带 `replay_of_run_id`。
+- 历史数字给出比较域（`scenario_version`）与样本量，附逐题配对表，禁止跨版本比较。
+- 分开写文档检查、源码运行测试、精确包验收和真实业务结果；本地提交不证明外部业务成功。
+- 本地哈希链不证明执行真实性，不声称 tamper-proof；unknown 保持未知，查询或恢复后才更新结论。
 
 ## 六、claim 语言
+
+以下比赛措辞只适用于历史证据，不作为当前产品能力声明。
 
 允许：
 

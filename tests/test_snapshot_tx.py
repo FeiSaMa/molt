@@ -21,8 +21,9 @@ FIXED = "2026-01-01T00:00:00Z"
 
 
 def load_genome() -> Genome:
-    data = json.loads((ROOT / "shells/code-repair/genomes/v0.json").read_text(encoding="utf-8"))
-    return Genome.from_dict(data)
+    from synthetic_genome import synthetic_genome
+
+    return synthetic_genome()
 
 
 def make_roots(tmp_path: Path) -> dict[str, Path]:
@@ -102,7 +103,7 @@ from molt.core.types import Genome
 import json
 write_policy.DEFAULT_BACKEND = 'v1'
 store = StateStore(Path({str(tmp_path / "state")!r}))
-genome = Genome.from_dict(json.loads(Path({str(ROOT / "shells/code-repair/genomes/v0.json")!r}).read_text()))
+genome = Genome.from_dict({load_genome().to_dict()!r})
 roots = {{'molt/core': Path({str(roots["molt/core"])!r}), 'shells/code-repair': Path({str(roots["shells/code-repair"])!r})}}
 store._commit_pointer = lambda pointer: os.kill(os.getpid(), signal.SIGKILL)
 store.adopt(genome, roots, result_refs=['r1'], note='crash', adopted_at='{FIXED}')
@@ -132,7 +133,7 @@ from molt.core import write_policy
 from molt.core.types import Genome
 write_policy.DEFAULT_BACKEND = 'v1'
 store = StateStore(Path({str(tmp_path / "state")!r}))
-genome = Genome.from_dict(json.loads(Path({str(ROOT / "shells/code-repair/genomes/v0.json")!r}).read_text()))
+genome = Genome.from_dict({load_genome().to_dict()!r})
 roots = {{'molt/core': Path({str(roots["molt/core"])!r}), 'shells/code-repair': Path({str(roots["shells/code-repair"])!r})}}
 store._commit_pointer = lambda pointer: os.kill(os.getpid(), signal.SIGKILL)
 store.adopt(genome, roots, result_refs=['r1'], note='crash', adopted_at='{FIXED}')

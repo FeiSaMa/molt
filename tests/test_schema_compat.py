@@ -140,8 +140,10 @@ def test_docs_are_generated_from_schema() -> None:
 def test_validate_all_covers_repository_artifacts() -> None:
     validated = schema.validate_all(ROOT)
     kinds = {kind for _, kind in validated}
-    assert {"scenario", "shell_manifest", "genome", "task"} <= kinds
-    assert len(validated) >= 16
+    assert kinds == set(RECORD_TYPES)
+    expected = {(ROOT / "tests" / "fixtures" / "records" / f"{kind}.json", kind)
+                for kind in RECORD_TYPES}
+    assert set(validated) == expected
 
 
 def test_shell_manifest_cannot_declare_gate_policy() -> None:
