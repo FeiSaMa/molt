@@ -30,7 +30,34 @@ PYTHONDONTWRITEBYTECODE=1 uv run --locked molt audit
 
 ## 版本管理与模型审计
 
-[配置和工具版本示例](docs/operations/synthetic-versions.md) 演示受控提案、配置和工具成组激活、命名分支、合并、回退，以及在途任务固定到启动时的版本。审计保留变更当时的判断和证据，离线模型可以生成有出处的摘要。示例从源码运行，支持随仓库提供的 echo 工具。接入其他工作流需要对应的配置校验、工具运行入口和权限配置。
+安装后使用 `molt version` 初始化个人工作区、提交自己的配置与内置 echo 工具描述、切换或合并分支、回退活动版本。运行可以固定到已提交的快照。审计保留原始记录，已安装的离线模型可追加引用原始字段的摘要。独立安装、首次提交和断线恢复命令见[个人工作区手册](docs/operations/version-cli.md)。[源码示例](docs/operations/synthetic-versions.md)使用同一 broker。
+
+### OpenCode 项目快照
+
+先按[安装与首次运行](docs/operations/version-cli.md#安装与首次运行)解包并启动独立工作区。执行到 `test "$ready" = 1` 为止，在同一个 Bash 会话继续。
+
+```bash
+mkdir -m 700 "$base/edit" "$base/exports"
+cat > "$base/project.json" <<'JSON'
+{"workspace":"w","edits":"edit","exports":"exports","files":["opencode.json"]}
+JSON
+p() { "$base/venv/bin/molt" project --config "$base/project.json" "$@"; }
+
+edit=$(p begin | jq -er '.edit')
+printf '%s\n' '{"model":"isolated/demo"}' > "$edit/opencode.json"
+initial=$(p save --reason '建立试用基线' | jq -er '.snapshot')
+
+printf '%s\n' '{"model":"isolated/edited"}' > "$edit/opencode.json"
+p preview
+p save --reason '更新样例配置' > "$base/edited.json"
+v audit "$(jq -er '.event' "$base/edited.json")"
+
+p rollback "$initial"
+tree=$(p read-tree | jq -er '.tree')
+cat "$tree/opencode.json"
+```
+
+回退后最后一条命令应显示 `{"model":"isolated/demo"}`。已安装 OpenCode v2 时，可运行 `p opencode -- debug config` 查看新作业读取的配置。保存冲突、原请求恢复和启动参数见[项目级 CLI 手册](docs/operations/version-cli.md#项目级-cli)。
 
 ## 使用与维护
 

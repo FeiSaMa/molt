@@ -17,6 +17,8 @@ from typing import Any
 from molt.core.errors import MoltError
 from molt.core.types import Scenario
 from molt.kernel_client import KernelClient, KernelError
+from molt.project_cli import add_project_parser
+from molt.version_cli import add_version_parser, cmd_version
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -71,6 +73,8 @@ def build_parser() -> argparse.ArgumentParser:
     group = doctor.add_mutually_exclusive_group()
     group.add_argument("--deps", action="store_true")
     group.add_argument("--repo-policy", action="store_true")
+    add_version_parser(sub)
+    add_project_parser(sub)
     return parser
 
 
@@ -368,6 +372,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 2
         if args.command == "migrate":
             return cmd_migrate(args)
+        if args.command in {"version", "project"}:
+            return cmd_version(args)
         if args.command == "audit":
             if args.scenario:
                 print("--scenario is only supported for v1 read-only audit", file=sys.stderr)

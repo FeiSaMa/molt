@@ -82,7 +82,7 @@ for target in {[str(sandbox.state / 'kernel.sock'), str(sandbox.state / 'objects
 print(json.dumps({_staged({'reply_format': 'json'}, {'tool': 'echo', 'output_format': 'json'})!r}))
 """)
         with monkeypatch.context() as patch:
-            patch.setattr("examples.version_workers._BWRAP", tmp_path / "missing")
+            patch.setattr("molt.version_workers._BWRAP", tmp_path / "missing")
             with pytest.raises(RuntimeError, match="isolated worker"):
                 _propose(sandbox, good, first, activate=True)
         assert sandbox.pin() == pin
@@ -101,7 +101,7 @@ print(json.dumps({_staged({'reply_format': 'json'}, {'tool': 'echo', 'output_for
             dependency = roots[f"snapshots/{committed['snapshot']}/dependency.json"]
             assert json.loads(client.get_object(dependency["sha256"]))["version"] == 1
         with monkeypatch.context() as patch:
-            patch.setattr("examples.synthetic_versions.ECHO_DEPENDENCY", {"version": 2})
+            patch.setattr("molt.versioning.ECHO_DEPENDENCY", {"version": 2})
             with pytest.raises(ValueError, match="dependency is unavailable"):
                 sandbox.run(new_pin, "hi")
     with _server(_binary(), sandbox.state):
@@ -165,7 +165,7 @@ print(json.dumps({"claims": [
         assert sandbox.status()["branches"]["other"] == first["snapshot"]
         assert sandbox.status()["active"] == change["snapshot"]
         for claim in audit["digests"][-1]["claims"]:
-            refs = claim["references"] if claim["kind"] == "recorded_observation" else claim["evidence"]
+            refs = claim["references"] if claim["kind"].endswith("_observation") else claim["evidence"]
             assert all(ref["event"] == event and ref["field"] in audit["projection"] for ref in refs)
 
 
@@ -266,7 +266,54 @@ print(json.dumps({"claims": [{"kind": "inference", "text": "Activation enabled t
         assert restarted.run(merged_pin, "hi") == "synthetic: hi"
         audited = restarted.audit(activated["event"])
         assert audited["projection"]["after"] == restarted.read(merged_pin)
+        assert audited["projection"]["branch_head_changed"] is False
         assert audited["evidence"]["validation"]
         assert audited["digests"][0]["claims"][-1]["evidence"][-1] == {
-            "event": activated["event"], "field": "active_after",
+            "event": activated["event"], "field": "active_after", "source": "event",
         }
+
+
+def test_rollback_digest_identifies_removed_prefix_and_unverified_model_claim(tmp_path):
+    from molt.core.hash import canonical_json_bytes, sha256_bytes
+
+    kernel = _binary()
+    sandbox = VersionSandbox.initialize(tmp_path / "v", kernel)
+    with _server(kernel, sandbox.state):
+        initial = sandbox.commit(
+            "main", {"reply_format": "plain"}, {"tool": "echo", "output_format": "plain"},
+            expected=0, expected_head=None,
+        )
+        change = sandbox.commit(
+            "main", {"reply_format": "plain", "prefix": "cfg: "},
+            {"tool": "echo", "output_format": "config"},
+            expected=1, expected_head=initial["snapshot"], activate=True,
+        )
+        rolled = sandbox.rollback(initial["snapshot"], expected=2)
+        branches = sandbox.workspace_status()["branches"]
+        false_model = _worker(tmp_path, """
+print(json.dumps({"claims": [
+    {"kind": "inference", "text": "The edit was required by the operator.", "evidence": ["action", "reason_recorded"]}
+]}))
+""")
+        digest = sandbox.digest(rolled["event"], worker=false_model)["digest"]
+        audit = sandbox.audit(rolled["event"])
+        projection = audit["projection"]
+        assert digest["template_version"] == 3
+        assert digest["input_sha256"] == sha256_bytes(canonical_json_bytes(projection))
+        assert audit["evidence"]["action"] == projection["action"] == "rollback"
+        assert projection["target_snapshot"] == initial["snapshot"]
+        assert projection["before_snapshot"] == change["snapshot"]
+        assert projection["branch_head_changed"] is projection["reason_recorded"] is False
+        assert sandbox.workspace_status()["branches"] == branches == {"main": change["snapshot"]}
+        assert projection["changes"] == [
+            {"group": "config", "name": "prefix", "operation": "remove", "before": "cfg: ", "after": None},
+            {"group": "tool", "name": "output_format", "operation": "modify", "before": "config", "after": "plain"},
+        ]
+        observations = {claim["field"]: claim for claim in digest["claims"] if "field" in claim}
+        assert observations["changes"]["kind"] == "derived_observation"
+        assert observations["changes"]["references"] == [{
+            "event": rolled["event"], "field": "changes", "source": "projection", "template_version": 3,
+        }]
+        assert digest["claims"][0]["references"][0]["source"] == "event"
+        assert digest["claims"][-1]["kind"] == "inference"
+        assert digest["claims"][-1]["verified"] is False
