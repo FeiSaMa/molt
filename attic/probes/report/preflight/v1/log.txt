@@ -1,4 +1,0 @@
-实验：配置修复 preflight spike v1
-证据：上级目录 spike.json、spike-stub-trace.txt、spike-blind.patch。
-结果：reference 4/4；stub 1/4（3 项策略失败）；blind DeepSeek v4 Pro 4/4，cost=$0.020370、wall=30s、5 turns。verdict=spike_not_green。
-结论：该轮证明给定策略测试能区分 reference/stub，blind 完成此 spike；不代表 memory 迁移或通用 agent 能力。

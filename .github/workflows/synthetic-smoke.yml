@@ -1,0 +1,29 @@
+# Historical filename retained until the separately confirmed asset retirement.
+# This workflow no longer runs Pi or accepts credentials/model budgets.
+name: synthetic-smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  synthetic-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12.13"
+      - run: uv sync --extra dev --locked
+      - run: cargo build -p molt-kernel
+      - name: Synthetic transactions and v1 compatibility over real UDS
+        env:
+          MOLT_KERNEL_BIN: target/debug/molt-kernel
+        run: uv run pytest -q tests/test_kernel_transactions.py tests/test_v1_compatibility.py tests/test_kernel_cli_contract.py

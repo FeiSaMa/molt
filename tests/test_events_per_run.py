@@ -152,7 +152,6 @@ def test_ledger_and_events_are_append_only(tmp_path: Path) -> None:
 
 
 def _genome():
-    from molt.core.types import Genome
+    from synthetic_genome import synthetic_genome
 
-    data = json.loads((ROOT / "shells/code-repair/genomes/v0.json").read_text(encoding="utf-8"))
-    return Genome.from_dict(data)
+    return synthetic_genome()

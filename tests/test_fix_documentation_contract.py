@@ -29,35 +29,35 @@ def _between(text: str, start: str, stop: str) -> str:
 # -- 三层数字：历史扫描 claim / 当前 tracked 扫描复算 / gate cps --
 
 
-def test_readme_links_to_canonical_claim_sources() -> None:
+def test_readme_links_to_product_operations_and_compatibility() -> None:
     readme = _read("README.md")
     assert "[AGENTS.md](AGENTS.md)" in readme
-    assert "[ADR-0008](docs/decisions/0008-demo.md)" in readme
+    for target in (
+        "docs/architecture.md",
+        "docs/operations/kernel-cli.md",
+        "docs/operations/kernel-cli.md#v1-只读兼容与显式迁移",
+        "docs/operations/molt-kernel-systemd.md",
+        "docs/operations/synthetic-versions.md",
+        "docs/operations/v2-backup-restore.md",
+    ):
+        assert f"]({target})" in readme
 
 
-def test_agents_three_layer_numbers_are_separated() -> None:
-    section = _section(_read("AGENTS.md"), "**claim（只允许这样说）**", "**not claimed**")
-    blockquote = next(line for line in section.splitlines() if line.startswith("> 模型能力"))
-    assert "tracked 证据" in blockquote
-    assert "未随仓库导出" in blockquote
-
-    historical = _between(section, "历史扫描级 claim", "当前 tracked 扫描级复算")
-    assert "[ADR-0008](docs/decisions/0008-demo.md)" in historical
-    assert "$0.009978" in historical and "41.7s" in historical
-    assert "−72%" in historical and "−61%" in historical
-    assert "不能表述为当前 tracked 数据已完整复算" in historical
-
-    current = _between(section, "当前 tracked 扫描级复算", "**gate 级**")
-    assert "$0.010684" in current and "42.6s" in current
-    assert "−70.0%" in current and "−60.1%" in current
-    assert "verified=false" in current
-    assert "$0.009978" not in current and "41.7s" not in current
-
-    gate = section.split("**gate 级**", 1)[1]
-    assert "cps" in gate
-    assert "0.003556022" in gate and "0.001068401" in gate
-    assert "$0.010684" not in gate and "42.6s" not in gate
-    assert "不是 gate 级复算" in gate
+def test_agents_preserves_transaction_and_retirement_boundaries() -> None:
+    text = _read("AGENTS.md")
+    boundaries = _section(text, "## 二、边界与不变量", "## 三、协议与兼容")
+    for required in (
+        "不透明对象", "单写者", "持久日志提交点", "同 request ID", "unknown",
+        "禁止换新 ID 盲重试", "不等于取消外部预约", "不证明执行真实性", "synthetic",
+    ):
+        assert required in boundaries
+    compatibility = _section(text, "## 三、协议与兼容", "## 四、本地执行与证据")
+    assert "1.1.x" in compatibility and "只读审计与显式迁移" in compatibility
+    assert "冻结 schema 不改字段或语义" in compatibility
+    retirement = _section(text, "## 五、退出与删除", "## 六、所有权与协作")
+    assert "明确确认" in retirement and "gio trash" in retirement
+    assert "完整 dry-run 清单" in retirement
+    assert "变化项重新核对" in retirement and "新增路径重新预览确认" in retirement
 
 
 # -- 已知缺口与局限段 --
@@ -66,7 +66,7 @@ def test_agents_three_layer_numbers_are_separated() -> None:
 def test_core_known_gaps_marks_k5_k6_status() -> None:
     text = _read("docs/research/core-known-gaps.md")
     k5 = _section(text, "## K5", "## K6")
-    k6 = _section(text, "## K6", "## 为什么")
+    k6 = _section(text, "## K6", "## 兼容性")
     assert "历史缺口" in k5 and "本轮修复" in k5 and "剩余边界" in k5
     assert "invalid_ratio" in k5 and "paired_rows_from_runs" in k5
     assert "两侧 `invalid_ratio` 也从同一分侧结果重算" in k5

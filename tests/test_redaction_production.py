@@ -1,4 +1,4 @@
-"""P5：demo 生产路径必须落脱敏 manifest，audit 必须校验 pre/post 指标。"""
+"""v1 synthetic manifest 与审计校验；不再声称验证已退出的 demo 生产路径。"""
 
 from __future__ import annotations
 
@@ -16,10 +16,10 @@ def _manifest_path(store, scenario) -> Path:
     return store.root / "redaction" / f"{scenario.scenario_id}.json"
 
 
-def test_demo_writes_redaction_manifest(demo_artifacts) -> None:
+def test_synthetic_manifest_is_auditable(demo_artifacts) -> None:
     store, scenario, summary = demo_artifacts
     path = _manifest_path(store, scenario)
-    assert path.is_file(), "demo 必须在 state/redaction/<scenario>.json 落 manifest"
+    assert path.is_file(), "synthetic evidence 必须附带脱敏 manifest"
     manifest = json.loads(path.read_text(encoding="utf-8"))
     assert manifest["redaction_version"] == REDACTION_VERSION
     assert manifest["pre_metrics"] == manifest["post_metrics"]

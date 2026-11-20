@@ -1,9 +1,0 @@
-实验：配置修复 spike（两轮预检）
-实验目的：检查隐藏测试能否区分 reference、stub 与 blind agent；不测跨运行 memory 迁移。
-
-证据：spike.json、spike-v2.json、max-preflight.json；逐字 trace 与 patch 保存在同目录。
-方法：每轮 3 个策略 P1/P3/P5；reference 全通过，stub 均有 3 项失败，blind 使用 DeepSeek v4 Pro。
-结果：v1 blind 4/4 测试通过，成本 $0.020370；v2 blind 4/4 测试通过，成本 $0.032899。两轮 verdict 均为 spike_not_green，不作为正式场景能力结论。
-成本：v1 $0.020746；v2 $0.032899；累计 $0.053645，均低于各自 $1.00 上限。
-结论边界：证明该配置题 spike 上的校验器能区分 stub 与 reference，blind 完成了给定修复；不证明通用配置能力或自进化。
-复算入口：probes/report/preflight/spike.json、spike-v2.json、max-preflight.json。

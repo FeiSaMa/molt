@@ -19,15 +19,10 @@ def _make_repo(root: Path, *, skip: frozenset[str] = frozenset()) -> Path:
         path = root / rel
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("# placeholder\n", encoding="utf-8")
-    if "shells" not in skip:
-        for name in ("harness.py", "verifier.py", "task_provider.py"):
-            path = root / "shells" / "demo" / name
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("", encoding="utf-8")
-        (root / "shells/demo/switches.schema.json").write_text("{}", encoding="utf-8")
-    if "bench" not in skip:
-        (root / "bench").mkdir(parents=True, exist_ok=True)
-        (root / "bench/.keep").write_text("", encoding="utf-8")
+    if "schemas/v1/*.schema.json" not in skip:
+        path = root / "schemas/v1/synthetic.schema.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}", encoding="utf-8")
     for rel in ("schemas", "docs/decisions"):
         if rel not in skip:
             (root / rel).mkdir(parents=True, exist_ok=True)
@@ -61,6 +56,8 @@ def _snapshot(root: Path) -> dict[str, str]:
 def test_repo_policy_ok_on_complete_fixture(tmp_path: Path, capsys) -> None:
     repo = _make_repo(tmp_path / "repo")
     assert main(["--root", str(repo), "doctor", "--repo-policy"]) == 0
+    assert not (repo / "shells").exists()
+    assert not (repo / "bench").exists()
     captured = capsys.readouterr()
     assert "repo-policy ok" in captured.out
     assert "repo-policy frozen:" in captured.out
@@ -69,11 +66,12 @@ def test_repo_policy_ok_on_complete_fixture(tmp_path: Path, capsys) -> None:
 
 
 def test_repo_policy_missing_files_exit_1(tmp_path: Path, capsys) -> None:
-    repo = _make_repo(tmp_path / "repo", skip=frozenset({".github/CODEOWNERS", "bench"}))
+    repo = _make_repo(tmp_path / "repo", skip=frozenset({".github/CODEOWNERS", "molt/kernel_client.py", "schemas/v1/*.schema.json"}))
     assert main(["--root", str(repo), "doctor", "--repo-policy"]) == 1
     captured = capsys.readouterr()
     assert "repo-policy missing: .github/CODEOWNERS" in captured.err
-    assert "repo-policy missing: bench" in captured.err
+    assert "repo-policy missing: molt/kernel_client.py" in captured.err
+    assert "repo-policy missing: schemas/v1/*.schema.json" in captured.err
     assert "repo-policy ok" not in captured.out
 
 

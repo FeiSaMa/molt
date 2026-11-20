@@ -1,7 +1,0 @@
-实验：K4 verifier 启动/测试发现面加固（demo-7、probe-7、c2-2 新域）
-实验目的：在候选工作区不可信的前提下，测试常见 Python 启动注入和测试发现绕过能否造成误判，并保留 verifier 版本变化后的比较域隔离。
-
-结果：7 项攻击中 5 项在旧 verifier 可复现并在加固 verifier 被阻断；另外 2 项在旧发现链本不可达，不计作修复命中。正常正确/错误解各 27 项正反例通过（54/54）。全量测试 516 passed / 2 skipped；Pi 调用 $0。
-新比较域：code-repair shell 1.0.1 / scenario demo-7；probe shell 0.3.1 / scenario probe-7；probe-c2 shell 0.3.1 / scenario c2-2。不得把新域结果与旧域结果直接比较。
-来源：docs/decisions/0011-verifier-startup-hardening.md、tests/test_verifier_startup_hardening.py、三处 verifier 与对应 manifests/genomes。
-结论边界：本批加固启动与测试发现面，不是任意恶意 Python 的完整隔离；solution 仍可能在 judge 进程内影响判分，真正强边界仍需独立只读 judge/容器。

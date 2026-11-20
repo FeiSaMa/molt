@@ -1,7 +1,0 @@
-实验：2c C1b memory 主实验（历史主证据 scenario probe-4）
-实验目的：比较失败反馈提炼出的 gen2 rule memory 与 baseline 在 x5–x8 同族迁移题上的表现，并经过 gate。
-
-正式 16 条主实验 runs：baseline 与 memory 各 8 条，任务 x5/x6/x7/x8 各两次。baseline 各题通过数：x5 0/2、x6 0/2（另有 1 条 invalid）、x7 0/2、x8 2/2；memory：x5 2/2、x6 2/2、x7 1/2（另有 1 条 invalid）、x8 0/2。有效可通过配对只支持局部迁移；x8 是负迁移。
-verdict=partial_transfer；gate=adopt / lower_cost_per_solved。总成本 $2.30024424，含控制与后续记录；预算上限 $2.50，budget_stopped=true（停止在预算边界，expected_runs=20，missing_runs=0）。主 16 runs 未改；控制题 2 个任务各 2/2。
-来源：verdict.json、rows.json、control-rows.json、gate.json、followup.json、x8-analysis.md。
-结论边界：gate adopt 不等于所有迁移题通过；x8 baseline 2/2、memory 0/2，明确为负迁移。不可声称通用自进化。

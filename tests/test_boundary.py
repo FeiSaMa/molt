@@ -111,8 +111,10 @@ def test_seven_ports_are_defined_in_core() -> None:
 
 
 def test_shell_and_adapter_are_outside_core() -> None:
-    assert not (ROOT / "molt" / "core" / "fixture.py").exists()
-    assert (ROOT / "molt" / "adapters" / "fixture" / "runtime.py").is_file()
-    assert (ROOT / "shells" / "code-repair" / "harness.py").is_file()
-    assert (ROOT / "shells" / "code-repair" / "verifier.py").is_file()
-    assert (ROOT / "shells" / "code-repair" / "task_provider.py").is_file()
+    # Enforce the dependency boundary whether adapters are present or retired.
+    forbidden = {"fixture", "harness", "verifier", "task_provider"}
+    core_files = {p.stem for p in (ROOT / "molt" / "core").glob("*.py")}
+    assert not (forbidden & core_files)
+    for path in (ROOT / "molt" / "core").glob("*.py"):
+        assert not any(m.startswith(("molt.adapters", "molt.shell", "molt.demo"))
+                       for m in _imports(path))

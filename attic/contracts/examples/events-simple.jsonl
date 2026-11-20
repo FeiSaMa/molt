@@ -1,7 +1,0 @@
-{"id": 1, "event": "turn.started", "data": {"turn_id": "turn-a1b2c3d4e5f60718", "session_id": "sess-0d6b8a2c4f7e4911"}}
-{"id": 2, "event": "status", "data": {"turn_id": "turn-a1b2c3d4e5f60718", "state": "thinking"}}
-{"id": 3, "event": "status", "data": {"turn_id": "turn-a1b2c3d4e5f60718", "state": "responding"}}
-{"id": 4, "event": "message.delta", "data": {"turn_id": "turn-a1b2c3d4e5f60718", "message_id": "msg-abc1", "text": "mock 回复：你好"}}
-{"id": 5, "event": "message.completed", "data": {"turn_id": "turn-a1b2c3d4e5f60718", "message_id": "msg-abc1", "role": "assistant", "content": "mock 回复：你好"}}
-{"id": 6, "event": "turn.completed", "data": {"turn_id": "turn-a1b2c3d4e5f60718", "session_id": "sess-0d6b8a2c4f7e4911", "turn_count": 1}}
-{"id": 7, "event": "done", "data": {}}

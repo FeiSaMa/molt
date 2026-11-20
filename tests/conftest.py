@@ -1,4 +1,4 @@
-"""共享 fixture：一次构建 demo 证据链，各测试复制后按需篡改。"""
+"""共享 synthetic v1 审计夹具，各测试复制后按需篡改。"""
 
 from __future__ import annotations
 
@@ -9,7 +9,6 @@ import pytest
 
 from molt.core import write_policy
 from molt.core.store import StateStore
-from molt.demo import build_demo_state
 
 ROOT = Path(__file__).resolve().parents[1]
 write_policy.DEFAULT_BACKEND = "v1"
@@ -22,8 +21,10 @@ def repo_root() -> Path:
 
 @pytest.fixture(scope="session")
 def demo_artifacts(tmp_path_factory: pytest.TempPathFactory):
-    work = tmp_path_factory.mktemp("demo")
-    store, scenario, summary = build_demo_state(ROOT, work)
+    from synthetic_audit import build_audit_fixture
+
+    work = tmp_path_factory.mktemp("synthetic-audit")
+    store, scenario, summary = build_audit_fixture(work / "state")
     return store, scenario, summary
 
 

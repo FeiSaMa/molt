@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from synthetic_genome import synthetic_genome
+
 from molt.core.store import StateStore
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,7 +34,7 @@ from molt.core.types import Genome
 write_policy.DEFAULT_BACKEND = 'v1'
 index = sys.argv[1]
 store = StateStore(Path({str(state)!r}))
-genome = Genome.from_dict(json.loads(Path({str(ROOT / "shells/code-repair/genomes/v0.json")!r}).read_text()))
+genome = Genome.from_dict({synthetic_genome().to_dict()!r})
 roots = {{'molt/core': Path({str(roots["molt/core"])!r})}}
 ready = Path({str(barrier)!r}) / ('ready-' + index)
 ready.write_text('1')

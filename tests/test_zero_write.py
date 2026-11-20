@@ -8,7 +8,6 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,52 +34,75 @@ def tree_snapshot(root: Path) -> dict[str, str]:
     return snapshot
 
 
-COMMANDS = [
-    ["schema", "validate", "--all"],
-    ["doctor", "--deps"],
-    ["genome", "hash", "shells/code-repair/genomes/v0.json"],
-    ["genome", "verify", "shells/code-repair/genomes/v0.json"],
-    ["gate", "--fixture", "tests/fixtures/gate/"],
-    ["audit", "--scenario", "demo"],
-    ["calibrate", "--scenario", "demo", "--min-pass", "0"],
-]
+def _invoke(command: list[str], env: dict[str, str]) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, "-m", "molt", *command], cwd=ROOT, env=env,
+                          capture_output=True, text=True, check=False, timeout=30)
 
 
-def test_commands_do_not_write_repository() -> None:
-    before = tree_snapshot(ROOT)
-    env = dict(os.environ)
-    env["PYTHONPATH"] = str(ROOT)
-    env["PYTHONDONTWRITEBYTECODE"] = "1"
-    with tempfile.TemporaryDirectory(prefix="molt-propose-state-") as propose_state:
-        commands = [
-            *COMMANDS,
-            ["propose", "--scenario", "demo", "--state", propose_state, "--offline"],
-            [
-                "demo",
-                "--scenario",
-                "demo",
-                "--mode",
-                "replay",
-                "--state",
-                str(Path(propose_state) / "demo-state"),
-            ],
-        ]
-        for command in commands:
-            completed = subprocess.run(
-                [sys.executable, str(ROOT / "tests/run_cli.py"), *command],
-                cwd=ROOT,
-                env=env,
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=240,
-            )
-            assert completed.returncode == 0, (command, completed.stdout, completed.stderr)
-
+def _assert_unchanged(before: dict[str, str]) -> None:
     after = tree_snapshot(ROOT)
-    added = sorted(set(after) - set(before))
-    removed = sorted(set(before) - set(after))
-    changed = sorted(key for key in set(before) & set(after) if before[key] != after[key])
-    assert added == [], f"新增路径: {added}"
-    assert removed == [], f"删除路径: {removed}"
-    assert changed == [], f"内容变化: {changed}"
+    assert sorted(set(after) - set(before)) == [], "新增路径"
+    assert sorted(set(before) - set(after)) == [], "删除路径"
+    assert [key for key in before.keys() & after.keys() if before[key] != after[key]] == [], "内容变化"
+
+
+def test_read_only_commands_do_not_write_repository(tmp_path) -> None:
+    from test_v1_compatibility import _snapshot, _write, build_compatibility_fixture
+
+    source = tmp_path / "v1"
+    scenario = build_compatibility_fixture(source)
+    scenario_file = tmp_path / "scenario.json"
+    _write(scenario_file, scenario.to_dict())
+    source_before = _snapshot(source)
+    before = tree_snapshot(ROOT)
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONPATH=str(ROOT), MOLT_KERNEL_BACKEND="v1")
+    commands = [["--help"], ["schema", "validate", "--all"], ["doctor", "--deps"],
+                ["doctor", "--repo-policy"],
+                ["schema", "docs", "--output", str(tmp_path / "protocol.md")],
+                ["audit", "--state", str(source), "--scenario", str(scenario_file)]]
+    for command in commands:
+        completed = _invoke(command, env)
+        assert completed.returncode == 0, (command, completed.stdout, completed.stderr)
+    assert _snapshot(source) == source_before
+    _assert_unchanged(before)
+
+
+def test_kernel_commands_do_not_write_repository(tmp_path) -> None:
+    import json
+
+    from test_kernel_transactions import TS, _binary, _run, _server
+
+    binary = _binary()
+    state = tmp_path / "kernel"
+    _run(binary, "init", "--state", state)
+    payload = tmp_path / "synthetic.json"
+    payload.write_text('{"provenance":"synthetic"}')
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONPATH=str(ROOT), MOLT_KERNEL_BACKEND="kernel")
+    before = tree_snapshot(ROOT)
+    with _server(binary, state) as socket:
+        env["MOLT_KERNEL_SOCKET"] = socket
+        def run(command):
+            result = _invoke(command, env)
+            assert result.returncode == 0, (command, result.stdout, result.stderr)
+            return json.loads(result.stdout)
+        digest = run(["object", "put", str(payload)])["hash"]
+        roots = tmp_path / "roots.json"
+        roots.write_text(json.dumps({"workspace": {"synthetic.json": {
+            "type": "file", "mode": 0o600, "size": payload.stat().st_size, "sha256": digest,
+        }}}))
+        manifest = run(["manifest", "create", str(roots)])["hash"]
+        first = run(["commit", "--manifest", manifest, "--request-id", "zero-write", "--at", TS])
+        assert run(["current"]) == first
+        assert run(["request-status", "zero-write"])["result"] == first
+        run(["inspect"])
+        run(["manifest", "get", manifest])
+        run(["object", "get", digest, "--out", str(tmp_path / "download.json")])
+        run(["audit"])
+    env["MOLT_KERNEL_BIN"] = str(binary)
+    for command in (["checkpoint", "export", "--state", str(state), "--out", str(tmp_path / "checkpoint.json"),
+                     "--created-at", TS],
+                    ["recover", "--state", str(state)],
+                    ["audit", "--state", str(state), "--checkpoint", str(tmp_path / "checkpoint.json")]):
+        result = _invoke(command, env)
+        assert result.returncode == 0, (command, result.stdout, result.stderr)
+    _assert_unchanged(before)

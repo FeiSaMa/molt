@@ -2,7 +2,7 @@
 runs/*
 !runs/.gitkeep
 
-# B1 状态目录（本地采纳/回退、事件、账本）
+# 本地状态与审计证据
 state/
 evidence/
 
@@ -23,15 +23,20 @@ npm-debug.log*
 .env
 .pi/
 
-# probe 原始流（体积大，不入库）
+# 本地历史产物与工作笔记
 probes/report/**/response*.jsonl
-
-# 现场 probe 产出：由 probes/run_demo.py 生成，不入库
-# - state.json / run.json 是当场证据（页面轮询用）
-# - live.md 是当场反思产出，genome artifacts 只在本次运行内引用
 web/data/probe/state.json
 web/data/probe/run.json
 shells/probe/memory/live.md
+/docs/continue-prompt.md
+/docs/execution-todo.md
+/docs/next-steps-2026-11-19.md
+/docs/decisions/0016-independent-judge.md
+/docs/decisions/0017-retire-competition-design.md
+/docs/operations/campus-readiness.md
+/docs/research/v2-baseline.md
+/docs/research/v2-candidate-evidence.md
+/docs/research/v2-scope.md
 
 # 本地工作备份与临时导出
 backup/
