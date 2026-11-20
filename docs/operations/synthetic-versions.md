@@ -1,5 +1,8 @@
 # 合成配置与工具版本闭环
 
+将自己的程序接入快照读取见[项目级 CLI](version-cli.md#项目级-cli)。本页使用合成配置和内置
+echo 工具演示事务与回归测试。
+
 [ADR-0018](../decisions/0018-agent-snapshots-and-audit-digests.md) 的首阶段示例使用固定的
 合成配置和 echo 工具。`v1` 返回纯文本，`v2` 返回 JSON，`invalid` 的配置与工具不匹配。
 `prefixed` 为纯文本添加前缀，`flexible` 的工具按配置选择输出格式，`json-config` 使用同一个

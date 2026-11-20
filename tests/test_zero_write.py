@@ -47,23 +47,17 @@ def _assert_unchanged(before: dict[str, str]) -> None:
 
 
 def test_read_only_commands_do_not_write_repository(tmp_path) -> None:
-    from test_v1_compatibility import _snapshot, _write, build_compatibility_fixture
-
-    source = tmp_path / "v1"
-    scenario = build_compatibility_fixture(source)
-    scenario_file = tmp_path / "scenario.json"
-    _write(scenario_file, scenario.to_dict())
-    source_before = _snapshot(source)
     before = tree_snapshot(ROOT)
-    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONPATH=str(ROOT), MOLT_KERNEL_BACKEND="v1")
-    commands = [["--help"], ["schema", "validate", "--all"], ["doctor", "--deps"],
-                ["doctor", "--repo-policy"],
-                ["schema", "docs", "--output", str(tmp_path / "protocol.md")],
-                ["audit", "--state", str(source), "--scenario", str(scenario_file)]]
-    for command in commands:
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONPATH=str(ROOT), MOLT_KERNEL_BACKEND="kernel")
+    for command in (["--help"], ["doctor", "--deps"], ["doctor", "--repo-policy"]):
         completed = _invoke(command, env)
         assert completed.returncode == 0, (command, completed.stdout, completed.stderr)
-    assert _snapshot(source) == source_before
+    for command in (["validate", "--all"], ["docs", "--output", str(tmp_path / "protocol.md")]):
+        completed = subprocess.run(
+            [sys.executable, "-m", "molt.schema", *command], cwd=ROOT, env=env,
+            capture_output=True, text=True, check=False, timeout=30,
+        )
+        assert completed.returncode == 0, (command, completed.stdout, completed.stderr)
     _assert_unchanged(before)
 
 

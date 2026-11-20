@@ -31,5 +31,5 @@ systemctl --user daemon-reload
 printf 'Installed molt candidate under %s. Initialize state with:\n' "$prefix"
 printf '  %s/bin/molt-kernel init --state %s\n' "$prefix" "$HOME/.local/share/molt/kernel"
 printf 'Then enable with: systemctl --user enable --now molt-kernel.service\n'
-printf 'Use the kernel backend with MOLT_KERNEL_BACKEND=kernel and MOLT_KERNEL_SOCKET=%s/kernel.sock\n' "$HOME/.local/share/molt/kernel"
+printf 'Set MOLT_KERNEL_SOCKET=%s/kernel.sock\n' "$HOME/.local/share/molt/kernel"
 printf 'Backup and recovery procedure: %s/share/molt/docs/operations/v2-backup-restore.md\n' "$prefix"

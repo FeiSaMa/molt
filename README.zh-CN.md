@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-molt 是本地 Agent 工作区的版本管理与审计 CLI。它能把 OpenCode 的配置和工具文件保存为快照，支持切换、合并分支以及回退活动版本。新作业可固定读取指定快照，审计记录保留原始证据和操作者给出的修改理由。
+molt 是本地 Agent 工作区的版本管理与审计 CLI。它能把配置、提示词和工具定义保存为快照，支持切换、合并分支以及回退活动版本。新作业可固定读取指定快照，审计记录保留原始证据和操作者给出的修改理由。
 
 Rust kernel 存储内容寻址对象和版本历史，并通过 Unix socket 提供事务接口。Python CLI 负责接入本地工作流。
 
@@ -35,6 +35,13 @@ PYTHONDONTWRITEBYTECODE=1 uv run --locked molt audit
 ## 版本管理与模型审计
 
 安装后使用 `molt version` 初始化个人工作区、提交自己的配置与内置 echo 工具描述、切换或合并分支、回退活动版本。运行可以固定到已提交的快照。审计保留原始记录，已安装的离线模型可追加引用原始字段的摘要。独立安装、首次提交和断线恢复命令见[个人工作区手册](docs/operations/version-cli.md)。[源码示例](docs/operations/synthetic-versions.md)使用同一 broker。
+
+### 让普通程序固定读取快照
+
+[启动独立项目工作区](docs/operations/version-cli.md#项目级-cli)后，每个新作业调用一次
+`molt project --config project.json read-tree`。程序使用返回的 `tree` 读取文件，
+把 `snapshot` 随结果保存。例如用 `cat "$tree/prompt.txt"` 读取固定的提示词。
+活动版本回退后，已经启动的作业可以继续使用原来的导出。
 
 ### OpenCode 项目快照
 
@@ -70,11 +77,10 @@ cat "$tree/opencode.json"
 | 查询、提交、审计和事务恢复 | [CLI 参考](docs/operations/kernel-cli.md) |
 | 安装并常驻运行 | [构建 Linux 安装包](docs/operations/v2-release-checklist.md) · [用户服务](docs/operations/molt-kernel-systemd.md) |
 | 备份、校验以及恢复到新目录 | [备份与恢复](docs/operations/v2-backup-restore.md) |
-| 读取旧状态或显式迁移 | [v1 兼容与迁移](docs/operations/kernel-cli.md#v1-只读兼容与显式迁移) |
 | 了解后端模块与边界 | [架构](docs/architecture.md) |
 | 构建候选安装包与本地验证 | [贡献指南](CONTRIBUTING.md) |
 
-`1.1.x` 保留 v1 状态的只读审计与显式迁移。外部业务写入有自己的事务和生命周期。molt 的回退仅切换本地状态。
+使用[对应的历史发行归档](docs/operations/kernel-cli.md#旧状态归档)处理旧数据副本。外部业务写入有自己的事务和生命周期。molt 的回退仅切换本地状态。
 
 ## 开发
 

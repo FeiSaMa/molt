@@ -169,9 +169,12 @@ class LlamaWorker:
             "digest": (
                 DIGEST_SCHEMA,
                 "Return exactly one short finding under 24 words. Name the operation exactly as recorded in action. "
-                "For a change summary use kind inference and evidence [\"changes\"]. "
-                "For an absent operator reason use kind missing and evidence [\"reason_recorded\"]. "
-                "For an unverified assumption cite judgment. For a source conflict cite two distinct source IDs. "
+                "For action propose, read judgment.reason for the Agent's explanation. "
+                "reason_recorded describes a separate operator field and does not apply to propose. "
+                "If judgment.assumptions contains an unverified claim, report it as kind missing and cite judgment. "
+                "Otherwise summarize the change using kind inference and evidence [\"changes\"]. "
+                "For other actions, cite reason_recorded only when reporting an absent operator reason. "
+                "For a source conflict cite two distinct source IDs. "
                 "Use literal field names once as citations. Do not invent a reason.",
             ),
         }[purpose]

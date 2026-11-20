@@ -598,6 +598,9 @@ fn run(args: &[String]) -> io::Result<Value> {
         ));
     }
     let state = State::new(path);
+    if command != "init" {
+        state.check_version()?;
+    }
     match command.as_str() {
         "init" if args.len() == 3 => {
             fs::create_dir_all(path)?;

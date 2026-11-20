@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 from test_kernel_transactions import TS, _binary, _run, _server
 
+from attic.v1.kernel_mirror import materialize_current, mirror_state, preview_state
 from molt.core import write_policy
 from molt.core.audit import audit_state
 from molt.core.errors import AuditError
@@ -38,7 +39,6 @@ from molt.core.types import (
     Verification,
 )
 from molt.kernel_client import KernelClient
-from molt.kernel_mirror import materialize_current, mirror_state, preview_state
 
 HASH = "a" * 64
 

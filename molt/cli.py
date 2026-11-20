@@ -1,4 +1,4 @@
-"""通用 kernel CLI 与只读 v1 兼容入口；不加载或执行 Agent。"""
+"""通用 kernel CLI。"""
 
 from __future__ import annotations
 
@@ -15,15 +15,14 @@ from pathlib import Path
 from typing import Any
 
 from molt.core.errors import MoltError
-from molt.core.types import Scenario
 from molt.kernel_client import KernelClient, KernelError
 from molt.project_cli import add_project_parser
 from molt.version_cli import add_version_parser, cmd_version
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="molt", description="状态事务、证据审计、迁移与恢复")
-    parser.add_argument("--root", type=Path, default=None, help="schema / 协作检查的仓库根")
+    parser = argparse.ArgumentParser(prog="molt", description="状态事务、证据审计与恢复")
+    parser.add_argument("--root", type=Path, default=None, help="doctor 协作检查的仓库根")
     parser.add_argument("--socket", default=None, help="kernel UDS；缺省 MOLT_KERNEL_SOCKET")
     sub = parser.add_subparsers(dest="command")
     for name, help_text in (("current", "查询当前 generation"), ("inspect", "查询 state 身份与状态")):
@@ -47,10 +46,9 @@ def build_parser() -> argparse.ArgumentParser:
     commit.add_argument("--manifest", required=True)
     commit.add_argument("--request-id", required=True, help="稳定幂等标识，重试时保留全部参数")
     commit.add_argument("--at", required=True, help="稳定 RFC3339 时间；重试时不得改变")
-    audit = sub.add_parser("audit", help="kernel 完整性审计；v1 模式只读重算历史语义")
+    audit = sub.add_parser("audit", help="kernel 完整性审计")
     audit.add_argument("--state", type=Path, help="显式磁盘 state；不指定时通过 socket 审计")
     audit.add_argument("--checkpoint", type=Path, help="离线 kernel 审计所用外部可信检查点")
-    audit.add_argument("--scenario", "--shell", dest="scenario", help="v1 审计的 scenario JSON 路径或旧 id")
     recover = sub.add_parser("recover", help="离线 kernel 事务恢复；先停止该 state 的服务")
     recover.add_argument("--state", type=Path, required=True)
     checkpoint = sub.add_parser("checkpoint", help="导出 checkpoint；可信主体须独立保管")
@@ -59,16 +57,6 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("--state", type=Path, required=True)
     export.add_argument("--out", type=Path, required=True, help="新文件，拒绝覆盖")
     export.add_argument("--created-at", required=True)
-    migrate = sub.add_parser("migrate", help="只读预览或显式迁移 v1 state 到 kernel")
-    migrate.add_argument("--state", type=Path, required=True)
-    migrate.add_argument("--apply", action="store_true")
-    migrate.add_argument("--migration-id", help="执行迁移所需的稳定幂等标识")
-    schema = sub.add_parser("schema", help="冻结 v1 schema 校验与文档生成")
-    schema_sub = schema.add_subparsers(dest="schema_command")
-    validate = schema_sub.add_parser("validate")
-    validate.add_argument("--all", action="store_true")
-    docs = schema_sub.add_parser("docs")
-    docs.add_argument("--output", type=Path)
     doctor = sub.add_parser("doctor", help="只读依赖边界 / 协作检查")
     group = doctor.add_mutually_exclusive_group()
     group.add_argument("--deps", action="store_true")
@@ -84,7 +72,7 @@ def _repo_root(args: argparse.Namespace) -> Path:
         return args.root.resolve()
     current = Path.cwd().resolve()
     for candidate in (current, *current.parents):
-        if (candidate / "schemas" / "v1").is_dir():
+        if (candidate / "pyproject.toml").is_file() and (candidate / "molt" / "cli.py").is_file():
             return candidate
     return Path(__file__).resolve().parent.parent
 
@@ -95,60 +83,6 @@ def _load_json(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"期望 object: {path}")
     return data
-
-
-
-def _scenario_path(root: Path, name: str) -> Path | None:
-    """先按 scenario 目录名找，再按 ``shell_id`` 反查（``--shell`` 别名）。"""
-    direct = root / "scenarios" / name / "scenario.json"
-    if direct.is_file():
-        return direct
-    matches: list[Path] = []
-    for path in sorted(root.glob("scenarios/*/scenario.json")):
-        if _load_json(path).get("shell_id") == name:
-            matches.append(path)
-    if len(matches) == 1:
-        return matches[0]
-    if len(matches) > 1:
-        raise ValueError(f"shell_id={name!r} 对应多个 scenario: {[str(p) for p in matches]}")
-    return None
-
-
-
-def _load_scenario(root: Path, name: str) -> Scenario:
-    explicit = Path(name)
-    path = explicit if explicit.is_file() else _scenario_path(root, name)
-    if path is None:
-        raise FileNotFoundError(f"scenario 不存在: {name}")
-    return Scenario.from_dict(_load_json(path))
-
-
-def cmd_schema(args: argparse.Namespace) -> int:
-    from molt import schema
-
-    root = _repo_root(args)
-    command = args.schema_command
-    if command == "validate":
-        if not args.all:
-            print("schema validate 需要 --all")
-            return 2
-        validated = schema.validate_all(root)
-        for path, kind in validated:
-            print(f"ok {kind} {path.relative_to(root)}")
-        print(f"schema validate --all: {len(validated)} 条记录通过")
-        return 0
-    if command == "docs":
-        if args.output:
-            # --output 只写目标文件，不碰仓库内 docs/protocol.md。
-            args.output.parent.mkdir(parents=True, exist_ok=True)
-            args.output.write_text(schema.render_protocol_docs(root), encoding="utf-8")
-            path = args.output
-        else:
-            path = schema.write_protocol_docs(root)
-        print(f"wrote {path}")
-        return 0
-    print("用法: molt schema {validate --all|docs}")
-    return 2
 
 
 
@@ -194,28 +128,20 @@ REPO_POLICY_FILES: tuple[str, ...] = (
     "crates/molt-kernel/Cargo.toml",
     "crates/molt-kernel/src/main.rs",
     "molt/kernel_client.py",
-    "molt/kernel_mirror.py",
-)
-REPO_POLICY_FROZEN: tuple[str, ...] = (
-    "schemas/v1/*.schema.json",
+    "molt/project_cli.py",
+    "molt/version_cli.py",
 )
 REPO_POLICY_CONTRACT: tuple[str, ...] = (
-    "schemas",
-    "molt/core/ports.py",
-    "docs/protocol.md",
     "docs/decisions",
 )
 
 
 def repo_policy_missing(root: Path) -> list[str]:
-    """只读检查仓库协作文件、冻结面与契约域；返回缺失项（空即通过）。"""
+    """只读检查仓库协作文件与契约域；返回缺失项（空即通过）。"""
     missing: list[str] = []
     for rel in REPO_POLICY_FILES:
         if not (root / rel).is_file():
             missing.append(rel)
-    for pattern in REPO_POLICY_FROZEN:
-        if not any(root.glob(pattern)):
-            missing.append(pattern)
     for rel in REPO_POLICY_CONTRACT:
         if not (root / rel).exists():
             missing.append(rel)
@@ -227,7 +153,6 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     root = _repo_root(args)
     if args.repo_policy:
         # 纯只读：不访问网络 / GitHub API，不写文件。
-        print("repo-policy frozen: " + ", ".join(REPO_POLICY_FROZEN))
         print("repo-policy contract: " + ", ".join(REPO_POLICY_CONTRACT))
         missing = repo_policy_missing(root)
         if missing:
@@ -246,44 +171,12 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 
 
-def cmd_migrate(args: argparse.Namespace) -> int:
-    socket_path = args.socket or os.environ.get("MOLT_KERNEL_SOCKET")
-    if not socket_path:
-        print("migrate requires MOLT_KERNEL_SOCKET", file=sys.stderr)
-        return 2
-    if not args.state.is_dir():
-        print(f"v1 state directory does not exist: {args.state}", file=sys.stderr)
-        return 2
-    try:
-        from molt.kernel_mirror import mirror_state, preview_state
-
-        if args.apply:
-            if not args.migration_id:
-                print("--apply requires --migration-id", file=sys.stderr)
-                return 2
-            report = mirror_state(args.state, socket_path, migration_id=args.migration_id)
-            print(
-                "migration applied "
-                f"state_id={preview_state(args.state, socket_path)['state_id']} "
-                f"generation={report['generation']} files={report['files']} "
-                f"unchanged={str(report['unchanged']).lower()}"
-            )
-        else:
-            report = preview_state(args.state, socket_path)
-            print("migration dry-run " + json.dumps(report, sort_keys=True, ensure_ascii=False))
-        return 0
-    except (OSError, RuntimeError, ValueError, KeyError) as exc:
-        print(f"migration failed: {exc}", file=sys.stderr)
-        return 1
-
-
-
 def _print_json(value: Any) -> None:
     print(json.dumps(value, sort_keys=True, ensure_ascii=False))
 
 
 def _kernel_local(args: argparse.Namespace) -> int:
-    """Delegate offline operations to the existing kernel; never select a v1 writer."""
+    """Delegate offline operations to the kernel."""
     executable = os.environ.get("MOLT_KERNEL_BIN") or shutil.which("molt-kernel")
     if not executable:
         print("requires molt-kernel on PATH or MOLT_KERNEL_BIN", file=sys.stderr)
@@ -342,45 +235,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.print_help()
         return 0
     try:
-        if args.command == "schema":
-            return cmd_schema(args)
-        if args.command == "doctor":
-            return cmd_doctor(args)
-        from molt.core import write_policy
-
-        backend = os.environ.get("MOLT_KERNEL_BACKEND", write_policy.DEFAULT_BACKEND)
-        if backend not in {"v1", "kernel"}:
+        backend = os.environ.get("MOLT_KERNEL_BACKEND", "kernel")
+        if backend == "v1":
+            print("MOLT_KERNEL_BACKEND=v1 is retired; use an archived release on a separate copy of the old state", file=sys.stderr)
+            return 2
+        if backend != "kernel":
             print(f"unsupported MOLT_KERNEL_BACKEND: {backend}", file=sys.stderr)
             return 2
-        if backend == "v1" and args.command != "migrate":
-            if args.command != "audit":
-                print("v1 state is read-only; use audit or explicit migrate", file=sys.stderr)
-                return 2
-            if args.state is None or not args.state.is_dir() or not args.scenario:
-                print("v1 read-only audit requires existing --state and --scenario JSON/id", file=sys.stderr)
-                return 2
-            if args.checkpoint:
-                print("--checkpoint is only supported for kernel audit", file=sys.stderr)
-                return 2
-            from molt.core.audit import audit_state
-            from molt.core.store import StateStore
-
-            _print_json(audit_state(StateStore(args.state), _load_scenario(_repo_root(args), args.scenario)))
-            return 0
+        if args.command == "doctor":
+            return cmd_doctor(args)
         if sys.platform != "linux" or platform.machine() != "x86_64":
             print("kernel backend is supported only on Linux x86_64", file=sys.stderr)
             return 2
-        if args.command == "migrate":
-            return cmd_migrate(args)
         if args.command in {"version", "project"}:
             return cmd_version(args)
-        if args.command == "audit":
-            if args.scenario:
-                print("--scenario is only supported for v1 read-only audit", file=sys.stderr)
-                return 2
-            if args.checkpoint and not args.state:
-                print("--checkpoint requires --state for offline kernel audit", file=sys.stderr)
-                return 2
+        if args.command == "audit" and args.checkpoint and not args.state:
+            print("--checkpoint requires --state for offline kernel audit", file=sys.stderr)
+            return 2
         if args.command in {"recover", "checkpoint"} or (args.command == "audit" and args.state):
             return _kernel_local(args)
         return _kernel_socket(args)

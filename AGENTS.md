@@ -4,7 +4,7 @@
 
 ## 一、当前定位与范围
 
-molt 提供 Agent 工作流的状态事务、版本管理、证据审计及显式迁移。Rust kernel 是默认事务后端，Python 客户端通过 Unix socket 访问。
+molt 提供 Agent 工作流的状态事务、版本管理、及证据审计。Rust kernel 是唯一事务后端，Python 客户端通过 Unix socket 访问。
 
 任务授权以当次用户指令为准。未经明确授权，不访问真实账号、正式外部系统或付费模型 API，不联系第三方，不修改正式服务、用户 state 或外部归档，不提交、推送、操作 PR 或发布，不覆盖已验收安装包。
 
@@ -25,11 +25,11 @@ molt 提供 Agent 工作流的状态事务、版本管理、证据审计及显�
 
 v1 字段事实源是 `schemas/v1/*.schema.json` 与 `molt/core/types.py`；
 `docs/protocol.md` 是生成物，禁止手改。冻结 schema 不改字段或语义。
-1.1.x 的 v1 只读审计与显式迁移兼容不变；迁移源保持无写入。
-审计、schema、policy、records 等代码若为兼容所需必须保留，不能按文件名判断退出范围。
+ADR-0019 取代后续产品的 v1 读取、语义审计与迁移承诺。旧状态只用对应的已验收版本在数据副本上处理。
+交付范围按运行时依赖核对，仍由 kernel、project 或 version 使用的共享代码保留。
 现存历史比较仍遵守 `scenario_version` 隔离、逐题配对及原 provenance 语义，不能改写历史含义。
 
-core 不 import 第三方库或 shell/adapter；保留兼容代码的单向依赖 `core ← shell/adapter`。
+core 不 import 第三方库或 shell/adapter；保留历史代码的单向依赖 `core ← shell/adapter`。
 kernel 不接管 verifier 或业务判分。保留历史状态中 `scenario.policy` 门禁阈值的归属。
 
 若集成必须突破冻结协议或 kernel 业务边界，先形成具体 ADR/决策请求，继续可独立任务，
@@ -75,7 +75,7 @@ GitHub 操作优先会话内 MCP，能力不足才说明原因回退；不直推
 ```bash
 PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 ruff check .
 PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 pytest -q
-PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 python -m molt schema validate --all
+PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 python -m molt.schema validate --all
 PYTHONDONTWRITEBYTECODE=1 uv run --python 3.12.13 python -m molt doctor --deps
 cargo test -p molt-kernel --features fault-injection
 cargo fmt --all -- --check

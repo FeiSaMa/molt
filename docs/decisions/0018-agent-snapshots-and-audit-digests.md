@@ -1,5 +1,7 @@
 # ADR-0018 草案：Agent 配置和工具的版本管理与审计摘要
 
+下文的 v1 兼容约定保留为历史记录。当前产品边界见 [ADR-0019](0019-retire-v1-compatibility.md)。
+
 状态为设计记录。本地示例实现了配置、工具和受管依赖的快照、命名分支、切换、合并与回退，并提供可回链的模型摘要。操作入口见[版本工作流](../operations/synthetic-versions.md)。
 
 ## 当前能力与缺口
@@ -40,7 +42,7 @@ molt kernel 已有不透明 CAS、manifest、单写者 generation 提交、持�
 
 **用一个 manifest 发布完整应用状态。** 应用索引作为直接文件，记录格式版本、版本图、分支名到 snapshot ID 的映射、活动 snapshot ID 和审计索引。不可变 snapshot 记录父 ID、配置与工具的内容及依赖标识、组合校验结果和原始证据引用。索引、snapshot 描述和须保留的配置、工具、证据对象都直接列入 manifest 的根条目。一次 generation 提交即发布这些状态。应用层校验引用闭合、版本图和激活策略，kernel 仍只校验不透明文件。应用回退基于最新索引切换活动指针，记录起止版本、授权与验证，追加 generation。保留后来创建的分支和证据。
 
-**用隔离 state 和单一受控写入口复用现行协议。** 由 broker 串行执行读取基线、比对预期 generation 和目标分支旧指针、暂存、校验、提交及未知结果恢复。Agent 提交提案，运行者通过受控读取或只读版本目录取得版本。broker 独占 socket 与 state 写入权限，隔离 CLI、mirror、归档回退和其他 GC 调用。UDS 的 `0600` 保护需要结合身份隔离，同 UID 进程共享权限。暂存到提交或放弃期间与实际 GC 互斥，重启先恢复持久在途意图再开放 GC。冲突时保留候选，显式合并或重新校验后形成新操作。现有 mirror 以 `state` 根承载 v1 迁移，调用无条件提交。[main.rs 103、199–245](../../crates/molt-kernel/src/main.rs)、[kernel_mirror.py 97–165](../../molt/kernel_mirror.py)
+**用隔离 state 和单一受控写入口复用现行协议。** 由 broker 串行执行读取基线、比对预期 generation 和目标分支旧指针、暂存、校验、提交及未知结果恢复。Agent 提交提案，运行者通过受控读取或只读版本目录取得版本。broker 独占 socket 与 state 写入权限，隔离 CLI、mirror、归档回退和其他 GC 调用。UDS 的 `0600` 保护需要结合身份隔离，同 UID 进程共享权限。暂存到提交或放弃期间与实际 GC 互斥，重启先恢复持久在途意图再开放 GC。冲突时保留候选，显式合并或重新校验后形成新操作。现有 mirror 以 `state` 根承载 v1 迁移，调用无条件提交。[main.rs 103、199–245](../../crates/molt-kernel/src/main.rs)、[kernel_mirror.py 97–165](../../attic/v1/kernel_mirror.py)
 
 **用原 ID 恢复未知结果。** 发送前持久化 state ID、原 request ID、目标 manifest、时间、预期基线及重建材料。断线、超时或提交 I/O 结果不明时，新连接确认 state 身份并查 `request.status`。已提交时核对原 manifest 和 generation，启动新任务另读最新 `current`。恢复后未找到且基线仍符合时，按原哈希补齐必要暂存对象，用原 ID 和原参数重放。基线已变则保留提案并报告冲突。查询失败或身份、结果不符时暂停该写入路径，禁止换 ID 盲重试。[kernel_client.py 18–78](../../molt/kernel_client.py)
 

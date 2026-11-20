@@ -12,10 +12,10 @@ from pathlib import Path
 
 import pytest
 
+from attic.v1.kernel_mirror import mirror_state, preview_state, state_roots
 from molt.cli import main as cli_main
 from molt.core import write_policy
 from molt.kernel_client import KernelClient, KernelError
-from molt.kernel_mirror import mirror_state, preview_state, state_roots
 
 ROOT = Path(os.environ.get("MOLT_TEST_DATA_ROOT", Path(__file__).resolve().parents[1])).resolve()
 TS = "2026-11-16T00:00:00Z"

@@ -1,5 +1,7 @@
 # ADR 0002：协议 v1
 
+本 ADR 保存历史字段及比较语义。后续产品的 v1 兼容范围见 [ADR-0019](0019-retire-v1-compatibility.md)。
+
 - 状态：已决定
 - 日期：2026-11-10
 - 关联：[`docs/protocol.md`](../protocol.md)、`schemas/v1/`、`molt/core/types.py`

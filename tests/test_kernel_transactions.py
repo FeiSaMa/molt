@@ -12,6 +12,7 @@ import os
 import shutil
 import struct
 import subprocess
+import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
@@ -21,6 +22,46 @@ import pytest
 from molt.kernel_client import KernelClient, KernelError
 
 TS = "2026-11-19T00:00:00Z"
+
+
+def test_reject_legacy_tree_without_writes(tmp_path, monkeypatch):
+    binary = _binary()
+    source = tmp_path / "legacy"
+    (source / "runs").mkdir(parents=True)
+    (source / "runs" / "record.json").write_bytes(b'{"provenance":"synthetic"}\n')
+    (source / "records").symlink_to("runs")
+
+    def snapshot():
+        return {
+            str(path.relative_to(source)): (
+                path.lstat().st_mode,
+                os.readlink(path) if path.is_symlink() else
+                hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None,
+            )
+            for path in source.rglob("*")
+        }
+
+    def reject(executable, command, expected, diagnostic):
+        done = subprocess.run(
+            [*executable, *command], cwd=tmp_path, capture_output=True, text=True, timeout=10,
+        )
+        assert done.returncode == expected, done.stderr
+        assert diagnostic in done.stderr
+        assert snapshot() == before
+
+    before = snapshot()
+    cli = [sys.executable, "-m", "molt"]
+    monkeypatch.setenv("MOLT_KERNEL_BIN", str(binary))
+    monkeypatch.setenv("MOLT_KERNEL_BACKEND", "v1")
+    reject(cli, ["current"], 2, "MOLT_KERNEL_BACKEND=v1 is retired")
+    reject(cli, ["recover", "--state", source], 2, "MOLT_KERNEL_BACKEND=v1 is retired")
+    monkeypatch.delenv("MOLT_KERNEL_BACKEND")
+    reject(cli, ["migrate", "--state", source], 2, "invalid choice")
+    reject(cli, ["audit", "--scenario", "legacy", "--state", source], 2, "unrecognized arguments")
+    for action in ("audit", "recover"):
+        reject(cli, [action, "--state", source], 1, "not an initialized kernel state")
+    reject([binary], ["init", "--state", source], 1, "state directory is not empty")
+    reject([binary], ["serve", "--state", source], 1, "not an initialized kernel state")
 
 
 def _binary() -> Path:
