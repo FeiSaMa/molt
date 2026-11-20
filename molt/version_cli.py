@@ -10,6 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from molt.project_cli import Project, opencode_arguments, run_opencode
 from molt.version_workers import LlamaWorker
 from molt.versioning import RecoveryRequired, VersionConflict, VersionSandbox
 
@@ -191,10 +192,18 @@ def _dispatch(args: argparse.Namespace):
 
 def cmd_version(args: argparse.Namespace) -> int:
     if args.socket is not None:
-        print("error: version 使用工作区自己的 socket", file=sys.stderr)
+        print(f"error: {args.command} 使用工作区自己的 socket", file=sys.stderr)
         return 2
     try:
-        result = _dispatch(args)
+        if args.command == "project":
+            project = Project(args.config, _json_file(args.config))
+            arguments = opencode_arguments(args.arguments) if args.project_command == "opencode" else None
+            result = project.execute(args)
+            if arguments is not None:
+                print(json.dumps(result, ensure_ascii=False), file=sys.stderr, flush=True)
+                run_opencode(Path(result["tree"]), arguments)
+        else:
+            result = _dispatch(args)
         print(json.dumps(result, ensure_ascii=False, allow_nan=False))
         return 0
     except RecoveryRequired as exc:

@@ -222,7 +222,7 @@ class VersionSandbox:
         except (OSError, RuntimeError, ValueError, KeyError) as exc:
             raise RecoveryRequired(f"request {params['request_id']} needs recovery") from exc
 
-    def _publish(self, client: KernelClient, journal: dict, files: dict, index: dict) -> dict:
+    def _publish(self, client: KernelClient, journal: dict, files: dict, index: dict, *, prepare=None) -> dict:
         prefix = "synthetic-versions" if self.provenance == "synthetic" else "local-versions"
         request_id = f"{prefix}-{uuid4()}"
         index["request_id"] = request_id
@@ -234,13 +234,23 @@ class VersionSandbox:
             "ts": datetime.now(UTC).isoformat(),
         }
         pending = {**journal, "pending": {"expected": journal["current"], "params": params}}
+        if prepare is not None:
+            prepare(request_id)
         self._save(pending)
         return self._commit(client, pending)
 
-    def recover(self) -> dict | None:
+    def recover(self, *, request_id: str | None = None) -> dict | None:
         """Query the original ID before deciding whether exact replay is possible."""
         with self._session() as (client, journal):
-            if not (intent := journal.get("pending")):
+            intent = journal.get("pending")
+            if request_id is not None and (not intent or request_id != intent["params"]["request_id"]):
+                status = client.request_status(request_id)
+                if status["status"] == "committed":
+                    return status["result"]
+                if status == {"status": "not_found", "retry_with_same_request_id": True}:
+                    return None
+                raise RecoveryRequired(f"request status is unresolved: {request_id}")
+            if not intent:
                 return self._idle_current(client, journal)
             params = intent["params"]
             status = client.request_status(params["request_id"])
@@ -343,7 +353,22 @@ class VersionSandbox:
             raise ValueError("reason and reason source must be nonempty short text")
         if any(path.is_relative_to(self.directory) for path in (root.absolute(), manifest.absolute())):
             raise ValueError("managed edit inputs must be outside the version workspace")
-        contents = capture(root, manifest)
+        return self.commit_file_contents(
+            branch, capture(root, manifest), expected=expected, expected_head=expected_head,
+            activate=activate, reason=reason, source=source,
+        )
+
+    def commit_file_contents(
+        self, branch: str, contents: dict[str, bytes], *, expected: Expected,
+        expected_head: str | None, activate: bool = False,
+        reason: str | None = None, source: str | None = None, prepare=None,
+    ) -> dict:
+        if (reason is None) != (source is None):
+            raise ValueError("provide both reason and reason source")
+        if reason is not None and (not _short_text(reason) or not _short_text(source)):
+            raise ValueError("reason and reason source must be nonempty short text")
+        validate_paths(list(contents))
+        validate_sizes([len(data) for data in contents.values()])
         with self._session() as (client, journal):
             files, index = self._checked_index(client, journal, expected)
             initializing = journal["current"] is None
@@ -373,6 +398,7 @@ class VersionSandbox:
                 validation="managed file paths and contents verified", activate=activate or initializing,
                 details={"branch": branch, "previous_head": head,
                          "reason": {"text": reason, "source": source} if reason is not None else None},
+                prepare=prepare,
             ) | {"changed": True}
 
     def history(self) -> list[dict]:
@@ -393,7 +419,7 @@ class VersionSandbox:
                 **self._version(client, files, index, snapshot),
             }
 
-    def export_tree(self, parent: Path, *, snapshot: str | None = None) -> dict:
+    def export_tree(self, parent: Path, *, snapshot: str | None = None, writable: bool = False) -> dict:
         """Read one committed selector, then materialize only that immutable snapshot."""
         if parent.absolute().is_relative_to(self.directory):
             raise ValueError("export parent must be outside the version workspace")
@@ -412,7 +438,7 @@ class VersionSandbox:
                 if len(data) != entry["size"] or f"sha256:{sha256_bytes(data)}" != entry["sha256"]:
                     raise ValueError(f"managed content identity mismatch: {path}")
                 contents[path] = data
-        return {"snapshot": snapshot, "tree": str(publish_tree(parent, contents))}
+        return {"snapshot": snapshot, "tree": str(publish_tree(parent, contents, writable=writable))}
 
     def create_branch(self, branch: str, snapshot: str, *, expected: Expected) -> dict:
         if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}", branch):
@@ -643,7 +669,7 @@ class VersionSandbox:
 
     def _record(
         self, client, journal, files, index, snapshot, *, action, validation,
-        activate=False, details=None,
+        activate=False, details=None, prepare=None,
     ) -> dict:
         previous = index["active"]
         evidence = {
@@ -660,8 +686,12 @@ class VersionSandbox:
         index["events"][event["sha256"]] = name
         index["last_event"] = event["sha256"]
         index["active"] = evidence["active_after"]
-        result = self._publish(client, journal, files, index)
-        return {"current": result, "snapshot": snapshot, "event": event["sha256"]}
+        receipt = {"snapshot": snapshot, "event": event["sha256"]}
+        result = self._publish(
+            client, journal, files, index,
+            prepare=(lambda request_id: prepare(request_id, receipt)) if prepare is not None else None,
+        )
+        return {"current": result, **receipt}
 
     @staticmethod
     def _descriptor(client, files, index, snapshot) -> dict:

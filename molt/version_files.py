@@ -87,11 +87,14 @@ def _read_file(directory: int, path: str) -> bytes:
         os.close(fd)
 
 
-def capture(root: Path, manifest: Path) -> dict[str, bytes]:
+def capture(root: Path, manifest: Path | list[str], *, allow_missing: bool = False) -> dict[str, bytes]:
     """Read only the explicitly listed files in a quiescent edit directory."""
     try:
-        with open_directory(manifest.parent) as directory:
-            paths = json.loads(_read_file(directory, manifest.name))
+        if isinstance(manifest, Path):
+            with open_directory(manifest.parent) as directory:
+                paths = json.loads(_read_file(directory, manifest.name))
+        else:
+            paths = manifest
         if not isinstance(paths, list):
             raise ValueError("managed manifest must be a JSON array of paths")
         validate_paths(paths)
@@ -99,7 +102,12 @@ def capture(root: Path, manifest: Path) -> dict[str, bytes]:
             contents = {}
             total = 0
             for path in sorted(paths):
-                data = _read_file(directory, path)
+                try:
+                    data = _read_file(directory, path)
+                except FileNotFoundError:
+                    if allow_missing:
+                        continue
+                    raise
                 total += len(data)
                 if total > MAX_TREE_BYTES:
                     raise ValueError("managed tree size exceeds limit")
@@ -109,7 +117,7 @@ def capture(root: Path, manifest: Path) -> dict[str, bytes]:
     return contents
 
 
-def publish_tree(parent: Path, contents: dict[str, bytes]) -> Path:
+def publish_tree(parent: Path, contents: dict[str, bytes], *, writable: bool = False) -> Path:
     """Publish a fresh project by renaming its complete tree into place."""
     parent = parent.absolute()
     with open_directory(parent) as fd:
@@ -125,9 +133,9 @@ def publish_tree(parent: Path, contents: dict[str, bytes]) -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)
         directories.update(directory for directory in path.parents if directory.is_relative_to(stage))
         path.write_bytes(data)
-        path.chmod(0o400)
+        path.chmod(0o600 if writable else 0o400)
     for directory in directories:
-        directory.chmod(0o500)
+        directory.chmod(0o700 if writable else 0o500)
     published = slot / "project"
     stage.rename(published)
     return published

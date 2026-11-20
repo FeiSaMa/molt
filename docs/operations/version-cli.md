@@ -2,7 +2,7 @@
 
 `molt version` 管理 Linux x86_64 上的单用户工作区。每个工作区有自己的
 kernel state、Unix socket 和 broker journal。工作区须由当前用户独占，
-路径要短到能容纳 `/state/kernel.sock`。所有版本写入应走 `molt version`。
+路径要短到能容纳 `/state/kernel.sock`。版本写入统一经同一个 broker，提供 `molt project` 和 `molt version` 两种入口。
 原有 kernel 命令、默认服务与 v1 兼容入口各自保留。
 
 ## 安装与首次运行
@@ -71,6 +71,57 @@ v run hello --pin "$base/pin.json"
 合并冲突返回 3。输入、配对验证和工作区校验错误返回 2，运行错误返回 1。
 `switch BRANCH --expect-generation N --expect-head SNAPSHOT` 激活该分支头。
 回退只改变活动快照，分支头与已取得的运行 pin 保持原值。
+
+## 项目级 CLI
+
+在新工作区执行首节到 `test "$ready" = 1`，然后在同一个 Bash 会话运行以下命令。
+
+```bash
+mkdir -m 700 "$base/edit" "$base/exports"
+printf '%s\n' '{"workspace":"w","edits":"edit","exports":"exports","files":["opencode.json"]}' > "$base/project.json"
+p() { "$base/venv/bin/molt" project --config "$base/project.json" "$@"; }
+edit=$(p begin | jq -er '.edit')
+printf '%s\n' '{"model":"isolated/demo"}' > "$edit/opencode.json"
+p preview
+p save --reason '建立试用基线'
+```
+
+相对目录以项目配置文件所在目录为基准。
+
+| 字段 | 用途 |
+| --- | --- |
+| `workspace` | 由 `molt version init` 创建的独立版本工作区 |
+| `edits` | 权限 0700 的专用父目录，每次 `begin` 创建新的可写项目 |
+| `exports` | 权限 0700 的专用父目录，每次 `read-tree` 或 `opencode` 固定一棵新树 |
+| `files` | 允许纳入快照的相对文件路径，沿用下节的大小和路径约束 |
+
+`begin [--branch BRANCH]` 输出编辑目录，从指定分支头复制，默认分支为 `main`。
+`preview` 输出增删改路径。结束对编辑目录的写入后，执行 `save --reason TEXT`。
+可用 `--reason-source TEXT` 记录理由来源，默认 `local operator`。
+清单内缺失路径视为删除，清单外的文件不纳入快照。保存成功后可在同目录继续编辑。
+无变更的保存返回 `changed: false`。提交证据可用 `v audit EVENT` 查询。
+
+`switch BRANCH` 和 `rollback SNAPSHOT` 修改活动快照。回退时以分支头作为后续
+`begin` 的编辑基线，若要从回退点继续开发，可用 `v branch` 从该快照建立新分支，
+然后 `begin --branch BRANCH`。旧导出和编辑目录都可继续查看。
+
+返回码 3 表示编辑目录未保存、预期 generation 或分支头已变化，或项目锁正被占用。
+检查 `preview` 与 `v status`。需要按新基线重新编辑时，用
+`begin --keep-old [--branch BRANCH]` 保留旧目录并输出 `previous_edit`，再手动迁移所需改动。
+程序不会更新已有编辑目录。
+
+保存返回 4 或进程意外中断时，先运行 `p recover`。恢复通过 broker 查询原 request ID，
+必要时原样重放。已提交时会将该批次推进为新编辑基线，并保留中断后的本地修改。
+若进程在写入 broker 意图之前退出，查询确认 `not_found` 后才可重新保存。
+低阶诊断使用 `v status`、`v request-status REQUEST_ID` 和本手册的恢复流程。
+
+`p opencode -- debug config` 和 `p opencode -- debug agents` 可读取固定快照。
+对配置了可用 provider 的项目，用 `p opencode -- run '任务内容'` 启动 OpenCode v2。
+使用 PATH 中的 `opencode`，在新只读导出目录中以 `--standalone` 前台运行。
+固定的快照 ID 和目录写到 stderr，OpenCode 接管终端、标准输出和退出码。
+每次作业使用新的 HOME 和 XDG 目录，可用 `run --help` 查看参数。连接外部服务、
+复用已有会话和切换工作目录的参数不适用于此入口。
+如需网络或文件系统隔离，可在 PATH 配置受控启动器；下节有断网的读取示例。
 
 ## 隔离 OpenCode 项目
 
