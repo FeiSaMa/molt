@@ -30,7 +30,35 @@ PYTHONDONTWRITEBYTECODE=1 uv run --locked molt audit
 
 ## 版本管理与模型审计
 
-[配置和工具版本示例](docs/operations/synthetic-versions.md) 演示受控提案、配置和工具成组激活、命名分支、合并、回退，以及在途任务固定到启动时的版本。审计保留变更当时的判断和证据，离线模型可以生成有出处的摘要。示例从源码运行，支持随仓库提供的 echo 工具。接入其他工作流需要对应的配置校验、工具运行入口和权限配置。
+安装后使用 `molt version` 初始化个人工作区、提交自己的配置与内置 echo 工具描述、切换或合并分支、回退活动版本。运行可以固定到已提交的快照。审计保留原始记录，已安装的离线模型可追加引用原始字段的摘要。独立安装、首次提交和断线恢复命令见[个人工作区手册](docs/operations/version-cli.md)。[源码示例](docs/operations/synthetic-versions.md)使用同一 broker。
+
+### OpenCode 项目快照
+
+先按[安装与首次运行](docs/operations/version-cli.md#安装与首次运行)在 Bash 中安装候选包并启动一个新工作区。执行到 `test "$ready" = 1` 为止，在同一终端继续。下面用合成配置演示保存、回退与审计。
+
+```bash
+edits="$base/edit"
+exports="$base/exports"
+mkdir -m 700 "$edits" "$exports"
+printf '%s\n' '["opencode.json"]' > "$base/files.json"
+printf '%s\n' '{"model":"isolated/demo"}' > "$edits/opencode.json"
+
+batch() { v commit-files --root "$edits" --manifest "$base/files.json" "$@"; }
+batch --expect-generation 0 --reason '建立试用基线' --reason-source 'local operator' > "$base/initial.json"
+initial=$(jq -er '.snapshot' "$base/initial.json")
+
+# 日常用法是在隔离 OpenCode 项目中编辑该文件，结束写入后提交。
+printf '%s\n' '{"model":"isolated/edited"}' > "$edits/opencode.json"
+batch --expect-generation 1 --expect-head "$initial" --activate \
+  --reason '更新样例配置' --reason-source 'local operator' > "$base/edited.json"
+v audit "$(jq -er '.event' "$base/edited.json")"
+
+v rollback "$initial" --expect-generation 2
+tree=$(v read-tree --into "$exports" | jq -er '.tree')
+cat "$tree/opencode.json"
+```
+
+最后一条命令应显示 `{"model":"isolated/demo"}`。新 OpenCode 作业从 `$tree` 读取固定版本，后续编辑仍在 `$edits` 完成。清单可加入相对路径形式的 Agent 定义和文本工具，选用不含敏感信息的文件。示例 generation 对应连续执行的三次写入，实际操作前用 `v status` 查看当前值和分支头。隔离 OpenCode 读取、分支、合并和离线摘要见[个人工作区手册](docs/operations/version-cli.md#隔离-opencode-项目)。
 
 ## 使用与维护
 
