@@ -16,7 +16,7 @@ fi
 mkdir -p "$out_dir"
 out_dir=$(cd "$out_dir" && pwd)
 archive="$out_dir/molt-$version-linux-x86_64.tar.gz"
-if [[ -e "$archive" || -e "$archive.sha256" ]]; then
+if [[ -e "$archive" || -e "$archive.sha256" || -e "$out_dir/molt-$version.tar.gz" ]]; then
   echo "refusing to overwrite an existing archive or checksum: $archive" >&2
   exit 2
 fi
@@ -26,15 +26,13 @@ bundle="$stage/molt-$version-linux-x86_64"
 mkdir -p "$bundle/bin" "$bundle/wheels" "$bundle/share/molt"
 mkdir -p "$bundle/share/molt/docs/operations"
 
-PYTHONDONTWRITEBYTECODE=1 uv build --wheel --out-dir "$bundle/wheels" "$repo_root"
+PYTHONDONTWRITEBYTECODE=1 uv build --out-dir "$stage" "$repo_root"
+install -m 0644 "$stage"/molt-*.whl "$bundle/wheels/"
 target_dir=$(realpath -m "${CARGO_TARGET_DIR:-$repo_root/target}")
 cargo build --manifest-path "$repo_root/Cargo.toml" --target-dir "$target_dir" --release -p molt-kernel
 install -m 0755 "$target_dir/release/molt-kernel" "$bundle/bin/molt-kernel"
 install -m 0644 "$repo_root/packaging/systemd/molt-kernel.service" "$bundle/molt-kernel.service"
-cp -a "$repo_root/schemas" "$bundle/share/molt/"
-# Frozen protocol examples are compatibility fixtures, not product scenarios.
-mkdir -p "$bundle/share/molt/tests/fixtures"
-cp -a "$repo_root/tests/fixtures/records" "$bundle/share/molt/tests/fixtures/"
+install -m 0644 "$repo_root/LICENSE" "$bundle/LICENSE"
 install -m 0644 "$repo_root/packaging/release/README.md" "$bundle/share/molt/README.md"
 install -m 0644 "$repo_root/docs/operations/kernel-cli.md" \
   "$repo_root/docs/operations/version-cli.md" \
@@ -45,5 +43,6 @@ install -m 0644 "$repo_root/docs/operations/kernel-cli.md" \
   "$bundle/share/molt/docs/operations/"
 install -m 0755 "$repo_root/packaging/release/install-user.sh" "$bundle/install-user.sh"
 tar -C "$stage" -czf "$archive" "molt-$version-linux-x86_64"
+install -m 0644 "$stage/molt-$version.tar.gz" "$out_dir/"
 sha256sum "$out_dir/molt-$version-linux-x86_64.tar.gz" > "$out_dir/molt-$version-linux-x86_64.tar.gz.sha256"
 printf '%s\n' "$out_dir/molt-$version-linux-x86_64.tar.gz"

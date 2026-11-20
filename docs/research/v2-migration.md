@@ -1,5 +1,12 @@
 # v2 M2/M3 migration contract
 
+This document records the M2/M3 rollout before the default-backend decision.
+References below to an opt-in kernel and a v1 production default describe that
+period. Linux x86_64 release `1.1.0` adopted the kernel default, with read-only
+v1 audit and explicit migration throughout `1.1.x`.
+For current commands and release scope, see the [migration guide](../operations/kernel-cli.md#v1-只读兼容与显式迁移)
+and the [release record](../operations/v2-release-1.1.0.md).
+
 ## M2 opt-in mirror
 
 `MOLT_KERNEL_SOCKET=<kernel.sock>` enables the CLI mirror for commands that use

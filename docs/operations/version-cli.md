@@ -1,15 +1,19 @@
-# 个人配置与工具工作区
+# Agent 项目工作区
 
-`molt version` 管理 Linux x86_64 上的单用户工作区。每个工作区有自己的
-kernel state、Unix socket 和 broker journal。工作区须由当前用户独占，
-路径要短到能容纳 `/state/kernel.sock`。版本写入统一经同一个 broker，提供 `molt project` 和 `molt version` 两种入口。
-原有 kernel 命令、默认服务与 v1 兼容入口各自保留。
+`molt project` 把一组受管文件保存为快照。作业启动时调用一次 `read-tree`，
+从返回的目录读取整组文件，就能固定本次使用的版本。下面的入门示例用 Bash 和 jq 作读者。
+`molt version` 用于初始化、分支与合并、审计、导出和低阶恢复。两者通过同一个 broker
+管理 Linux x86_64 上的单用户工作区。每个工作区有自己的 kernel state、Unix socket 和
+broker journal。工作区须由当前用户独占，路径要短到能容纳 `/state/kernel.sock`。
+
+初次使用先安装并启动独立工作区，再到[项目级 CLI](#项目级-cli)保存与读取文件。
+OpenCode 用户另见[隔离 OpenCode 项目](#隔离-opencode-项目)。如从候选包安装，按其来源
+和校验和辨认具体的候选归档，并用 `molt project --help` 核对入口。
 
 ## 安装与首次运行
 
-以下命令从 Linux 候选包解包目录执行。前台运行该工作区自己的 kernel，
-适合试用或检查候选包。安装和工作区路径用 `mktemp` 创建，全程使用同一个 Bash 会话。
-命令示例需要 uv、可用的 Python 3.12.13 和 jq。工作区运行时使用 Python 和随包附带的 kernel。
+准备 Bash、uv、Python 3.12.13 和 jq。选下列一种安装方式，随后在同一 Bash 会话中启动工作区。
+从候选包安装时，在解包目录执行以下命令。
 
 ```bash
 set -e
@@ -18,11 +22,28 @@ base=$(mktemp -d "${TMPDIR:-/tmp}/molt-version.XXXXXX")
 uv venv --python 3.12.13 "$base/venv"
 uv pip install --python "$base/venv/bin/python" "$bundle"/wheels/molt-*.whl
 kernel="$bundle/bin/molt-kernel"
+cli="$base/venv/bin/molt"
+```
+
+从源码试用时，在仓库根目录执行以下命令。需要 Rust 工具链。依赖、编译产物和工作区都放在临时目录。
+
+```bash
+set -e
+base=$(mktemp -d "${TMPDIR:-/tmp}/molt-version.XXXXXX")
+PYTHONDONTWRITEBYTECODE=1 UV_PROJECT_ENVIRONMENT="$base/venv" uv sync --locked --python 3.12.13
+cargo build --locked -p molt-kernel --target-dir "$base/target"
+cli="$base/venv/bin/molt"
+kernel="$base/target/debug/molt-kernel"
+```
+
+启动仅服务于本例的工作区。下面的样例数据标为 `synthetic`。
+
+```bash
 workspace="$base/w"
-v() { "$base/venv/bin/molt" version --workspace "$workspace" "$@"; }
+v() { "$cli" version --workspace "$workspace" "$@"; }
 
 v init --kernel "$kernel" --synthetic
-"$base/venv/bin/molt" version --workspace "$workspace" serve --kernel "$kernel" >"$base/kernel.log" 2>&1 &
+"$cli" version --workspace "$workspace" serve --kernel "$kernel" >"$base/kernel.log" 2>&1 &
 kernel_pid=$!
 trap 'kill "$kernel_pid" 2>/dev/null || true; wait "$kernel_pid" || true' EXIT
 ready=
@@ -32,7 +53,13 @@ for attempt in {1..100}; do
   sleep .05
 done
 test "$ready" = 1
+```
 
+管理普通文件时，直接继续[项目级 CLI](#项目级-cli)。要体验内置 echo 工具的配置校验与运行，可在空工作区走下面这条示例。
+
+### 内置 echo 工具示例
+
+```bash
 printf '%s\n' '{"reply_format":"plain","prefix":"demo: "}' > "$base/config.json"
 printf '%s\n' '{"tool":"echo","output_format":"plain"}' > "$base/tool.json"
 v commit --config "$base/config.json" --tool "$base/tool.json" --expect-generation 0 > "$base/first.json"
@@ -44,7 +71,7 @@ v show "$first"
 v audit "$event"
 ```
 
-初始化真实个人配置时省略 `--synthetic`。首个提交创建 `main` 并激活。
+为项目的实际配置初始化工作区时省略 `--synthetic`。首个提交创建 `main` 并激活。
 配置接受 `reply_format`（`plain` 或 `json`）及可选的 `prefix`（最多 120 个字符）。
 工具接受 `tool: "echo"` 和 `output_format`（`plain`、`json` 或 `config`）。
 固定格式必须与配置匹配，`config` 意味着随配置决定实际输出。
@@ -75,16 +102,34 @@ v run hello --pin "$base/pin.json"
 ## 项目级 CLI
 
 在新工作区执行首节到 `test "$ready" = 1`，然后在同一个 Bash 会话运行以下命令。
+这里的两份文件模拟作业配置与提示词。读者只接收一次导出的目录路径。
 
 ```bash
 mkdir -m 700 "$base/edit" "$base/exports"
-printf '%s\n' '{"workspace":"w","edits":"edit","exports":"exports","files":["opencode.json"]}' > "$base/project.json"
-p() { "$base/venv/bin/molt" project --config "$base/project.json" "$@"; }
+printf '%s\n' '{"workspace":"w","edits":"edit","exports":"exports","files":["settings.json","instructions.md"]}' > "$base/project.json"
+p() { "$cli" project --config "$base/project.json" "$@"; }
 edit=$(p begin | jq -er '.edit')
-printf '%s\n' '{"model":"isolated/demo"}' > "$edit/opencode.json"
+printf '%s\n' '{"format":"short"}' > "$edit/settings.json"
+printf '%s\n' '写一段摘要' > "$edit/instructions.md"
 p preview
-p save --reason '建立试用基线'
+first=$(p save --reason '先验证简短输出' | jq -er '.snapshot')
+
+printf '%s\n' '{"format":"full"}' > "$edit/settings.json"
+printf '%s\n' '写一份完整报告' > "$edit/instructions.md"
+p save --reason '批处理作业需要完整报告' > "$base/second.json"
+v audit "$(jq -er '.event' "$base/second.json")"
+pinned=$(p read-tree | jq -er '.tree')
+p rollback "$first"
+current=$(p read-tree | jq -er '.tree')
+
+read_job() { jq -r '.format' "$1/settings.json"; cat "$1/instructions.md"; }
+read_job "$pinned"
+read_job "$current"
 ```
+
+第一次读取输出 `full` 和“写一份完整报告”，第二次输出 `short` 和“写一段摘要”。
+接入自己的程序时，把同一个目录传给读取这些文件的进程。程序自行解释文件内容。
+需要追溯一次运行时，可保存这次 `read-tree` 输出中的 `snapshot` 和 `tree`，以便按作业查回版本。
 
 相对目录以项目配置文件所在目录为基准。
 
@@ -93,7 +138,7 @@ p save --reason '建立试用基线'
 | `workspace` | 由 `molt version init` 创建的独立版本工作区 |
 | `edits` | 权限 0700 的专用父目录，每次 `begin` 创建新的可写项目 |
 | `exports` | 权限 0700 的专用父目录，每次 `read-tree` 或 `opencode` 固定一棵新树 |
-| `files` | 允许纳入快照的相对文件路径，沿用下节的大小和路径约束 |
+| `files` | 允许纳入快照的相对文件路径，见[文件快照与导出](#文件快照与导出) |
 
 `begin [--branch BRANCH]` 输出编辑目录，从指定分支头复制，默认分支为 `main`。
 `preview` 输出增删改路径。结束对编辑目录的写入后，执行 `save --reason TEXT`。
@@ -115,13 +160,19 @@ p save --reason '建立试用基线'
 若进程在写入 broker 意图之前退出，查询确认 `not_found` 后才可重新保存。
 低阶诊断使用 `v status`、`v request-status REQUEST_ID` 和本手册的恢复流程。
 
-`p opencode -- debug config` 和 `p opencode -- debug agents` 可读取固定快照。
+### 可选的 OpenCode 启动入口
+
+若项目的受管清单包含 OpenCode 所需配置，可用
+`p opencode -- debug config` 和 `p opencode -- debug agents` 读取固定快照。
 对配置了可用 provider 的项目，用 `p opencode -- run '任务内容'` 启动 OpenCode v2。
 使用 PATH 中的 `opencode`，在新只读导出目录中以 `--standalone` 前台运行。
 固定的快照 ID 和目录写到 stderr，OpenCode 接管终端、标准输出和退出码。
-每次作业使用新的 HOME 和 XDG 目录，可用 `run --help` 查看参数。连接外部服务、
-复用已有会话和切换工作目录的参数不适用于此入口。
-如需网络或文件系统隔离，可在 PATH 配置受控启动器；下节有断网的读取示例。
+每次作业使用新的 HOME 和 XDG 目录，可用 `run --help` 查看参数。连接已有服务、
+复用已有会话和切换工作目录的参数不适用于此入口。新作业在启动时固定一棵树，
+已启动的作业可继续读取旧导出目录。常驻 OpenCode 的热重载尚未验收。
+
+该入口继承大部分进程环境，并为 OpenCode 重设配置与状态目录。如需限制网络或宿主
+文件访问，可在 PATH 配置受控启动器。下节提供断网的读取示例。
 
 ## 隔离 OpenCode 项目
 
@@ -187,11 +238,13 @@ opencode_read "$active" config
 opencode_read "$active" agents > "$base/active-agents.json"
 ```
 
-在独立编辑目录中结束编辑工具，再执行 `batch`。清单是相对路径的 JSON
+## 文件快照与导出
+
+项目配置的 `files` 和低阶命令 `v commit-files --manifest` 使用相同的文件边界。清单是相对路径的 JSON
 数组，最多 64 个常规文件，单个最多 256 KiB，合计最多 2 MiB。
 导入按清单读取实际字节，不跟随符号链接，不接受硬链接和特殊文件。
 停用编辑器和其他写入者后再捕获，不把凭据或敏感原文列入清单。
-删除清单中的条目表示提交删除，编辑目录中的原文件由操作者管理。
+使用低阶 `commit-files` 时，从清单中移除路径可以提交该文件的删除，编辑目录中的原文件由操作者管理。
 同一路径的不同修改、删除对修改及目录与文件重叠会导致合并冲突。
 冲突退出码为 3，诊断在 stderr，历史中没有失败合并事件。
 
@@ -250,7 +303,16 @@ v status
 约定停止所有工作区写入者，再停止该工作区的 kernel。备份整个目录及权限，
 包括 kernel state 的对象与日志和 `broker.json`。保护复制到工作区之外的 pin 文件。
 `broker.lock` 可随目录复制，锁的持有状态由进程决定。`state/kernel.sock`
-由服务重建，复制时排除该 socket。以下示例使用 tar，要求目标为新目录。
+由服务重建，复制时排除该 socket。
+
+使用 `molt project` 时，下面的 tar 只归档 `workspace`。项目配置还指定了独立的
+`edits` 和 `exports` 目录。未保存的修改只在编辑目录中；仍有作业使用的旧导出也在
+工作区外。需要保留这些内容时，在停止写入后另行备份项目配置及相应目录，保留权限。
+已提交文件可以从对应快照重新导出。
+
+工作区内的 `project-session.json` 保存当前编辑的绝对路径，会话还校验编辑目录、
+导出目录的解析路径和受管文件清单。迁到新根目录后，即使 kernel 审计通过，也要单独
+核对原编辑与导出是否可读，以及能否继续原项目会话。以下示例用 tar 将版本工作区恢复到新目录。
 
 ```bash
 kill "$kernel_pid"
@@ -273,3 +335,20 @@ v serve --kernel "$kernel"
 用独立保存的最近可信 checkpoint 验证已提交前缀，再查原 ID 并完成 broker 恢复，
 然后复查审计、状态、已有 pin 和未决事务。恢复副本与原目录具有相同 state ID，
 只启用一个工作副本。checkpoint 和备份应分别保管。
+
+### 旧编辑与导出路径不可访问
+
+1. 保留完整备份。按上节恢复工作区，再分别恢复配置、编辑目录和导出目录。用各目录原来的相对层次
+   查找已有导出和未保存文件。记录快照 ID、事件 ID 和原请求 ID。
+2. 新的编辑或导出绝对路径与旧会话绑定不符时，`molt project` 会拒绝该会话。保留
+   `project-session.json`、`broker.json` 和旧编辑目录。用新工作区的
+   `molt version --workspace "$restored" status` 和 `audit EVENT` 核对已提交记录。
+3. 若有未决请求，在恢复副本上用 `molt version --workspace "$restored" recover`
+   从 broker journal 查询及恢复原 ID。用 `request-status ORIGINAL_ID` 核对收据，
+   再按原事件 ID 核对保存理由和证据。若恢复失败或原 ID 仍不明确，保留完整副本及原请求并停止该工作区的写入。
+4. 核对成功并停服后，另建一个工作副本。仅在复制时略过 `state/kernel.sock` 和
+   `project-session.json`，保持备份原样，并把项目配置中的三个目录指向新副本。
+   启动新工作区后用 `project read-tree` 核对活动快照，再在正确分支上 `project begin`。
+   用旧会话的基线和恢复的分支头对照未保存的新增、修改和删除。把确认过的编辑应用到新编辑目录，
+   用 `project preview` 复核后再保存。如分支头已改变，先人工合并。
+5. 原路径失效时，重启普通作业并指向恢复的固定导出。按文件逐字节核对，或从对应快照重新导出。

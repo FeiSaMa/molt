@@ -53,18 +53,8 @@ checkpoint 导出拒绝覆盖；checkpoint 本身不包含对象数据。备份�
 恢复到独立空目录并审计；详细步骤见 [备份与恢复](v2-backup-restore.md)。
 外部 checkpoint 的保管者和可信来源必须独立确认，不能把本地导出等同外部可信见证。
 
-## v1 只读兼容与显式迁移
+## 旧状态归档
 
-整个 `1.1.x` 保留 v1 只读语义重算与显式迁移，不原地改冻结 schema。
-审计必须提供既有 state 和 scenario JSON；旧 scenario id/`--shell` 别名仅在对应配置仍存在时可解析，
-不加载 shell、verifier 或 runtime，也不自动生成任何审计输入。
-
-```bash
-MOLT_KERNEL_BACKEND=v1 molt audit --state /path/to/v1-state --scenario /path/to/scenario.json
-molt migrate --state /path/to/v1-state
-molt migrate --state /path/to/v1-state --apply --migration-id stable-import-id
-```
-
-迁移连接目标 socket，缺省仅 dry-run；`--apply` 必须有稳定 migration ID。
-预览和迁移均不修改源 state；同 ID 不能用于不同源快照。v1 模式拒绝恢复、提交及其他写命令，
-服务失败时绝不静默回写 v1。迁移不改变历史 `fixture/replay/live` 标签或 schema 语义。
+新 CLI 只接入 kernel 工作区。显式设置 `MOLT_KERNEL_BACKEND=v1` 会报错；`migrate`
+及语义审计的 `--scenario` / `--shell` 已退出。离线 kernel 命令会先校验状态格式，
+再建立锁或启动服务。需要读取或导出 v1 状态时，核对对应[历史发行归档](v2-release-1.1.0.md)，在旧数据的独立副本上使用当时的版本。

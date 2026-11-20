@@ -1,4 +1,4 @@
-"""Generic CLI failure, UDS and read-only v1 contracts; synthetic data only."""
+"""Generic CLI failure, UDS and legacy entry-point rejection; synthetic data only."""
 from __future__ import annotations
 
 import json
@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 from test_kernel_transactions import TS, _binary, _run, _server
-from test_v1_compatibility import _snapshot, _write, build_compatibility_fixture
+from test_v1_compatibility import _write, build_compatibility_fixture
 
 from molt.cli import main
 from molt.core import write_policy
@@ -75,7 +75,7 @@ def test_v1_writes_are_rejected_even_when_legacy_default_is_patched(tmp_path, mo
     ]
     for command in commands:
         assert main(command) == 2
-        assert "read-only" in capsys.readouterr().err
+        assert "MOLT_KERNEL_BACKEND=v1 is retired" in capsys.readouterr().err
         assert _tree_snapshot(source) == before
     for mutation in (
         store.ensure, store.recover,
@@ -144,48 +144,29 @@ def test_generic_cli_real_socket_transactions(tmp_path, monkeypatch, capsys):
         assert json.loads(capsys.readouterr().out) == first
 
 
-def test_cli_v1_audit_and_explicit_migration_preserve_source(tmp_path, monkeypatch, capsys):
-    binary = _binary()
+def test_cli_rejects_legacy_arguments_before_socket_or_state_access(tmp_path, monkeypatch, capsys):
     source = tmp_path / "legacy"
-    scenario = build_compatibility_fixture(source)
-    scenario_file = tmp_path / "scenario.json"
-    _write(scenario_file, scenario.to_dict())
-    before = _snapshot(source)
-    monkeypatch.setenv("MOLT_KERNEL_BACKEND", "v1")
-    assert main(["audit", "--state", str(source), "--scenario", str(scenario_file)]) == 0
-    assert json.loads(capsys.readouterr().out)["runs"] == 4
-    assert _snapshot(source) == before
-    kernel = tmp_path / "kernel"
-    _run(binary, "init", "--state", kernel)
-    with _server(binary, kernel) as socket:
-        monkeypatch.setenv("MOLT_KERNEL_SOCKET", socket)
-        assert main(["migrate", "--state", str(source)]) == 0
-        assert "dry-run" in capsys.readouterr().out
-        assert _snapshot(source) == before
-        with KernelClient(socket) as client:
-            assert client.current() is None
-        assert main(["migrate", "--state", str(source), "--apply"]) == 2
-        capsys.readouterr()
-        command = ["migrate", "--state", str(source), "--apply", "--migration-id", "cli-migration"]
-        assert main(command) == 0
-        assert "generation=1" in capsys.readouterr().out
-        assert main(command) == 0
-        assert "unchanged=true" in capsys.readouterr().out
-        assert _snapshot(source) == before
-        _write(source / "note.json", {"provenance": "synthetic", "changed": True})
-        changed = _snapshot(source)
-        assert main(command) == 1
-        assert "different source snapshot" in capsys.readouterr().err
-        assert _snapshot(source) == changed
-        with KernelClient(socket) as client:
-            assert client.current()["generation"] == 1
-    run_file = source / "runs" / "synthetic-baseline-search.json"
-    record = json.loads(run_file.read_text())
-    record["usage"]["cost_usd"] = 0.8
-    _write(run_file, record)
-    tampered = _snapshot(source)
-    assert main(["audit", "--state", str(source), "--scenario", str(scenario_file)]) == 1
-    assert _snapshot(source) == tampered
+    build_compatibility_fixture(source)
+    before = _tree_snapshot(source)
+    monkeypatch.delenv("MOLT_KERNEL_BACKEND", raising=False)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("retired entry point attempted kernel access")
+
+    monkeypatch.setattr("molt.cli.KernelClient", forbidden)
+    monkeypatch.setattr("molt.cli._kernel_local", forbidden)
+    for command in (
+        ["audit", "--state", str(source), "--scenario", "synthetic"],
+        ["audit", "--state", str(source), "--shell", "synthetic"],
+        ["migrate", "--state", str(source)],
+        ["migrate", "--state", str(source), "--apply", "--migration-id", "legacy"],
+        ["schema", "validate", "--all"],
+    ):
+        with pytest.raises(SystemExit) as rejected:
+            main(command)
+        assert rejected.value.code == 2
+        assert capsys.readouterr().err
+        assert _tree_snapshot(source) == before
 
 
 def test_cli_lost_commit_response_requires_original_id(tmp_path, monkeypatch, capsys):

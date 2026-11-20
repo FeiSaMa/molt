@@ -109,11 +109,15 @@ impl State {
         version.sync_all()?;
         sync_dir(&self.root)
     }
-    fn check_version(&self) -> io::Result<()> {
-        if fs::read(self.root.join("VERSION"))? != b"molt-kernel-state/1\n" {
-            return Err(invalid("unsupported state version"));
+    pub fn check_version(&self) -> io::Result<()> {
+        match fs::read(self.root.join("VERSION")) {
+            Ok(version) if version == b"molt-kernel-state/1\n" => Ok(()),
+            Ok(_) => Err(invalid("unsupported kernel state version")),
+            Err(err) if err.kind() == io::ErrorKind::NotFound => {
+                Err(invalid("not an initialized kernel state (missing VERSION)"))
+            }
+            Err(err) => Err(err),
         }
-        Ok(())
     }
     fn current_path(&self) -> PathBuf {
         self.root.join("refs/current.json")

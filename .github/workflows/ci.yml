@@ -49,14 +49,14 @@ jobs:
           cache-dependency-glob: uv.lock
       - run: uv sync --extra dev --locked
       - name: 记录 schema 校验（11 类 / 仓库内全部记录）
-        run: uv run python -m molt schema validate --all
-      - name: 独立 v1 synthetic 兼容夹具校验
+        run: uv run python -m molt.schema validate --all
+      - name: 历史 v1 schema 样例校验
         run: uv run pytest -q tests/test_schema_compat.py tests/test_schema_docs_output.py
       - name: docs/protocol.md 无手改漂移
         run: |
-          uv run python -m molt schema docs --output /tmp/protocol.md
+          uv run python -m molt.schema docs --output /tmp/protocol.md
           if ! diff -u docs/protocol.md /tmp/protocol.md; then
-            echo "::error::docs/protocol.md 与 schema 生成结果不一致；请运行 molt schema docs 重新生成"
+            echo "::error::docs/protocol.md 与 schema 生成结果不一致；请运行 python -m molt.schema docs 重新生成"
             exit 1
           fi
 
@@ -120,10 +120,10 @@ jobs:
       - run: uv sync --extra dev --locked
       - name: 构建 synthetic audit 使用的 kernel
         run: cargo build -p molt-kernel
-      - name: v1 语义审计与 kernel 事务恢复（synthetic）
+      - name: Kernel 事务恢复和旧入口拒绝
         env:
           MOLT_KERNEL_BIN: target/debug/molt-kernel
-        run: uv run pytest -q tests/test_v1_compatibility.py tests/test_kernel_transactions.py
+        run: uv run pytest -q tests/test_kernel_transactions.py
       - name: 零写入（文件系统树快照）
         env:
           MOLT_KERNEL_BIN: target/debug/molt-kernel
@@ -156,7 +156,14 @@ jobs:
       - name: Kernel UDS integration and service lifecycle
         env:
           MOLT_KERNEL_BIN: target/debug/molt-kernel
-        run: uv run pytest -q tests/test_kernel_client.py tests/test_kernel_cli_contract.py tests/test_kernel_transactions.py tests/test_v1_compatibility.py
+        run: uv run pytest -q tests/test_kernel_client.py tests/test_kernel_cli_contract.py tests/test_kernel_transactions.py
+      - name: Build kernel for project CLI recovery tests
+        run: cargo build -p molt-kernel --features fault-injection
+      - name: Project CLI pinned reads, dirty edits and request recovery
+        env:
+          MOLT_KERNEL_BIN: target/debug/molt-kernel
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: uv run pytest -q tests/test_project_cli.py
       - name: Build Linux x86_64 candidate bundle
         run: packaging/release/build-linux-x86_64.sh /tmp/molt-release
       - name: Smoke extracted wheel and kernel bundle
@@ -165,13 +172,14 @@ jobs:
           mkdir -p /tmp/molt-bundle-smoke
           tar -xzf /tmp/molt-release/molt-*-linux-x86_64.tar.gz -C /tmp/molt-bundle-smoke
           bundle=$(find /tmp/molt-bundle-smoke -mindepth 1 -maxdepth 1 -type d)
-          bash packaging/release/verify-bundle.sh "$bundle" /tmp/molt-bundle-verification
+          sdist=$(find /tmp/molt-release -maxdepth 1 -name 'molt-*.tar.gz' ! -name '*-linux-x86_64.tar.gz')
+          bash packaging/release/verify-bundle.sh "$bundle" /tmp/molt-bundle-verification "$sdist"
       - uses: actions/upload-artifact@v4
         with:
           name: molt-linux-x86_64-candidate
           path: |
-            /tmp/molt-release/molt-*-linux-x86_64.tar.gz
             /tmp/molt-release/molt-*-linux-x86_64.tar.gz.sha256
+            /tmp/molt-release/molt-*.tar.gz
           if-no-files-found: error
 
   secret-scan:

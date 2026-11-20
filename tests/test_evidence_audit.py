@@ -130,7 +130,7 @@ def test_secret_scan_blocks_audit(demo_copy) -> None:
     assert "secret scan" in str(excinfo.value)
 
 
-def test_audit_cli_existing_v1_state_is_read_only(demo_copy) -> None:
+def test_audit_cli_existing_v1_state_is_rejected_without_writes(demo_copy) -> None:
     store, scenario, _ = demo_copy
     from test_v1_compatibility import _snapshot
 
@@ -145,8 +145,8 @@ def test_audit_cli_existing_v1_state_is_read_only(demo_copy) -> None:
         [sys.executable, str(ROOT / "tests/run_cli.py"), "audit", "--scenario", str(scenario_path), "--state", str(store.root)],
         cwd=ROOT, env=env, capture_output=True, text=True, check=False, timeout=30,
     )
-    assert completed.returncode == 0, completed.stderr
-    assert json.loads(completed.stdout)["runs"] > 0
+    assert completed.returncode == 2, completed.stderr
+    assert "unrecognized arguments: --scenario" in completed.stderr
     assert _snapshot(store.root) == before
 
 

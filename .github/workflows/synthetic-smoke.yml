@@ -23,7 +23,12 @@ jobs:
           python-version: "3.12.13"
       - run: uv sync --extra dev --locked
       - run: cargo build -p molt-kernel
-      - name: Synthetic transactions and v1 compatibility over real UDS
+      - name: Synthetic transactions and legacy rejection over real UDS
         env:
           MOLT_KERNEL_BIN: target/debug/molt-kernel
-        run: uv run pytest -q tests/test_kernel_transactions.py tests/test_v1_compatibility.py tests/test_kernel_cli_contract.py
+        run: uv run pytest -q tests/test_kernel_transactions.py tests/test_kernel_cli_contract.py
+      - run: cargo build -p molt-kernel --features fault-injection
+      - name: Project snapshots and recovery over real UDS
+        env:
+          MOLT_KERNEL_BIN: target/debug/molt-kernel
+        run: uv run pytest -q tests/test_project_cli.py

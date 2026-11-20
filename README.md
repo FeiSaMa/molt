@@ -2,8 +2,8 @@
 
 [简体中文](README.zh-CN.md)
 
-molt is a CLI for versioning and auditing local agent workspaces. Save OpenCode
-configuration and tool files as snapshots, switch or merge branches, and roll
+molt is a CLI for versioning and auditing local agent workspaces. Save configuration,
+prompts, and tool definitions as snapshots, switch or merge branches, and roll
 back the active version. Each new job can read a fixed snapshot. Audit records
 preserve the original evidence and the operator's reason for a change.
 
@@ -40,6 +40,14 @@ The [transaction example](docs/operations/external-integration.md) walks through
 upload, commit, and lookup. If the outcome of a commit is unknown, use
 `molt request-status` to look up the original request ID and reuse the same ID and
 parameters during recovery.
+
+## Read a snapshot from your program
+
+After [starting an isolated project workspace](docs/operations/version-cli.md#项目级-cli),
+run `molt project --config project.json read-tree` once per job. Pass the
+returned `tree` to your program and retain `snapshot` alongside its output.
+For example, `cat "$tree/prompt.txt"` reads the prompt from that export.
+After a rollback, existing jobs can keep using their original exports.
 
 ## OpenCode project snapshots
 
@@ -86,11 +94,10 @@ references to the original evidence. The
 | Query, commit, audit, and recover transactions | [CLI reference](docs/operations/kernel-cli.md) |
 | Build and install the Linux bundle or run a user service | [Linux packaging](docs/operations/v2-release-checklist.md) · [User service](docs/operations/molt-kernel-systemd.md) |
 | Back up, verify, and restore into a new directory | [Backup and restore](docs/operations/v2-backup-restore.md) |
-| Read or migrate older state | [v1 compatibility and migration](docs/operations/kernel-cli.md#v1-只读兼容与显式迁移) |
 | Understand the kernel and client boundaries | [Architecture](docs/architecture.md) |
 | Build and verify candidate packages | [Contributing](CONTRIBUTING.md) |
 
-molt 1.1.x supports read-only auditing and explicit migration of v1 state.
+Use the [matching archived release](docs/operations/kernel-cli.md#旧状态归档) on a separate copy of v1 data.
 Rollback changes local state. External operations keep their own transaction
 and recovery lifecycle.
 

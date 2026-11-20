@@ -20,7 +20,7 @@ cargo build --locked -p molt-kernel
 ```bash
 PYTHONDONTWRITEBYTECODE=1 uv run --locked --extra dev ruff check .
 PYTHONDONTWRITEBYTECODE=1 uv run --locked --extra dev pytest -q
-PYTHONDONTWRITEBYTECODE=1 uv run --locked molt schema validate --all
+PYTHONDONTWRITEBYTECODE=1 uv run --locked python -m molt.schema validate --all
 cargo test --locked -p molt-kernel --features fault-injection
 cargo fmt --all -- --check
 cargo clippy --locked -p molt-kernel --all-targets --features fault-injection -- -D warnings
@@ -30,7 +30,7 @@ cargo clippy --locked -p molt-kernel --all-targets --features fault-injection --
 
 ## 协议与评审
 
-v1 schema 和 Python 类型定义是兼容事实源。`docs/protocol.md` 由 `molt schema docs` 生成。协议所有权见 [CODEOWNERS](.github/CODEOWNERS)，实现、权限和证据规则见 [AGENTS.md](AGENTS.md)。
+冻结的 v1 schema 和 Python 类型定义用于解释历史记录。`docs/protocol.md` 由仓库内的 `python -m molt.schema docs` 生成。协议所有权见 [CODEOWNERS](.github/CODEOWNERS)，实现、权限和证据规则见 [AGENTS.md](AGENTS.md)。
 
 提交信息使用中文 Conventional Commits。评审说明应写清用户可见行为、兼容影响、已执行的验证和未验证的场景。
 

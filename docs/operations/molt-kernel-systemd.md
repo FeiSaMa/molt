@@ -1,10 +1,8 @@
 # Linux user service for molt-kernel
 
 This is the supported supervised service example for a single-user Linux host
-with systemd on the supported release architecture, Linux x86_64. Other
-platforms reject the kernel default path. `1.1.0` uses kernel by default; set
-`MOLT_KERNEL_SOCKET` for the service endpoint. `MOLT_KERNEL_BACKEND=v1` is
-read-only compatibility mode for legacy state.
+with systemd on Linux x86_64. Set `MOLT_KERNEL_SOCKET` for the service endpoint.
+The current CLI uses initialized kernel state and rejects `MOLT_KERNEL_BACKEND=v1`.
 
 Install the release binary at `~/.local/bin/molt-kernel`, then initialize the
 state exactly once before enabling the service:

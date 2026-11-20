@@ -29,13 +29,13 @@ def _between(text: str, start: str, stop: str) -> str:
 # -- 三层数字：历史扫描 claim / 当前 tracked 扫描复算 / gate cps --
 
 
-def test_readme_links_to_product_operations_and_compatibility() -> None:
+def test_readme_links_to_product_operations_and_legacy_archive() -> None:
     readme = _read("README.md")
     assert "[AGENTS.md](AGENTS.md)" in readme
     for target in (
         "docs/architecture.md",
         "docs/operations/kernel-cli.md",
-        "docs/operations/kernel-cli.md#v1-只读兼容与显式迁移",
+        "docs/operations/kernel-cli.md#旧状态归档",
         "docs/operations/molt-kernel-systemd.md",
         "docs/operations/synthetic-versions.md",
         "docs/operations/v2-backup-restore.md",
@@ -52,7 +52,8 @@ def test_agents_preserves_transaction_and_retirement_boundaries() -> None:
     ):
         assert required in boundaries
     compatibility = _section(text, "## 三、协议与兼容", "## 四、本地执行与证据")
-    assert "1.1.x" in compatibility and "只读审计与显式迁移" in compatibility
+    assert "ADR-0019 取代后续产品的 v1 读取、语义审计与迁移承诺" in compatibility
+    assert "对应的已验收版本在数据副本上处理" in compatibility
     assert "冻结 schema 不改字段或语义" in compatibility
     retirement = _section(text, "## 五、退出与删除", "## 六、所有权与协作")
     assert "明确确认" in retirement and "gio trash" in retirement

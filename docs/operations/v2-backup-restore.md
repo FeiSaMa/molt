@@ -1,10 +1,8 @@
 # v2 kernel backup and restore
 
-This procedure targets the `1.1.0` Linux x86_64 release installed with
-`packaging/release/install-user.sh`. Substitute the installed release directory
-and state path when running it. R is `1.1.0`; v1 remains read-only throughout
-the `1.1.x` release line. The release binding and compatibility window are in
-[`v2-release-1.1.0.md`](v2-release-1.1.0.md).
+Use the bundled kernel with an initialized kernel state on Linux x86_64.
+Set the installed bundle path and state path before running the procedure.
+For the historical 1.1.0 archive, see [its exact release record](v2-release-1.1.0.md).
 
 ## Backup
 
@@ -12,7 +10,7 @@ Keep the kernel state and an exported checkpoint in separate protected storage.
 The checkpoint is a chain reference, not a copy of the state contents.
 
 ```bash
-release="$HOME/.local/share/molt/releases/1.1.0-linux-x86_64"
+release=/absolute/path/to/installed/molt-bundle
 state="$HOME/.local/share/molt/kernel"
 backup="$HOME/.local/state/molt-backups/$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -m 0700 -p "$backup"
@@ -37,7 +35,7 @@ Restore to an empty state path. Preserve the failed state for diagnosis rather
 than overlaying the backup onto it.
 
 ```bash
-release="$HOME/.local/share/molt/releases/1.1.0-linux-x86_64"
+release=/absolute/path/to/installed/molt-bundle
 backup="/path/to/verified/molt-backup"
 restore="$HOME/.local/share/molt/kernel-restore"
 (cd "$backup" && sha256sum -c checkpoint.json.sha256)
@@ -62,15 +60,8 @@ application-level checks. The checkpoint verifies that the restored log
 contains the referenced committed prefix; it does not make separate filesystems
 or the checkpoint copy part of one atomic transaction.
 
-## Rollback to v1
+## Historical v1 data
 
-Stop the kernel service before changing executables or state paths. Rollback
-uses the v1 snapshot taken at migration time. Restoring an older executable and
-that original v1 snapshot returns to the migration-time state; it does not
-bring forward any later v2 writes. Preserve the separate verified v2 state
-backup so those later writes remain recoverable.
-
-Do not point the v1 writer at the v2 kernel state directory. Validate the
-restored v1 snapshot with the matching v1 release and its audit procedure before
-resuming writes. Record the selected release, migration ID, v1 snapshot, v2
-backup, checkpoint digest, and restore test result in the release record.
+Keep the old backup together with the exact release that supported its format.
+Use a separate copy for historical reads and exports. Kernel state backups
+retain their own generation history. See [the historical release record](v2-release-1.1.0.md).

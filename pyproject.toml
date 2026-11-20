@@ -1,19 +1,21 @@
 [build-system]
-requires = ["hatchling>=1.24"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
 name = "molt"
-version = "1.1.0"
-description = "Agent 工作流的状态事务、证据审计、迁移与恢复"
+version = "1.2.0rc3"
+description = "Agent 工作流的状态事务、证据审计与恢复"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "molt" }]
-dependencies = ["jsonschema>=4.22"]
+dependencies = []
 
 [project.optional-dependencies]
 dev = [
+  "jsonschema>=4.22",
   "pytest>=8.4",
   "ruff>=0.6",
 ]
@@ -21,15 +23,28 @@ dev = [
 [project.scripts]
 molt = "molt.cli:main"
 
+[tool.hatch.build]
+# Both artifacts carry the same kernel-facing Python runtime.
+exclude = [
+  "/molt/adapters", "/molt/demo.py", "/molt/bench.py", "/molt/shell_bundle.py", "/molt/shell_loader.py",
+  "/molt/schema.py",
+  "/molt/core/archive.py", "/molt/core/audit.py", "/molt/core/engine.py",
+  "/molt/core/events.py", "/molt/core/gate.py", "/molt/core/genome.py",
+  "/molt/core/isolation.py", "/molt/core/ledger.py", "/molt/core/metrics.py",
+  "/molt/core/policy.py", "/molt/core/ports.py", "/molt/core/proposer.py",
+  "/molt/core/redact.py", "/molt/core/snapshot.py", "/molt/core/store.py", "/molt/core/types.py",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["molt"]
-# Runtime package retains the frozen v1 compatibility code, not competition loaders.
-exclude = ["/molt/adapters", "/molt/demo.py", "/molt/bench.py", "/molt/shell_bundle.py", "/molt/shell_loader.py"]
 
 [tool.hatch.build.targets.sdist]
-# Source distributions follow the same runtime boundary; checkout assets remain pending confirmation.
-only-include = ["molt", "schemas", "crates", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "pyproject.toml", "uv.lock", "README.md", "LICENSE", "packaging", "docs/operations", "docs/protocol.md", "tests/test_kernel_client.py", "tests/test_kernel_transactions.py", "tests/test_kernel_cli_contract.py", "tests/test_v1_compatibility.py", "tests/fixtures/records"]
-exclude = ["/molt/adapters", "/molt/demo.py", "/molt/bench.py", "/molt/shell_bundle.py", "/molt/shell_loader.py"]
+only-include = [
+  "molt", "crates", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml",
+  "pyproject.toml", "uv.lock", "README.md", "README.zh-CN.md", "LICENSE",
+  "packaging", "docs/operations", "tests/test_kernel_transactions.py",
+  "tests/test_project_cli.py", "tests/test_version_cli.py",
+]
 
 [tool.ruff]
 target-version = "py311"

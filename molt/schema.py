@@ -6,8 +6,9 @@
 
 from __future__ import annotations
 
+import argparse
 import json
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -168,3 +169,44 @@ def write_protocol_docs(root: Path | None = None) -> Path:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(render_protocol_docs(root), encoding="utf-8")
     return target
+
+
+def _run(args: argparse.Namespace) -> int:
+    root = args.root.resolve() if args.root else find_repo_root()
+    command = args.schema_command
+    if command == "validate":
+        if not args.all:
+            print("schema validate 需要 --all")
+            return 2
+        validated = validate_all(root)
+        for path, kind in validated:
+            print(f"ok {kind} {path.relative_to(root)}")
+        print(f"schema validate --all: {len(validated)} 条记录通过")
+        return 0
+    if command == "docs":
+        if args.output:
+            # --output 只写目标文件，不碰仓库内 docs/protocol.md。
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(render_protocol_docs(root), encoding="utf-8")
+            path = args.output
+        else:
+            path = write_protocol_docs(root)
+        print(f"wrote {path}")
+        return 0
+    print("用法: python -m molt.schema {validate --all|docs}")
+    return 2
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="冻结 v1 历史协议校验与文档生成")
+    parser.add_argument("--root", type=Path)
+    sub = parser.add_subparsers(dest="schema_command", required=True)
+    validate = sub.add_parser("validate")
+    validate.add_argument("--all", action="store_true")
+    docs = sub.add_parser("docs")
+    docs.add_argument("--output", type=Path)
+    return _run(parser.parse_args(argv))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
