@@ -1,19 +1,19 @@
 # Linux user service for molt-kernel
 
-This is the supported supervised service example for a single-user Linux host
-with systemd on Linux x86_64. Set `MOLT_KERNEL_SOCKET` for the service endpoint.
+This is the supervised service example for a single-user Linux host with
+systemd on Linux x86_64. Set `MOLT_KERNEL_SOCKET` for the service endpoint.
+The rc8 package has been exercised in isolated transient user-manager units.
+That evidence does not cover persistent enablement, login auto-start, or a
+production deployment.
 The current CLI uses initialized kernel state and rejects `MOLT_KERNEL_BACKEND=v1`.
 
-Install the release binary at `~/.local/bin/molt-kernel`, then initialize the
-state exactly once before enabling the service:
+Run the release bundle's `install-user.sh` to install a versioned CLI and kernel,
+switch the user entry points, and write the unit. Then initialize the state
+exactly once before starting the service:
 
 ```sh
-install -D -m 0755 molt-kernel "$HOME/.local/bin/molt-kernel"
 mkdir -p "$HOME/.local/share/molt"
 "$HOME/.local/bin/molt-kernel" init --state "$HOME/.local/share/molt/kernel"
-install -D -m 0644 packaging/systemd/molt-kernel.service \
-  "$HOME/.config/systemd/user/molt-kernel.service"
-systemctl --user daemon-reload
 systemctl --user enable --now molt-kernel.service
 ```
 
@@ -37,11 +37,10 @@ An active server is protected by the lock. A regular file or symlink at the
 socket path is never removed and requires operator investigation. Concurrent
 manual starts fail with an explicit `kernel server already running` error.
 
-For an upgrade, stop the unit, replace the binary, run
-`molt-kernel audit --state "$HOME/.local/share/molt/kernel"`, then start the
-unit and verify protocol readiness. Keep a verified backup of the state
-directory and an independently stored checkpoint before upgrading. Do not run
-two kernel binaries against one state.
+For an upgrade, retain a verified backup of the state directory and an
+independently stored checkpoint before upgrading. Install the new bundle,
+restart the unit, run `molt-kernel audit --state "$HOME/.local/share/molt/kernel"`,
+and verify protocol readiness. Do not run two kernel binaries against one state.
 Rollback replaces the executable/configuration and uses the original v1
 snapshot from migration time; it never opens or downgrades v2 state with a v1
 writer. Later v2 writes are not automatically carried into that v1 snapshot.
@@ -49,5 +48,8 @@ Keep a separate verified v2 backup/export and rehearse its recovery before
 relying on rollback.
 
 This service unit is a deployment example, not a signed package or an automatic
-installer. The `1.1.0` release bundle includes an installer and the release-bound
-backup and recovery procedure.
+installer. The current `1.2.0rc8` bundle remains a local candidate. Before a
+public or production deployment, record the exact bundle checksum, source
+fingerprint, persistent-user-manager test, backup and recovery evidence, and
+the responsible operator. The historical `1.1.0` release bundle and its
+procedure are retained as archival evidence.

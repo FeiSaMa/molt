@@ -50,6 +50,10 @@ with zipfile.ZipFile(wheels[0]) as wheel:
     names = {name for name in wheel.namelist() if ".dist-info/" not in name}
     assert names == runtime, (names - runtime, runtime - names)
 with tarfile.open(sys.argv[2], "r:gz") as archive:
+    filename = "THIRD-PARTY-LICENSES.txt"
+    source_notice = next(item for item in archive.getmembers()
+                         if item.name.split("/", 1)[-1] == f"packaging/release/{filename}")
+    assert (bundle / filename).read_bytes() == archive.extractfile(source_notice).read()
     source_licenses = [item for item in archive if item.isfile() and item.name.split("/", 1)[1] == "LICENSE"]
     assert len(source_licenses) == 1, source_licenses
     with archive.extractfile(source_licenses[0]) as source_license:
@@ -88,6 +92,7 @@ unit = unit.replace("%h/.local/share/molt/kernel", str(work / "empty-state"))
 (work / "molt-kernel.service").write_text(unit)
 PY
 systemd-analyze verify "$work/molt-kernel.service"
+bash "$repo_root/packaging/release/verify-user-install.sh" "$bundle" "$work/user-install"
 # Keep UDS paths below SUN_LEN even when the persistent evidence path is long.
 test_state=$(mktemp -d /tmp/molt-bundle-tests.XXXXXX)
 MOLT_KERNEL_BIN="$bundle/bin/molt-kernel" \
