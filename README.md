@@ -10,6 +10,13 @@ preserve the original evidence and the operator's reason for a change.
 The Rust kernel stores content-addressed objects and version history and exposes
 transactions over a Unix socket. The Python CLI connects the kernel to local workflows.
 
+## Try a workspace from source
+
+On Linux, the [workspace quickstart](docs/operations/project-quickstart.md) runs a
+local example that saves a config and a prompt together, pins them for a job,
+rolls back the active snapshot, and reads the reason for the change. The example
+uses synthetic files and needs no model account.
+
 ## Run from source
 
 The following steps start an isolated instance on Linux. You'll need

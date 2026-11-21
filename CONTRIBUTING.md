@@ -2,6 +2,10 @@
 
 用户安装和快速开始见 [README](README.md)。模块职责与事务边界见 [架构](docs/architecture.md)。
 
+初次试用可先运行[双文件工作区示例](docs/operations/project-quickstart.md)。
+报告普通缺陷时，请附上版本或 commit SHA、运行环境、最小复现命令、退出码和脱敏输出。
+[问题反馈](https://github.com/FeiSaMa/molt/issues) · [安全报告](SECURITY.md)
+
 ## 开发环境
 
 在 Linux 上准备 uv 和 Rust，然后在仓库根目录运行：

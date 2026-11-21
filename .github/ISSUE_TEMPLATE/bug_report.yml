@@ -1,0 +1,39 @@
+name: Bug report / 缺陷报告
+description: Report unexpected behavior in molt.
+body:
+  - type: markdown
+    attributes:
+      value: Use synthetic or redacted examples. Submit security reports through the private link in the issue chooser.
+  - type: input
+    id: version
+    attributes:
+      label: molt version or commit SHA / 版本或提交
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment / 运行环境
+      description: Include OS, architecture, relevant tool versions, and how molt was installed.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce / 复现步骤
+      description: Include the exact commands and a minimal shareable example.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / 预期结果
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior / 实际结果
+      description: Include the exit code and relevant redacted output.
+    validations:
+      required: true
