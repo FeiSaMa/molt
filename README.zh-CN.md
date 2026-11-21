@@ -6,6 +6,11 @@ molt 是本地 Agent 工作区的版本管理与审计 CLI。它能把配置、�
 
 Rust kernel 存储内容寻址对象和版本历史，并通过 Unix socket 提供事务接口。Python CLI 负责接入本地工作流。
 
+## 从源码试用项目工作区
+
+[工作区快速开始](docs/operations/project-quickstart.md) 在 Linux 上演示成组保存配置和提示词、
+为作业固定快照、回退活动版本和查询变更理由。示例使用合成文件，无需模型账号。
+
 ## 从源码启动
 
 下面的步骤在 Linux 上启动一个独立实例。需要 [uv](https://docs.astral.sh/uv/) 和 [Rust](https://rustup.rs/)。
