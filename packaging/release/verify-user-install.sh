@@ -83,7 +83,7 @@ expect_failure 31 install_bundle "$bundle" "$new"
 assert_active "$old"
 expect_failure 33 install_bundle "$bundle" "$new" FAIL_RELOAD=33 > "$work/rollback.log" 2>&1
 assert_active "$old"
-rg -F 'restoration was incomplete' "$work/rollback.log"
+grep -F 'restoration was incomplete' "$work/rollback.log"
 
 install_bundle "$bundle" "$new" | tee "$work/upgrade.log"
 assert_active "$new"
