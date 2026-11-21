@@ -169,6 +169,6 @@ systemctl --user daemon-reload
 trap - EXIT HUP INT TERM
 printf 'Installed molt candidate under %s and reloaded the user unit.\n' "$prefix"
 printf 'For a new state directory: %s/bin/molt-kernel init --state %s\n' "$prefix" "$state"
-printf 'Start the service separately: systemctl --user start %s\n' "$unit"
+printf 'Enable and start the service with: systemctl --user enable --now %s\n' "$unit"
 printf 'Set MOLT_KERNEL_SOCKET=%s/kernel.sock\n' "$state"
 printf 'Backup and recovery procedure: %s/share/molt/docs/operations/v2-backup-restore.md\n' "$prefix"
