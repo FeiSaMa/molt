@@ -17,6 +17,27 @@ safe_path() {
 render_unit() {
   sed "s|%h/.local/bin/molt-kernel|$1/bin/molt-kernel|g" "$bundle/molt-kernel.service"
 }
+render_launcher() {
+  cat <<'EOF'
+#!/usr/bin/env bash
+prefix=$(dirname "$(dirname "$(realpath -- "$0")")")
+# Versions launches the CLI again, and its kernel worker resolves molt-kernel.
+export PATH="$prefix/bin:$PATH"
+export MOLT_TUI_BIN="${MOLT_TUI_BIN-$prefix/bin/molt-tui}"
+exec "$prefix/venv/bin/molt" --root "$prefix/share/molt" "$@"
+EOF
+}
+check_tools() {
+  local release=$1 probe status=0
+  "$release/bin/molt" version commit-files --help | grep -F -- '--include-request-id' >/dev/null ||
+    die "installed CLI lacks the commit receipt option"
+  env -u MOLT_NO_TUI -u MOLT_TUI_BIN "$release/bin/molt" tui --selftest --width 80 --height 24 |
+    grep -F 'SELFTEST OK' >/dev/null ||
+    die "installed TUI selftest failed"
+  # A no-argument invocation has a defined protocol error and never opens a state or socket.
+  probe=$("$release/bin/molt-kernel" 2>&1) || status=$?
+  [[ $status == 1 && $probe == *'"code":"invalid_request"'* ]] || die "installed kernel startup probe failed"
+}
 
 [[ $# == 0 ]] || die "usage: [MOLT_INSTALL_PREFIX=/absolute/path] [UV_PYTHON=3.12.13] bash install-user.sh"
 for tool in uv systemctl flock; do
@@ -30,7 +51,7 @@ wheel_name=${wheels[0]##*/}
 version=${wheel_name#molt-}
 version=${version%%-*}
 [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+([a-z]+[0-9]+)?$ ]] || die "invalid release version: $version"
-[[ -x $bundle/bin/molt-kernel && -s $bundle/molt-kernel.service &&
+[[ -x $bundle/bin/molt-kernel && -x $bundle/bin/molt-tui && -s $bundle/molt-kernel.service &&
    -s $bundle/LICENSE && -s $bundle/THIRD-PARTY-LICENSES.txt &&
    -s $bundle/share/molt/README.md ]] || die "incomplete release bundle: $bundle"
 
@@ -71,10 +92,13 @@ fi
 
 if exists "$prefix"; then
   [[ -d $prefix/venv && -x $prefix/venv/bin/molt &&
+    -x $prefix/bin/molt && -x $prefix/bin/molt-kernel && -x $prefix/bin/molt-tui &&
     $("$prefix/venv/bin/python" -I -c 'from importlib.metadata import version; print(version("molt"))') == "$version" ]] &&
     cmp -s "$bundle/LICENSE" "$prefix/LICENSE" &&
     cmp -s "$bundle/THIRD-PARTY-LICENSES.txt" "$prefix/THIRD-PARTY-LICENSES.txt" &&
+    cmp -s "$prefix/bin/molt" <(render_launcher) &&
     cmp -s "$bundle/bin/molt-kernel" "$prefix/bin/molt-kernel" &&
+    cmp -s "$bundle/bin/molt-tui" "$prefix/bin/molt-tui" &&
     cmp -s "${wheels[0]}" "$prefix/wheels/$wheel_name" &&
     diff -qr "$bundle/share/molt" "$prefix/share/molt" >/dev/null &&
     { cmp -s "$prefix/$unit" <(render_unit "$prefix") ||
@@ -82,6 +106,7 @@ if exists "$prefix"; then
         cmp -s "${entries[2]}" <(render_unit "$prefix"); }; } ||
     die "install prefix conflicts with this bundle: $prefix"
   if [[ -n $old && $old == "$prefix" ]]; then
+    check_tools "$prefix"
     printf 'molt %s is already installed at %s.\n' "$version" "$prefix"
     exit 0
   fi
@@ -95,26 +120,18 @@ else
   install -m 0644 "$bundle/THIRD-PARTY-LICENSES.txt" "$stage/THIRD-PARTY-LICENSES.txt"
   render_unit "$prefix" > "$stage/$unit"
   install -m 0755 "$bundle/bin/molt-kernel" "$stage/bin/molt-kernel"
+  install -m 0755 "$bundle/bin/molt-tui" "$stage/bin/molt-tui"
   install -m 0644 "${wheels[0]}" "$stage/wheels/$wheel_name"
   uv venv --relocatable --python "${UV_PYTHON:-3.12.13}" "$stage/venv"
-  uv pip install --python "$stage/venv/bin/python" "$stage/wheels/$wheel_name"
-  cat > "$stage/bin/molt" <<'EOF'
-#!/usr/bin/env bash
-prefix=$(dirname "$(dirname "$(realpath -- "$0")")")
-exec "$prefix/venv/bin/molt" --root "$prefix/share/molt" "$@"
-EOF
+  uv pip install --no-index --python "$stage/venv/bin/python" "$stage/wheels/$wheel_name"
+  render_launcher > "$stage/bin/molt"
   chmod 0755 "$stage/bin/molt"
-  render_unit "$prefix" > "$stage/$unit"
-  "$stage/bin/molt" --help >/dev/null
+  check_tools "$stage"
   printf '%s\n' "$version" > "$stage/.molt-release"
   mv -nT -- "$stage" "$prefix"
   [[ ! -d $stage ]] || die "another installation created $prefix"
 fi
-"$prefix/bin/molt" --help >/dev/null
-[[ -x $prefix/bin/molt-kernel ]] || die "kernel binary is not executable: $prefix/bin/molt-kernel"
-if "$prefix/bin/molt-kernel" ping --socket "$HOME/.local/share/molt/.missing-install-probe.sock" +  >/dev/null 2>&1; then
-  die "kernel unexpectedly connected to a missing install probe socket"
-fi
+check_tools "$prefix"
 
 # Stage replacements next to their destinations for atomic per-file renames.
 bin_stage=$(mktemp -d "$bin_dir/.molt-switch.XXXXXX")

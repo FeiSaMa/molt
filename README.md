@@ -10,6 +10,28 @@ preserve the original evidence and the operator's reason for a change.
 The Rust kernel stores content-addressed objects and version history and exposes
 transactions over a Unix socket. The Python CLI connects the kernel to local workflows.
 
+## Try the Linux candidate
+
+[Download the first Linux pre-release](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [Release notes](docs/releases/1.2.0rc9.md)
+
+The single-user Linux x86_64 candidate (1.2.0rc9) includes a matched CLI, TUI and kernel.
+With the archive and its checksum in the current directory, run:
+
+```bash
+sha256sum -c molt-1.2.0rc9-linux-x86_64.tar.gz.sha256
+tar -xzf molt-1.2.0rc9-linux-x86_64.tar.gz
+cd molt-1.2.0rc9-linux-x86_64
+bash ./install-user.sh
+"$HOME/.local/bin/molt" tui --mock
+```
+
+The installer needs uv, Python 3.12.13 and a systemd user manager. Ctrl+Q exits.
+Chat defaults to a live DeepSeek session. Use `--mock` for offline Chat.
+Attach a version workspace to save transactions in Versions and browse a pinned
+snapshot in Tree. Settings, Diff and Approval use mock data.
+For an isolated workspace without a user service, follow the instructions in
+`share/molt/README.md` inside the archive.
+
 ## Try a workspace from source
 
 On Linux, the [workspace quickstart](docs/operations/project-quickstart.md) runs a

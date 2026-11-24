@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verify the installed wheel and bundled kernel outside the source checkout.
+# Verify the installed CLI, TUI and kernel outside the source checkout.
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -16,14 +16,14 @@ esac
 mkdir "$work"
 work=$(cd "$work" && pwd)
 export PYTHONDONTWRITEBYTECODE=1
-unset PYTHONPATH PYTHONHOME MOLT_KERNEL_BACKEND MOLT_KERNEL_SOCKET MOLT_KERNEL_BIN
+unset PYTHONPATH PYTHONHOME MOLT_KERNEL_BACKEND MOLT_KERNEL_SOCKET MOLT_KERNEL_BIN MOLT_NO_TUI MOLT_TUI_BIN
 
 test -s "$bundle/share/molt/README.md"
 for doc in kernel-cli.md version-cli.md v2-backup-restore.md v2-release-checklist.md v2-release-1.1.0.md molt-kernel-systemd.md; do
   test -s "$bundle/share/molt/docs/operations/$doc"
 done
 # Reject accidental reintroduction of competition modules or duplicate import roots.
-uv run --no-project --python 3.12.13 python - "$bundle" "$sdist" <<'PYCODE'
+uv run --no-project --python 3.12.13 python - "$bundle" "$sdist" "$repo_root" <<'PYCODE'
 import pathlib
 import sys
 import tarfile
@@ -49,6 +49,9 @@ with zipfile.ZipFile(wheels[0]) as wheel:
     assert wheel.read(wheel_licenses[0]) == license_text
     names = {name for name in wheel.namelist() if ".dist-info/" not in name}
     assert names == runtime, (names - runtime, runtime - names)
+    source = pathlib.Path(sys.argv[3])
+    for name in runtime:
+        assert wheel.read(name) == (source / name).read_bytes(), name
 with tarfile.open(sys.argv[2], "r:gz") as archive:
     filename = "THIRD-PARTY-LICENSES.txt"
     source_notice = next(item for item in archive.getmembers()

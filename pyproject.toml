@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "molt"
-version = "1.2.0rc8"
+version = "1.2.0rc9"
 description = "Agent 工作流的状态事务、证据审计与恢复"
 readme = "README.md"
 requires-python = ">=3.11"

@@ -46,16 +46,24 @@ installed_version() {
   "$1/venv/bin/python" -I -c 'from importlib.metadata import version; print(version("molt"))'
 }
 assert_active() {
-  local prefix=$1
+  local prefix=$1 expected_bundle=$bundle
+  if [[ $prefix == "$work/old" ]]; then expected_bundle=$previous_bundle; fi
   [[ $(readlink "$HOME/.local/bin/molt") == "$prefix/bin/molt" ]]
   [[ $(readlink "$HOME/.local/bin/molt-kernel") == "$prefix/bin/molt-kernel" ]]
   sed "s|%h/.local/bin/molt-kernel|$prefix/bin/molt-kernel|g" "$bundle/molt-kernel.service" |
     cmp - "$REAL_SYSTEMD_STAGE"
   "$HOME/.local/bin/molt" --help >/dev/null
+  if [[ -e $prefix/bin/molt-tui ]]; then
+    cmp "$expected_bundle/bin/molt-tui" "$prefix/bin/molt-tui"
+    "$HOME/.local/bin/molt" tui --mock --selftest --width 80 --height 24 | grep -F 'SELFTEST OK'
+  fi
 }
 
 old="$work/old"
 new="$work/new"
+# A PATH-only lookup would run this unrelated TUI and return 73.
+printf '#!/bin/sh\nexit 73\n' > "$work/tools/molt-tui"
+chmod +x "$work/tools/molt-tui"
 install_bundle "$previous_bundle" "$old"
 assert_active "$old"
 state="$HOME/.local/share/molt/kernel"
@@ -85,12 +93,25 @@ expect_failure 33 install_bundle "$bundle" "$new" FAIL_RELOAD=33 > "$work/rollba
 assert_active "$old"
 grep -F 'restoration was incomplete' "$work/rollback.log"
 
+# A real executable that fails its startup probe must leave the active install intact.
+cp -a "$bundle" "$work/broken-bundle"
+printf '#!/bin/sh\nexit 42\n' > "$work/broken-bundle/bin/molt-tui"
+expect_failure 2 install_bundle "$work/broken-bundle" "$work/broken-prefix"
+assert_active "$old"
+[[ ! -e $work/broken-prefix && $(state_tree) == "$before" ]]
+
 install_bundle "$bundle" "$new" | tee "$work/upgrade.log"
 assert_active "$new"
 new_version=$(installed_version "$new")
 [[ $bundle == "$previous_bundle" || $(installed_version "$old") != "$new_version" ]]
 cmp "$bundle/LICENSE" "$new/LICENSE"
 cmp "$bundle/THIRD-PARTY-LICENSES.txt" "$new/THIRD-PARTY-LICENSES.txt"
+cmp "$bundle/bin/molt-kernel" "$new/bin/molt-kernel"
+cmp "$bundle/bin/molt-tui" "$new/bin/molt-tui"
+cmp "$bundle"/wheels/molt-*.whl "$new"/wheels/molt-*.whl
+expect_failure 73 env MOLT_TUI_BIN="$work/tools/molt-tui" "$HOME/.local/bin/molt" tui --mock
+"$new/venv/bin/python" -I -c \
+  'import molt, pathlib, sys; p = pathlib.Path(molt.__file__).resolve(); assert p.is_relative_to(pathlib.Path(sys.prefix).resolve()), p; print("installed molt:", p)'
 install_bundle "$bundle" "$new" UV_PYTHON="$work/nonexistent-python"
 assert_active "$new"
 

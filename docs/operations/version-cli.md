@@ -20,8 +20,9 @@ set -e
 bundle=$PWD
 base=$(mktemp -d "${TMPDIR:-/tmp}/molt-version.XXXXXX")
 uv venv --python 3.12.13 "$base/venv"
-uv pip install --python "$base/venv/bin/python" "$bundle"/wheels/molt-*.whl
+uv pip install --no-index --python "$base/venv/bin/python" "$bundle"/wheels/molt-*.whl
 kernel="$bundle/bin/molt-kernel"
+export MOLT_TUI_BIN="$bundle/bin/molt-tui"
 cli="$base/venv/bin/molt"
 ```
 
@@ -31,9 +32,10 @@ cli="$base/venv/bin/molt"
 set -e
 base=$(mktemp -d "${TMPDIR:-/tmp}/molt-version.XXXXXX")
 PYTHONDONTWRITEBYTECODE=1 UV_PROJECT_ENVIRONMENT="$base/venv" uv sync --locked --python 3.12.13
-cargo build --locked -p molt-kernel --target-dir "$base/target"
+cargo build --locked -p molt-kernel -p molt-tui --target-dir "$base/target"
 cli="$base/venv/bin/molt"
 kernel="$base/target/debug/molt-kernel"
+export MOLT_TUI_BIN="$base/target/debug/molt-tui"
 ```
 
 启动仅服务于本例的工作区。下面的样例数据标为 `synthetic`。
@@ -56,6 +58,17 @@ test "$ready" = 1
 ```
 
 管理普通文件时，直接继续[项目级 CLI](#项目级-cli)。要体验内置 echo 工具的配置校验与运行，可在空工作区走下面这条示例。
+
+### 终端界面
+
+在刚才的 Bash 会话中运行。需要 Linux x86_64、交互终端和同一候选包的三个组件；完整保存回执需要 CLI 支持 `commit-files --include-request-id`。
+
+```bash
+v commit-files --help | grep -F -- --include-request-id
+"$cli" tui --mock --version-workspace "$workspace" --molt-bin "$cli"
+```
+
+用 Ctrl+V 进入 Versions，按 `s` 保存合成配置，`v` 查看 generation、snapshot、event 与原 request ID，Esc 返回。按 `h` 查看历史，`a` 查看选中事件的审计，Ctrl+Q 退出。运行 `v request-status 请求ID` 核对 committed。需要体验固定 Tree 时，回到 Versions，按 `p` 固定读者，再按 `l` 和 `t` 载入并查看该快照。用另一个新工作区运行后续需要空状态的示例。
 
 ### 内置 echo 工具示例
 

@@ -36,11 +36,14 @@ def test_no_args_non_tty_prints_help(monkeypatch, capsys) -> None:
     assert "usage:" in capsys.readouterr().out
 
 
-def test_no_args_tty_missing_binary_exits_2(monkeypatch, capsys) -> None:
+def test_no_args_tty_missing_binary_prints_help(monkeypatch, capsys) -> None:
+    monkeypatch.delenv("MOLT_TUI_BIN", raising=False)
     monkeypatch.setattr(cli, "_tui_wanted", lambda: True)
     monkeypatch.setattr(cli, "_tui_bin", lambda: None)
-    assert cli.main([]) == 2
-    assert "MOLT_TUI_BIN" in capsys.readouterr().err
+    assert cli.main([]) == 0
+    captured = capsys.readouterr()
+    assert "usage: molt" in captured.out
+    assert captured.err == ""
 
 
 def test_no_args_tty_execs_binary(monkeypatch) -> None:
@@ -128,15 +131,15 @@ def test_tui_bin_prefers_env_and_requires_executable(monkeypatch, tmp_path: Path
     assert cli._tui_bin() is None
 
 
-def test_tui_bin_rejects_a_directory(monkeypatch, tmp_path: Path, capsys) -> None:
-    directory = tmp_path / "molt-tui-dir"
-    directory.mkdir()
-    monkeypatch.setenv("MOLT_TUI_BIN", str(directory))
+@pytest.mark.parametrize("invalid", ["", ".", "missing"])
+def test_invalid_override_keeps_diagnostic(monkeypatch, tmp_path: Path, capsys, invalid: str) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MOLT_TUI_BIN", invalid)
     assert cli._tui_bin() is None
 
     monkeypatch.setattr(cli, "_tui_wanted", lambda: True)
     assert cli.main([]) == 2
-    assert "MOLT_TUI_BIN" in capsys.readouterr().err
+    assert f"MOLT_TUI_BIN does not name an executable file: {invalid!r}" in capsys.readouterr().err
 
     assert cli.main(["tui"]) == 2
     assert "MOLT_TUI_BIN" in capsys.readouterr().err
@@ -164,8 +167,10 @@ def test_tui_requires_linux_x64(monkeypatch, capsys, system: str, machine: str) 
     monkeypatch.setattr(cli.platform, "machine", lambda: machine)
 
     assert cli._tui_platform_ok() is False
-    assert cli.main([]) == 2
-    assert "Linux x86_64" in capsys.readouterr().err
+    assert cli.main([]) == 0
+    captured = capsys.readouterr()
+    assert "usage: molt" in captured.out
+    assert captured.err == ""
 
     assert cli.main(["tui"]) == 2
     assert "Linux x86_64" in capsys.readouterr().err
