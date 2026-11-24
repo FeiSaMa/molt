@@ -346,6 +346,7 @@ class VersionSandbox:
         self, branch: str, root: Path, manifest: Path, *, expected: Expected,
         expected_head: str | None, activate: bool = False,
         reason: str | None = None, source: str | None = None,
+        include_request_id: bool = False,
     ) -> dict:
         if (reason is None) != (source is None):
             raise ValueError("provide both reason and reason source")
@@ -355,13 +356,14 @@ class VersionSandbox:
             raise ValueError("managed edit inputs must be outside the version workspace")
         return self.commit_file_contents(
             branch, capture(root, manifest), expected=expected, expected_head=expected_head,
-            activate=activate, reason=reason, source=source,
+            activate=activate, reason=reason, source=source, include_request_id=include_request_id,
         )
 
     def commit_file_contents(
         self, branch: str, contents: dict[str, bytes], *, expected: Expected,
         expected_head: str | None, activate: bool = False,
         reason: str | None = None, source: str | None = None, prepare=None,
+        include_request_id: bool = False,
     ) -> dict:
         if (reason is None) != (source is None):
             raise ValueError("provide both reason and reason source")
@@ -393,13 +395,16 @@ class VersionSandbox:
                                    "sha256": client.upload_object(data)}
             snapshot = self._store_file_version(client, files, index, tree, [head] if head else [])
             index["branches"][branch] = snapshot
-            return self._record(
+            receipt = self._record(
                 client, journal, files, index, snapshot, action="commit",
                 validation="managed file paths and contents verified", activate=activate or initializing,
                 details={"branch": branch, "previous_head": head,
                          "reason": {"text": reason, "source": source} if reason is not None else None},
                 prepare=prepare,
             ) | {"changed": True}
+            if include_request_id:
+                receipt["request_id"] = index["request_id"]
+            return receipt
 
     def history(self) -> list[dict]:
         with self._session() as (client, _):

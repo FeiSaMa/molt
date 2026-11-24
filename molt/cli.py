@@ -20,6 +20,48 @@ from molt.project_cli import add_project_parser
 from molt.version_cli import add_version_parser, cmd_version
 
 
+def _tui_disabled() -> bool:
+    """``MOLT_NO_TUI=1`` is the only hard off switch for the explicit subcommand."""
+    return os.environ.get("MOLT_NO_TUI") == "1"
+
+
+def _tui_wanted() -> bool:
+    return sys.stdin.isatty() and sys.stdout.isatty() and not _tui_disabled()
+
+
+def _tui_platform_ok() -> bool:
+    return sys.platform == "linux" and platform.machine() == "x86_64"
+
+
+def _tui_bin() -> str | None:
+    explicit = os.environ.get("MOLT_TUI_BIN")
+    if explicit:
+        path = os.path.abspath(os.path.expanduser(explicit))
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+        return None
+    found = shutil.which("molt-tui")
+    if found and os.path.isfile(found):
+        return found
+    return None
+
+
+def _run_tui(forwarded: Sequence[str], tui_args: Sequence[str]) -> int:
+    if not _tui_platform_ok():
+        print("molt-tui is supported only on Linux x86_64", file=sys.stderr)
+        return 2
+    binary = _tui_bin()
+    if binary is None:
+        print("molt-tui not found; install it or set MOLT_TUI_BIN", file=sys.stderr)
+        return 2
+    try:
+        os.execv(binary, [binary, *forwarded, *tui_args])
+    except OSError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="molt", description="状态事务、证据审计与恢复")
     parser.add_argument("--root", type=Path, default=None, help="doctor 协作检查的仓库根")
@@ -63,6 +105,8 @@ def build_parser() -> argparse.ArgumentParser:
     group.add_argument("--repo-policy", action="store_true")
     add_version_parser(sub)
     add_project_parser(sub)
+    tui = sub.add_parser("tui", help="启动 molt-tui（终端界面）", add_help=False)
+    tui.add_argument("tui_args", nargs=argparse.REMAINDER, help="透传给 molt-tui 的参数")
     return parser
 
 
@@ -230,11 +274,24 @@ def _kernel_socket(args: argparse.Namespace) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
-    args = parser.parse_args(argv)
+    # argparse 的 REMAINDER 不会吞下紧随子命令的选项（如 ``tui --mock``），
+    # 先用 parse_known_args 收走这些透传参数，再按原语义校验其余子命令。
+    args, forwarded = parser.parse_known_args(argv)
+    if forwarded and args.command != "tui":
+        parser.error("unrecognized arguments: " + " ".join(forwarded))
     if not args.command:
+        if _tui_wanted():
+            return _run_tui([], [])
         parser.print_help()
         return 0
     try:
+        if args.command == "tui":
+            # 显式子命令不检查 TTY：CI 里也能跑 ``--selftest``；只服从
+            # MOLT_NO_TUI=1 这个显式关闭开关。
+            if _tui_disabled():
+                print("molt tui is disabled by MOLT_NO_TUI=1", file=sys.stderr)
+                return 2
+            return _run_tui(forwarded, args.tui_args)
         backend = os.environ.get("MOLT_KERNEL_BACKEND", "kernel")
         if backend == "v1":
             print("MOLT_KERNEL_BACKEND=v1 is retired; use an archived release on a separate copy of the old state", file=sys.stderr)

@@ -12,10 +12,12 @@
 /schemas/                @FeiSaMa @By-Diamond @dong856
 /molt/core/              @FeiSaMa
 /crates/                 @FeiSaMa
+/crates/molt-tui/        @dong856
 /molt/kernel_client.py   @FeiSaMa
 /molt/kernel_mirror.py   @FeiSaMa
 /docs/protocol.md        @FeiSaMa
 /docs/decisions/         @FeiSaMa
+/docs/v3-agent-tui-spec.md @dong856
 
 # --- 兼容域：历史场景路径 -------------------------------------------------
 /shells/                 @By-Diamond

@@ -48,3 +48,9 @@ ADR-0019 将 v1 语义审计与迁移留在对应的历史发行归档。kernel 
 每个工作区由同一本机用户独占。程序可直接消费 `molt project read-tree` 返回的目录。
 可选的 OpenCode 启动入口会为新作业设置临时 HOME 和 XDG 目录。需要限制网络或宿主文件访问时，
 使用单独的隔离启动器。
+
+## v3 TUI（draft）
+
+`crates/molt-tui` 是 v3 agent TUI 的独立原型 crate，不进入 kernel，也不改变本文其余章节描述的 v2 事务边界。它默认以 live 模式连接 DeepSeek API（`DEEPSEEK_API_KEY` 或 `MOLT_API_KEY_HELPER`），`--mock` 则在无网络的情况下渲染固定会话；`--selftest` 用固定 fixture 覆盖全部屏幕并用于 CI 冒烟。`molt` 无参数在 TTY 下直接进入该二进制，`molt tui` 为显式子命令。
+
+原型只覆盖终端外壳、输入、流式对话与 JSONL 会话；工具调用、审批、MCP、会话树回退与 kernel 集成均未实现。架构方向见 [v3 agent TUI 规格](v3-agent-tui-spec.md)，分层、broker、会话树、权限、记忆与配置路由见 `docs/decisions/0020`–`0025`。

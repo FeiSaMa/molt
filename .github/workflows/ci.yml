@@ -164,6 +164,10 @@ jobs:
           MOLT_KERNEL_BIN: target/debug/molt-kernel
           PYTHONDONTWRITEBYTECODE: "1"
         run: uv run pytest -q tests/test_project_cli.py
+      - name: TUI entrypoint contract (`molt` / `molt tui`)
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: uv run pytest -q tests/test_cli_tui.py
       - name: Build Linux x86_64 candidate bundle
         run: packaging/release/build-linux-x86_64.sh /tmp/molt-release
       - name: Smoke extracted wheel and kernel bundle

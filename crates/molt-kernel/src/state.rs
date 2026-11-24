@@ -323,6 +323,7 @@ impl State {
         let previous = self.read_current()?;
         let generation = commits.len() as u64 + 1;
         let journal = json!({"request_id":request_id,"request_hash":request_hash,"previous":previous,"generation":generation,"manifest_hash":manifest_hash});
+        crate::fault_point("journal.before_persist");
         atomic_write(&self.journal_path(), &encode(&journal)?)?;
         crate::fault_point("journal.persisted");
         let record = log.append(lock, "generation.committed", ts, manifest_hash, json!({"request_id":request_id,"request_hash":request_hash,"previous":previous,"generation":generation}))?;
