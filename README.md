@@ -12,6 +12,8 @@ transactions over a Unix socket. The Python CLI connects the kernel to local wor
 
 ## Try the Linux candidate
 
+[Download the first Linux pre-release](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [Release notes](docs/releases/1.2.0rc9.md)
+
 The single-user Linux x86_64 candidate (1.2.0rc9) includes a matched CLI, TUI and kernel.
 With the archive and its checksum in the current directory, run:
 

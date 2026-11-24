@@ -8,6 +8,8 @@ Rust kernel 存储内容寻址对象和版本历史，并通过 Unix socket 提�
 
 ## 试用 Linux 候选包
 
+[下载首个 Linux 预发行版](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [Release notes](docs/releases/1.2.0rc9.md)
+
 Linux x86_64 单用户候选包 1.2.0rc9 包含配套的 CLI、TUI 和 kernel。将归档与校验文件放在同一目录，准备 uv、Python 3.12.13 和 systemd 用户管理器，执行：
 
 ```bash
