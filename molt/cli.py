@@ -35,7 +35,7 @@ def _tui_platform_ok() -> bool:
 
 def _tui_bin() -> str | None:
     explicit = os.environ.get("MOLT_TUI_BIN")
-    if explicit:
+    if explicit is not None:
         path = os.path.abspath(os.path.expanduser(explicit))
         if os.path.isfile(path) and os.access(path, os.X_OK):
             return path
@@ -46,16 +46,16 @@ def _tui_bin() -> str | None:
     return None
 
 
-def _run_tui(forwarded: Sequence[str], tui_args: Sequence[str]) -> int:
-    if not _tui_platform_ok():
-        print("molt-tui is supported only on Linux x86_64", file=sys.stderr)
-        return 2
-    binary = _tui_bin()
+def _run_tui(binary: str | None, tui_args: Sequence[str]) -> int:
     if binary is None:
-        print("molt-tui not found; install it or set MOLT_TUI_BIN", file=sys.stderr)
+        explicit = os.environ.get("MOLT_TUI_BIN")
+        if explicit is None:
+            print("molt-tui not found; install it or set MOLT_TUI_BIN", file=sys.stderr)
+        else:
+            print(f"MOLT_TUI_BIN does not name an executable file: {explicit!r}", file=sys.stderr)
         return 2
     try:
-        os.execv(binary, [binary, *forwarded, *tui_args])
+        os.execv(binary, [binary, *tui_args])
     except OSError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -280,8 +280,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     if forwarded and args.command != "tui":
         parser.error("unrecognized arguments: " + " ".join(forwarded))
     if not args.command:
-        if _tui_wanted():
-            return _run_tui([], [])
+        if _tui_wanted() and _tui_platform_ok():
+            binary = _tui_bin()
+            if binary is not None or "MOLT_TUI_BIN" in os.environ:
+                return _run_tui(binary, [])
         parser.print_help()
         return 0
     try:
@@ -291,7 +293,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             if _tui_disabled():
                 print("molt tui is disabled by MOLT_NO_TUI=1", file=sys.stderr)
                 return 2
-            return _run_tui(forwarded, args.tui_args)
+            if not _tui_platform_ok():
+                print("molt-tui is supported only on Linux x86_64", file=sys.stderr)
+                return 2
+            return _run_tui(_tui_bin(), [*forwarded, *args.tui_args])
         backend = os.environ.get("MOLT_KERNEL_BACKEND", "kernel")
         if backend == "v1":
             print("MOLT_KERNEL_BACKEND=v1 is retired; use an archived release on a separate copy of the old state", file=sys.stderr)

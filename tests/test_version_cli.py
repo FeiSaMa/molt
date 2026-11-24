@@ -116,7 +116,9 @@ def test_version_cli_workflow_and_conflicting_writers(tmp_path):
         assert _cli(workspace, "audit", merged["event"])["evidence"] == audit["evidence"]
 
 
-@pytest.mark.parametrize(("point", "durable"), [("log.fsynced", False), ("head.durable", True)])
+@pytest.mark.parametrize(("point", "durable"), [
+    ("journal.before_persist", False), ("log.fsynced", False), ("head.durable", True),
+])
 @pytest.mark.parametrize("managed", [False, True], ids=["echo", "files"])
 def test_original_request_after_kernel_disconnect(tmp_path, point, durable, managed):
     kernel = _binary()
@@ -183,6 +185,8 @@ def test_original_request_after_kernel_disconnect(tmp_path, point, durable, mana
                     assert not write.done() and time.monotonic() < deadline
                     time.sleep(.01)
                 request = json.loads((workspace / "broker.json").read_text())["pending"]["params"]["request_id"]
+                if point == "journal.before_persist":
+                    assert not (state / "tx/journal.json").exists()
             finally:
                 server.kill()
                 server.wait(timeout=5)
@@ -199,6 +203,10 @@ def test_original_request_after_kernel_disconnect(tmp_path, point, durable, mana
             assert pending["pending_request"] == request
             status = _cli(target, "request-status", request)
             assert status["status"] == ("committed" if durable else "not_found")
+            assert pending["generation"] == (2 if durable else 1)
+            assert [event["generation"] for event in _cli(target, "history")] == (
+                [1, 2] if durable else [1]
+            )
             commit(target, files, 1, "--expect-head", first["snapshot"], expected=4)
             recovered = _cli(target, "recover")
             assert recovered["generation"] == 2

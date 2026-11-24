@@ -49,8 +49,8 @@ ADR-0019 将 v1 语义审计与迁移留在对应的历史发行归档。kernel 
 可选的 OpenCode 启动入口会为新作业设置临时 HOME 和 XDG 目录。需要限制网络或宿主文件访问时，
 使用单独的隔离启动器。
 
-## v3 TUI（draft）
+## TUI 与版本工作区
 
-`crates/molt-tui` 是 v3 agent TUI 的独立原型 crate，不进入 kernel，也不改变本文其余章节描述的 v2 事务边界。它默认以 live 模式连接 DeepSeek API（`DEEPSEEK_API_KEY` 或 `MOLT_API_KEY_HELPER`），`--mock` 则在无网络的情况下渲染固定会话；`--selftest` 用固定 fixture 覆盖全部屏幕并用于 CI 冒烟。`molt` 无参数在 TTY 下直接进入该二进制，`molt tui` 为显式子命令。
+`crates/molt-tui` 提供终端界面。Chat 默认使用 DeepSeek 流式 API，读取 `DEEPSEEK_API_KEY` 或 `MOLT_API_KEY_HELPER`，会话保存在本地 JSONL。用 `molt tui --mock` 可离线操作。Settings、Diff 和 Approval 当前显示模拟数据。
 
-原型只覆盖终端外壳、输入、流式对话与 JSONL 会话；工具调用、审批、MCP、会话树回退与 kernel 集成均未实现。架构方向见 [v3 agent TUI 规格](v3-agent-tui-spec.md)，分层、broker、会话树、权限、记忆与配置路由见 `docs/decisions/0020`–`0025`。
+显式传入 `--version-workspace` 后，Versions 调用配套 CLI，由 broker 通过 Unix socket 提交 kernel 事务。保存带预期 generation 和 head，冲突保留草稿；成功回执里的 generation、snapshot、event 和 request ID 来自同一次响应。Tree 读取显式固定的 snapshot 导出。可用 `--molt-bin` 指定配套 CLI 的绝对路径，`--mock` 只影响此模式下的 Chat 等演示数据，Versions 的保存仍会写入所选工作区。[运行示例](operations/version-cli.md#终端界面)

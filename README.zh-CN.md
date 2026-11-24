@@ -6,6 +6,20 @@ molt 是本地 Agent 工作区的版本管理与审计 CLI。它能把配置、�
 
 Rust kernel 存储内容寻址对象和版本历史，并通过 Unix socket 提供事务接口。Python CLI 负责接入本地工作流。
 
+## 试用 Linux 候选包
+
+Linux x86_64 单用户候选包 1.2.0rc9 包含配套的 CLI、TUI 和 kernel。将归档与校验文件放在同一目录，准备 uv、Python 3.12.13 和 systemd 用户管理器，执行：
+
+```bash
+sha256sum -c molt-1.2.0rc9-linux-x86_64.tar.gz.sha256
+tar -xzf molt-1.2.0rc9-linux-x86_64.tar.gz
+cd molt-1.2.0rc9-linux-x86_64
+bash ./install-user.sh
+"$HOME/.local/bin/molt" tui --mock
+```
+
+Ctrl+Q 退出。Chat 默认连接 DeepSeek，`--mock` 可离线体验。显式指定版本工作区后，Versions 使用真实事务，Tree 可读取固定快照。Settings、Diff 和 Approval 使用模拟数据。独立工作区也可手动启动，步骤见归档内的 `share/molt/README.md`。
+
 ## 从源码试用项目工作区
 
 [工作区快速开始](docs/operations/project-quickstart.md) 在 Linux 上演示成组保存配置和提示词、

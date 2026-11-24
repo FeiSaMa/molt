@@ -7,7 +7,7 @@
 ```bash
 work=$(mktemp -d /tmp/molt-package-XXXXXX)
 archive=$(bash packaging/release/build-linux-x86_64.sh "$work/out")
-sha256sum --check "$archive.sha256"
+(cd "$work/out" && sha256sum --check "$(basename "$archive").sha256")
 mkdir "$work/unpacked"
 tar -xf "$archive" -C "$work/unpacked"
 sdist="${archive%-linux-x86_64.tar.gz}.tar.gz"
@@ -19,9 +19,15 @@ bash packaging/release/verify-bundle.sh "$work/unpacked"/molt-* "$work/verificat
 wheel。真实 UDS 回归覆盖原 request ID 恢复、A/B 固定读取和回退、按 B 的事件 ID 查审计，
 以及旧入口拒绝与旧状态目录树零写入。带断点的项目保存恢复使用启用 fault-injection 的调试 kernel。
 
-1.1.0 的验收只对应其发行记录中的精确归档。候选包使用独立标识。公开许可、授权范围和正式发行另行决定。
+本地候选 1.2.0rc9 把配套的 CLI、TUI 与默认功能 kernel 打入同一归档。构建按照 `Cargo.lock` 为两个 Rust 二进制核对目标依赖许可，按照 `packaging/release/build-requirements.txt` 的版本与哈希取得 wheel 构建后端。每次候选使用新输出目录，以源码清单、锁文件、二进制及归档的 SHA-256 标识。历史 1.1.0 和 rc8 各自的验收只对应其精确归档。
 
-历史 1.1.0 的验收只对应其发行记录中的精确归档。当前 `1.2.0rc8` 仍是本地候选包，必须绑定本轮源码指纹、三个制品的精确 SHA-256 和仓库外验包日志。候选包不是公开发行，公开许可范围、授权范围和正式发行另行决定。
+旧包升级验收需要另外核验旧归档的校验文件，再解包并作为第三个参数交给下列脚本。省略旧包时，验包流程使用当前候选验证两处安装前缀切换。
+
+```bash
+bash packaging/release/verify-user-install.sh "$work/unpacked"/molt-* "$work/upgrade" "$old_bundle"
+```
+
+CI 的包外入口冒烟运行已安装的 TUI 80×24 selftest，并验证同前缀选择、显式覆盖、失败保全及配套回执选项。真实交互另按包内 `share/molt/README.md` 启动 mock Chat、Versions 和固定 Tree，记录 PTY 转录、CLI 对照与退出清理；断点恢复另用同源码 fault-injection kernel 验证。
 
 验收候选发布时，还要用同一包演练持久用户服务安装、异常退出重启、磁盘空间耗尽及权限错误。保留独立 checkpoint，演练备份、恢复和升级回退。记录源码、精确归档路径和 SHA-256、隔离安装位置、运行命令及退出码。I05 已在隔离用户管理器的 transient unit 中完成两种场景，持久 `enable --now`、登录自启、多用户权限隔离和正式环境责任确认仍是未验收门项。
 

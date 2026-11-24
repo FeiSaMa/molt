@@ -170,9 +170,9 @@ jobs:
         run: uv run pytest -q tests/test_cli_tui.py
       - name: Build Linux x86_64 candidate bundle
         run: packaging/release/build-linux-x86_64.sh /tmp/molt-release
-      - name: Smoke extracted wheel and kernel bundle
+      - name: Smoke installed CLI, TUI and kernel outside checkout
         run: |
-          sha256sum -c /tmp/molt-release/molt-*-linux-x86_64.tar.gz.sha256
+          (cd /tmp/molt-release && sha256sum -c molt-*-linux-x86_64.tar.gz.sha256)
           mkdir -p /tmp/molt-bundle-smoke
           tar -xzf /tmp/molt-release/molt-*-linux-x86_64.tar.gz -C /tmp/molt-bundle-smoke
           bundle=$(find /tmp/molt-bundle-smoke -mindepth 1 -maxdepth 1 -type d)

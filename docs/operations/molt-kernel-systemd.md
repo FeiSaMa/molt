@@ -7,7 +7,7 @@ That evidence does not cover persistent enablement, login auto-start, or a
 production deployment.
 The current CLI uses initialized kernel state and rejects `MOLT_KERNEL_BACKEND=v1`.
 
-Run the release bundle's `install-user.sh` to install a versioned CLI and kernel,
+Run the release bundle's `install-user.sh` to install a matched CLI, TUI and kernel,
 switch the user entry points, and write the unit. Then initialize the state
 exactly once before starting the service:
 
@@ -48,7 +48,7 @@ Keep a separate verified v2 backup/export and rehearse its recovery before
 relying on rollback.
 
 This service unit is a deployment example, not a signed package or an automatic
-installer. The current `1.2.0rc8` bundle remains a local candidate. Before a
+installer. The `1.2.0rc9` bundle is a local candidate. Before a
 public or production deployment, record the exact bundle checksum, source
 fingerprint, persistent-user-manager test, backup and recovery evidence, and
 the responsible operator. The historical `1.1.0` release bundle and its
