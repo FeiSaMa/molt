@@ -7,7 +7,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::Modifier,
     text::Line,
-    widgets::{Block, Borders, Clear, Paragraph},
+    widgets::{Block, Borders, Clear, Paragraph, Wrap},
     Frame,
 };
 
@@ -89,6 +89,97 @@ impl TreeState {
 }
 
 impl App {
+    pub(crate) fn render_managed_tree(&self, frame: &mut Frame, area: Rect) {
+        let Some(workspace) = self.version_workspace.as_ref() else {
+            return;
+        };
+        let snapshot = workspace
+            .reader_snapshot
+            .as_deref()
+            .unwrap_or("none loaded");
+        let outer = Block::default()
+            .title(format!(" TREE · snapshot {snapshot} "))
+            .borders(Borders::ALL)
+            .border_style(self.theme.border())
+            .style(self.theme.base());
+        let inner = outer.inner(area);
+        frame.render_widget(outer, area);
+        if inner.width < 4 || inner.height == 0 {
+            return;
+        }
+        let rows = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Length(1), Constraint::Min(0)])
+            .split(inner);
+        frame.render_widget(
+            Paragraph::new(styled_line(
+                "j/k or ↑/↓ browse · PgUp/PgDn · Ctrl+V Versions",
+                inner.width,
+                self.theme.muted(),
+            )),
+            rows[0],
+        );
+        let columns = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(46), Constraint::Percentage(54)])
+            .split(rows[1]);
+        let selected = workspace
+            .reader_selected
+            .min(workspace.reader_files.len().saturating_sub(1));
+        let file_lines = if workspace.reader_files.is_empty() {
+            vec![styled_line(
+                "(empty managed tree)",
+                columns[0].width,
+                self.theme.muted(),
+            )]
+        } else {
+            workspace
+                .reader_files
+                .iter()
+                .enumerate()
+                .map(|(index, path)| {
+                    let marker = if index == selected { "> " } else { "  " };
+                    let line = format!("{marker}{}", path.display());
+                    let style = if index == selected {
+                        self.theme.accent().add_modifier(Modifier::BOLD)
+                    } else {
+                        self.theme.text()
+                    };
+                    styled_line(line, columns[0].width, style)
+                })
+                .collect()
+        };
+        let list_height = usize::from(columns[0].height.saturating_sub(2)).max(1);
+        let offset = selected.saturating_sub(list_height.saturating_sub(1));
+        frame.render_widget(
+            Paragraph::new(file_lines)
+                .scroll((offset.min(u16::MAX as usize) as u16, 0))
+                .block(
+                    Block::default()
+                        .title(format!(" FILES {} ", workspace.reader_files.len()))
+                        .borders(Borders::ALL)
+                        .border_style(self.theme.border()),
+                ),
+            columns[0],
+        );
+        let selected_path = workspace
+            .reader_files
+            .get(selected)
+            .map(|path| path.display().to_string())
+            .unwrap_or_else(|| "preview".to_owned());
+        frame.render_widget(
+            Paragraph::new(workspace.reader_preview.as_str())
+                .wrap(Wrap { trim: false })
+                .block(
+                    Block::default()
+                        .title(format!(" {selected_path} "))
+                        .borders(Borders::ALL)
+                        .border_style(self.theme.border()),
+                ),
+            columns[1],
+        );
+    }
+
     /// Flatten the three sessions into visible rows, honouring folds and the
     /// mock search filter.
     pub fn tree_rows(&self) -> Vec<TreeRow> {

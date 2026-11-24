@@ -63,6 +63,7 @@ fn help_documents_live_default_and_key_sources() {
         "MOLT_API_KEY_HELPER",
         "Ctrl+C",
         "Ctrl+N",
+        "Ctrl+O",
     ] {
         assert!(text.contains(marker), "help missing `{marker}`:\n{text}");
     }

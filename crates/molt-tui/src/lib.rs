@@ -18,6 +18,7 @@ pub mod session;
 pub mod settings;
 pub mod theme;
 pub mod tree;
+pub mod version_workspace;
 pub mod wordmark;
 
 use anyhow::{bail, Context, Result};
@@ -49,6 +50,10 @@ pub struct Cli {
     /// Explicit alias for the default reset background. The shell never paints
     /// an opaque background, so the flag is accepted for intent/clarity only.
     pub transparent: bool,
+    /// Explicit local molt version workspace. No workspace is accessed by default.
+    pub version_workspace: Option<std::path::PathBuf>,
+    /// Path to the existing molt CLI used for version transactions.
+    pub molt_bin: String,
     pub help: bool,
 }
 
@@ -64,6 +69,8 @@ impl Default for Cli {
             logo: None,
             color: ColorMode::default(),
             transparent: false,
+            version_workspace: None,
+            molt_bin: "molt".to_string(),
             help: false,
         }
     }
@@ -94,6 +101,18 @@ impl Cli {
                 }
                 "--selftest" => cli.selftest = true,
                 "--transparent" => cli.transparent = true,
+                "--version-workspace" => {
+                    cli.version_workspace = Some(
+                        args.next()
+                            .context("--version-workspace requires a path")?
+                            .into(),
+                    );
+                }
+                "--molt-bin" => {
+                    cli.molt_bin = args
+                        .next()
+                        .context("--molt-bin requires an executable path")?;
+                }
                 "--help" | "-h" => cli.help = true,
                 "--logo" => {
                     // `--logo` on its own selects candidate 3; a following
@@ -155,13 +174,16 @@ pub const fn usage() -> &'static str {
     "molt-tui · terminal shell (v3, live DeepSeek)
 
 Usage:
-  molt-tui [--model <id>] [--base-url <url>] [--color 16|256|truecolor] [--transparent]
+  molt-tui [--version-workspace <path>] [--molt-bin <path>] [--color 16|256|truecolor]
   molt-tui --mock [--color 16|256|truecolor] [--transparent]
   molt-tui --selftest [--width <u16> --height <u16>]
 
   Live mode is the default: Chat streams from DeepSeek and persists the
   conversation as JSONL under ~/.local/share/molt/sessions.
   --mock         run entirely on deterministic mock data (no network, no key)
+  --version-workspace <path>
+                 connect the Versions panel to an initialized local molt workspace
+  --molt-bin <path>  molt CLI executable (default: molt)
   --model <id>   DeepSeek model id (default deepseek-flash)
   --base-url <url>
                  OpenAI-compatible endpoint root (default https://api.deepseek.com)
@@ -194,11 +216,13 @@ Keys:
   Enter    send the Chat composer (live unless --mock)
   Ctrl+C   cancel the live stream; outside a stream, press twice to quit
   Ctrl+N   new live session (live mode)
+  Ctrl+O   browse and reopen live sessions (live mode)
+  Ctrl+V   open an explicitly configured local molt version workspace
   Esc      leave the composer, or return to it
   y        copy the last answer via OSC 52 (Chat, normal mode)
 
 Screen keys:
-  Chat     type to compose · Ctrl+N new session · a approval
+  Chat     type to compose · Ctrl+N new · Ctrl+O sessions · a approval
            (--mock: t streams a 1.5s mock turn)
   Tree     j/k move · h/l fold · f fork · r rollback · p pin
            Space mark · / search
@@ -234,9 +258,22 @@ pub fn run(cli: Cli) -> Result<()> {
         }
     }
     if cli.mock {
-        return app::run(cli.color, cli.transparent);
+        return app::run_with_workspace(
+            cli.color,
+            logo::DEFAULT_CANDIDATE,
+            cli.transparent,
+            cli.version_workspace,
+            &cli.molt_bin,
+        );
     }
-    app::run_live(cli.color, &cli.model, &cli.base_url, cli.transparent)
+    app::run_live(
+        cli.color,
+        &cli.model,
+        &cli.base_url,
+        cli.transparent,
+        cli.version_workspace,
+        &cli.molt_bin,
+    )
 }
 
 /// Render every screen at 120x40 and 80x24, check required text and row widths,

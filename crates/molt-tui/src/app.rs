@@ -28,10 +28,11 @@ use crate::approval::ApprovalUiState;
 use crate::diff::DiffState;
 use crate::mock::{McpStatus, Message, MessageRole, MockData, SessionKind};
 use crate::provider::{self, ChatMessage, ProviderConfig, ProviderEvent, Usage};
-use crate::session::{self, Session, SessionStore};
+use crate::session::{self, Session, SessionStore, SessionSummary};
 use crate::settings::SettingsState;
 use crate::theme::{ColorMode, Theme};
 use crate::tree::TreeState;
+use crate::version_workspace::VersionWorkspace;
 use crate::{clipboard, logo, wordmark};
 
 /// Status messages disappear after three seconds of wall clock time.
@@ -130,6 +131,12 @@ pub struct StatusMessage {
     pub level: StatusLevel,
 }
 
+#[derive(Debug, Clone)]
+struct SessionPickerState {
+    sessions: Vec<SessionSummary>,
+    selected: usize,
+}
+
 #[derive(Debug)]
 pub struct App {
     pub mock: MockData,
@@ -138,6 +145,10 @@ pub struct App {
     pub screen: Screen,
     pub theme: Theme,
     pub show_help: bool,
+    session_picker: Option<SessionPickerState>,
+    pub version_workspace: Option<VersionWorkspace>,
+    pub version_panel_open: bool,
+    version_receipt_scroll: Option<usize>,
     pub scroll: u16,
     pub quit: bool,
     /// First Ctrl+C in a non-streaming state arms quit; the second one exits.
@@ -230,6 +241,10 @@ impl App {
             screen: Screen::Startup,
             theme,
             show_help: false,
+            session_picker: None,
+            version_workspace: None,
+            version_panel_open: false,
+            version_receipt_scroll: None,
             scroll: 0,
             quit: false,
             quit_armed: false,
@@ -326,6 +341,8 @@ impl App {
     /// modal surface.
     pub fn modal(&self) -> bool {
         self.show_help
+            || self.session_picker.is_some()
+            || self.version_panel_open
             || self.screen == Screen::Approval
             || self.tree.rollback.is_some()
             || self.settings.detail_open
@@ -520,6 +537,90 @@ impl App {
         }
     }
 
+    fn open_session_picker(&mut self) {
+        if self.mode != DataMode::Live {
+            self.set_status(
+                StatusLevel::Info,
+                "saved sessions are available in live mode",
+            );
+            return;
+        }
+        if self.streaming {
+            self.set_status(
+                StatusLevel::Warning,
+                "cancel the stream before opening a session",
+            );
+            return;
+        }
+        let Some(store) = self.store.as_ref() else {
+            self.set_status(StatusLevel::Danger, "session store unavailable");
+            return;
+        };
+        match store.list() {
+            Ok(sessions) if sessions.is_empty() => {
+                self.set_status(StatusLevel::Info, "no saved sessions");
+            }
+            Ok(sessions) => {
+                let selected = self
+                    .session
+                    .as_ref()
+                    .and_then(|current| sessions.iter().position(|item| item.id == current.id))
+                    .unwrap_or(0);
+                self.session_picker = Some(SessionPickerState { sessions, selected });
+            }
+            Err(error) => {
+                self.set_status(StatusLevel::Danger, format!("session list failed: {error}"))
+            }
+        }
+    }
+
+    fn handle_session_picker_key(&mut self, key: KeyEvent) {
+        let Some(picker) = self.session_picker.as_mut() else {
+            return;
+        };
+        match key.code {
+            KeyCode::Esc => self.session_picker = None,
+            KeyCode::Char('j') | KeyCode::Down => {
+                picker.selected = (picker.selected + 1).min(picker.sessions.len() - 1);
+            }
+            KeyCode::Char('k') | KeyCode::Up => {
+                picker.selected = picker.selected.saturating_sub(1);
+            }
+            KeyCode::Enter => {
+                let id = picker.sessions[picker.selected].id.clone();
+                let result = self.store.as_ref().map(|store| store.load_by_id(&id));
+                match result {
+                    Some(Ok(session)) => {
+                        let skipped_lines = session.skipped_lines;
+                        self.last_assistant = last_assistant_text(&session);
+                        self.session = Some(session);
+                        self.screen = Screen::Chat;
+                        self.composer_focused = true;
+                        self.streaming_text.clear();
+                        self.streaming_reasoning.clear();
+                        self.usage = None;
+                        self.session_picker = None;
+                        self.scroll_chat_to_bottom();
+                        if skipped_lines == 0 {
+                            self.set_status(StatusLevel::Success, format!("loaded session {id}"));
+                        } else {
+                            self.set_status(
+                                StatusLevel::Warning,
+                                format!(
+                                    "loaded session {id} · skipped {skipped_lines} malformed lines"
+                                ),
+                            );
+                        }
+                    }
+                    Some(Err(error)) => self
+                        .set_status(StatusLevel::Danger, format!("session load failed: {error}")),
+                    None => self.set_status(StatusLevel::Danger, "session store unavailable"),
+                }
+            }
+            _ => {}
+        }
+    }
+
     /// Handle one key press. `Ctrl+Q` is the only quit key; `q` is ordinary
     /// text whenever the Chat composer is focused. Tab and `?` stay global so
     /// they work while typing.
@@ -539,6 +640,14 @@ impl App {
             self.handle_interrupt();
             return;
         }
+        if self.session_picker.is_some() {
+            self.handle_session_picker_key(key);
+            return;
+        }
+        if self.version_panel_open {
+            self.handle_version_panel_key(key);
+            return;
+        }
         if key.modifiers.contains(KeyModifiers::CONTROL)
             && matches!(key.code, KeyCode::Char('n') | KeyCode::Char('N'))
         {
@@ -549,6 +658,26 @@ impl App {
             match key.code {
                 KeyCode::Char('?') | KeyCode::Esc => self.show_help = false,
                 _ => {}
+            }
+            return;
+        }
+        if key.modifiers.contains(KeyModifiers::CONTROL)
+            && matches!(key.code, KeyCode::Char('o') | KeyCode::Char('O'))
+        {
+            self.open_session_picker();
+            return;
+        }
+        if key.modifiers.contains(KeyModifiers::CONTROL)
+            && matches!(key.code, KeyCode::Char('v') | KeyCode::Char('V'))
+        {
+            if self.version_workspace.is_some() {
+                self.version_panel_open = true;
+                self.refresh_version_status();
+            } else {
+                self.set_status(
+                    StatusLevel::Warning,
+                    "start with --version-workspace to connect molt",
+                );
             }
             return;
         }
@@ -592,6 +721,10 @@ impl App {
             self.handle_composer_key(key);
             return;
         }
+        if self.screen == Screen::Tree && self.uses_managed_tree() {
+            self.handle_version_tree_key(key);
+            return;
+        }
         let consumed = match self.screen {
             Screen::Tree => self.handle_tree_key(key),
             Screen::Settings => self.handle_settings_key(key),
@@ -614,6 +747,139 @@ impl App {
             KeyCode::PageUp => self.scroll = self.scroll.saturating_sub(10),
             KeyCode::PageDown => self.scroll = self.scroll.saturating_add(10),
             _ => {}
+        }
+    }
+
+    fn handle_version_tree_key(&mut self, key: KeyEvent) {
+        let Some(workspace) = self.version_workspace.as_mut() else {
+            return;
+        };
+        match key.code {
+            KeyCode::Char('j') | KeyCode::Down => workspace.move_reader_selection(1),
+            KeyCode::Char('k') | KeyCode::Up => workspace.move_reader_selection(-1),
+            KeyCode::PageDown => {
+                for _ in 0..8 {
+                    workspace.move_reader_selection(1);
+                }
+            }
+            KeyCode::PageUp => {
+                for _ in 0..8 {
+                    workspace.move_reader_selection(-1);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn uses_managed_tree(&self) -> bool {
+        self.version_workspace.is_some()
+    }
+
+    fn handle_version_panel_key(&mut self, key: KeyEvent) {
+        let Some(workspace) = self.version_workspace.as_mut() else {
+            self.version_panel_open = false;
+            self.version_receipt_scroll = None;
+            return;
+        };
+        if let Some(scroll) = self.version_receipt_scroll {
+            let (width, height) = self.viewport.get();
+            let panel = Self::version_panel_rect(Rect::new(0, 0, width, height));
+            let lines = Self::save_receipt_lines(workspace, panel.width.saturating_sub(2));
+            let max_scroll = lines
+                .len()
+                .saturating_sub(usize::from(panel.height.saturating_sub(2)));
+            let scroll = scroll.min(max_scroll);
+            self.version_receipt_scroll = match key.code {
+                KeyCode::Esc | KeyCode::Char('q') => None,
+                KeyCode::Up | KeyCode::Char('k') => Some(scroll.saturating_sub(1)),
+                KeyCode::Down | KeyCode::Char('j') => Some((scroll + 1).min(max_scroll)),
+                _ => Some(scroll),
+            };
+            return;
+        }
+        if workspace.editing {
+            workspace.handle_editor_key(key);
+            return;
+        }
+        if workspace.history_filter_draft().is_some() {
+            workspace.handle_history_filter_key(key);
+            return;
+        }
+        if key.code == KeyCode::Char('t') {
+            self.version_panel_open = false;
+            self.screen = Screen::Tree;
+            self.composer_focused = false;
+            return;
+        }
+        let result = match key.code {
+            KeyCode::Esc | KeyCode::Char('q') => {
+                self.version_panel_open = false;
+                return;
+            }
+            KeyCode::Char('r') => workspace.refresh(),
+            KeyCode::Char('s') => workspace.commit_synthetic(),
+            KeyCode::Char('v') if key.modifiers.is_empty() => {
+                self.version_receipt_scroll = Some(0);
+                return;
+            }
+            KeyCode::Char('e') => {
+                workspace.begin_edit();
+                return;
+            }
+            KeyCode::Char('p') => workspace.pin_reader(),
+            KeyCode::Char('l') => workspace.read_pinned(),
+            KeyCode::Char('h') => workspace.history(),
+            KeyCode::Char('/') => {
+                workspace.begin_history_filter();
+                return;
+            }
+            KeyCode::Char('c') => {
+                workspace.clear_history_filter();
+                return;
+            }
+            KeyCode::Char('j') | KeyCode::Down => {
+                workspace.move_history_selection(1);
+                return;
+            }
+            KeyCode::Char('k') | KeyCode::Up => {
+                workspace.move_history_selection(-1);
+                return;
+            }
+            KeyCode::PageDown | KeyCode::Char(']') => {
+                workspace.page_history(1);
+                return;
+            }
+            KeyCode::PageUp | KeyCode::Char('[') => {
+                workspace.page_history(-1);
+                return;
+            }
+            KeyCode::Char('a') => workspace.audit_last(),
+            KeyCode::Char('u') => workspace.recover().and_then(|()| workspace.refresh()),
+            KeyCode::Char('b') => workspace.rollback_last(),
+            _ => return,
+        };
+        if let Err(error) = result {
+            let message = format!("operation failed: {error}");
+            if key.code == KeyCode::Char('s') {
+                workspace.detail = vec![
+                    message,
+                    format!("draft bytes {}", workspace.draft.len()),
+                    workspace.draft.clone(),
+                ];
+            } else {
+                workspace.detail.push(message);
+            }
+            self.set_status(StatusLevel::Danger, format!("molt workspace: {error}"));
+        } else {
+            self.set_status(StatusLevel::Success, "molt workspace updated");
+        }
+    }
+
+    fn refresh_version_status(&mut self) {
+        if let Some(workspace) = self.version_workspace.as_mut() {
+            if let Err(error) = workspace.refresh() {
+                self.set_status(StatusLevel::Danger, format!("molt workspace: {error}"));
+            }
         }
     }
 
@@ -800,10 +1066,13 @@ impl App {
             Screen::Startup => "",
             Screen::Chat => {
                 if self.mode == DataMode::Live {
-                    "type · Enter send · Ctrl+C cancel · Ctrl+N new · y copy · Tab views · ? help"
+                    "type · Enter send · Ctrl+V versions · Ctrl+O sessions · Ctrl+N new · Ctrl+C cancel · y copy · ? help"
                 } else {
                     "type to compose · Esc normal · t mock stream · y copy · Tab views · ? help"
                 }
+            }
+            Screen::Tree if self.uses_managed_tree() => {
+                "j/k browse · PgUp/PgDn · Ctrl+V Versions · read-only"
             }
             Screen::Tree => {
                 "j/k move · h/l fold · f fork · r rollback · p pin · Space mark · / search"
@@ -846,6 +1115,94 @@ impl App {
         if self.show_help {
             self.render_help(frame, area);
         }
+        if self.session_picker.is_some() {
+            self.render_session_picker(frame, area);
+        }
+        if self.version_panel_open {
+            self.render_version_panel(frame, area);
+        }
+    }
+
+    fn version_panel_rect(area: Rect) -> Rect {
+        let width = area.width.saturating_sub(8).clamp(1, 88);
+        let height = area.height.saturating_sub(6).clamp(1, 16);
+        Rect::new(
+            area.x + area.width.saturating_sub(width) / 2,
+            area.y + area.height.saturating_sub(height) / 2,
+            width,
+            height,
+        )
+    }
+
+    fn save_receipt_lines(workspace: &VersionWorkspace, width: u16) -> Vec<Line<'static>> {
+        let fields = match &workspace.last_save_receipt {
+            Some(receipt) => vec![
+                "Esc back · j/k scroll".to_owned(),
+                format!("generation {}", receipt.generation),
+                "snapshot ID".to_owned(),
+                receipt.snapshot.clone(),
+                "event ID".to_owned(),
+                receipt.event.clone(),
+                "request ID".to_owned(),
+                receipt.request_id.clone(),
+            ],
+            None => vec![
+                "Esc back".to_owned(),
+                "No successful save in this session".to_owned(),
+            ],
+        };
+        fields
+            .iter()
+            .flat_map(|field| wrap_text(field, width))
+            .map(Line::from)
+            .collect()
+    }
+
+    fn render_version_panel(&self, frame: &mut Frame, area: Rect) {
+        use ratatui::widgets::{Clear, Wrap};
+        let panel = Self::version_panel_rect(area);
+        let workspace = self.version_workspace.as_ref();
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .border_style(self.theme.border())
+            .style(self.theme.base());
+        frame.render_widget(Clear, panel);
+        if let (Some(scroll), Some(workspace)) = (self.version_receipt_scroll, workspace) {
+            let inner = block.inner(panel);
+            let lines = Self::save_receipt_lines(workspace, inner.width);
+            let offset = scroll.min(lines.len().saturating_sub(usize::from(inner.height)));
+            let widget = Paragraph::new(lines.into_iter().skip(offset).collect::<Vec<_>>())
+                .block(block.title(" LAST SUCCESSFUL SAVE "));
+            frame.render_widget(widget, panel);
+            return;
+        }
+        let mut lines = vec![
+            Line::from("Ctrl+V · local workspace · v save receipt · / filter · c clear"),
+            Line::from("e edit · s save · p pin reader · l read pinned · t tree · b rollback"),
+            Line::from("u recover · h history · j/k move · PgUp/PgDn · a audit · Esc close"),
+        ];
+        if let Some(workspace) = workspace {
+            if let Some(draft) = workspace.history_filter_draft() {
+                lines.push(Line::from("event ID, generation (gN), or action"));
+                lines.push(Line::from("Enter apply · Esc cancel · Backspace edit"));
+                lines.push(Line::from(format!("/ {draft}")));
+            } else {
+                if !workspace.history_filter().is_empty() {
+                    let text = format!("filter {}", workspace.history_filter());
+                    lines.extend(
+                        wrap_text(&text, panel.width.saturating_sub(2))
+                            .into_iter()
+                            .take(2)
+                            .map(Line::from),
+                    );
+                }
+                lines.extend(workspace.detail.iter().cloned().map(Line::from));
+            }
+        }
+        let widget = Paragraph::new(lines)
+            .wrap(Wrap { trim: true })
+            .block(block.title(" VERSIONS "));
+        frame.render_widget(widget, panel);
     }
 
     fn render_header(&self, frame: &mut Frame, area: Rect) {
@@ -854,10 +1211,11 @@ impl App {
         }
         // W-19: the header is a single plain-text line. No compact block
         // wordmark and no icon glyphs; narrow terminals simply truncate it.
-        let mode = if self.mode == DataMode::Live {
-            "live"
-        } else {
-            "mock"
+        let mode = match (self.mode, self.screen, self.version_workspace.is_some()) {
+            (DataMode::Live, Screen::Chat, true) => "live chat · molt connected",
+            (DataMode::Live, Screen::Chat, false) => "live chat · mock panels",
+            (_, _, true) => "molt connected · mock panels",
+            _ => "mock",
         };
         let label = fit(&format!(" molt · v3 · {mode}"), area.width);
         frame.render_widget(
@@ -1073,6 +1431,11 @@ impl App {
             return;
         }
         let context = match self.screen {
+            Screen::Tree if self.uses_managed_tree() => self
+                .version_workspace
+                .as_ref()
+                .and_then(|workspace| workspace.reader_snapshot.clone())
+                .unwrap_or_else(|| "no tree".to_owned()),
             Screen::Tree => self.tree_context_id(),
             Screen::Settings => self.mock.active_config.clone(),
             Screen::Diff => format!("{} hunks", self.mock.hunk_count()),
@@ -1116,7 +1479,13 @@ impl App {
         match self.screen {
             Screen::Startup => {}
             Screen::Chat => self.render_chat(frame, body),
-            Screen::Tree => self.render_tree(frame, body),
+            Screen::Tree => {
+                if self.uses_managed_tree() {
+                    self.render_managed_tree(frame, body);
+                } else {
+                    self.render_tree(frame, body);
+                }
+            }
             Screen::Settings => self.render_settings(frame, body),
             Screen::Diff => self.render_diff(frame, body),
             Screen::Approval => self.render_approval(frame, body),
@@ -1470,6 +1839,11 @@ impl App {
             ),
             styled_line("Ctrl+N   new live session", inner.width, self.theme.text()),
             styled_line(
+                "Ctrl+O   browse live sessions",
+                inner.width,
+                self.theme.text(),
+            ),
+            styled_line(
                 "Esc      leave / return to the composer",
                 inner.width,
                 self.theme.text(),
@@ -1497,6 +1871,68 @@ impl App {
             ),
         ];
         frame.render_widget(Paragraph::new(lines).style(self.theme.panel()), inner);
+    }
+
+    fn render_session_picker(&self, frame: &mut Frame, area: Rect) {
+        if area.width < 24 || area.height < 7 {
+            return;
+        }
+        let picker = self.session_picker.as_ref().expect("picker checked above");
+        let width = area.width.saturating_sub(2).min(74);
+        let height = area.height.saturating_sub(2).min(20);
+        let rect = Rect::new(
+            area.x + (area.width - width) / 2,
+            area.y + (area.height - height) / 2,
+            width,
+            height,
+        );
+        frame.render_widget(Clear, rect);
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .border_style(self.theme.accent())
+            .style(self.theme.panel())
+            .title(Span::styled(
+                " SESSIONS · j/k select · Enter open · Esc close ",
+                self.theme.title(),
+            ));
+        let inner = block.inner(rect);
+        frame.render_widget(block, rect);
+        if inner.width == 0 || inner.height == 0 {
+            return;
+        }
+        let mut lines = Vec::with_capacity(picker.sessions.len() * 2);
+        for (index, session) in picker.sessions.iter().enumerate() {
+            let selected = index == picker.selected;
+            let marker = if selected { "▸ " } else { "  " };
+            let style = if selected {
+                self.theme.accent().add_modifier(Modifier::BOLD)
+            } else {
+                self.theme.text()
+            };
+            lines.push(styled_line(
+                format!("{marker}{} · {}", session.id, session.modified_at),
+                inner.width,
+                style,
+            ));
+            if !session.preview.is_empty() {
+                lines.push(styled_line(
+                    format!("    {}", session.preview),
+                    inner.width,
+                    self.theme.muted(),
+                ));
+            }
+        }
+        let selected_line = picker.sessions[..picker.selected]
+            .iter()
+            .map(|session| 1 + usize::from(!session.preview.is_empty()))
+            .sum::<usize>();
+        let scroll = selected_line.saturating_sub(usize::from(inner.height.saturating_sub(1)));
+        frame.render_widget(
+            Paragraph::new(lines)
+                .style(self.theme.panel())
+                .scroll((scroll.min(u16::MAX as usize) as u16, 0)),
+            inner,
+        );
     }
 }
 
@@ -1679,18 +2115,38 @@ pub fn run(mode: ColorMode, transparent: bool) -> Result<()> {
 /// Run the interactive loop with an explicit legacy candidate and the
 /// `--transparent` intent.
 pub fn run_with(mode: ColorMode, logo_candidate: usize, transparent: bool) -> Result<()> {
+    run_with_workspace(mode, logo_candidate, transparent, None, "molt")
+}
+
+pub fn run_with_workspace(
+    mode: ColorMode,
+    logo_candidate: usize,
+    transparent: bool,
+    workspace: Option<std::path::PathBuf>,
+    molt_bin: &str,
+) -> Result<()> {
     if !terminal_available() {
         eprintln!("molt-tui requires a TTY; use --selftest");
         return Ok(());
     }
-    let app = App::with_options_theme(mode, logo_candidate, transparent);
+    let mut app = App::with_options_theme(mode, logo_candidate, transparent);
+    if let Some(workspace) = workspace {
+        app.version_workspace = Some(VersionWorkspace::connect(molt_bin, workspace)?);
+    }
     run_terminal(app)
 }
 
 /// Run the interactive loop against the real DeepSeek endpoint. Key resolution
 /// happens before the raw-mode setup but after the TTY check; a missing key is
 /// handed to [`App::new_live`] as a system message, not an abort.
-pub fn run_live(mode: ColorMode, model: &str, base_url: &str, transparent: bool) -> Result<()> {
+pub fn run_live(
+    mode: ColorMode,
+    model: &str,
+    base_url: &str,
+    transparent: bool,
+    version_workspace: Option<std::path::PathBuf>,
+    molt_bin: &str,
+) -> Result<()> {
     if !terminal_available() {
         eprintln!("molt-tui requires a TTY; use --selftest");
         return Ok(());
@@ -1702,6 +2158,9 @@ pub fn run_live(mode: ColorMode, model: &str, base_url: &str, transparent: bool)
     });
     let store = SessionStore::default();
     let mut app = App::new_live(mode, provider_result, store);
+    if let Some(workspace) = version_workspace {
+        app.version_workspace = Some(VersionWorkspace::connect(molt_bin, workspace)?);
+    }
     if transparent {
         app.theme = Theme::new(mode).with_transparent();
     }
@@ -1786,6 +2245,236 @@ mod tests {
 
     fn press(app: &mut App, code: KeyCode) {
         app.handle_key(KeyEvent::new(code, KeyModifiers::NONE));
+    }
+
+    fn press_control(app: &mut App, character: char) {
+        app.handle_key(KeyEvent::new(
+            KeyCode::Char(character),
+            KeyModifiers::CONTROL,
+        ));
+    }
+
+    #[test]
+    fn version_panel_keys_move_history_selection() {
+        use crate::version_workspace::{HistoryEvent, VersionHistory};
+
+        let mut app = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+        let mut history_view = VersionHistory::default();
+        history_view.replace_events(vec![
+            HistoryEvent {
+                event: "event-new".to_owned(),
+                generation: 2,
+                action: "commit".to_owned(),
+            },
+            HistoryEvent {
+                event: "event-old".to_owned(),
+                generation: 1,
+                action: "commit".to_owned(),
+            },
+        ]);
+        app.version_workspace = Some(VersionWorkspace {
+            binary: "molt".into(),
+            workspace: "/tmp/synthetic".into(),
+            state_id: "synthetic-state".to_owned(),
+            generation: 2,
+            active_snapshot: None,
+            last_event: Some("event-new".to_owned()),
+            history_view,
+            pending_request: None,
+            last_save_receipt: None,
+            detail: vec![
+                "> g2 commit event-new".to_owned(),
+                "  g1 commit event-old".to_owned(),
+            ],
+            draft: String::new(),
+            editing: false,
+            pinned_reader: None,
+            reader_parent: None,
+            reader_tree: None,
+            reader_snapshot: None,
+            reader_files: Vec::new(),
+            reader_selected: 0,
+            reader_preview: String::new(),
+            retired_reader_parents: Vec::new(),
+        });
+        app.version_panel_open = true;
+
+        press(&mut app, KeyCode::Char('j'));
+
+        let workspace = app.version_workspace.as_ref().unwrap();
+        assert_eq!(workspace.detail[2], "> g1 commit event-old");
+    }
+
+    #[test]
+    fn version_panel_page_keys_select_older_history() {
+        use crate::version_workspace::{HistoryEvent, VersionHistory};
+
+        let mut app = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+        let mut history_view = VersionHistory::default();
+        history_view.replace_events(
+            (0..17)
+                .map(|index| HistoryEvent {
+                    event: format!("event-{index}"),
+                    generation: 17 - index,
+                    action: "commit".to_owned(),
+                })
+                .collect(),
+        );
+        app.version_workspace = Some(VersionWorkspace {
+            binary: "molt".into(),
+            workspace: "/tmp/synthetic".into(),
+            state_id: "synthetic-state".to_owned(),
+            generation: 17,
+            active_snapshot: None,
+            last_event: Some("event-0".to_owned()),
+            history_view,
+            pending_request: None,
+            last_save_receipt: None,
+            detail: Vec::new(),
+            draft: String::new(),
+            editing: false,
+            pinned_reader: None,
+            reader_parent: None,
+            reader_tree: None,
+            reader_snapshot: None,
+            reader_files: Vec::new(),
+            reader_selected: 0,
+            reader_preview: String::new(),
+            retired_reader_parents: Vec::new(),
+        });
+        app.version_panel_open = true;
+
+        press(&mut app, KeyCode::PageDown);
+
+        let workspace = app.version_workspace.as_ref().unwrap();
+        assert_eq!(workspace.detail[0], "history 9-16 of 17");
+        assert_eq!(workspace.detail[1], "> g9 commit event-8");
+
+        press(&mut app, KeyCode::PageUp);
+
+        let workspace = app.version_workspace.as_ref().unwrap();
+        assert_eq!(workspace.detail[0], "history 1-8 of 17");
+        assert_eq!(workspace.detail[1], "> g17 commit event-0");
+
+        press(&mut app, KeyCode::Char('/'));
+        press(&mut app, KeyCode::Char('g'));
+        press(&mut app, KeyCode::Char('9'));
+        press(&mut app, KeyCode::Enter);
+        let workspace = app.version_workspace.as_ref().unwrap();
+        assert_eq!(workspace.history_filter(), "g9");
+        assert_eq!(workspace.detail[0], "history 1-1 of 1");
+        assert_eq!(workspace.detail[1], "> g9 commit event-8");
+
+        press(&mut app, KeyCode::Char('/'));
+        press(&mut app, KeyCode::Char('a'));
+        press(&mut app, KeyCode::Esc);
+        assert!(app.version_panel_open);
+        let workspace = app.version_workspace.as_ref().unwrap();
+        assert_eq!(workspace.history_filter(), "g9");
+        assert_eq!(workspace.detail[1], "> g9 commit event-8");
+
+        press(&mut app, KeyCode::Char('c'));
+        let workspace = app.version_workspace.as_ref().unwrap();
+        assert_eq!(workspace.history_filter(), "");
+        assert_eq!(workspace.detail[0], "history 1-8 of 17");
+    }
+
+    #[test]
+    fn managed_tree_keys_browse_exports_without_running_mock_actions() {
+        use crate::version_workspace::VersionHistory;
+        use std::path::PathBuf;
+
+        let tree = std::env::temp_dir().join(format!(
+            "molt-tui-tree-keys-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&tree).unwrap();
+        std::fs::write(tree.join("a.txt"), "alpha").unwrap();
+        std::fs::write(tree.join("b.txt"), "bravo").unwrap();
+
+        let mut app = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+        app.mode = DataMode::Live;
+        app.version_workspace = Some(VersionWorkspace {
+            binary: "molt".into(),
+            workspace: "/tmp/synthetic".into(),
+            state_id: "synthetic-state".to_owned(),
+            generation: 2,
+            active_snapshot: None,
+            last_event: None,
+            history_view: VersionHistory::default(),
+            pending_request: None,
+            last_save_receipt: None,
+            detail: Vec::new(),
+            draft: String::new(),
+            editing: false,
+            pinned_reader: None,
+            reader_parent: None,
+            reader_tree: Some(tree.clone()),
+            reader_snapshot: Some("snapshot-b".to_owned()),
+            reader_files: vec![PathBuf::from("a.txt"), PathBuf::from("b.txt")],
+            reader_selected: 0,
+            reader_preview: "alpha".to_owned(),
+            retired_reader_parents: Vec::new(),
+        });
+        let mock_selected = app.tree.selected;
+        let mock_session_count = app.mock.sessions.len();
+
+        press(&mut app, KeyCode::Char('j'));
+        press(&mut app, KeyCode::Char('f'));
+        press(&mut app, KeyCode::Char('r'));
+        press(&mut app, KeyCode::Char('p'));
+        press(&mut app, KeyCode::Char(' '));
+
+        let workspace = app.version_workspace.as_ref().unwrap();
+        assert_eq!(workspace.reader_selected, 1);
+        assert_eq!(workspace.reader_preview, "bravo");
+        assert_eq!(app.tree.selected, mock_selected);
+        assert!(app.tree.marks.is_empty());
+        assert!(app.tree.pinned.is_empty());
+        assert!(app.tree.rollback.is_none());
+        assert_eq!(app.mock.sessions.len(), mock_session_count);
+        drop(app);
+        std::fs::remove_dir_all(tree).unwrap();
+    }
+
+    #[test]
+    fn versions_panel_opens_the_managed_tree() {
+        use crate::version_workspace::VersionHistory;
+
+        let mut app = App::with_screen(ColorMode::Ansi256, Screen::Chat);
+        app.mode = DataMode::Live;
+        app.version_workspace = Some(VersionWorkspace {
+            binary: "molt".into(),
+            workspace: "/tmp/synthetic".into(),
+            state_id: "synthetic-state".to_owned(),
+            generation: 0,
+            active_snapshot: None,
+            last_event: None,
+            history_view: VersionHistory::default(),
+            pending_request: None,
+            last_save_receipt: None,
+            detail: Vec::new(),
+            draft: String::new(),
+            editing: false,
+            pinned_reader: None,
+            reader_parent: None,
+            reader_tree: None,
+            reader_snapshot: None,
+            reader_files: Vec::new(),
+            reader_selected: 0,
+            reader_preview: String::new(),
+            retired_reader_parents: Vec::new(),
+        });
+
+        press_control(&mut app, 'v');
+        press(&mut app, KeyCode::Char('t'));
+
+        assert!(!app.version_panel_open);
+        assert_eq!(app.screen, Screen::Tree);
     }
 
     #[test]
@@ -1997,6 +2686,88 @@ mod tests {
         assert!(text.contains("[SYSTEM]"), "{text}");
         assert!(text.contains("provider unavailable"), "{text}");
         assert!(!text.contains(KEY_PREFIX), "{text}");
+    }
+
+    #[test]
+    fn live_session_picker_reopens_a_saved_conversation() {
+        let (_temp, store) = temp_store("session-picker");
+        let prior = store.new_session().expect("prior session");
+        store
+            .append(
+                &prior,
+                &ChatMessage {
+                    role: "user".to_string(),
+                    content: "older prompt".to_string(),
+                },
+            )
+            .expect("append prior user message");
+        store
+            .append(
+                &prior,
+                &ChatMessage {
+                    role: "assistant".to_string(),
+                    content: "older answer".to_string(),
+                },
+            )
+            .expect("append prior assistant message");
+        let current = store.new_session().expect("current session");
+        store
+            .append(
+                &current,
+                &ChatMessage {
+                    role: "user".to_string(),
+                    content: "current prompt".to_string(),
+                },
+            )
+            .expect("append current prompt");
+
+        let mut app = App::new_live(ColorMode::Ansi256, Ok(test_config()), store.clone());
+        app.input = "unsent draft".to_string();
+        assert_eq!(app.session.as_ref().unwrap().id, current.id);
+        press_control(&mut app, 'o');
+        assert!(app.modal());
+        assert!(app.session_picker.is_some());
+
+        let text = render_app(&app, 80, 24).join("\n");
+        assert!(text.contains("SESSIONS"), "{text}");
+        assert!(text.contains("older prompt"), "{text}");
+        let target = app
+            .session_picker
+            .as_ref()
+            .unwrap()
+            .sessions
+            .iter()
+            .position(|summary| summary.id == prior.id)
+            .expect("prior session is listed");
+        for _ in 0..target {
+            press(&mut app, KeyCode::Char('j'));
+        }
+        press(&mut app, KeyCode::Enter);
+
+        assert!(app.session_picker.is_none());
+        let loaded = app.session.as_ref().unwrap();
+        assert_eq!(loaded.id, prior.id);
+        assert_eq!(loaded.messages.len(), 2);
+        assert_eq!(app.last_assistant, "older answer");
+        assert_eq!(app.screen, Screen::Chat);
+        assert_eq!(app.input, "unsent draft");
+        assert!(app
+            .status_text()
+            .is_some_and(|status| status == format!("loaded session {}", prior.id)));
+    }
+
+    #[test]
+    fn live_session_picker_does_not_open_during_a_stream() {
+        let (_temp, store) = temp_store("picker-streaming");
+        let mut app = App::new_live(ColorMode::Ansi256, Ok(test_config()), store);
+        app.streaming = true;
+
+        press_control(&mut app, 'o');
+
+        assert!(app.session_picker.is_none());
+        assert!(app
+            .status_text()
+            .is_some_and(|status| status.contains("cancel the stream")));
     }
 
     #[test]

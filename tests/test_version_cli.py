@@ -263,18 +263,25 @@ def test_managed_file_capture_and_merge(tmp_path):
         assert "regular file" in commit(0, listed=["fifo"], expected=2)
         assert "duplicate" in commit(0, listed=[config.name] * 2, expected=2)
         first = commit(0, "--reason", "baseline", "--reason-source", "operator")
+        assert "request_id" not in first
         head = first["snapshot"]
         assert _cli(workspace, "audit", first["event"])["evidence"]["reason"] == {
             "text": "baseline", "source": "operator",
         }
-        assert commit(1, "--expect-head", head)["changed"] is False
+        no_change = commit(1, "--expect-head", head, "--include-request-id")
+        assert no_change["changed"] is False and "request_id" not in no_change
         assert "stale generation" in commit(0, "--expect-head", head, expected=3)
         _cli(workspace, "branch", "topic", head, "--expect-generation", 1)
         config.write_bytes(b'{"model":"local/changed"}\n')
-        ours = commit(2, "--expect-head", head)["snapshot"]
+        our_commit = commit(2, "--expect-head", head, "--include-request-id")
+        ours = our_commit["snapshot"]
         config.write_bytes(b'{"model":"local/example"}\n')
         tool.write_bytes(b"changed\r\n")
         theirs = commit(3, "--branch", "topic", "--expect-head", head)["snapshot"]
+        assert _cli(workspace, "pin")["request_id"] != our_commit["request_id"]
+        assert _cli(workspace, "request-status", our_commit["request_id"]) == {
+            "status": "committed", "result": our_commit["current"],
+        }
         merged = _cli(workspace, "merge", "main", "topic", "--expect-target", ours,
                       "--expect-source", theirs, "--expect-generation", 4, "--activate")
         show = _cli(workspace, "show", merged["snapshot"])

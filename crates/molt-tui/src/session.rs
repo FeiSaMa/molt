@@ -165,43 +165,27 @@ impl SessionStore {
             return Ok(None);
         };
 
-        let file = File::open(&path).with_context(|| format!("open session {}", path.display()))?;
-        let mut reader = BufReader::new(file);
-        let mut messages = Vec::new();
-        let mut skipped_lines = 0_usize;
-        let mut buffer = Vec::new();
+        Ok(Some(read_session(&path, id, modified)?))
+    }
 
-        loop {
-            buffer.clear();
-            let read = reader
-                .read_until(b'\n', &mut buffer)
-                .with_context(|| format!("read session {}", path.display()))?;
-            if read == 0 {
-                break;
-            }
-            let Ok(text) = std::str::from_utf8(&buffer) else {
-                skipped_lines += 1;
-                continue;
-            };
-            let text = text.trim();
-            if text.is_empty() {
-                continue;
-            }
-            match serde_json::from_str::<StoredMessage>(text) {
-                Ok(record) => messages.push(ChatMessage {
-                    role: record.role,
-                    content: record.content,
-                }),
-                Err(_) => skipped_lines += 1,
-            }
+    /// Load a session selected from [`Self::list`].
+    pub fn load_by_id(&self, id: &str) -> Result<Session> {
+        if !valid_session_id(id) {
+            anyhow::bail!("invalid session id");
         }
 
-        Ok(Some(Session {
-            id,
-            created_at: format_utc(modified),
-            messages,
-            skipped_lines,
-        }))
+        let path = self.session_path(id);
+        let metadata = fs::symlink_metadata(&path)
+            .with_context(|| format!("inspect session {}", path.display()))?;
+        if !metadata.file_type().is_file() {
+            anyhow::bail!("session {} is not a regular file", path.display());
+        }
+
+        read_session(
+            &path,
+            id.to_string(),
+            metadata.modified().unwrap_or(UNIX_EPOCH),
+        )
     }
 
     /// List sessions newest first, with a preview of the first user message.
@@ -248,9 +232,16 @@ impl SessionStore {
             if file_stem(&path).is_none() {
                 continue;
             }
+            let file_type = match entry.file_type() {
+                Ok(file_type) => file_type,
+                Err(_) => continue,
+            };
+            if !file_type.is_file() {
+                continue;
+            }
             let metadata = match entry.metadata() {
-                Ok(metadata) if metadata.is_file() => metadata,
-                _ => continue,
+                Ok(metadata) => metadata,
+                Err(_) => continue,
             };
             let modified = metadata.modified().unwrap_or(UNIX_EPOCH);
             files.push((path, modified));
@@ -265,6 +256,46 @@ struct StoredMessage {
     role: String,
     content: String,
     created_at: String,
+}
+
+fn read_session(path: &Path, id: String, modified: SystemTime) -> Result<Session> {
+    let file = File::open(path).with_context(|| format!("open session {}", path.display()))?;
+    let mut reader = BufReader::new(file);
+    let mut messages = Vec::new();
+    let mut skipped_lines = 0_usize;
+    let mut buffer = Vec::new();
+
+    loop {
+        buffer.clear();
+        let read = reader
+            .read_until(b'\n', &mut buffer)
+            .with_context(|| format!("read session {}", path.display()))?;
+        if read == 0 {
+            break;
+        }
+        let Ok(text) = std::str::from_utf8(&buffer) else {
+            skipped_lines += 1;
+            continue;
+        };
+        let text = text.trim();
+        if text.is_empty() {
+            continue;
+        }
+        match serde_json::from_str::<StoredMessage>(text) {
+            Ok(record) => messages.push(ChatMessage {
+                role: record.role,
+                content: record.content,
+            }),
+            Err(_) => skipped_lines += 1,
+        }
+    }
+
+    Ok(Session {
+        id,
+        created_at: format_utc(modified),
+        messages,
+        skipped_lines,
+    })
 }
 
 #[cfg(unix)]
@@ -482,6 +513,32 @@ mod tests {
             vec![message("user", "hello"), message("assistant", "hi there")]
         );
         assert_eq!(loaded.skipped_lines, 0);
+    }
+
+    #[test]
+    fn load_by_id_reads_a_selected_session() {
+        let temp = TempDir::new("load-by-id");
+        let store = SessionStore::new(temp.path().join("sessions"));
+        let session = store.new_session().expect("new session");
+        store
+            .append(&session, &message("user", "saved prompt"))
+            .expect("append user");
+
+        let loaded = store
+            .load_by_id(&session.id)
+            .expect("load selected session");
+
+        assert_eq!(loaded.id, session.id);
+        assert_eq!(loaded.messages, vec![message("user", "saved prompt")]);
+        assert_eq!(loaded.skipped_lines, 0);
+    }
+
+    #[test]
+    fn load_by_id_rejects_path_like_ids() {
+        let temp = TempDir::new("invalid-id");
+        let store = SessionStore::new(temp.path().join("sessions"));
+
+        assert!(store.load_by_id("../outside").is_err());
     }
 
     #[test]

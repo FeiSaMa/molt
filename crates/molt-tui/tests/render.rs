@@ -57,6 +57,171 @@ fn chat_frame_at_120x40_has_shell_and_sidebar() {
 }
 
 #[test]
+fn live_mode_labels_only_chat_as_live_and_other_screens_as_mock() {
+    let mut application = App::with_screen(ColorMode::Ansi256, Screen::Chat);
+    application.mode = molt_tui::DataMode::Live;
+    let chat = render_app(&application, 120, 40).join("\n");
+    assert!(chat.contains("live chat · mock panels"), "{chat}");
+
+    application.screen = Screen::Tree;
+    let tree = render_app(&application, 120, 40).join("\n");
+    assert!(tree.contains("molt · v3 · mock"), "{tree}");
+    assert!(!tree.contains("live chat"), "{tree}");
+}
+
+fn app_with_version_workspace() -> App {
+    use molt_tui::version_workspace::VersionWorkspace;
+
+    let mut application = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+    application.mode = molt_tui::DataMode::Live;
+    application.version_workspace = Some(VersionWorkspace {
+        binary: "molt".into(),
+        workspace: "/tmp/synthetic".into(),
+        state_id: "synthetic-state-id".to_owned(),
+        generation: 3,
+        active_snapshot: Some("snapshot-3".to_owned()),
+        last_event: Some("event-3".to_owned()),
+        history_view: Default::default(),
+        pending_request: None,
+        last_save_receipt: None,
+        detail: vec![
+            "state_id synthetic-state-id".to_owned(),
+            "generation 3".to_owned(),
+        ],
+        draft: String::new(),
+        editing: false,
+        pinned_reader: None,
+        reader_parent: None,
+        reader_tree: None,
+        reader_snapshot: None,
+        reader_files: Vec::new(),
+        reader_selected: 0,
+        reader_preview: String::new(),
+        retired_reader_parents: Vec::new(),
+    });
+    application
+}
+
+#[test]
+fn version_panel_shows_the_handshake_identity_at_80x24() {
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+    let mut application = app_with_version_workspace();
+    application.handle_key(KeyEvent::new(KeyCode::Char('v'), KeyModifiers::CONTROL));
+    let frame = render_app(&application, 80, 24).join("\n");
+    assert!(frame.contains("VERSIONS"), "{frame}");
+    assert!(frame.contains("synthetic-state-id"), "{frame}");
+}
+
+#[test]
+fn version_panel_save_receipt_wraps_and_returns_to_previous_view() {
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+    use molt_tui::version_workspace::SaveReceipt;
+
+    let mut application = app_with_version_workspace();
+    application.version_panel_open = true;
+    let open = KeyEvent::new(KeyCode::Char('v'), KeyModifiers::NONE);
+    let escape = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
+    application.handle_key(open);
+    let empty = render_app(&application, 80, 24).join("\n");
+    assert!(
+        empty.contains("No successful save in this session"),
+        "{empty}"
+    );
+    application.handle_key(escape);
+
+    let workspace = application.version_workspace.as_mut().unwrap();
+    let snapshot = "1234abcd".repeat(8);
+    let event = format!("sha256:{}beef", "cdef5678".repeat(7) + "cdef");
+    let request_id = "synthetic-versions-12345678-1234-1234-1234-123456789abc";
+    workspace.last_save_receipt = Some(SaveReceipt {
+        generation: 2,
+        snapshot: snapshot.clone(),
+        event: event.clone(),
+        request_id: request_id.to_owned(),
+    });
+    workspace.draft = "preserved draft".to_owned();
+    let before = render_app(&application, 80, 24);
+    assert!(before.join("\n").contains("v save receipt"));
+    application.handle_key(KeyEvent::new(KeyCode::Char('v'), KeyModifiers::CONTROL));
+    assert_eq!(render_app(&application, 80, 24), before);
+    application.handle_key(open);
+    let frame = render_app(&application, 80, 24);
+    let text = frame.join("\n");
+    for token in [
+        "LAST SUCCESSFUL SAVE",
+        "generation 2",
+        &snapshot,
+        request_id,
+    ] {
+        assert!(text.contains(token), "{text}");
+    }
+    let event_row = frame
+        .iter()
+        .position(|line| line.contains("event ID"))
+        .unwrap();
+    let wrapped_event: String = frame[event_row + 1..=event_row + 2]
+        .iter()
+        .map(|line| line.chars().skip(5).take(70).collect::<String>())
+        .map(|line| line.trim().to_owned())
+        .collect();
+    assert_eq!(wrapped_event, event);
+
+    render_app(&application, 52, 14);
+    for _ in 0..10 {
+        application.handle_key(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE));
+    }
+    let scrolled = render_app(&application, 52, 14).join("\n");
+    assert!(scrolled.contains("123456789abc"), "{scrolled}");
+    for key in ['s', 't'] {
+        application.handle_key(KeyEvent::new(KeyCode::Char(key), KeyModifiers::NONE));
+    }
+    application.handle_key(escape);
+    assert_eq!(render_app(&application, 80, 24), before);
+    assert_eq!(
+        application.version_workspace.as_ref().unwrap().draft,
+        "preserved draft"
+    );
+}
+
+#[test]
+fn managed_tree_shows_snapshot_paths_and_text_preview_at_80x24() {
+    use molt_tui::version_workspace::VersionWorkspace;
+    use std::path::PathBuf;
+
+    let mut application = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+    application.mode = molt_tui::DataMode::Live;
+    application.version_workspace = Some(VersionWorkspace {
+        binary: "molt".into(),
+        workspace: "/tmp/synthetic".into(),
+        state_id: "synthetic-state-id".to_owned(),
+        generation: 3,
+        active_snapshot: Some("snapshot-3".to_owned()),
+        last_event: Some("event-3".to_owned()),
+        history_view: Default::default(),
+        pending_request: None,
+        last_save_receipt: None,
+        detail: Vec::new(),
+        draft: String::new(),
+        editing: false,
+        pinned_reader: Some("snapshot-3".to_owned()),
+        reader_parent: None,
+        reader_tree: Some("/tmp/synthetic-export/project".into()),
+        reader_snapshot: Some("snapshot-b".to_owned()),
+        reader_files: vec![PathBuf::from("nested/config.txt")],
+        reader_selected: 0,
+        reader_preview: "byte-for-byte preview".to_owned(),
+        retired_reader_parents: Vec::new(),
+    });
+
+    let frame = render_app(&application, 80, 24).join("\n");
+
+    assert!(frame.contains("snapshot-b"), "{frame}");
+    assert!(frame.contains("nested/config.txt"), "{frame}");
+    assert!(frame.contains("byte-for-byte preview"), "{frame}");
+}
+
+#[test]
 fn every_screen_at_80x24_stays_within_80_columns() {
     for screen in Screen::ALL {
         let lines = render(screen, 80, 24);

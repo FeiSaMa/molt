@@ -65,6 +65,8 @@ def add_version_parser(commands) -> None:
     commit_files.add_argument("--activate", action="store_true")
     commit_files.add_argument("--reason")
     commit_files.add_argument("--reason-source")
+    commit_files.add_argument("--include-request-id", action="store_true",
+                              help="在成功提交的回执中返回原 request ID")
 
     branch = actions.add_parser("branch", help="从已有快照建立分支")
     branch.add_argument("branch")
@@ -164,6 +166,7 @@ def _dispatch(args: argparse.Namespace):
                 args.branch, args.root, args.manifest, expected=expected,
                 expected_head=args.expect_head, activate=args.activate,
                 reason=args.reason, source=args.reason_source,
+                include_request_id=args.include_request_id,
             )
         case "branch":
             return box.create_branch(args.branch, args.snapshot, expected=expected)
