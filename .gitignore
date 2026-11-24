@@ -23,6 +23,22 @@ npm-debug.log*
 .env
 .pi/
 
+# 本地凭据 / 私钥（不要提交）
+.env.*
+.secrets/
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+*.token
+deepseek-key
+id_rsa
+id_ed25519
+credentials.json
+credentials.yaml
+service-account*.json
+
 # 本地历史产物与工作笔记
 probes/report/**/response*.jsonl
 web/data/probe/state.json
