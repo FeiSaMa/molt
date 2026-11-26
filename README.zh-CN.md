@@ -1,16 +1,26 @@
 # molt
 
-[English](README.md)
+**给本地 AI Agent 工作区做版本管理。**
 
-molt 是本地 Agent 工作区的版本管理与审计 CLI。它能把配置、提示词和工具定义保存为快照，支持切换、合并分支以及回退活动版本。新作业可固定读取指定快照，审计记录保留原始证据和操作者给出的修改理由。
+molt 帮你在提示词、配置或工具定义改动后，找回当时的文件并用同一组输入重新运行作业。
 
-Rust kernel 存储内容寻址对象和版本历史，并通过 Unix socket 提供事务接口。Python CLI 负责接入本地工作流。
+![Molt 终端演示，依次保存版本、查看事务回执，并在 Tree 中浏览固定快照的配置](docs/assets/molt-workspace-demo.gif)
 
-## 试用 Linux 候选包
+*使用 v1.2.0rc9 终端界面和合成工作区录制，这套流程无需模型账号。*
 
-[下载首个 Linux 预发行版](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [Release notes](docs/releases/1.2.0rc9.md)
+[工作区快速开始](docs/operations/project-quickstart.md) · [Linux x86_64 预发行版](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [English](README.md)
 
-Linux x86_64 单用户候选包 1.2.0rc9 包含配套的 CLI、TUI 和 kernel。将归档与校验文件放在同一目录，准备 uv、Python 3.12.13 和 systemd 用户管理器，执行：
+- **成组保存文件。** 把提示词、配置和工具定义保存到同一个快照。
+- **为每次运行固定输入。** 活动版本变更后，已启动的作业仍能读取原快照。
+- **在分支上试改动。** 支持切换或合并分支，也可以回退本地活动版本。
+- **查清改了什么、为什么改。** 查看版本历史、保存回执和审计记录。
+- **恢复中断的保存。** 使用原 request ID 查询事务结果。
+
+## 试用 Linux 预发行版
+
+[下载 v1.2.0rc9](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [发行说明](docs/releases/1.2.0rc9.md)
+
+Linux x86_64 单用户安装包包含配套的 CLI、TUI 和 kernel。将归档与校验文件放在同一目录，准备 uv、Python 3.12.13 和 systemd 用户管理器，再执行以下命令。
 
 ```bash
 sha256sum -c molt-1.2.0rc9-linux-x86_64.tar.gz.sha256
@@ -20,7 +30,9 @@ bash ./install-user.sh
 "$HOME/.local/bin/molt" tui --mock
 ```
 
-Ctrl+Q 退出。Chat 默认连接 DeepSeek，`--mock` 可离线体验。显式指定版本工作区后，Versions 使用真实事务，Tree 可读取固定快照。Settings、Diff 和 Approval 使用模拟数据。独立工作区也可手动启动，步骤见归档内的 `share/molt/README.md`。
+Ctrl+Q 退出。上面的命令以离线模拟模式启动 Chat。此预发行版的 Settings、Diff 和 Approval 也使用模拟数据。
+
+要复现演示，先[启动独立版本工作区](docs/operations/version-cli.md#安装与首次运行)，再按[终端界面操作步骤](docs/operations/version-cli.md#终端界面)操作。
 
 ## 从源码试用项目工作区
 
@@ -92,6 +104,8 @@ cat "$tree/opencode.json"
 回退后最后一条命令应显示 `{"model":"isolated/demo"}`。已安装 OpenCode v2 时，可运行 `p opencode -- debug config` 查看新作业读取的配置。保存冲突、原请求恢复和启动参数见[项目级 CLI 手册](docs/operations/version-cli.md#项目级-cli)。
 
 ## 使用与维护
+
+Python CLI 通过 Unix socket 访问 Rust kernel。kernel 负责保存内容寻址对象和版本历史。
 
 | 目标 | 文档 |
 | --- | --- |

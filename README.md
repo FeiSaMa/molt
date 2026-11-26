@@ -1,18 +1,25 @@
 # molt
 
-[简体中文](README.zh-CN.md)
+**Version your local AI agent workspace.**
 
-molt is a CLI for versioning and auditing local agent workspaces. Save configuration,
-prompts, and tool definitions as snapshots, switch or merge branches, and roll
-back the active version. Each new job can read a fixed snapshot. Audit records
-preserve the original evidence and the operator's reason for a change.
+molt lets you rerun a job with the same prompts, configuration, and tool
+definitions after those files have changed.
 
-The Rust kernel stores content-addressed objects and version history and exposes
-transactions over a Unix socket. The Python CLI connects the kernel to local workflows.
+![Molt terminal demo showing a version save, its transaction receipt, and the pinned configuration in Tree](docs/assets/molt-workspace-demo.gif)
 
-## Try the Linux candidate
+*Recorded with the v1.2.0rc9 terminal UI and a synthetic workspace. No model account is needed for this workflow.*
 
-[Download the first Linux pre-release](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [Release notes](docs/releases/1.2.0rc9.md)
+[Workspace quickstart](docs/operations/project-quickstart.md) · [Linux x86_64 prerelease](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [简体中文](README.zh-CN.md)
+
+- **Save related files together.** Capture prompts, configs, and tool definitions in one snapshot.
+- **Pin a snapshot for each run.** Give a job a fixed copy of its inputs, even when the active version changes.
+- **Try changes on a branch.** Switch branches, merge changes, or roll back the active local version.
+- **See what changed and why.** Inspect version history, save receipts, and audit records.
+- **Recover after an interrupted save.** Look up the outcome using the original request ID.
+
+## Try the Linux prerelease
+
+[Download v1.2.0rc9](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [Release notes](docs/releases/1.2.0rc9.md)
 
 The single-user Linux x86_64 candidate (1.2.0rc9) includes a matched CLI, TUI and kernel.
 With the archive and its checksum in the current directory, run:
@@ -26,11 +33,11 @@ bash ./install-user.sh
 ```
 
 The installer needs uv, Python 3.12.13 and a systemd user manager. Ctrl+Q exits.
-Chat defaults to a live DeepSeek session. Use `--mock` for offline Chat.
-Attach a version workspace to save transactions in Versions and browse a pinned
-snapshot in Tree. Settings, Diff and Approval use mock data.
-For an isolated workspace without a user service, follow the instructions in
-`share/molt/README.md` inside the archive.
+The command above runs Chat in offline mock mode. Settings, Diff and Approval
+also use mock data in this prerelease.
+
+To reproduce the recording, [start an isolated version workspace](docs/operations/version-cli.md#安装与首次运行)
+and follow the [terminal UI walkthrough](docs/operations/version-cli.md#终端界面).
 
 ## Try a workspace from source
 
@@ -117,6 +124,9 @@ references to the original evidence. The
 [source example](docs/operations/synthetic-versions.md) uses the same broker.
 
 ## Usage and maintenance
+
+molt pairs a Python CLI with a Rust kernel that stores content-addressed objects
+and version history. The CLI talks to the kernel over a Unix socket.
 
 | Task | Documentation |
 | --- | --- |
