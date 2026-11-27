@@ -7,9 +7,9 @@ definitions after those files have changed.
 
 ![Molt terminal demo showing a version save, its transaction receipt, and the pinned configuration in Tree](docs/assets/molt-workspace-demo.gif)
 
-*Recorded with the v1.2.0rc9 terminal UI and a synthetic workspace. No model account is needed for this workflow.*
+*Recorded with the previous v1.2.0rc9 terminal UI and a synthetic workspace. No model account is needed for this workflow.*
 
-[Workspace quickstart](docs/operations/project-quickstart.md) · [Independent trial record](docs/operations/independent-trial.md) · [Linux x86_64 prerelease](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [简体中文](README.zh-CN.md)
+[Workspace quickstart](docs/operations/project-quickstart.md) · [Independent trial record](docs/operations/independent-trial.md) · [Linux x86_64 prerelease](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc10) · [简体中文](README.zh-CN.md)
 
 - **Save related files together.** Capture prompts, configs, and tool definitions in one snapshot.
 - **Pin a snapshot for each run.** Give a job a fixed copy of its inputs, even when the active version changes.
@@ -19,22 +19,31 @@ definitions after those files have changed.
 
 ## Try the Linux prerelease
 
-[Download v1.2.0rc9](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [Release notes](docs/releases/1.2.0rc9.md)
+[Download v1.2.0rc10](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc10) · [Release notes](docs/releases/1.2.0rc10.md)
 
-The single-user Linux x86_64 candidate (1.2.0rc9) includes a matched CLI, TUI and kernel.
-With the archive and its checksum in the current directory, run:
+The single-user Linux x86_64 candidate (1.2.0rc10) ships a matched CLI, TUI and
+kernel as native deb, rpm and Arch packages. Download the package for your
+distribution and `SHA256SUMS`, then verify and install:
 
 ```bash
-sha256sum -c molt-1.2.0rc9-linux-x86_64.tar.gz.sha256
-tar -xzf molt-1.2.0rc9-linux-x86_64.tar.gz
-cd molt-1.2.0rc9-linux-x86_64
-bash ./install-user.sh
-"$HOME/.local/bin/molt" tui --mock
+sha256sum --check --ignore-missing SHA256SUMS
+
+# Arch Linux
+sudo pacman -U ./molt-1.2.0rc10+git3e7d01b-1-x86_64.pkg.tar.zst
+# Debian / Ubuntu
+sudo apt install ./molt_*.deb
+# Fedora / RHEL
+sudo dnf install ./molt-*.rpm
 ```
 
-The installer needs uv, Python 3.12.13 and a systemd user manager. Ctrl+Q exits.
-The command above runs Chat in offline mock mode. Settings, Diff and Approval
-also use mock data in this prerelease.
+The rc10 packages are unsigned. The release declares glibc 2.43+ and Python
+3.11+; these are release and packaging-metadata requirements, not a re-test in
+this repository update. `molt tui --mock` runs Chat in offline mock mode.
+Settings, Diff and Approval also use mock data in this prerelease.
+
+The v1.2.0rc9 tar.gz and its checksum remain available as the
+[previous portable archive](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9)
+([rc9 notes](docs/releases/1.2.0rc9.md)); it is not the current install path.
 
 To reproduce the recording, [start an isolated version workspace](docs/operations/version-cli.md#安装与首次运行)
 and follow the [terminal UI walkthrough](docs/operations/version-cli.md#终端界面).

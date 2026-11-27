@@ -44,6 +44,10 @@ install -m 0644 "$repo_root/packaging/systemd/molt-kernel.service" "$bundle/molt
 install -m 0644 "$repo_root/LICENSE" "$bundle/LICENSE"
 install -m 0644 "$notices" "$bundle/THIRD-PARTY-LICENSES.txt"
 install -m 0644 "$repo_root/packaging/release/README.md" "$bundle/share/molt/README.md"
+# The tracked README lives in packaging/release/ and links to ../../docs/... so it
+# resolves in the repository. In the bundle it sits at share/molt/README.md next
+# to docs/, so rewrite only those links to docs/... in the copied file.
+sed -i -e 's#](\.\./\.\./docs/#](docs/#g' "$bundle/share/molt/README.md"
 install -m 0644 "$repo_root/docs/operations/kernel-cli.md" \
   "$repo_root/docs/operations/version-cli.md" \
   "$repo_root/docs/operations/project-quickstart.md" \

@@ -556,12 +556,12 @@ ADR 0020–0025 正文已生成（W-04b / W-04c，2026-11-21），文件名为�
 
 | ADR | 标题 | 范围 | 阻塞项 |
 |---|---|---|---|
-| [0020](adr/0020-v3-layering.md) | v3 分层与进程边界 | TUI / agent / broker / kernel；`molt → molt-tui`；kernel 零改动；TUI 栈与降级 | Q1 / Q10 / Q11 / A1 |
-| [0021](adr/0021-ts-broker.md) | TS broker 与 kernel 事务契约 | 单写者 / journal / 原 ID 恢复 / state 根隔离 / golden 字节对齐 / managed vs workspace | Q2 / A5 / A6、0021 X1 |
-| [0022](adr/0022-session-tree.md) | 会话树、fork 与回退 | `parent_id` 树 / leaf / boundary / checkpoint / 前向 commit / 两棵树分离 | Q4 / Q5、0022 X1 |
-| [0023](adr/0023-permissions-sandbox.md) | 权限、审批与沙箱 | last-match + deny>ask>allow / once/always/reject / 工具分级 / bwrap / 脱敏 | Q8 / Q9 |
-| [0024](adr/0024-memory-system.md) | 记忆系统 | 双层 / frontmatter / FTS5 / 两阶段 / 去重 / 过期 / 证据 / 与 compaction 关系 | Q2 / Q6 |
-| [0025](adr/0025-config-dag-routing.md) | 统一配置模型、配置树与自动路由 | genome 子集 / DAG / suggest / auto / 跨版本不可比 | Q7 / A6 |
+| [0020](decisions/0020-v3-layering.md) | v3 分层与进程边界 | TUI / agent / broker / kernel；`molt → molt-tui`；kernel 零改动；TUI 栈与降级 | Q1 / Q10 / Q11 / A1 |
+| [0021](decisions/0021-ts-broker.md) | TS broker 与 kernel 事务契约 | 单写者 / journal / 原 ID 恢复 / state 根隔离 / golden 字节对齐 / managed vs workspace | Q2 / A5 / A6、0021 X1 |
+| [0022](decisions/0022-session-tree.md) | 会话树、fork 与回退 | `parent_id` 树 / leaf / boundary / checkpoint / 前向 commit / 两棵树分离 | Q4 / Q5、0022 X1 |
+| [0023](decisions/0023-permissions-sandbox.md) | 权限、审批与沙箱 | last-match + deny>ask>allow / once/always/reject / 工具分级 / bwrap / 脱敏 | Q8 / Q9 |
+| [0024](decisions/0024-memory-system.md) | 记忆系统 | 双层 / frontmatter / FTS5 / 两阶段 / 去重 / 过期 / 证据 / 与 compaction 关系 | Q2 / Q6 |
+| [0025](decisions/0025-config-dag-routing.md) | 统一配置模型、配置树与自动路由 | genome 子集 / DAG / suggest / auto / 跨版本不可比 | Q7 / A6 |
 
 ## 20. 与现有 ADR 的冲突表
 

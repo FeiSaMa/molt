@@ -1,6 +1,6 @@
 # molt Linux 安装包
 
-本候选包 1.2.0rc9 用于 Linux x86_64 单用户环境，内含同源的 CLI wheel、TUI 和 kernel。用户安装器需要 uv、Python 3.12.13 和可用的 systemd 用户管理器。独立工作区可直接使用包内文件和前台 kernel。
+本安装包用于 Linux x86_64 单用户环境（当前源码版本 1.2.0rc10；`1.2.0rc9` 归档仅作上一版可移植归档），内含同源的 CLI wheel、TUI 和 kernel。用户安装器需要 uv、Python 3.12.13 和可用的 systemd 用户管理器。独立工作区可直接使用包内文件和前台 kernel。
 
 解包后从归档顶层运行安装器。安装器在同一文件系统准备独立版本，检查 CLI 回执选项、TUI 自检和 kernel 启动，再切换 `~/.local/bin` 入口和用户 unit 并运行 `daemon-reload`。重复运行同一精确包会复核已安装版本。遇到冲突的用户文件会退出并保留原文件。升级后由操作者决定何时重启运行中的服务。
 
@@ -18,21 +18,21 @@ export MOLT_KERNEL_SOCKET="$HOME/.local/share/molt/kernel/kernel.sock"
 "$HOME/.local/bin/molt" audit
 ```
 
-已有实例升级时，先按[备份与恢复](docs/operations/v2-backup-restore.md)保留状态和检查点，再运行新版本安装器。确认安装完成后，按[服务手册](docs/operations/molt-kernel-systemd.md)重启服务并审计。切换或 reload 失败时安装器恢复原入口和 unit，并保留可核对的旧入口副本；重新运行同一安装器可重试。补偿失败时依据终端报告的备份目录核对并恢复三个入口，再运行 `systemctl --user daemon-reload`。初始化命令仅用于新状态目录。
+已有实例升级时，先按[备份与恢复](../../docs/operations/v2-backup-restore.md)保留状态和检查点，再运行新版本安装器。确认安装完成后，按[服务手册](../../docs/operations/molt-kernel-systemd.md)重启服务并审计。切换或 reload 失败时安装器恢复原入口和 unit，并保留可核对的旧入口副本；重新运行同一安装器可重试。补偿失败时依据终端报告的备份目录核对并恢复三个入口，再运行 `systemctl --user daemon-reload`。初始化命令仅用于新状态目录。
 
-对象、事务、原 request ID 恢复与旧状态拒绝行为见 [CLI 参考](docs/operations/kernel-cli.md)。
+对象、事务、原 request ID 恢复与旧状态拒绝行为见 [CLI 参考](../../docs/operations/kernel-cli.md)。
 
-只想在独立目录试用配置与工具版本时，从解包目录按[个人工作区手册](docs/operations/version-cli.md)安装 wheel、启动随包 kernel。版本事务与内置文本工具使用随包运行时。模型提案和摘要另外需要 Bubblewrap、llama-completion 及已安装的兼容 GGUF。
+只想在独立目录试用配置与工具版本时，从解包目录按[个人工作区手册](../../docs/operations/version-cli.md)安装 wheel、启动随包 kernel。版本事务与内置文本工具使用随包运行时。模型提案和摘要另外需要 Bubblewrap、llama-completion 及已安装的兼容 GGUF。
 
 项目级 CLI 可供脚本或自有 Agent 工作流读取固定配置。包内的 Bash 示例可从解包目录
 演练保存、固定读取、回退和审计。Node.js 示例展示如何把快照 ID 和配置交给自己的作业。
-[项目工作区快速开始](docs/operations/project-quickstart.md)
+[项目工作区快速开始](../../docs/operations/project-quickstart.md)
 
 ## 离线终端试用
 
-先在归档所在目录运行 `sha256sum -c molt-1.2.0rc9-linux-x86_64.tar.gz.sha256`，再解包。在用户安装后，`"$HOME/.local/bin/molt" tui --mock` 可直接启动。裸 `molt` 在交互终端发现可用 TUI 时进入默认 live Chat；自动查找缺失、关闭 TUI 或非交互输入时显示 CLI 帮助。显式 `MOLT_TUI_BIN` 可覆盖同前缀的二进制。Ctrl+Q 退出。
+先在归档所在目录用同名 `.sha256` 文件校验（例如 `sha256sum -c molt-*-linux-x86_64.tar.gz.sha256`），再解包。`1.2.0rc9` 归档仅作上一版可移植归档，不是当前安装入口。在用户安装后，`"$HOME/.local/bin/molt" tui --mock` 可直接启动。裸 `molt` 在交互终端发现可用 TUI 时进入默认 live Chat；自动查找缺失、关闭 TUI 或非交互输入时显示 CLI 帮助。显式 `MOLT_TUI_BIN` 可覆盖同前缀的二进制。Ctrl+Q 退出。
 
-要使用真实 Versions 与固定 Tree，按[工作区手册](docs/operations/version-cli.md#安装与首次运行)从归档顶层建立新的 synthetic 工作区，并在同一 Bash 中运行该手册的「终端界面」示例。保存需要本包的 `commit-files --include-request-id`。Chat 用 `--mock` 离线运行，Settings、Diff、Approval 显示模拟数据。
+要使用真实 Versions 与固定 Tree，按[工作区手册](../../docs/operations/version-cli.md#安装与首次运行)从归档顶层建立新的 synthetic 工作区，并在同一 Bash 中运行该手册的「终端界面」示例。保存需要本包的 `commit-files --include-request-id`。Chat 用 `--mock` 离线运行，Settings、Diff、Approval 显示模拟数据。
 
 ### 试用记录
 
