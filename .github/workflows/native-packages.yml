@@ -168,7 +168,7 @@ jobs:
           LocalFileSigLevel = Optional TrustAll
           EOF
               baseline=$(find "$RUNNER_TEMP/artifacts" -name '*1.2.0rc9-1-x86_64.pkg.tar.zst' -print -quit)
-              candidate=$(find "$RUNNER_TEMP/artifacts" -name '*+git*-1-x86_64.pkg.tar.zst' -print -quit)
+              candidate=$(find "$RUNNER_TEMP/artifacts" -name 'molt-1.2.0rc10+git*-1-x86_64.pkg.tar.zst' -print -quit)
               test -n "$baseline" && test -n "$candidate"
               pacman --config "$RUNNER_TEMP/pacman-local.conf" -U --noconfirm "$baseline"
               pacman -Q molt
@@ -192,7 +192,7 @@ jobs:
           mkdir -p "$state"
           molt-kernel init --state "$state/kernel"
           MOLT_KERNEL_BACKEND=kernel MOLT_KERNEL_STATE="$state/kernel" \
-            molt --root "$state/project" doctor --json
+            molt --root "$state/project" doctor
           molt-tui --selftest --width 80 --height 24
 
           case "$FORMAT" in
