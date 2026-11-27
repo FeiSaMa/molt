@@ -703,7 +703,10 @@ impl App {
             }
             return;
         }
-        if self.screen == Screen::Approval && self.handle_approval_key(key) {
+        if self.mode == DataMode::Mock
+            && self.screen == Screen::Approval
+            && self.handle_approval_key(key)
+        {
             return;
         }
         if key.code == KeyCode::Tab {
@@ -723,6 +726,12 @@ impl App {
         }
         if self.screen == Screen::Tree && self.uses_managed_tree() {
             self.handle_version_tree_key(key);
+            return;
+        }
+        // Live mode has no real backend for the demo-only panels. Reject the
+        // action at dispatch time so a visual label alone cannot be bypassed.
+        if self.unavailable_panel().is_some() {
+            self.reject_unavailable_action(key);
             return;
         }
         let consumed = match self.screen {
@@ -773,6 +782,46 @@ impl App {
 
     fn uses_managed_tree(&self) -> bool {
         self.version_workspace.is_some()
+    }
+
+    /// The current screen when Live mode has no real backend for it. `None`
+    /// means the screen is Mock (where the demo is explicit) or has a real
+    /// backend (Chat, or Tree with a connected Versions workspace).
+    pub fn unavailable_panel(&self) -> Option<Screen> {
+        if self.mode != DataMode::Live {
+            return None;
+        }
+        match self.screen {
+            Screen::Tree if !self.uses_managed_tree() => Some(Screen::Tree),
+            Screen::Settings | Screen::Diff | Screen::Approval => Some(self.screen),
+            _ => None,
+        }
+    }
+
+    /// One-line reason for an unavailable panel.
+    fn unavailable_detail(screen: Screen) -> &'static str {
+        match screen {
+            Screen::Tree => "no real session-tree store is connected",
+            Screen::Settings => "no real config backend is connected",
+            Screen::Diff => "no real diff backend is connected",
+            Screen::Approval => "no real permission engine is connected",
+            _ => "no real backend is connected",
+        }
+    }
+
+    /// Keep navigation keys working but refuse every demo action in Live mode.
+    fn reject_unavailable_action(&mut self, key: KeyEvent) {
+        if self.screen == Screen::Approval && key.code == KeyCode::Esc {
+            self.screen = Screen::Chat;
+            self.composer_focused = true;
+            self.set_status(StatusLevel::Info, "returned to live chat");
+            return;
+        }
+        let panel = self.screen.title().to_ascii_lowercase();
+        self.set_status(
+            StatusLevel::Warning,
+            format!("{panel} unavailable in live · no real data source connected"),
+        );
     }
 
     fn handle_version_panel_key(&mut self, key: KeyEvent) {
@@ -1074,6 +1123,12 @@ impl App {
             Screen::Tree if self.uses_managed_tree() => {
                 "j/k browse · PgUp/PgDn · Ctrl+V Versions · read-only"
             }
+            Screen::Tree | Screen::Settings | Screen::Diff if self.mode == DataMode::Live => {
+                "unavailable in live · Tab next · ? help"
+            }
+            Screen::Approval if self.mode == DataMode::Live => {
+                "unavailable in live · Esc chat · Tab next · ? help"
+            }
             Screen::Tree => {
                 "j/k move · h/l fold · f fork · r rollback · p pin · Space mark · / search"
             }
@@ -1213,9 +1268,10 @@ impl App {
         // wordmark and no icon glyphs; narrow terminals simply truncate it.
         let mode = match (self.mode, self.screen, self.version_workspace.is_some()) {
             (DataMode::Live, Screen::Chat, true) => "live chat · molt connected",
-            (DataMode::Live, Screen::Chat, false) => "live chat · mock panels",
-            (_, _, true) => "molt connected · mock panels",
-            _ => "mock",
+            (DataMode::Live, Screen::Chat, false) => "live chat · demo panels unavailable",
+            (DataMode::Live, _, _) => "live · demo panels unavailable",
+            (DataMode::Mock, _, true) => "molt connected · mock panels",
+            (DataMode::Mock, _, false) => "mock",
         };
         let label = fit(&format!(" molt · v3 · {mode}"), area.width);
         frame.render_widget(
@@ -1307,6 +1363,7 @@ impl App {
         let mut lines = Vec::new();
         let theme = self.theme;
 
+        let demo = self.mode == DataMode::Live;
         let compact = width < 22;
         lines.push(styled_line("SESSIONS", width, theme.title()));
         if self.mode == DataMode::Live {
@@ -1366,7 +1423,11 @@ impl App {
             }
         }
 
-        lines.push(styled_line("MCP", width, theme.title()));
+        lines.push(styled_line(
+            if demo { "MCP · demo only" } else { "MCP" },
+            width,
+            theme.title(),
+        ));
         for server in &self.mock.mcp {
             let (text, style) = match server.status {
                 McpStatus::Connected => (format!("● {} ok", server.name), theme.success()),
@@ -1385,7 +1446,11 @@ impl App {
             }
         }
 
-        lines.push(styled_line("TODOS", width, theme.title()));
+        lines.push(styled_line(
+            if demo { "TODOS · demo only" } else { "TODOS" },
+            width,
+            theme.title(),
+        ));
         for todo in &self.mock.todos {
             let mark = if todo.done { "x" } else { " " };
             let style = if todo.done {
@@ -1400,7 +1465,15 @@ impl App {
             ));
         }
 
-        lines.push(styled_line("CONFIG", width, theme.title()));
+        lines.push(styled_line(
+            if demo {
+                "CONFIG · demo only"
+            } else {
+                "CONFIG"
+            },
+            width,
+            theme.title(),
+        ));
         if let Some(config) = self.mock.active_config() {
             if compact {
                 lines.push(styled_line(config.id.clone(), width, theme.info()));
@@ -1430,28 +1503,33 @@ impl App {
             );
             return;
         }
-        let context = match self.screen {
-            Screen::Tree if self.uses_managed_tree() => self
-                .version_workspace
-                .as_ref()
-                .and_then(|workspace| workspace.reader_snapshot.clone())
-                .unwrap_or_else(|| "no tree".to_owned()),
-            Screen::Tree => self.tree_context_id(),
-            Screen::Settings => self.mock.active_config.clone(),
-            Screen::Diff => format!("{} hunks", self.mock.hunk_count()),
-            Screen::Approval => format!("{} pending", self.mock.pending_approvals().count()),
-            Screen::Chat | Screen::Startup => {
-                if self.mode == DataMode::Live {
-                    self.session
-                        .as_ref()
-                        .map(|session| session.id.clone())
-                        .unwrap_or_else(|| "live".to_owned())
-                } else {
-                    self.mock
-                        .sessions
-                        .first()
-                        .map(|session| session.id.clone())
-                        .unwrap_or_else(|| "mock".to_owned())
+        let unavailable = self.unavailable_panel();
+        let context = if unavailable.is_some() {
+            "unavailable".to_owned()
+        } else {
+            match self.screen {
+                Screen::Tree if self.uses_managed_tree() => self
+                    .version_workspace
+                    .as_ref()
+                    .and_then(|workspace| workspace.reader_snapshot.clone())
+                    .unwrap_or_else(|| "no tree".to_owned()),
+                Screen::Tree => self.tree_context_id(),
+                Screen::Settings => self.mock.active_config.clone(),
+                Screen::Diff => format!("{} hunks", self.mock.hunk_count()),
+                Screen::Approval => format!("{} pending", self.mock.pending_approvals().count()),
+                Screen::Chat | Screen::Startup => {
+                    if self.mode == DataMode::Live {
+                        self.session
+                            .as_ref()
+                            .map(|session| session.id.clone())
+                            .unwrap_or_else(|| "live".to_owned())
+                    } else {
+                        self.mock
+                            .sessions
+                            .first()
+                            .map(|session| session.id.clone())
+                            .unwrap_or_else(|| "mock".to_owned())
+                    }
                 }
             }
         };
@@ -1476,6 +1554,10 @@ impl App {
         if body.width == 0 || body.height == 0 {
             return;
         }
+        if let Some(panel) = unavailable {
+            self.render_unavailable(frame, body, panel);
+            return;
+        }
         match self.screen {
             Screen::Startup => {}
             Screen::Chat => self.render_chat(frame, body),
@@ -1490,6 +1572,48 @@ impl App {
             Screen::Diff => self.render_diff(frame, body),
             Screen::Approval => self.render_approval(frame, body),
         }
+    }
+
+    /// Explicit empty state for a Live screen whose real backend does not
+    /// exist. The embedded demo is never painted here, so mock approvals,
+    /// diffs or configs cannot be mistaken for real state.
+    fn render_unavailable(&self, frame: &mut Frame, area: Rect, screen: Screen) {
+        if area.width == 0 || area.height == 0 {
+            return;
+        }
+        let width = area.width;
+        let mut lines = vec![styled_line(
+            format!("UNAVAILABLE · {}", screen.title()),
+            width,
+            self.theme.warning().add_modifier(Modifier::BOLD),
+        )];
+        for text in [
+            "live mode · not connected to a real data source",
+            Self::unavailable_detail(screen),
+            "nothing on this screen reflects real state",
+        ] {
+            for line in wrap_text(text, width) {
+                lines.push(styled_line(line, width, self.theme.text()));
+            }
+        }
+        lines.push(Line::default());
+        for text in [
+            "demo data is hidden · demo actions are disabled",
+            "Chat, sessions and Versions stay available · --mock keeps the demo",
+        ] {
+            for line in wrap_text(text, width) {
+                lines.push(styled_line(line, width, self.theme.muted()));
+            }
+        }
+        if screen == Screen::Tree {
+            for line in wrap_text(
+                "start with --version-workspace for the read-only Versions tree",
+                width,
+            ) {
+                lines.push(styled_line(line, width, self.theme.muted()));
+            }
+        }
+        frame.render_widget(Paragraph::new(lines).style(self.theme.base()), area);
     }
 
     fn render_status(&self, frame: &mut Frame, area: Rect) {
@@ -1814,7 +1938,7 @@ impl App {
             .title(Span::styled(" HELP ", self.theme.title()));
         let inner = block.inner(rect);
         frame.render_widget(block, rect);
-        let lines = vec![
+        let mut lines = vec![
             styled_line("Ctrl+Q   quit", inner.width, self.theme.text()),
             styled_line(
                 "Tab      Chat -> Tree -> Settings -> Diff",
@@ -1822,7 +1946,11 @@ impl App {
                 self.theme.text(),
             ),
             styled_line(
-                "a        approval screen (modal)",
+                if self.mode == DataMode::Live {
+                    "a        unavailable in live (no approval engine)"
+                } else {
+                    "a        approval screen (modal)"
+                },
                 inner.width,
                 self.theme.text(),
             ),
@@ -1854,22 +1982,35 @@ impl App {
                 self.theme.text(),
             ),
             styled_line("Up/Down  scroll main pane", inner.width, self.theme.text()),
-            styled_line(
+        ];
+        if self.mode == DataMode::Live {
+            lines.push(styled_line(
+                "Ctrl+V   Versions workspace (if connected)",
+                inner.width,
+                self.theme.text(),
+            ));
+            lines.push(styled_line(
+                "Tree/Settings/Diff/Approval unavailable in live",
+                inner.width,
+                self.theme.text(),
+            ));
+        } else {
+            lines.push(styled_line(
                 "Tree     j/k · h/l · f · r · p · Space · /",
                 inner.width,
                 self.theme.text(),
-            ),
-            styled_line(
+            ));
+            lines.push(styled_line(
                 "Settings j/k · a apply · d diff · r routing",
                 inner.width,
                 self.theme.text(),
-            ),
-            styled_line(
+            ));
+            lines.push(styled_line(
                 "Diff     n/N hunk · s split · a apply · r restore",
                 inner.width,
                 self.theme.text(),
-            ),
-        ];
+            ));
+        }
         frame.render_widget(Paragraph::new(lines).style(self.theme.panel()), inner);
     }
 
@@ -2420,6 +2561,7 @@ mod tests {
             reader_preview: "alpha".to_owned(),
             retired_reader_parents: Vec::new(),
         });
+        assert!(app.unavailable_panel().is_none());
         let mock_selected = app.tree.selected;
         let mock_session_count = app.mock.sessions.len();
 
@@ -2487,6 +2629,27 @@ mod tests {
         assert!(app.input.is_empty());
         assert!(!app.last_assistant.is_empty());
         assert!(!app.streaming);
+    }
+
+    #[test]
+    fn live_demo_only_panels_report_unavailable() {
+        for screen in [
+            Screen::Tree,
+            Screen::Settings,
+            Screen::Diff,
+            Screen::Approval,
+        ] {
+            let mut app = App::with_screen(ColorMode::Ansi256, screen);
+            app.mode = DataMode::Live;
+            assert_eq!(app.unavailable_panel(), Some(screen));
+        }
+
+        let mut chat = App::with_screen(ColorMode::Ansi256, Screen::Chat);
+        chat.mode = DataMode::Live;
+        assert_eq!(chat.unavailable_panel(), None);
+
+        let mock = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+        assert_eq!(mock.unavailable_panel(), None);
     }
 
     #[test]

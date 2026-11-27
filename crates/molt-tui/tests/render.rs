@@ -57,16 +57,62 @@ fn chat_frame_at_120x40_has_shell_and_sidebar() {
 }
 
 #[test]
-fn live_mode_labels_only_chat_as_live_and_other_screens_as_mock() {
+fn live_mode_marks_demo_panels_unavailable_and_hides_their_mock_content() {
     let mut application = App::with_screen(ColorMode::Ansi256, Screen::Chat);
     application.mode = molt_tui::DataMode::Live;
     let chat = render_app(&application, 120, 40).join("\n");
-    assert!(chat.contains("live chat · mock panels"), "{chat}");
+    assert!(
+        chat.contains("live chat · demo panels unavailable"),
+        "{chat}"
+    );
+    assert!(chat.contains("MCP · demo only"), "{chat}");
+    assert!(chat.contains("CONFIG · demo only"), "{chat}");
 
-    application.screen = Screen::Tree;
-    let tree = render_app(&application, 120, 40).join("\n");
-    assert!(tree.contains("molt · v3 · mock"), "{tree}");
-    assert!(!tree.contains("live chat"), "{tree}");
+    for (screen, reason, absent) in [
+        (
+            Screen::Tree,
+            "no real session-tree store is connected",
+            "demo-6",
+        ),
+        (
+            Screen::Settings,
+            "no real config backend is connected",
+            "CONFIG DAG",
+        ),
+        (Screen::Diff, "no real diff backend is connected", "+++"),
+        (
+            Screen::Approval,
+            "no real permission engine is connected",
+            "proc.exec",
+        ),
+    ] {
+        application.screen = screen;
+        let text = render_app(&application, 120, 40).join("\n");
+        assert!(
+            text.contains("live · demo panels unavailable"),
+            "{} header:\n{text}",
+            screen.title()
+        );
+        assert!(
+            text.contains(&format!("{} · unavailable", screen.title())),
+            "{} title:\n{text}",
+            screen.title()
+        );
+        assert!(
+            text.contains("nothing on this screen reflects real state"),
+            "{}:\n{text}",
+            screen.title()
+        );
+        assert!(text.contains(reason), "{}:\n{text}", screen.title());
+        assert!(!text.contains(absent), "{}:\n{text}", screen.title());
+
+        let narrow = render_app(&application, 80, 24).join("\n");
+        assert!(
+            narrow.contains("unavailable"),
+            "{} at 80x24:\n{narrow}",
+            screen.title()
+        );
+    }
 }
 
 fn app_with_version_workspace() -> App {

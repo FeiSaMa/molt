@@ -1,7 +1,7 @@
 //! W-09 interaction tests: tree/settings/approval/diff keys and state frames.
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use molt_tui::{app, App, ColorMode, Screen};
+use molt_tui::{app, App, ColorMode, DataMode, Screen};
 use ratatui::{backend::TestBackend, Terminal};
 use unicode_width::UnicodeWidthStr;
 
@@ -36,6 +36,13 @@ fn assert_rows_fit(lines: &[String], width: u16) {
             "row {row} is {cells} cells: {line:?}"
         );
     }
+}
+
+/// A Live app whose non-Chat panels have no real backend attached.
+fn live(screen: Screen) -> App {
+    let mut application = App::with_screen(ColorMode::Ansi256, screen);
+    application.mode = DataMode::Live;
+    application
 }
 
 #[test]
@@ -592,4 +599,171 @@ fn status_messages_expire_after_three_seconds() {
     assert!(application.status_text().is_some());
     application.tick(application.now + std::time::Duration::from_secs(4));
     assert!(application.status_text().is_none());
+}
+
+#[test]
+fn live_tree_without_a_workspace_hides_demo_nodes_and_blocks_mock_actions() {
+    let mut application = live(Screen::Tree);
+    assert_eq!(application.unavailable_panel(), Some(Screen::Tree));
+    let sessions = application.mock.sessions.len();
+    let selected = application.tree.selected;
+
+    for key in ['j', 'f', 'r', 'p', ' ', '/'] {
+        press(&mut application, KeyCode::Char(key));
+    }
+
+    assert_eq!(application.mock.sessions.len(), sessions);
+    assert_eq!(application.tree.selected, selected);
+    assert!(application.tree.marks.is_empty());
+    assert!(application.tree.pinned.is_empty());
+    assert!(application.tree.rollback.is_none());
+    assert!(!application.tree.search_input);
+    assert!(application
+        .status_text()
+        .is_some_and(|status| status.contains("unavailable")));
+
+    let text = render(&application, 120, 40).join("\n");
+    assert!(text.contains("TREE · unavailable"), "{text}");
+    assert!(
+        text.contains("no real session-tree store is connected"),
+        "{text}"
+    );
+    assert!(!text.contains("demo-6"), "{text}");
+    assert!(!text.contains("NODE n"), "{text}");
+    assert!(!text.contains("f fork"), "{text}");
+}
+
+#[test]
+fn live_settings_hides_the_mock_dag_and_blocks_apply() {
+    let mut application = live(Screen::Settings);
+    assert_eq!(application.unavailable_panel(), Some(Screen::Settings));
+    let active = application.mock.active_config.clone();
+    let routing = application.settings.routing;
+
+    for key in ['j', 'a', 'd', 'r'] {
+        press(&mut application, KeyCode::Char(key));
+    }
+    press(&mut application, KeyCode::Enter);
+
+    assert_eq!(application.mock.active_config, active);
+    assert_eq!(application.settings.routing, routing);
+    assert!(!application.settings.detail_open);
+    assert!(application
+        .status_text()
+        .is_some_and(|status| status.contains("settings unavailable")));
+
+    let text = render(&application, 120, 40).join("\n");
+    assert!(text.contains("SETTINGS · unavailable"), "{text}");
+    assert!(
+        text.contains("no real config backend is connected"),
+        "{text}"
+    );
+    assert!(!text.contains("CONFIG DAG"), "{text}");
+    assert!(!text.contains("a apply"), "{text}");
+}
+
+#[test]
+fn live_diff_hides_mock_hunks_and_blocks_patch_actions() {
+    let mut application = live(Screen::Diff);
+    assert_eq!(application.unavailable_panel(), Some(Screen::Diff));
+
+    for key in ['n', 's', 'a', 'r', 'o'] {
+        press(&mut application, KeyCode::Char(key));
+    }
+
+    assert_eq!(application.diff.current, 0);
+    assert!(!application.diff.split);
+    assert!(!application.diff.restore);
+
+    let text = render(&application, 120, 40).join("\n");
+    assert!(text.contains("DIFF · unavailable"), "{text}");
+    assert!(text.contains("no real diff backend is connected"), "{text}");
+    assert!(!text.contains("+++"), "{text}");
+    assert!(!text.contains("@@"), "{text}");
+    assert!(!text.contains("3 hunks"), "{text}");
+}
+
+#[test]
+fn live_approval_hides_the_mock_request_and_blocks_decisions() {
+    let mut application = live(Screen::Approval);
+    assert_eq!(application.unavailable_panel(), Some(Screen::Approval));
+    let pending = application.mock.pending_approvals().count();
+
+    press(&mut application, KeyCode::Char('y'));
+    press_shift(&mut application, 'A');
+    press(&mut application, KeyCode::Char('x'));
+
+    assert_eq!(application.mock.pending_approvals().count(), pending);
+    assert!(application.approvals.saved_rules.is_empty());
+    assert!(application
+        .status_text()
+        .is_some_and(|status| status.contains("approval unavailable")));
+
+    let text = render(&application, 120, 40).join("\n");
+    assert!(text.contains("APPROVAL · unavailable"), "{text}");
+    assert!(
+        text.contains("no real permission engine is connected"),
+        "{text}"
+    );
+    assert!(!text.contains("proc.exec"), "{text}");
+    assert!(!text.contains("cargo test"), "{text}");
+    assert!(!text.contains("once (approved)"), "{text}");
+
+    press(&mut application, KeyCode::Esc);
+    assert_eq!(application.screen, Screen::Chat);
+    assert!(application.composer_focused);
+}
+
+#[test]
+fn live_chat_keeps_the_composer_and_opens_only_the_unavailable_approval_screen() {
+    let mut application = live(Screen::Chat);
+    assert!(application.unavailable_panel().is_none());
+
+    press(&mut application, KeyCode::Char('h'));
+    press(&mut application, KeyCode::Char('i'));
+    assert_eq!(application.input, "hi");
+
+    // `a` opens the panel, but the panel has no real backend and refuses
+    // every decision below.
+    press(&mut application, KeyCode::Esc);
+    press(&mut application, KeyCode::Char('a'));
+    assert_eq!(application.screen, Screen::Approval);
+    assert_eq!(application.unavailable_panel(), Some(Screen::Approval));
+
+    let pending = application.mock.pending_approvals().count();
+    press(&mut application, KeyCode::Char('y'));
+    assert_eq!(application.mock.pending_approvals().count(), pending);
+    assert!(application
+        .status_text()
+        .is_some_and(|status| status.contains("approval unavailable")));
+
+    press(&mut application, KeyCode::Esc);
+    assert_eq!(application.screen, Screen::Chat);
+    assert!(application.composer_focused);
+    assert_eq!(application.input, "hi");
+    assert!(!application.quit);
+}
+
+#[test]
+fn mock_mode_still_runs_the_demo_actions() {
+    let mut tree = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+    assert!(tree.unavailable_panel().is_none());
+    let sessions = tree.mock.sessions.len();
+    press(&mut tree, KeyCode::Char('f'));
+    assert_eq!(tree.mock.sessions.len(), sessions + 1);
+
+    let mut settings = App::with_screen(ColorMode::Ansi256, Screen::Settings);
+    settings.select_config(1);
+    press(&mut settings, KeyCode::Char('a'));
+    assert_eq!(settings.mock.active_config, "low/full");
+
+    let mut approval = App::with_screen(ColorMode::Ansi256, Screen::Approval);
+    press(&mut approval, KeyCode::Char('y'));
+    assert_eq!(approval.mock.pending_approvals().count(), 0);
+
+    let mut diff = App::with_screen(ColorMode::Ansi256, Screen::Diff);
+    press(&mut diff, KeyCode::Char('a'));
+    assert!(diff
+        .status_text()
+        .is_some_and(|status| status.contains("patch applied")));
 }
