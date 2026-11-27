@@ -9,7 +9,7 @@ definitions after those files have changed.
 
 *Recorded with the v1.2.0rc9 terminal UI and a synthetic workspace. No model account is needed for this workflow.*
 
-[Workspace quickstart](docs/operations/project-quickstart.md) · [Linux x86_64 prerelease](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [简体中文](README.zh-CN.md)
+[Workspace quickstart](docs/operations/project-quickstart.md) · [Independent trial record](docs/operations/independent-trial.md) · [Linux x86_64 prerelease](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [简体中文](README.zh-CN.md)
 
 - **Save related files together.** Capture prompts, configs, and tool definitions in one snapshot.
 - **Pin a snapshot for each run.** Give a job a fixed copy of its inputs, even when the active version changes.

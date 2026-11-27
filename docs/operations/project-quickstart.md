@@ -12,7 +12,12 @@ It requires no model account or provider configuration.
 ### From a Linux bundle / 使用 Linux 安装包
 
 Verify the archive against its checksum, unpack it, and run from the extracted directory.
+Use a bundle that contains `share/molt/examples/project-workspace.sh` and
+`share/molt/examples/project-reader.mjs`. For the published v1.2.0rc9 archive,
+use the source instructions below for this walkthrough.
 核对归档的 SHA-256 后解包，在解包目录执行以下命令。
+请选择包含上述两个示例文件的候选包。若拿到的是公开发布的 v1.2.0rc9 归档，
+请用下方的源码方式完成本演练。
 
 ```bash
 (
@@ -85,8 +90,16 @@ In the extracted bundle, use `share/molt/examples/project-reader.mjs`.
 文件。解包后请使用 `share/molt/examples/project-reader.mjs`。
 
 ```bash
+# From the source checkout / 在源码目录运行
 node examples/project-reader.mjs /path/to/molt ./project.json settings.json prompt.txt
+
+# From the extracted candidate / 在解包后的候选包目录运行
+node share/molt/examples/project-reader.mjs /path/to/molt ./project.json settings.json prompt.txt
 ```
+
+Replace the executable, config path and file names with those for your project.
+The quickstart stops its demo kernel when it exits.
+请替换为自己项目的可执行文件、配置路径和受管文件名。快速开始示例退出时会停止演示 kernel。
 
 An application can import the function and parse its own file formats.
 应用可以导入函数并按自己的格式解析文件。
