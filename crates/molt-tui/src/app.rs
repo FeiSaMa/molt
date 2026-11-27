@@ -37,6 +37,10 @@ use crate::{clipboard, logo, wordmark};
 
 /// Status messages disappear after three seconds of wall clock time.
 pub const STATUS_TTL: Duration = Duration::from_secs(3);
+/// `b` is reserved for TUI file recovery (C5). The forward-commit path does
+/// not exist yet, so the key must not call the CLI rollback operation.
+pub const FILE_RECOVERY_DISABLED: &str =
+    "TUI file recovery is disabled (C5 pending); use CLI export + forward commit";
 /// The fake model turn triggered by `t` in the chat view.
 pub const MOCK_STREAM_MS: u64 = 1500;
 
@@ -860,6 +864,7 @@ impl App {
             self.composer_focused = false;
             return;
         }
+        let mut file_recovery_disabled = false;
         let result = match key.code {
             KeyCode::Esc | KeyCode::Char('q') => {
                 self.version_panel_open = false;
@@ -904,9 +909,19 @@ impl App {
             }
             KeyCode::Char('a') => workspace.audit_last(),
             KeyCode::Char('u') => workspace.recover().and_then(|()| workspace.refresh()),
-            KeyCode::Char('b') => workspace.rollback_last(),
+            KeyCode::Char('b') => {
+                workspace
+                    .detail
+                    .insert(0, FILE_RECOVERY_DISABLED.to_owned());
+                file_recovery_disabled = true;
+                Ok(())
+            }
             _ => return,
         };
+        if file_recovery_disabled {
+            self.set_status(StatusLevel::Warning, FILE_RECOVERY_DISABLED);
+            return;
+        }
         if let Err(error) = result {
             let message = format!("operation failed: {error}");
             if key.code == KeyCode::Char('s') {
@@ -1233,7 +1248,9 @@ impl App {
         }
         let mut lines = vec![
             Line::from("Ctrl+V · local workspace · v save receipt · / filter · c clear"),
-            Line::from("e edit · s save · p pin reader · l read pinned · t tree · b rollback"),
+            Line::from(
+                "e edit · s save · p pin reader · l read pinned · t tree · b file recovery unavailable",
+            ),
             Line::from("u recover · h history · j/k move · PgUp/PgDn · a audit · Esc close"),
         ];
         if let Some(workspace) = workspace {
@@ -2518,6 +2535,77 @@ mod tests {
         let workspace = app.version_workspace.as_ref().unwrap();
         assert_eq!(workspace.history_filter(), "");
         assert_eq!(workspace.detail[0], "history 1-8 of 17");
+    }
+
+    #[test]
+    fn version_panel_b_reports_file_recovery_disabled_without_calling_molt() {
+        use crate::version_workspace::VersionHistory;
+        use std::os::unix::fs::PermissionsExt;
+
+        let directory = std::env::temp_dir().join(format!(
+            "molt-tui-b-disabled-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        let binary = directory.join("molt");
+        let argv_log = directory.join("argv.log");
+        std::fs::write(
+            &binary,
+            format!(
+                "#!/bin/sh\nprintf '%s\\n' \"$*\" >> '{}'\nexit 1\n",
+                argv_log.display()
+            ),
+        )
+        .unwrap();
+        let mut permissions = std::fs::metadata(&binary).unwrap().permissions();
+        permissions.set_mode(0o755);
+        std::fs::set_permissions(&binary, permissions).unwrap();
+
+        let mut app = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+        app.version_workspace = Some(VersionWorkspace {
+            binary,
+            workspace: "/tmp/synthetic".into(),
+            state_id: "synthetic-state".to_owned(),
+            generation: 2,
+            active_snapshot: Some("snapshot-b".to_owned()),
+            last_event: Some("event-b".to_owned()),
+            history_view: VersionHistory::default(),
+            pending_request: None,
+            last_save_receipt: None,
+            detail: Vec::new(),
+            draft: String::new(),
+            editing: false,
+            pinned_reader: None,
+            reader_parent: None,
+            reader_tree: None,
+            reader_snapshot: None,
+            reader_files: Vec::new(),
+            reader_selected: 0,
+            reader_preview: String::new(),
+            retired_reader_parents: Vec::new(),
+        });
+        app.version_panel_open = true;
+
+        press(&mut app, KeyCode::Char('b'));
+
+        let workspace = app.version_workspace.as_ref().unwrap();
+        assert_eq!(workspace.generation, 2);
+        assert_eq!(workspace.active_snapshot.as_deref(), Some("snapshot-b"));
+        assert_eq!(workspace.detail[0], FILE_RECOVERY_DISABLED);
+        assert!(app
+            .status_text()
+            .is_some_and(|status| status.contains(FILE_RECOVERY_DISABLED)));
+        assert!(
+            !argv_log.exists(),
+            "b must not invoke the molt CLI: {:?}",
+            std::fs::read_to_string(&argv_log)
+        );
+        drop(app);
+        std::fs::remove_dir_all(directory).unwrap();
     }
 
     #[test]

@@ -5,7 +5,7 @@
 | 状态 | Draft |
 | 日期 | 2026-11-21 |
 | 基线 | `a5ce76dbbe60`（`main`，`pyproject` 版本 `1.2.0rc8`） |
-| 实现状态 | 未交付：会话树与 TUI 文件恢复未按本 ADR 实现；C5 待修（2026-11-27，`6198139`） |
+| 实现状态 | 未交付：会话树与 TUI 文件恢复未按本 ADR 实现；B2 封堵已执行（2026-11-28），前向恢复未实现，C5 仍待修 |
 | 关联 | spec §5.3 / §5.4 / §6.2–6.4 / §6.7 / §12 F6；前置 0018 / 0021 |
 | 决策者 | 用户（X1 于 2026-11-21 确认） |
 
@@ -61,7 +61,7 @@ Spec: `docs/v3-agent-tui-spec.md`
 
 **范围解释（决定，2026-11-27）**：X1（2026-11-21 已确认）中的「文件回退」只指上表第二行——把 checkpoint 的文件状态恢复到工作区并形成新 generation。公开 CLI `molt version rollback` 是只改变活动快照的运维命令，不是文件恢复，不在 X1 范围内；本 ADR 不缩窄、不改写 2026-11-21 的 X1 原文与 D5 正文，只补充术语边界。此段是解释 / 决定，不是 2026-11-21 的原文事实。
 
-**实现状态（C5，B2 待修）**：TUI Versions 的 `rollback_last` 当前调用 `molt version rollback`（`crates/molt-tui/src/version_workspace.rs:571-591`），该调用既不是上表的「TUI 文件恢复」，也不能把 CLI 运维回退当作文件恢复。C5 列为 **B2 待修**：TUI 文件恢复改为导出 + 前向 commit，不调用 kernel `rollback`（也不借用会触发 kernel rollback 的 CLI 运维命令来冒充文件恢复）；B2 同时验证操作前后内容、generation、历史与无 kernel rollback 调用，并运行既有 CLI rollback 回归，确认它仍只改变活动快照。
+**实现状态（C5，仍未完成）**：B2 封堵已执行（2026-11-28），TUI Versions 的 `b` 不再调用 `molt version rollback`，改为明确提示文件恢复不可用；前向恢复（导出目标状态 + 前向提交新 generation）未实现，C5 仍待修。CLI `molt version rollback` 保持只改变活动快照的运维语义，不属于 X1 的文件回退。
 
 ### D6 两棵树分离
 
@@ -140,3 +140,4 @@ Spec: `docs/v3-agent-tui-spec.md`
 |---|---|---|---|
 | 2026-11-21 | `a5ce76dbbe60` | 初稿（W-04b）：会话树、leaf、fork、checkpoint、前向 commit、两棵树分离 | spec §19 |
 | 2026-11-27 | `6198139` | 补 D5.1：分开对话回退、TUI 文件恢复与 CLI 运维 rollback；明确 X1 只约束文件回退，CLI 保持只改变活动快照；C5 标 B2 待修；X2–X4 写延期/收口条件；X1 与 D5 原文保留，状态保持 Draft | 2026-11-27 设计-实现对账（C5；spec §18 Q4/Q5；`docs/operations/version-cli.md` 的 rollback 语义；`crates/molt-tui/src/version_workspace.rs` 静态核对） |
+| 2026-11-28 | `afa9a78` | B2 安全封堵：TUI `b` 不再调用 `molt version rollback`，文件恢复动作明确不可用；前向恢复未实现，C5 仍待修 | B2 封堵验收（D4/D5/D6；`crates/molt-tui/src/app.rs`、`crates/molt-tui/src/version_workspace.rs`） |

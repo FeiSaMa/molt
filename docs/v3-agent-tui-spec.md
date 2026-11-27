@@ -202,7 +202,7 @@ v2 的形态是「Rust kernel + Python `VersionSandbox` + 外部 OpenCode」。v
 | 项 | 现状 | 待修与验收 |
 |---|---|---|
 | C4 | Live 模式下 Tree / Settings / Diff / Approval 仍读 `MockData`（`app.rs`、`tree.rs`、`settings.rs`、`approval.rs`），没有 fail closed | **B1 待修**：Live 下无真实数据源的四个面板不得展示为真实状态或接受动作；显式 Mock 模式保留演示。真实 Live 可用范围限定为已连接且有真实后端支持的 Chat、Versions 路径；会话存储是本地 JSONL，不属于后端。首轮自然态 PTY 验收后逐项验证 |
-| C5 | TUI Versions 的 `rollback_last` 调用 `molt version rollback`（`version_workspace.rs:571-591`），不是 X1 要求的文件恢复 | **B2 待修**：TUI 文件恢复改为导出目标状态 + 前向提交新 generation，不调用 kernel `rollback`；B2 验证操作前后内容、generation、历史与无 kernel rollback 调用，并运行既有 CLI rollback 回归，确认其仍只改变活动快照 |
+| C5 | B2 封堵已执行（2026-11-28）：TUI `b` 不再调用 `molt version rollback`，文件恢复动作明确不可用；前向恢复未实现，C5 仍待修 | **B2 剩余**：TUI 文件恢复改为导出目标状态 + 前向提交新 generation，不调用 kernel `rollback`；验收仍需覆盖操作前后内容、generation、历史与无 kernel rollback 调用，并运行既有 CLI rollback 回归，确认其仍只改变活动快照 |
 
 C4 / C5 在 A 批只记录状态，不在本轮修复；不得把「四面板 mock」或「Versions 回退」描述为已符合目标契约。
 
@@ -644,7 +644,7 @@ ADR 0020–0025 正文已生成（W-04b / W-04c，2026-11-21），文件名为�
 | `contracts/openapi-v3.json` | 待补（W-06） | HTTP 契约 |
 | `contracts/events.schema.json` | 待补（W-06） | SSE 事件 schema |
 | `contracts/README.md` | 待补（W-06） | 契约目录说明 |
-| `crates/molt-tui/` | 已交付（P0 原型 + 部分现行路径） | 入口、6 屏、selftest、logo；Chat 直连 provider、JSONL 会话、Versions 经 CLI 已接通；Tree / Settings / Diff / Approval 仍 mock（C4 / B1 待修）；Versions 的 `rollback_last` 仍是 CLI 运维回退，文件恢复语义 C5 / B2 待修；完整 P1 agent 闭环未开始 |
+| `crates/molt-tui/` | 已交付（P0 原型 + 部分现行路径） | 入口、6 屏、selftest、logo；Chat 直连 provider、JSONL 会话、Versions 经 CLI 已接通；Tree / Settings / Diff / Approval 仍 mock（C4 / B1 待修）；B2 封堵已执行（2026-11-28）：TUI `b` 不再调用 CLI rollback，文件恢复动作明确不可用；前向恢复未实现，C5 / B2 仍待修；完整 P1 agent 闭环未开始 |
 
 TUI 阶段口径与 `docs/architecture.md`「TUI 与版本工作区」一致：当前是已交付的 P0 原型，加上 Chat 直连、JSONL 会话与 Versions CLI 这些超出纯 mock 的现行路径；TS agent / TS broker / SQLite / 权限引擎 / 工具执行器均未交付，不因 TUI 可用而视为 P1 闭环。
 

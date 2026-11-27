@@ -567,28 +567,6 @@ impl VersionWorkspace {
         self.detail.insert(0, summary);
         Ok(())
     }
-
-    pub fn rollback_last(&mut self) -> Result<()> {
-        let history = self.call(&["history"])?;
-        let events = history
-            .as_array()
-            .context("history response is not an array")?;
-        let snapshot = events
-            .last()
-            .and_then(|event| event["from"].as_str())
-            .context("no previous snapshot to roll back to")?;
-        let snapshot = snapshot.to_owned();
-        let generation = self.generation.to_string();
-        let result = self.call(&["rollback", &snapshot, "--expect-generation", &generation])?;
-        let receipt = vec![
-            format!(
-                "rollback target {}",
-                result["snapshot"].as_str().unwrap_or("unknown")
-            ),
-            "local active version changed".to_owned(),
-        ];
-        self.refresh().map(|()| self.detail.extend(receipt))
-    }
 }
 
 fn display_event_id(event: &str) -> String {

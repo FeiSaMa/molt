@@ -64,6 +64,6 @@ ADR-0019 将 v1 语义审计与迁移留在对应的历史发行归档。kernel 
 
 C1 凭据边界：现行 Chat 直连把 provider key 放在 TUI 进程内存，相对目标态扩大了暴露面（进程转储、同 UID 进程、日志 / 错误串误带）。spec INV-6 的脱敏要求仍强制：key 只从 env / `MOLT_API_KEY_HELPER` 读，不进入 argv / 日志 / 错误串，`ProviderConfig` 的 `Debug` 打码。spec INV-2 原约束保持：TUI 不直接接触 kernel socket。目标 v3 分层是 TUI `--HTTP/SSE-->` TS agent `-->` TS broker `--UDS-->` kernel；目标态 TUI 不持 provider key。该目标层尚未交付（根目录无 `agent/`，无 `.ts`、无 `package.json`）。
 
-显式传入 `--version-workspace` 后，Versions 调用配套 CLI，由 broker 通过 Unix socket 提交 kernel 事务。保存带预期 generation 和 head，冲突保留草稿；成功回执里的 generation、snapshot、event 和 request ID 来自同一次响应。版本工作区可读取显式固定的 snapshot 导出（这是只读导出路径，不是会话 Tree 面板的真实数据源）。当前回退按钮仍走 `molt version rollback` 运维路径，不是 X1 的文件恢复；C5 待 B2 修正。可用 `--molt-bin` 指定配套 CLI 的绝对路径，`--mock` 只影响此模式下的 Chat 等演示数据，Versions 的保存仍会写入所选工作区。[运行示例](operations/version-cli.md#终端界面)
+显式传入 `--version-workspace` 后，Versions 调用配套 CLI，由 broker 通过 Unix socket 提交 kernel 事务。保存带预期 generation 和 head，冲突保留草稿；成功回执里的 generation、snapshot、event 和 request ID 来自同一次响应。版本工作区可读取显式固定的 snapshot 导出（这是只读导出路径，不是会话 Tree 面板的真实数据源）。B2 封堵已执行（2026-11-28）：TUI `b` 不再调用 `molt version rollback`，文件恢复动作明确不可用；前向恢复未实现，C5 仍待修。可用 `--molt-bin` 指定配套 CLI 的绝对路径，`--mock` 只影响此模式下的 Chat 等演示数据，Versions 的保存仍会写入所选工作区。[运行示例](operations/version-cli.md#终端界面)
 
 阶段口径与 spec §21 一致：TUI 为已交付 P0 原型加部分现行路径；完整 P1 agent 闭环未开始。
