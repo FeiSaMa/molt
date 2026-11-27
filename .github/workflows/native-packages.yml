@@ -53,7 +53,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/packages/baseline" "$RUNNER_TEMP/packages/candidate"
           VERSION=1.2.0rc9 bash packaging/native/build-deb-rpm.sh \
             "$RUNNER_TEMP/packages/baseline" "$(go env GOPATH)/bin/nfpm"
-          bash packaging/native/build-deb-rpm.sh \
+          VERSION=1.2.0rc10+git3e7d01b bash packaging/native/build-deb-rpm.sh \
             "$RUNNER_TEMP/packages/candidate" "$(go env GOPATH)/bin/nfpm"
       - uses: actions/upload-artifact@v4
         with:
