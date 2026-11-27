@@ -53,6 +53,45 @@ Keep reading from that tree for the entire run.
 调用一次 `read-tree`，把返回的 `tree` 传给作业，并将 `snapshot` 和结果一并保存。
 同一次运行始终使用这一棵树。[项目级 CLI 手册](version-cli.md#项目级-cli)
 
+### Use a Node.js reader / 接入 Node.js 作业
+
+The CLI contract also works from Node.js without a Molt package dependency.
+The example calls `read-tree` once, then reads selected UTF-8 files from that
+pin. Pass the executable and config paths for your installation and project.
+
+```bash
+node examples/project-reader.mjs /path/to/molt ./project.json settings.json instructions.md
+```
+
+An application can import the same helper and parse its own file formats:
+
+```js
+import { readPinnedProject } from "./examples/project-reader.mjs";
+
+const pin = readPinnedProject(process.env.MOLT_BIN, "./project.json");
+const settings = JSON.parse(pin.files["settings.json"]);
+startJob({ settings, instructions: pin.files["instructions.md"], snapshot: pin.snapshot });
+```
+
+Only paths listed in `project.json` can be read. The helper returns the
+snapshot ID with the contents so the caller can keep the version beside its job
+record. It is an integration example; the supported interface remains the
+`molt project` CLI.
+
+该 CLI 也可由 Node.js 调用，无需安装 Molt 的 Node 包。示例只调用一次
+`read-tree`，再从固定目录读取选定的 UTF-8 文件。应用可以导入 helper 并按自己的格式解析：
+
+```js
+import { readPinnedProject } from "./examples/project-reader.mjs";
+
+const pin = readPinnedProject(process.env.MOLT_BIN, "./project.json");
+const settings = JSON.parse(pin.files["settings.json"]);
+startJob({ settings, instructions: pin.files["instructions.md"], snapshot: pin.snapshot });
+```
+
+helper 只读取 `project.json` 清单中列出的路径，并一并返回快照 ID，供调用方关联作业记录。
+它是接入示例，受支持的接口仍是 `molt project` CLI。
+
 If a save is interrupted and the result is unknown, run
 `molt project --config project.json recover` to query or recover the original
 request. Rollback switches the active local snapshot. External side effects
