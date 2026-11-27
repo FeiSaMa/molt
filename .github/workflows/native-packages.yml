@@ -161,12 +161,6 @@ jobs:
             arch)
               (cd "$RUNNER_TEMP/artifacts" && sha256sum -c SHA256SUMS)
               pacman -Syu --noconfirm --needed
-              cat > "$RUNNER_TEMP/pacman-local.conf" <<'EOF'
-          [options]
-          Architecture = auto
-          SigLevel = Required DatabaseOptional
-          LocalFileSigLevel = Optional TrustAll
-          EOF
               baseline=$(for package in "$RUNNER_TEMP/artifacts"/*.pkg.tar.zst; do
                 if bsdtar -xOf "$package" .PKGINFO | grep -qx 'pkgname = molt' \
                   && bsdtar -xOf "$package" .PKGINFO | grep -qx 'pkgver = 1.2.0rc9-1'; then
@@ -182,9 +176,9 @@ jobs:
                 fi
               done)
               test -n "$baseline" && test -n "$candidate"
-              pacman --config "$RUNNER_TEMP/pacman-local.conf" -U --noconfirm "$baseline"
+              pacman -U --noconfirm "$baseline"
               pacman -Q molt
-              pacman --config "$RUNNER_TEMP/pacman-local.conf" -U --noconfirm "$candidate"
+              pacman -U --noconfirm "$candidate"
               installed_version=$(pacman -Q molt | awk '{print $2}')
               test "$installed_version" != '1.2.0rc9-1'
               ;;
@@ -210,7 +204,7 @@ jobs:
           case "$FORMAT" in
             deb) apt-get remove -y molt ;;
             rpm) dnf remove -y molt ;;
-            arch) pacman --config "$RUNNER_TEMP/pacman-local.conf" -R --noconfirm molt ;;
+            arch) pacman -R --noconfirm molt ;;
           esac
           for path in /usr/bin/molt /usr/bin/molt-kernel /usr/bin/molt-tui \
             /usr/lib/molt/molt-python.whl /usr/lib/systemd/user/molt-kernel.service; do
