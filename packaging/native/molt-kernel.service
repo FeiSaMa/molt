@@ -1,0 +1,14 @@
+[Unit]
+Description=Molt transaction kernel
+After=default.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/molt-kernel serve --state %h/.local/share/molt/kernel
+ExecStartPost=/usr/bin/molt-kernel ping --socket %h/.local/share/molt/kernel/kernel.sock
+Restart=on-failure
+RestartSec=2
+UMask=0077
+
+[Install]
+WantedBy=default.target

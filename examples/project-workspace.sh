@@ -20,11 +20,14 @@ v() { "$cli" version --workspace "$base/w" "$@"; }
 p() { "$cli" project --config "$base/project.json" "$@"; }
 
 v init --kernel "$kernel" --synthetic
-v serve --kernel "$kernel" >"$base/kernel.log" 2>&1 &
+"$cli" version --workspace "$base/w" serve --kernel "$kernel" >"$base/kernel.log" 2>&1 &
 kernel_pid=$!
 cleanup() {
   kill "$kernel_pid" 2>/dev/null || true
   wait "$kernel_pid" 2>/dev/null || true
+  if [[ -S "$base/w/state/kernel.sock" ]]; then
+    unlink "$base/w/state/kernel.sock"
+  fi
 }
 trap cleanup EXIT
 trap 'exit 130' INT

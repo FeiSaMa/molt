@@ -22,6 +22,10 @@ test -s "$bundle/share/molt/README.md"
 for doc in kernel-cli.md version-cli.md v2-backup-restore.md v2-release-checklist.md v2-release-1.1.0.md molt-kernel-systemd.md; do
   test -s "$bundle/share/molt/docs/operations/$doc"
 done
+for path in docs/operations/{project-quickstart,independent-trial}.md \
+  examples/project-reader.mjs examples/project-workspace.sh; do
+  cmp "$repo_root/$path" "$bundle/share/molt/$path"
+done
 # Reject accidental reintroduction of competition modules or duplicate import roots.
 uv run --no-project --python 3.12.13 python - "$bundle" "$sdist" "$repo_root" <<'PYCODE'
 import pathlib
@@ -62,6 +66,13 @@ with tarfile.open(sys.argv[2], "r:gz") as archive:
     with archive.extractfile(source_licenses[0]) as source_license:
         assert source_license.read() == license_text
     names = {item.name.split("/", 1)[1] for item in archive if item.isfile()}
+    required_trial_files = {
+        "docs/operations/project-quickstart.md",
+        "docs/operations/independent-trial.md",
+        "examples/project-reader.mjs",
+        "examples/project-workspace.sh",
+    }
+    assert required_trial_files <= names, required_trial_files - names
     source_runtime = {name for name in names if name.startswith("molt/")}
     assert source_runtime == runtime, (source_runtime - runtime, runtime - source_runtime)
     forbidden = ("attic/", "bench/", "shells/", "scenarios/", "schemas/", "tests/fixtures/")

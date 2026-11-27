@@ -24,6 +24,10 @@ export MOLT_KERNEL_SOCKET="$HOME/.local/share/molt/kernel/kernel.sock"
 
 只想在独立目录试用配置与工具版本时，从解包目录按[个人工作区手册](docs/operations/version-cli.md)安装 wheel、启动随包 kernel。版本事务与内置文本工具使用随包运行时。模型提案和摘要另外需要 Bubblewrap、llama-completion 及已安装的兼容 GGUF。
 
+项目级 CLI 可供脚本或自有 Agent 工作流读取固定配置。包内的 Bash 示例可从解包目录
+演练保存、固定读取、回退和审计。Node.js 示例展示如何把快照 ID 和配置交给自己的作业。
+[项目工作区快速开始](docs/operations/project-quickstart.md)
+
 ## 离线终端试用
 
 先在归档所在目录运行 `sha256sum -c molt-1.2.0rc9-linux-x86_64.tar.gz.sha256`，再解包。在用户安装后，`"$HOME/.local/bin/molt" tui --mock` 可直接启动。裸 `molt` 在交互终端发现可用 TUI 时进入默认 live Chat；自动查找缺失、关闭 TUI 或非交互输入时显示 CLI 帮助。显式 `MOLT_TUI_BIN` 可覆盖同前缀的二进制。Ctrl+Q 退出。

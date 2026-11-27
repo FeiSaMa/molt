@@ -8,7 +8,7 @@ molt 帮你在提示词、配置或工具定义改动后，找回当时的文件
 
 *使用 v1.2.0rc9 终端界面和合成工作区录制，这套流程无需模型账号。*
 
-[工作区快速开始](docs/operations/project-quickstart.md) · [Linux x86_64 预发行版](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [English](README.md)
+[工作区快速开始](docs/operations/project-quickstart.md) · [独立试用记录模板](docs/operations/independent-trial.md) · [Linux x86_64 预发行版](https://github.com/FeiSaMa/molt/releases/tag/v1.2.0rc9) · [English](README.md)
 
 - **成组保存文件。** 把提示词、配置和工具定义保存到同一个快照。
 - **为每次运行固定输入。** 活动版本变更后，已启动的作业仍能读取原快照。

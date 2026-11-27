@@ -1,0 +1,51 @@
+name: molt
+arch: amd64
+platform: linux
+version: ${VERSION}
+version_schema: none
+section: utils
+priority: optional
+maintainer: FeiSaMa <maintainers@users.noreply.github.com>
+description: Agent workflow state transactions, versioning, and evidence audit
+homepage: https://github.com/FeiSaMa/molt
+license: MIT
+contents:
+  - src: ${STAGE}/usr/bin/molt
+    dst: /usr/bin/molt
+    file_info:
+      mode: 0755
+  - src: ${STAGE}/usr/bin/molt-kernel
+    dst: /usr/bin/molt-kernel
+    file_info:
+      mode: 0755
+  - src: ${STAGE}/usr/bin/molt-tui
+    dst: /usr/bin/molt-tui
+    file_info:
+      mode: 0755
+  - src: ${STAGE}/usr/lib/molt/molt-python.whl
+    dst: /usr/lib/molt/molt-python.whl
+  - src: ${STAGE}/usr/lib/systemd/user/molt-kernel.service
+    dst: /usr/lib/systemd/user/molt-kernel.service
+  - src: ${STAGE}/usr/share/doc/molt/
+    dst: /usr/share/doc/molt/
+  - src: ${STAGE}/usr/share/licenses/molt/
+    dst: /usr/share/licenses/molt/
+depends:
+  - python3 >= 3.11
+overrides:
+  deb:
+    depends:
+      - python3 (>= 3.11)
+      - libc6 (>= 2.43)
+  rpm:
+    depends:
+      - python3 >= 3.11
+      - glibc >= 2.43
+  archlinux:
+    depends:
+      - python
+      - glibc>=2.43
+deb:
+  compression: xz
+rpm:
+  compression: xz

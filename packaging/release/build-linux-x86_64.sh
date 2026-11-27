@@ -25,7 +25,7 @@ fi
 stage=$(mktemp -d "$out_dir/stage.XXXXXX")
 bundle="$stage/molt-$version-linux-x86_64"
 mkdir -p "$bundle/bin" "$bundle/wheels" "$bundle/share/molt"
-mkdir -p "$bundle/share/molt/docs/operations"
+mkdir -p "$bundle/share/molt/docs/operations" "$bundle/share/molt/examples"
 
 export PYTHONDONTWRITEBYTECODE=1
 uv lock --project "$repo_root" --check --python "${UV_PYTHON:-3.12.13}"
@@ -46,11 +46,15 @@ install -m 0644 "$notices" "$bundle/THIRD-PARTY-LICENSES.txt"
 install -m 0644 "$repo_root/packaging/release/README.md" "$bundle/share/molt/README.md"
 install -m 0644 "$repo_root/docs/operations/kernel-cli.md" \
   "$repo_root/docs/operations/version-cli.md" \
+  "$repo_root/docs/operations/project-quickstart.md" \
+  "$repo_root/docs/operations/independent-trial.md" \
   "$repo_root/docs/operations/v2-backup-restore.md" \
   "$repo_root/docs/operations/v2-release-checklist.md" \
   "$repo_root/docs/operations/v2-release-1.1.0.md" \
   "$repo_root/docs/operations/molt-kernel-systemd.md" \
   "$bundle/share/molt/docs/operations/"
+install -m 0644 "$repo_root/examples/project-reader.mjs" \
+  "$repo_root/examples/project-workspace.sh" "$bundle/share/molt/examples/"
 install -m 0755 "$repo_root/packaging/release/install-user.sh" "$bundle/install-user.sh"
 tar -C "$stage" -czf "$archive" "molt-$version-linux-x86_64"
 install -m 0644 "$stage/molt-$version.tar.gz" "$out_dir/"
