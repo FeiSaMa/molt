@@ -75,22 +75,28 @@ jobs:
           useradd --create-home builder
           install -d -o builder -g builder \
             "$RUNNER_TEMP/packages" \
+            "$RUNNER_TEMP/arch-baseline" \
+            "$RUNNER_TEMP/arch-candidate" \
             "$RUNNER_TEMP/cargo-target" \
             "$RUNNER_TEMP/uv-cache"
-          cp PKGBUILD "$RUNNER_TEMP/PKGBUILD.baseline"
-          sed -i "s/^pkgver=.*/pkgver='1.2.0rc9'/" "$RUNNER_TEMP/PKGBUILD.baseline"
-          chown -R builder:builder "$GITHUB_WORKSPACE"
-          chown builder:builder "$RUNNER_TEMP/PKGBUILD.baseline"
+          cp PKGBUILD "$RUNNER_TEMP/arch-baseline/PKGBUILD"
+          cp PKGBUILD "$RUNNER_TEMP/arch-candidate/PKGBUILD"
+          sed -i "s/^pkgver=.*/pkgver='1.2.0rc9'/" "$RUNNER_TEMP/arch-baseline/PKGBUILD"
+          chown builder:builder \
+            "$RUNNER_TEMP/arch-baseline/PKGBUILD" \
+            "$RUNNER_TEMP/arch-candidate/PKGBUILD"
           runuser -u builder -- env \
+            RUNNER_TEMP="$RUNNER_TEMP" \
             CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target" \
             UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" \
             PKGDEST="$RUNNER_TEMP/packages" \
-            makepkg --cleanbuild --noconfirm -p "$RUNNER_TEMP/PKGBUILD.baseline"
+            bash -c 'cd "$RUNNER_TEMP/arch-baseline" && makepkg --cleanbuild --noconfirm'
           runuser -u builder -- env \
+            RUNNER_TEMP="$RUNNER_TEMP" \
             CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target" \
             UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" \
             PKGDEST="$RUNNER_TEMP/packages" \
-            makepkg --cleanbuild --noconfirm
+            bash -c 'cd "$RUNNER_TEMP/arch-candidate" && makepkg --cleanbuild --noconfirm'
           (cd "$RUNNER_TEMP/packages" && sha256sum ./*.pkg.tar.zst > SHA256SUMS)
       - uses: actions/upload-artifact@v4
         with:
