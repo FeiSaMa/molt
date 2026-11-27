@@ -5,7 +5,7 @@ pkgdesc='Agent workflow state transactions, versioning, and evidence audit'
 arch=('x86_64')
 url='https://github.com/FeiSaMa/molt'
 license=('MIT')
-depends=('python>=3.11' 'glibc>=2.43')
+depends=('python' 'glibc>=2.43')
 makedepends=('cargo' 'uv' 'python' 'unzip')
 options=(!lto)
 _commit=3e7d01bb1ea32f307fbb109553f7bf9b968861b6

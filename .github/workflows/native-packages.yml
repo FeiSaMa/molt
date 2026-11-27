@@ -94,6 +94,7 @@ jobs:
             UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" \
             PKGDEST="$RUNNER_TEMP/packages" \
             bash -c 'cd "$RUNNER_TEMP/arch-candidate" && makepkg --cleanbuild --noconfirm'
+          chown -R runner:runner "$RUNNER_TEMP/packages"
           (cd "$RUNNER_TEMP/packages" && sha256sum ./*.pkg.tar.zst > SHA256SUMS)
       - uses: actions/upload-artifact@v4
         with:
@@ -187,7 +188,11 @@ jobs:
           test -f /usr/lib/molt/molt-python.whl
           test -f /usr/lib/systemd/user/molt-kernel.service
           molt --help
-          molt-kernel --help
+          state="$RUNNER_TEMP/package-state"
+          mkdir -p "$state"
+          molt-kernel init --state "$state/kernel"
+          MOLT_KERNEL_BACKEND=kernel MOLT_KERNEL_STATE="$state/kernel" \
+            molt --root "$state/project" doctor --json
           molt-tui --selftest --width 80 --height 24
 
           case "$FORMAT" in
