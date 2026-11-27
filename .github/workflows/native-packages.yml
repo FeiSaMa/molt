@@ -94,7 +94,7 @@ jobs:
             UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" \
             PKGDEST="$RUNNER_TEMP/packages" \
             bash -c 'cd "$RUNNER_TEMP/arch-candidate" && makepkg --cleanbuild --noconfirm'
-          chown -R runner:runner "$RUNNER_TEMP/packages"
+          chown -R "$(stat -c '%u:%g' "$GITHUB_WORKSPACE")" "$RUNNER_TEMP/packages"
           (cd "$RUNNER_TEMP/packages" && sha256sum ./*.pkg.tar.zst > SHA256SUMS)
       - uses: actions/upload-artifact@v4
         with:
