@@ -11,10 +11,11 @@
 | 日期 | 2026-11-21 |
 | 基线 | `a5ce76dbbe60`（`main`，`pyproject` 版本 `1.2.0rc8`） |
 | 状态 | Draft，待用户确认后进入实现 |
+| 修订 | 2026-11-27（基线 `6198139`）：A 批文档处置；现行/目标分离、门禁分类、0024 归档入向标记；见 §23 |
 | 决策 | 2026-11-21 用户确认 0020 X1 / 0021 X1 / 0022 X1（见文末决策记录） |
 | 作者 | Kaguya（编排）/ 用户（决策） |
 | 相关 ADR | 新增 0020–0025；修订说明 0015 / 0018 / 0019 |
-| 本轮交付 | spec + TUI mock 原型 + logo；不含完整 agent/kernel 集成 |
+| 本轮交付 | 初稿轮（2026-11-21）：spec + TUI mock 原型 + logo；不含完整 agent/kernel 集成。现行 TUI 进度见 §5.0 / §21 |
 | 文档性质 | 架构 spec；不替代 ADR，不包含完整 DDL 与 OpenAPI 正文 |
 
 ## 2. 目录
@@ -39,6 +40,8 @@
 - [19. ADR 清单](#19-adr-清单)
 - [20. 与现有 ADR 的冲突表](#20-与现有-adr-的冲突表)
 - [21. 文件清单](#21-文件清单)
+- [22. 决策记录](#22-决策记录)
+- [23. 文档修订记录](#23-文档修订记录)
 
 ## 3. 核心思想与目标
 
@@ -112,7 +115,22 @@ v2 的形态是「Rust kernel + Python `VersionSandbox` + 外部 OpenCode」。v
 
 ## 5. C4 分层
 
-### 5.1 Context
+### 5.0 现行路径（2026-11-27，基线 `6198139`）
+
+本节的目标态（5.1–5.4）尚未整体交付。现行仓库路径是：
+
+| 环节 | 现行实现 | 状态 |
+|---|---|---|
+| 入口 | `molt` 无参且 stdin/stdout 均为 TTY → `execv molt-tui`；`molt tui` 为显式子命令（`molt/cli.py`） | 已交付 |
+| Chat | `molt-tui` 进程内读 `DEEPSEEK_API_KEY` / `MOLT_API_KEY_HELPER`，直连 DeepSeek provider（`crates/molt-tui/src/provider.rs`） | 已交付；C1 |
+| 会话存储 | 本地 JSONL `$HOME/.local/share/molt/sessions/<id>.jsonl`（`session.rs`） | 已交付；不是后端服务，也不是 SQLite |
+| Versions | `--version-workspace` → 子进程 `molt version` → Python `VersionSandbox` → kernel（`version_workspace.rs`） | 已交付；spec INV-2 保持 |
+| Tree / Settings / Diff / Approval | 仍读 `MockData`；Live 模式下也不代表真实状态 | C4 / B1 待修 |
+| TS agent / TS broker / SQLite / 权限引擎 / 工具执行器 | 根目录无 `agent/`，无 `.ts`、无 `package.json` | 未交付 |
+
+现行路径的预算与门禁按现行实现判断：managed 快照仍是 64 文件 / 单文件 256 KiB / 总 2 MiB；5 000 文件 / 单文件 8 MiB / 总 256 MiB 只是 v3 workspace 目标（见 §7、§16）。
+
+### 5.1 Context（v3 目标态，未交付）
 
 ```text
 用户终端
@@ -129,11 +147,11 @@ v2 的形态是「Rust kernel + Python `VersionSandbox` + 外部 OpenCode」。v
            kernel (Rust，零改动)
 ```
 
-### 5.2 Container
+### 5.2 Container（v3 目标态，未交付）
 
 | 容器 | 技术栈 | 职责 | 明确不做 |
 |---|---|---|---|
-| `molt-tui` | Rust + ratatui 0.30.x + crossterm 0.29 | 渲染、键位、命令面板、审批 modal、diff、消费 SSE | 不连 kernel/broker、不写 DB、不持密钥 |
+| `molt-tui` | Rust + ratatui 0.30.x + crossterm 0.29 | 渲染、键位、命令面板、审批 modal、diff、消费 SSE | 不连 kernel/broker、不写 DB、不持密钥（目标态；现行见 §5.0 / C1） |
 | agent API | Node 24 + `node:http` | 路由、Bearer、SSE hub、幂等、错误映射 | 不执行工具、不直接写 kernel |
 | agent runtime | TypeScript | turn 循环、上下文、模型适配、工具调度、取消、预算 | 不持有 UI 状态 |
 | session store | SQLite WAL | 会话树、节点、事件、leaf、fork、迁移 | 不存密钥、不存 kernel 状态 |
@@ -143,7 +161,7 @@ v2 的形态是「Rust kernel + Python `VersionSandbox` + 外部 OpenCode」。v
 | broker | TypeScript 模块 | kernel 客户端、journal、index、单写者、恢复 | 不处理会话/记忆/权限 |
 | kernel | Rust | 不透明字节、提交、恢复、审计 | 不变 |
 
-### 5.3 Component
+### 5.3 Component（v3 目标态，未交付）
 
 | 容器 | 关键文件 / 模块 |
 |---|---|
@@ -156,7 +174,7 @@ v2 的形态是「Rust kernel + Python `VersionSandbox` + 外部 OpenCode」。v
 | tools | `registry.ts`、`exec.ts`、`apply_patch.ts`、`fs.ts`、`mcp.ts`、`sandbox/bwrap.ts` |
 | broker | `broker/{kernel,index,journal,publish,recover,guard}.ts` |
 
-### 5.4 依赖方向与禁止
+### 5.4 依赖方向与禁止（v3 目标态，未交付）
 
 允许的方向是：`molt`（Python CLI）`--exec-->` `molt-tui` `--HTTP/SSE-->` agent；agent 内部再指向 runtime、store、permissions、tools、memory、config；agent 的 broker 模块 `--UDS-->` kernel。依赖必须单向，否则单写者与审计边界会被绕过。
 
@@ -167,6 +185,26 @@ v2 的形态是「Rust kernel + Python `VersionSandbox` + 外部 OpenCode」。v
 | broker → 会话 / 记忆 / 权限 | broker 只做提交与恢复，避免职责耦合 |
 | kernel → 网络 / LLM | kernel 必须保持无出站依赖 |
 | 任何层直接改 `state/` | 所有写入必须经 broker 的 journal + 锁 |
+
+### 5.5 C1 凭据边界（现状与目标）
+
+**现状（2026-11-27，基线 `6198139`）**：TUI 进程内读 `DEEPSEEK_API_KEY` / `MOLT_API_KEY_HELPER`，直接向 provider 发 `Authorization: Bearer`（`crates/molt-tui/src/provider.rs`）。provider key 存在于 TUI 进程内存，相对目标态扩大了凭据暴露面：进程转储、同 UID 进程读取、日志 / 错误串误带、崩溃转储都可能触及密钥。
+
+**保留的硬约束**：
+
+- **spec INV-6**：密钥只从 env / `MOLT_API_KEY_HELPER` 读，不进入 argv / 日志 / 错误串；`ProviderConfig` 的 `Debug` 必须打码；测试与错误路径不得打印密钥。
+- **spec INV-2**：TUI 不直接接触 kernel socket。现行 Versions 路径经 CLI 子进程（`version_workspace.rs:134-146`），`crates/molt-tui/src` 无 `KernelClient` / `kernel.sock` 引用。
+
+**目标（agent 模式，未交付）**：TUI 不持 provider key；provider 调用在 agent 侧、沙箱外，工具在 bwrap 内。目标态落地前，部署方应按「TUI 进程持有 provider key」评估信任边界，不得按目标态描述假定密钥只在 agent 侧。
+
+### 5.6 待修项（C4 / C5，分别转 B1 / B2）
+
+| 项 | 现状 | 待修与验收 |
+|---|---|---|
+| C4 | Live 模式下 Tree / Settings / Diff / Approval 仍读 `MockData`（`app.rs`、`tree.rs`、`settings.rs`、`approval.rs`），没有 fail closed | **B1 待修**：Live 下无真实数据源的四个面板不得展示为真实状态或接受动作；显式 Mock 模式保留演示。真实 Live 可用范围限定为已连接且有真实后端支持的 Chat、Versions 路径；会话存储是本地 JSONL，不属于后端。首轮自然态 PTY 验收后逐项验证 |
+| C5 | TUI Versions 的 `rollback_last` 调用 `molt version rollback`（`version_workspace.rs:571-591`），不是 X1 要求的文件恢复 | **B2 待修**：TUI 文件恢复改为导出目标状态 + 前向提交新 generation，不调用 kernel `rollback`；B2 验证操作前后内容、generation、历史与无 kernel rollback 调用，并运行既有 CLI rollback 回归，确认其仍只改变活动快照 |
+
+C4 / C5 在 A 批只记录状态，不在本轮修复；不得把「四面板 mock」或「Versions 回退」描述为已符合目标契约。
 
 ## 6. 关键数据流
 
@@ -473,7 +511,9 @@ logo / mascot 按 truecolor 半块 → 256 色半块 → 16 色半块单/双色�
 
 ## 16. 测试与验收
 
-统一命令如下；P0 至少跑 Rust 门禁，P1/P2 按范围补 Python / TS 与 golden 门禁。Python 侧使用 uv 3.12.13。
+门禁分两类：**现行可执行**（本仓库当前可运行）与**未来门禁**（agent / golden 落地后才可执行）。两类不得混用；未落地的命令不得作为当前验收证据。Python 侧使用 uv 3.12.13。
+
+### 16.1 现行可执行门禁（2026-11-27）
 
 ```bash
 cargo fmt --all -- --check
@@ -483,12 +523,21 @@ cargo run -p molt-tui -- --selftest --width 80 --height 24
 cargo run -p molt-tui -- --selftest --width 120 --height 40
 uv run ruff check .
 uv run pytest
+```
+
+P0 至少跑 Rust 门禁；Python 门禁按改动范围跑。
+
+### 16.2 未来门禁（agent/ 与 golden 落地后；当前不可执行）
+
+```bash
 pnpm --dir agent install --frozen-lockfile
 pnpm --dir agent typecheck
 pnpm --dir agent lint
 pnpm --dir agent test
 pnpm --dir agent test:golden
 ```
+
+当前 `test -d agent` → 0，仓库无 `.ts` / `package.json`，故 16.2 全部不可执行；G-01…G-09 的 golden 比对同样待 TS broker 落地。P1 / P2 在 agent/ 落地后补 16.2，不降低 16.1 的既有门禁。
 
 `--width/--height` 保留在 P0 门禁（W-12b 实现）；上限 width ≤500、height ≤200；非法值（0、超限、缺一维、未配 `--selftest`）退出码 **2**。`--theme` 为 P1，不列入 P0 门禁。P1 必须新增 bwrap 参数解析与真实执行测试（扩展 P-09），并补「非 git workspace」「无 `.molt`」用例；P0 只做文档修正。
 
@@ -531,14 +580,14 @@ golden 只覆盖 managed 快照路径（`commit_file_contents` / `_record` / `_p
 | Q1 | agent 数据根与 token 路径 | 推荐默认（待确认）：`~/.local/share/molt/agent/`；token 放 `$XDG_RUNTIME_DIR/molt/agent-<uid>.json` |
 | Q2 | `node:sqlite` 是否具备 FTS5 + trigram | 待实测；不满足则改用 `better-sqlite3` |
 | Q3 | workspace 快照预算与排除项 | **已确认（2026-11-21，Q3）**：≤5 000 文件 / 单文件 ≤8 MiB / 总 ≤256 MiB + 排除项：`.git/`（整棵）、`.env*`、`.molt/memory/`、`.ssh/`、`.aws/`、`.netrc`、`.git-credentials`、`node_modules/`、`target/`、`.molt/tmp/`；拒绝 symlink；快照前 secret scan |
-| Q4 | 是否确认文件回退禁用 kernel rollback，改为导出 + 前向 commit | **已确认（2026-11-21）**：导出 + 前向 commit，禁用 kernel rollback |
+| Q4 | 是否确认文件回退禁用 kernel rollback，改为导出 + 前向 commit | **已确认（2026-11-21）**：导出 + 前向 commit，禁用 kernel rollback。X1 约束的是**文件回退**；公开 CLI `molt version rollback` 是只改变活动快照的运维命令，不属于文件回退，保持原语义（2026-11-27 解释，见 ADR-0022 D5.1） |
 | Q5 | fork 复制行还是共享节点 | 推荐默认（待确认）：复制行 |
 | Q6 | 记忆 `verified` 判定主体 | 推荐默认（待确认）：仅 `user_confirmed` + `repo_checked` 自动；`tool_verified` 二次确认 |
 | Q7 | auto 路由 N 与成功定义 | 推荐默认（待确认）：N=5；成功 = turn 完成且无用户回退 |
 | Q8 | provider 出网位置 / remote MCP 网络策略 | 推荐默认（待确认）：provider 在沙箱外；remote MCP 默认关，显式 allowlist |
 | Q9 | `always` 作用域 / TTL | 推荐默认（待确认）：session + 24 h |
 | Q10 | TUI 动效 / 鼠标默认 | 可后调；tmux 静态；鼠标 P1（默认关） |
-| Q11 | 无参 `molt` 找不到 `molt-tui` 时 exit 2 还是 help | 推荐默认（待确认）：exit 2 |
+| Q11 | 无参 `molt` 找不到 `molt-tui` 时 exit 2 还是 help | 推荐默认（待确认）：exit 2。**收口条件（2026-11-27）**：B 批自然态 PTY 验收覆盖双 TTY 启动与 `molt-tui` 缺失分支——双 TTY 缺失时 exit 2、非 TTY 时 help + exit 0；证据留存并注明日期后关闭。未收口前按推荐默认评审，不改实现 |
 | Q12 | 单 agent 多 TUI / 多 workspace 并发级别 | 推荐默认（待确认）：单 TUI 多 workspace；多客户端 P2 |
 
 | ID | 假设 | 影响 / 验证 |
@@ -552,16 +601,16 @@ golden 只覆盖 managed 快照路径（`commit_file_contents` / `_record` / `_p
 
 ## 19. ADR 清单
 
-ADR 0020–0025 正文已生成（W-04b / W-04c，2026-11-21），文件名为最终命名。每个 ADR 的阻塞项必须在接受前关闭。
+ADR 0020–0025 正文已生成（W-04b / W-04c，2026-11-21），文件名为最终命名。0020–0023 与 0025 仍在评审，阻塞项必须在接受前关闭；0024 已于 2026-11-27 归档，不再作为待接受 ADR（重启条件见其头部）。
 
 | ADR | 标题 | 范围 | 阻塞项 |
 |---|---|---|---|
-| [0020](decisions/0020-v3-layering.md) | v3 分层与进程边界 | TUI / agent / broker / kernel；`molt → molt-tui`；kernel 零改动；TUI 栈与降级 | Q1 / Q10 / Q11 / A1 |
-| [0021](decisions/0021-ts-broker.md) | TS broker 与 kernel 事务契约 | 单写者 / journal / 原 ID 恢复 / state 根隔离 / golden 字节对齐 / managed vs workspace | Q2 / A5 / A6、0021 X1 |
-| [0022](decisions/0022-session-tree.md) | 会话树、fork 与回退 | `parent_id` 树 / leaf / boundary / checkpoint / 前向 commit / 两棵树分离 | Q4 / Q5、0022 X1 |
-| [0023](decisions/0023-permissions-sandbox.md) | 权限、审批与沙箱 | last-match + deny>ask>allow / once/always/reject / 工具分级 / bwrap / 脱敏 | Q8 / Q9 |
-| [0024](decisions/0024-memory-system.md) | 记忆系统 | 双层 / frontmatter / FTS5 / 两阶段 / 去重 / 过期 / 证据 / 与 compaction 关系 | Q2 / Q6 |
-| [0025](decisions/0025-config-dag-routing.md) | 统一配置模型、配置树与自动路由 | genome 子集 / DAG / suggest / auto / 跨版本不可比 | Q7 / A6 |
+| [0020](decisions/0020-v3-layering.md) | v3 分层与进程边界 | TUI / agent / broker / kernel；`molt → molt-tui`；kernel 零改动；TUI 栈与降级 | Q1 / Q10 / Q11 / A1；Q11 / X2 收口条件见 §18 Q11 与 ADR-0020 X2（2026-11-27） |
+| [0021](decisions/0021-ts-broker.md) | TS broker 与 kernel 事务契约 | 单写者 / journal / 原 ID 恢复 / state 根隔离 / golden 字节对齐 / managed vs workspace | Q2 / A5 / A6、0021 X1；TS broker 未交付，预算来源分列见 ADR-0021 D5 |
+| [0022](decisions/0022-session-tree.md) | 会话树、fork 与回退 | `parent_id` 树 / leaf / boundary / checkpoint / 前向 commit / 两棵树分离 | Q4 / Q5、0022 X1；X1 只约束文件回退，CLI 运维 rollback 不在范围（ADR-0022 D5.1）；C5 待 B2 修 |
+| [0023](decisions/0023-permissions-sandbox.md) | 权限、审批与沙箱 | last-match + deny>ask>allow / once/always/reject / 工具分级 / bwrap / 脱敏 | Q8 / Q9；权限引擎与 v3 工具沙箱未交付（ADR-0023 D8） |
+| [0024](decisions/0024-memory-system.md) | 记忆系统 | 双层 / frontmatter / FTS5 / 两阶段 / 去重 / 过期 / 证据 / 与 compaction 关系 | Q2 / Q6；**0024 已归档（2026-11-27），重启条件见 ADR-0024 头部** |
+| [0025](decisions/0025-config-dag-routing.md) | 统一配置模型、配置树与自动路由 | genome 子集 / DAG / suggest / auto / 跨版本不可比 | Q7 / A6；genome 目标保留，DAG / 路由未交付（ADR-0025 D7） |
 
 ## 20. 与现有 ADR 的冲突表
 
@@ -574,13 +623,15 @@ ADR 0020–0025 正文已生成（W-04b / W-04c，2026-11-21），文件名为�
 | 0018 版本图 = snapshot DAG + 分支 + 合并 | 部分重叠 | 0022 明确「会话树 / 配置 DAG」两棵树；0025 定义 config DAG |
 | 0018「rollback 重发归档 manifest」 | 与文件回退方案冲突 | 0022 禁止用于文件回退，改为导出 + 前向 commit；**已确认（2026-11-21，0022 X1）** |
 | 0018 单一 broker | 继承 | 0021 落实 |
-| 0018 digest 无授权 | 继承并延伸 | 0024 延伸 |
+| 0018 digest 无授权 | 继承并延伸 | 0024 延伸（0024 已归档，2026-11-27；重启条件见其头部） |
 | 0018 受管预算 64 / 256 KiB / 2 MiB | managed 保留；workspace 另定 | **已确认（2026-11-21，0021 X1）**：≤5 000 文件 / 单文件 ≤8 MiB / 总 ≤256 MiB；排除 `.git/`（整棵）、`.env*`、`.molt/memory/`、`.ssh/`、`.aws/`、`.netrc`、`.git-credentials`、`node_modules/`、`target/`、`.molt/tmp/`；拒绝 symlink；快照前 secret scan |
-| 0019 退出 v1 | 不冲突 | 0020 / 0021 / 0022 / 0024 不引入 v1 读取；0025 沿用 genome 字段但不读 v1 state |
-| AGENTS §二 不变量 | 对齐 | spec INV-1…INV-12 + 0021 / 0023 / 0024 |
-| AGENTS §七 验收入口 | 扩展 | 新增 pnpm / golden，不降低既有门禁 |
+| 0019 退出 v1 | 不冲突 | 0020 / 0021 / 0022 / 0024 不引入 v1 读取；0025 沿用 genome 字段但不读 v1 state（0024 已归档，2026-11-27） |
+| AGENTS §二 不变量 | 对齐 | spec INV-1…INV-12 + 0021 / 0023 / 0024（0024 已归档，2026-11-27；重启条件见其头部） |
+| AGENTS §七 验收入口 | 扩展 | 新增 pnpm / golden，不降低既有门禁；pnpm / golden 属 §16.2 未来门禁，当前不可执行 |
 
 三处确认项已于 2026-11-21 由用户显式关闭：0020 X1（0015 §M0 不禁止 v3 在 kernel 之外新建 agent）、0022 X1（文件回退禁用 kernel rollback，改为导出 + 前向 commit）、0021 X1（workspace 预算 ≤5 000 文件 / 单文件 ≤8 MiB / 总 ≤256 MiB）。结论见 §22 决策记录。
+
+0024 于 2026-11-27 归档；上表对 0024 的引用保留为历史设计关系，重启条件见 ADR-0024 头部；§11 正文未因归档改动。
 
 ## 21. 文件清单
 
@@ -588,12 +639,14 @@ ADR 0020–0025 正文已生成（W-04b / W-04c，2026-11-21），文件名为�
 |---|---|---|
 | `docs/v3-agent-tui-spec.md` | 新建 | 本评审稿 |
 | 内部调研资料（目录索引） | 新建 | 目录索引与阅读顺序 |
-| `docs/decisions/0020…0025-*.md` | 已生成（W-04b / W-04c） | 六份 ADR 正文（0020 / 0021 / 0022 由 W-04b，0023–0025 由 W-04c） |
+| `docs/decisions/0020…0025-*.md` | 已生成（W-04b / W-04c） | 六份 ADR 正文（0020 / 0021 / 0022 由 W-04b，0023–0025 由 W-04c）；0024 已归档（2026-11-27） |
 | `contracts/schema.sql` | 待补（W-06） | 完整 DDL |
 | `contracts/openapi-v3.json` | 待补（W-06） | HTTP 契约 |
 | `contracts/events.schema.json` | 待补（W-06） | SSE 事件 schema |
 | `contracts/README.md` | 待补（W-06） | 契约目录说明 |
-| `crates/molt-tui/`（原型路径） | W-08/W-09 进行中 | TUI mock 原型与 logo |
+| `crates/molt-tui/` | 已交付（P0 原型 + 部分现行路径） | 入口、6 屏、selftest、logo；Chat 直连 provider、JSONL 会话、Versions 经 CLI 已接通；Tree / Settings / Diff / Approval 仍 mock（C4 / B1 待修）；Versions 的 `rollback_last` 仍是 CLI 运维回退，文件恢复语义 C5 / B2 待修；完整 P1 agent 闭环未开始 |
+
+TUI 阶段口径与 `docs/architecture.md`「TUI 与版本工作区」一致：当前是已交付的 P0 原型，加上 Chat 直连、JSONL 会话与 Versions CLI 这些超出纯 mock 的现行路径；TS agent / TS broker / SQLite / 权限引擎 / 工具执行器均未交付，不因 TUI 可用而视为 P1 闭环。
 
 本文档只记录已确认的架构方向与待确认项，不包含实现代码；任何偏离内容包的技术事实都应回到 ADR 评审中解决。
 
@@ -608,3 +661,20 @@ ADR 0020–0025 正文已生成（W-04b / W-04c，2026-11-21），文件名为�
 | 0022 X1 | 2026-11-21 | `/tree` 文件回退采用「导出 + 前向 commit」，**禁用** kernel `rollback`；历史只增不改，回退留下新 generation。 | ADR-0022 §2 D5、§8 X1；§20 |
 
 三处确认项关闭后，0020 / 0021 / 0022 不再被该三项阻塞，可进入评审接受流程；其余开放项（0020 X2–X4、0021 X2–X4、0022 X2–X4，以及 §18 Q1–Q12 / A1–A6）仍按「待确认 / 待实测 / 假设」处理。本节只记录结论，不改写正文技术内容。
+
+### 22.1 2026-11-27 ADR 处置（A 批）
+
+| 项 | 日期 | 结论 | 落点 |
+|---|---|---|---|
+| 0024 | 2026-11-27 | 归档；原文件与正文保留；重启条件见头部 | ADR-0024 状态头 / §10；§19 / §20 |
+| 0020–0023 / 0025 | 2026-11-27 | 保持 Draft；按对账修订现行 / 目标、交付状态、未决与延期条件 | 各 ADR §10 修订记录 |
+| C1 | 2026-11-27 | 现状直连如实记录；spec INV-6 / INV-2 原约束保留；目标态 TUI 不持 provider key | §5.5；`architecture.md` |
+| C4 / C5 | 2026-11-27 | 分别转 B1 / B2 待修，不在 A 批关闭 | §5.6；ADR-0022 D5.1 |
+| 0020 X4 / Q11-X2 | 2026-11-27 | X4 本轮不拆 0026，记延期触发条件；Q11/X2 记双 TTY / 缺 binary 收口条件与日期 | ADR-0020 §8；§18 Q11 |
+
+## 23. 文档修订记录
+
+| 日期 | 基线 | 修订内容 | 来源 |
+|---|---|---|---|
+| 2026-11-21 | `a5ce76dbbe60` | Draft v1 初稿（W-04a）；§19 ADR 清单 | 本文档历史 |
+| 2026-11-27 | `6198139` | A 批：§5.0 现行路径、§5.5 C1、§5.6 C4/C5；§16 门禁分类；§18 Q4/Q11；§19 / §20 状态同步与 0024 归档标记；§21 TUI 阶段；§19 六条链接核对为 `decisions/` | 2026-11-27 设计-实现对账（spec §18 Q1–Q12 / A1–A6、ADR §8 X1–X4；仓库静态核对） |
