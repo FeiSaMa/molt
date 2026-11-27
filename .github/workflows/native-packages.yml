@@ -51,9 +51,9 @@ jobs:
       - name: Build baseline and candidate packages
         run: |
           mkdir -p "$RUNNER_TEMP/packages/baseline" "$RUNNER_TEMP/packages/candidate"
-          VERSION=1.2.0rc9 packaging/native/build-deb-rpm.sh \
+          VERSION=1.2.0rc9 bash packaging/native/build-deb-rpm.sh \
             "$RUNNER_TEMP/packages/baseline" "$(go env GOPATH)/bin/nfpm"
-          packaging/native/build-deb-rpm.sh \
+          bash packaging/native/build-deb-rpm.sh \
             "$RUNNER_TEMP/packages/candidate" "$(go env GOPATH)/bin/nfpm"
       - uses: actions/upload-artifact@v4
         with:
@@ -73,16 +73,24 @@ jobs:
       - name: Build baseline and candidate packages
         run: |
           useradd --create-home builder
-          install -d -o builder -g builder "$RUNNER_TEMP/packages"
+          install -d -o builder -g builder \
+            "$RUNNER_TEMP/packages" \
+            "$RUNNER_TEMP/cargo-target" \
+            "$RUNNER_TEMP/uv-cache"
           cp PKGBUILD "$RUNNER_TEMP/PKGBUILD.baseline"
           sed -i "s/^pkgver=.*/pkgver='1.2.0rc9'/" "$RUNNER_TEMP/PKGBUILD.baseline"
-          chown -R builder:builder "$GITHUB_WORKSPACE" "$RUNNER_TEMP"
-          runuser -u builder -- env CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target" \
-            UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" makepkg --cleanbuild --noconfirm \
-            --pkgdest "$RUNNER_TEMP/packages" -p "$RUNNER_TEMP/PKGBUILD.baseline"
-          runuser -u builder -- env CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target" \
-            UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" makepkg --cleanbuild --noconfirm \
-            --pkgdest "$RUNNER_TEMP/packages"
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          chown builder:builder "$RUNNER_TEMP/PKGBUILD.baseline"
+          runuser -u builder -- env \
+            CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target" \
+            UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" \
+            PKGDEST="$RUNNER_TEMP/packages" \
+            makepkg --cleanbuild --noconfirm -p "$RUNNER_TEMP/PKGBUILD.baseline"
+          runuser -u builder -- env \
+            CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target" \
+            UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" \
+            PKGDEST="$RUNNER_TEMP/packages" \
+            makepkg --cleanbuild --noconfirm
           (cd "$RUNNER_TEMP/packages" && sha256sum ./*.pkg.tar.zst > SHA256SUMS)
       - uses: actions/upload-artifact@v4
         with:
