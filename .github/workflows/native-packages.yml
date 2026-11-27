@@ -77,7 +77,6 @@ jobs:
             "$RUNNER_TEMP/packages" \
             "$RUNNER_TEMP/arch-baseline" \
             "$RUNNER_TEMP/arch-candidate" \
-            "$RUNNER_TEMP/cargo-target" \
             "$RUNNER_TEMP/uv-cache"
           cp PKGBUILD "$RUNNER_TEMP/arch-baseline/PKGBUILD"
           cp PKGBUILD "$RUNNER_TEMP/arch-candidate/PKGBUILD"
@@ -87,13 +86,11 @@ jobs:
             "$RUNNER_TEMP/arch-candidate/PKGBUILD"
           runuser -u builder -- env \
             RUNNER_TEMP="$RUNNER_TEMP" \
-            CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target" \
             UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" \
             PKGDEST="$RUNNER_TEMP/packages" \
             bash -c 'cd "$RUNNER_TEMP/arch-baseline" && makepkg --cleanbuild --noconfirm'
           runuser -u builder -- env \
             RUNNER_TEMP="$RUNNER_TEMP" \
-            CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target" \
             UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" \
             PKGDEST="$RUNNER_TEMP/packages" \
             bash -c 'cd "$RUNNER_TEMP/arch-candidate" && makepkg --cleanbuild --noconfirm'
