@@ -167,8 +167,20 @@ jobs:
           SigLevel = Required DatabaseOptional
           LocalFileSigLevel = Optional TrustAll
           EOF
-              baseline=$(find "$RUNNER_TEMP/artifacts" -name '*1.2.0rc9-1-x86_64.pkg.tar.zst' -print -quit)
-              candidate=$(find "$RUNNER_TEMP/artifacts" -name 'molt-1.2.0rc10+git*-1-x86_64.pkg.tar.zst' -print -quit)
+              baseline=$(for package in "$RUNNER_TEMP/artifacts"/*.pkg.tar.zst; do
+                if bsdtar -xOf "$package" .PKGINFO | grep -qx 'pkgname = molt' \
+                  && bsdtar -xOf "$package" .PKGINFO | grep -qx 'pkgver = 1.2.0rc9-1'; then
+                  printf '%s\n' "$package"
+                  break
+                fi
+              done)
+              candidate=$(for package in "$RUNNER_TEMP/artifacts"/*.pkg.tar.zst; do
+                if bsdtar -xOf "$package" .PKGINFO | grep -qx 'pkgname = molt' \
+                  && bsdtar -xOf "$package" .PKGINFO | grep -q '^pkgver = 1.2.0rc10+git'; then
+                  printf '%s\n' "$package"
+                  break
+                fi
+              done)
               test -n "$baseline" && test -n "$candidate"
               pacman --config "$RUNNER_TEMP/pacman-local.conf" -U --noconfirm "$baseline"
               pacman -Q molt
