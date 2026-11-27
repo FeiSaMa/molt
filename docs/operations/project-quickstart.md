@@ -1,16 +1,36 @@
 # Project workspace quickstart / 项目工作区快速开始
 
 Run this example on Linux x86_64 with Bash, jq, [uv](https://docs.astral.sh/uv/),
-and [Rust](https://rustup.rs/). The build uses Python 3.12.13 and the repository's
-pinned Rust toolchain. The example starts its own kernel and uses synthetic
-files. It requires no model account or provider configuration.
+and Python 3.12.13. The example starts its own kernel and uses synthetic files.
+It requires no model account or provider configuration.
 
-在 Linux x86_64 上准备 Bash、jq、uv 和 Rust。构建使用 Python 3.12.13 和仓库固定的 Rust
-工具链。示例启动独立 kernel 并使用合成文件，无需模型账号或 provider 配置。
+在 Linux x86_64 上准备 Bash、jq、uv 和 Python 3.12.13。
+示例启动独立 kernel 并使用合成文件，无需模型账号或 provider 配置。
 
 ## Run the example / 运行示例
 
-Clone the repository and run the following in Bash. 克隆仓库后在 Bash 中执行以下命令。
+### From a Linux bundle / 使用 Linux 安装包
+
+Verify the archive against its checksum, unpack it, and run from the extracted directory.
+核对归档的 SHA-256 后解包，在解包目录执行以下命令。
+
+```bash
+(
+  set -e
+  demo_env=$(mktemp -d /tmp/molt-demo-env.XXXXXX)
+  export PYTHONDONTWRITEBYTECODE=1
+  uv venv --python 3.12.13 "$demo_env/venv"
+  uv pip install --no-index --python "$demo_env/venv/bin/python" ./wheels/molt-*.whl
+  TMPDIR=/tmp bash ./share/molt/examples/project-workspace.sh \
+    "$demo_env/venv/bin/molt" ./bin/molt-kernel
+)
+```
+
+### From source / 使用源码
+
+Install [Rust](https://rustup.rs/) to build with the repository's pinned toolchain.
+Clone the repository and run the following in Bash.
+安装 Rust 后克隆仓库，在 Bash 中执行以下命令。
 
 ```bash
 git clone https://github.com/FeiSaMa/molt.git
@@ -18,6 +38,7 @@ cd molt
 (
   set -e
   build=$(mktemp -d /tmp/molt-build.XXXXXX)
+  export PYTHONDONTWRITEBYTECODE=1
   UV_PROJECT_ENVIRONMENT="$build/venv" uv sync --locked --python 3.12.13
   cargo build --locked -p molt-kernel --target-dir "$build/target"
   TMPDIR=/tmp bash examples/project-workspace.sh \
@@ -56,41 +77,34 @@ Keep reading from that tree for the entire run.
 ### Use a Node.js reader / 接入 Node.js 作业
 
 The CLI contract also works from Node.js without a Molt package dependency.
-The example calls `read-tree` once, then reads selected UTF-8 files from that
-pin. Pass the executable and config paths for your installation and project.
+Start your project's kernel and save a version before running the reader.
+Pass your Molt executable, project config and the UTF-8 files you want to read.
+In the extracted bundle, use `share/molt/examples/project-reader.mjs`.
+
+先启动项目的 kernel 并保存一个版本，再传入 Molt 可执行文件、项目配置和要读取的 UTF-8
+文件。解包后请使用 `share/molt/examples/project-reader.mjs`。
 
 ```bash
-node examples/project-reader.mjs /path/to/molt ./project.json settings.json instructions.md
+node examples/project-reader.mjs /path/to/molt ./project.json settings.json prompt.txt
 ```
 
-An application can import the same helper and parse its own file formats:
+An application can import the function and parse its own file formats.
+应用可以导入函数并按自己的格式解析文件。
 
 ```js
 import { readPinnedProject } from "./examples/project-reader.mjs";
 
 const pin = readPinnedProject(process.env.MOLT_BIN, "./project.json");
 const settings = JSON.parse(pin.files["settings.json"]);
-startJob({ settings, instructions: pin.files["instructions.md"], snapshot: pin.snapshot });
+startJob({ settings, instructions: pin.files["prompt.txt"], snapshot: pin.snapshot });
 ```
 
-Only paths listed in `project.json` can be read. The helper returns the
-snapshot ID with the contents so the caller can keep the version beside its job
-record. It is an integration example; the supported interface remains the
-`molt project` CLI.
+The example calls `read-tree` once, reads the selected paths from the
+`project.json` file list and returns the snapshot ID with the contents.
+Store that ID with the job record.
 
-该 CLI 也可由 Node.js 调用，无需安装 Molt 的 Node 包。示例只调用一次
-`read-tree`，再从固定目录读取选定的 UTF-8 文件。应用可以导入 helper 并按自己的格式解析：
-
-```js
-import { readPinnedProject } from "./examples/project-reader.mjs";
-
-const pin = readPinnedProject(process.env.MOLT_BIN, "./project.json");
-const settings = JSON.parse(pin.files["settings.json"]);
-startJob({ settings, instructions: pin.files["instructions.md"], snapshot: pin.snapshot });
-```
-
-helper 只读取 `project.json` 清单中列出的路径，并一并返回快照 ID，供调用方关联作业记录。
-它是接入示例，受支持的接口仍是 `molt project` CLI。
+示例只调用一次 `read-tree`，从固定目录读取 `project.json` 清单中选定的路径。
+返回的快照 ID 可随作业结果保存。
 
 If a save is interrupted and the result is unknown, run
 `molt project --config project.json recover` to query or recover the original

@@ -25,6 +25,9 @@ kernel_pid=$!
 cleanup() {
   kill "$kernel_pid" 2>/dev/null || true
   wait "$kernel_pid" 2>/dev/null || true
+  if [[ -S "$base/w/state/kernel.sock" ]]; then
+    unlink "$base/w/state/kernel.sock"
+  fi
 }
 trap cleanup EXIT
 trap 'exit 130' INT

@@ -44,6 +44,7 @@ only-include = [
   "pyproject.toml", "uv.lock", "README.md", "README.zh-CN.md", "LICENSE",
   "packaging", "docs/operations", "tests/test_kernel_transactions.py",
   "tests/test_project_cli.py", "tests/test_version_cli.py",
+  "examples/project-reader.mjs", "examples/project-workspace.sh",
 ]
 
 [tool.ruff]
