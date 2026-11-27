@@ -58,7 +58,7 @@ wheels = [
 
 [[package]]
 name = "molt"
-version = "1.2.0rc9"
+version = "1.2.0rc10"
 source = { editable = "." }
 
 [package.optional-dependencies]

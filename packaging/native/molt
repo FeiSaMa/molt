@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export PYTHONPATH=/usr/lib/molt/molt-python.whl${PYTHONPATH:+:$PYTHONPATH}
+exec /usr/bin/python3 -c 'from molt.cli import main; main()' "$@"

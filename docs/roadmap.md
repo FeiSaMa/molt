@@ -38,12 +38,12 @@ I01–I07 已在本地 rc8 候选包上完成单用户安装、升级与恢复�
 
 ### 工程执行顺序
 
-R01、R02 和 R03 的本地候选验收均已通过。R04 仅在独立试用或后续复现不能由现有 CLI 和手册处理的恢复缺口时启动。GitHub-hosted runner 与未参与实现者的试用反馈尚未取得。
+R01、R02 和 R03 的本地候选验收均已通过。候选 commit `3e7d01bb1ea32f307fbb109553f7bf9b968861b6` 的 GitHub-hosted CI run `45972772110` 六个 job 全部成功。R04 仅在独立试用或后续复现不能由现有 CLI 和手册处理的恢复缺口时启动。未参与实现者的试用反馈尚未取得。
 
 | 任务 | 改动入口 | 验收 |
 | --- | --- | --- |
-| R01 · 源码回归 | `ci.yml` 中用开启 `fault-injection` 的 debug kernel 运行 `tests/test_project_cli.py`，并保留现有普通 kernel 集成步骤。CI 接线已核对。 | 本地 Linux UDS 于 2026-11-27 通过 7/7，覆盖固定读取、未保存编辑保护、丢失回执恢复，以及两个故障点和两种路径状态下用原 request ID 恢复并保留后续编辑。GitHub-hosted runner 尚未观察。 |
-| R02 · 安装包冒烟 | `verify-bundle.sh` 核对随包手册和示例，并从仓库外调用已安装 wheel 与随包 kernel。 | 本地 Linux x86_64 于 2026-11-27 通过：归档 SHA 校验、安装器升级/回滚检查、8 项包外事务测试，以及解包后的 Bash 和 Node 示例。固定 B 后回退到 A，逐字节核对旧、新读者，并按事件取回 B 的保存理由；同时核对恢复后的工作区、编辑与旧导出。GitHub-hosted runner 尚未观察。 |
+| R01 · 源码回归 | `ci.yml` 中用开启 `fault-injection` 的 debug kernel 运行 `tests/test_project_cli.py`，并保留现有普通 kernel 集成步骤。CI 接线已核对。 | 本地 Linux UDS 于 2026-11-27 通过 7/7，覆盖固定读取、未保存编辑保护、丢失回执恢复，以及两个故障点和两种路径状态下用原 request ID 恢复并保留后续编辑。候选 commit `3e7d01bb1ea32f307fbb109553f7bf9b968861b6` 的 hosted run `45972772110` 中相关 CI jobs 成功。 |
+| R02 · 安装包冒烟 | `verify-bundle.sh` 核对随包手册和示例，并从仓库外调用已安装 wheel 与随包 kernel。 | 本地 Linux x86_64 于 2026-11-27 通过：归档 SHA 校验、安装器升级/回滚检查、8 项包外事务测试，以及解包后的 Bash 和 Node 示例。固定 B 后回退到 A，逐字节核对旧、新读者，并按事件取回 B 的保存理由；同时核对恢复后的工作区、编辑与旧导出。候选 hosted run `45972772110` 的 `kernel` job（含候选 bundle 构建和仓库外冒烟）成功。 |
 | R03 · 迁址演练 | 从 `molt/project_cli.py` 的 `Project._load` 和 `project-session.json` 入手。独立保存已提交工作区、未保存编辑和旧导出，用恢复副本及新目录配置演练。另做带未决请求的副本。 | 本地 synthetic 候选于 2026-11-27 通过。单独迁移 workspace 可续用原 session；分别迁移 workspace、edits、exports 会拒绝旧 session 重绑且保留备份。新工作副本核对活动快照、审计、旧导出及 add/modify/delete 草稿，generation 不变。两个 kernel 断线窗口均用原 ID 恢复，5 项迁址/恢复回归通过。迁移不自动重绑绝对路径，按手册用新工作副本和人工编辑恢复。 |
 | R04 · 修复恢复缺口 | 仅在 R03 复现阻塞时实施。先判定是否能由安全的手工作业解决。若需要 CLI 操作，先明确哪些路径可重新绑定、哪些会话与未决事务必须拒绝。 | 用迁址回归证明恢复可重复，失败保留原文件、原请求及审计，原路径上的活跃作业和既有导出仍按各自版本读取。 |
 

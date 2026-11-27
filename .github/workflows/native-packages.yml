@@ -1,0 +1,191 @@
+name: native-packages
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "PKGBUILD"
+      - "packaging/native/**"
+      - "packaging/release/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "crates/**"
+      - ".github/workflows/native-packages.yml"
+  push:
+    branches: [main]
+    paths:
+      - "PKGBUILD"
+      - "packaging/native/**"
+      - "packaging/release/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "crates/**"
+      - ".github/workflows/native-packages.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-deb-rpm:
+    name: build deb and rpm
+    runs-on: ubuntu-latest
+    container: fedora:rawhide
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: dnf install -y gcc gcc-c++ git make openssl-devel pkgconf-pkg-config python3-devel go tar gzip
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.100.0
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12.13"
+      - name: Install nfpm
+        run: |
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.49.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Build baseline and candidate packages
+        run: |
+          mkdir -p "$RUNNER_TEMP/packages/baseline" "$RUNNER_TEMP/packages/candidate"
+          VERSION=1.2.0rc9 packaging/native/build-deb-rpm.sh \
+            "$RUNNER_TEMP/packages/baseline" "$(go env GOPATH)/bin/nfpm"
+          packaging/native/build-deb-rpm.sh \
+            "$RUNNER_TEMP/packages/candidate" "$(go env GOPATH)/bin/nfpm"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-deb-rpm
+          path: ${{ runner.temp }}/packages
+          if-no-files-found: error
+          retention-days: 7
+
+  build-arch:
+    name: build Arch packages
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: pacman -Syu --noconfirm --needed base-devel git rust uv python unzip
+      - name: Build baseline and candidate packages
+        run: |
+          useradd --create-home builder
+          install -d -o builder -g builder "$RUNNER_TEMP/packages"
+          cp PKGBUILD "$RUNNER_TEMP/PKGBUILD.baseline"
+          sed -i "s/^pkgver=.*/pkgver='1.2.0rc9'/" "$RUNNER_TEMP/PKGBUILD.baseline"
+          chown -R builder:builder "$GITHUB_WORKSPACE" "$RUNNER_TEMP"
+          runuser -u builder -- env CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target" \
+            UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" makepkg --cleanbuild --noconfirm \
+            --pkgdest "$RUNNER_TEMP/packages" -p "$RUNNER_TEMP/PKGBUILD.baseline"
+          runuser -u builder -- env CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target" \
+            UV_CACHE_DIR="$RUNNER_TEMP/uv-cache" makepkg --cleanbuild --noconfirm \
+            --pkgdest "$RUNNER_TEMP/packages"
+          (cd "$RUNNER_TEMP/packages" && sha256sum ./*.pkg.tar.zst > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-arch
+          path: ${{ runner.temp }}/packages
+          if-no-files-found: error
+          retention-days: 7
+
+  install-upgrade-remove:
+    name: ${{ matrix.distro }} install upgrade remove
+    needs: [build-deb-rpm, build-arch]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: Debian sid
+            image: debian:sid
+            format: deb
+          - distro: Fedora Rawhide
+            image: fedora:rawhide
+            format: rpm
+          - distro: Arch Linux
+            image: archlinux:latest
+            format: arch
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-${{ matrix.format == 'arch' && 'arch' || 'deb-rpm' }}
+          path: ${{ runner.temp }}/artifacts
+      - name: Install, upgrade, verify, and remove with native package manager
+        env:
+          FORMAT: ${{ matrix.format }}
+        run: |
+          set -euo pipefail
+          case "$FORMAT" in
+            deb)
+              (cd "$RUNNER_TEMP/artifacts/baseline" && sha256sum -c SHA256SUMS)
+              (cd "$RUNNER_TEMP/artifacts/candidate" && sha256sum -c SHA256SUMS)
+              apt-get update
+              apt-get install -y ca-certificates
+              baseline=$(find "$RUNNER_TEMP/artifacts/baseline" -name '*.deb' -print -quit)
+              candidate=$(find "$RUNNER_TEMP/artifacts/candidate" -name '*.deb' -print -quit)
+              apt-get install -y "$baseline"
+              test "$(dpkg-query -W -f='${Version}' molt)" = '1.2.0rc9'
+              apt-get install -y "$candidate"
+              installed_version=$(dpkg-query -W -f='${Version}' molt)
+              test "$installed_version" != '1.2.0rc9'
+              ;;
+            rpm)
+              (cd "$RUNNER_TEMP/artifacts/baseline" && sha256sum -c SHA256SUMS)
+              (cd "$RUNNER_TEMP/artifacts/candidate" && sha256sum -c SHA256SUMS)
+              dnf install -y dnf-plugins-core
+              baseline=$(find "$RUNNER_TEMP/artifacts/baseline" -name '*.rpm' -print -quit)
+              candidate=$(find "$RUNNER_TEMP/artifacts/candidate" -name '*.rpm' -print -quit)
+              dnf install -y "$baseline"
+              rpm -q molt
+              dnf install -y "$candidate"
+              installed_version=$(rpm -q --qf '%{VERSION}\n' molt)
+              test "$installed_version" != '1.2.0rc9'
+              ;;
+            arch)
+              (cd "$RUNNER_TEMP/artifacts" && sha256sum -c SHA256SUMS)
+              pacman -Syu --noconfirm --needed
+              cat > "$RUNNER_TEMP/pacman-local.conf" <<'EOF'
+          [options]
+          Architecture = auto
+          SigLevel = Required DatabaseOptional
+          LocalFileSigLevel = Optional TrustAll
+          EOF
+              baseline=$(find "$RUNNER_TEMP/artifacts" -name '*1.2.0rc9-1-x86_64.pkg.tar.zst' -print -quit)
+              candidate=$(find "$RUNNER_TEMP/artifacts" -name '*+git*-1-x86_64.pkg.tar.zst' -print -quit)
+              test -n "$baseline" && test -n "$candidate"
+              pacman --config "$RUNNER_TEMP/pacman-local.conf" -U --noconfirm "$baseline"
+              pacman -Q molt
+              pacman --config "$RUNNER_TEMP/pacman-local.conf" -U --noconfirm "$candidate"
+              installed_version=$(pacman -Q molt | awk '{print $2}')
+              test "$installed_version" != '1.2.0rc9-1'
+              ;;
+          esac
+
+          export HOME="$RUNNER_TEMP/molt-package-home"
+          export XDG_STATE_HOME="$HOME/.local/state"
+          mkdir -p "$HOME/.local/share/molt"
+          printf 'keep-me\n' > "$HOME/.local/share/molt/user-data"
+          test -x /usr/bin/molt
+          test -x /usr/bin/molt-kernel
+          test -x /usr/bin/molt-tui
+          test -f /usr/lib/molt/molt-python.whl
+          test -f /usr/lib/systemd/user/molt-kernel.service
+          molt --help
+          molt-kernel --help
+          molt-tui --selftest --width 80 --height 24
+
+          case "$FORMAT" in
+            deb) apt-get remove -y molt ;;
+            rpm) dnf remove -y molt ;;
+            arch) pacman --config "$RUNNER_TEMP/pacman-local.conf" -R --noconfirm molt ;;
+          esac
+          for path in /usr/bin/molt /usr/bin/molt-kernel /usr/bin/molt-tui \
+            /usr/lib/molt/molt-python.whl /usr/lib/systemd/user/molt-kernel.service; do
+            test ! -e "$path"
+          done
+          test "$(cat "$HOME/.local/share/molt/user-data")" = 'keep-me'
