@@ -1,9 +1,10 @@
 //! Calls the existing `molt version` CLI for an explicitly selected workspace.
 
+use std::collections::BTreeMap;
 use std::fs::{self, DirBuilder};
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Output};
 
 use anyhow::{bail, Context, Result};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -12,6 +13,13 @@ use serde_json::Value;
 
 const HISTORY_PAGE_SIZE: usize = 8;
 const READER_PREVIEW_BYTES: usize = 4096;
+/// Managed-file budget from `docs/operations/version-cli.md` and
+/// `molt/version_files.py`.
+const MAX_MANAGED_FILES: usize = 64;
+const MAX_MANAGED_FILE_BYTES: u64 = 256 * 1024;
+const MAX_MANAGED_TREE_BYTES: u64 = 2 * 1024 * 1024;
+const RECOVERY_REASON: &str = "TUI file recovery to the previous main tree";
+const RECOVERY_SOURCE: &str = "local TUI operator";
 
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct HistoryEvent {
@@ -75,6 +83,155 @@ pub struct SaveReceipt {
     pub request_id: String,
 }
 
+/// How a `b` file-recovery attempt ended. Only [`Restored`](Self::Restored) and
+/// [`NoEffect`](Self::NoEffect) establish a usable result; the other two keep
+/// the user from blind retries.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FileRecoveryOutcome {
+    Restored,
+    NoEffect,
+    Rejected,
+    Unknown,
+}
+
+/// Lines that the Versions panel and the status line render after `b`.
+#[derive(Debug, Clone)]
+pub struct FileRecoveryReport {
+    pub outcome: FileRecoveryOutcome,
+    pub lines: Vec<String>,
+    /// Request ID named by the CLI, when it named a trusted one. A pending ID
+    /// from another action is recorded here but labelled as foreign.
+    pub request_id: Option<String>,
+}
+
+impl FileRecoveryReport {
+    pub fn headline(&self) -> String {
+        self.lines.first().cloned().unwrap_or_default()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct WorkspaceStatus {
+    state_id: String,
+    generation: u64,
+    active: Option<String>,
+    last_event: Option<String>,
+    main_head: Option<String>,
+    pending_request: Option<String>,
+    branch_count: usize,
+}
+
+impl WorkspaceStatus {
+    fn parse(value: &Value) -> Result<Self> {
+        let branches = value["branches"]
+            .as_object()
+            .context("status omitted branches")?;
+        let generation = value["generation"]
+            .as_u64()
+            .context("status omitted generation")?;
+        let current_generation = value["current"]["generation"].as_u64();
+        if generation == 0 && !value["current"].is_null() {
+            bail!("status generation 0 carries a committed current pointer");
+        }
+        if generation > 0 && current_generation != Some(generation) {
+            bail!("status current generation does not match generation");
+        }
+        Ok(Self {
+            state_id: value["state_id"]
+                .as_str()
+                .context("status omitted state_id")?
+                .to_owned(),
+            generation,
+            active: value["active"].as_str().map(str::to_owned),
+            last_event: value["last_event"].as_str().map(str::to_owned),
+            main_head: branches
+                .get("main")
+                .and_then(Value::as_str)
+                .map(str::to_owned),
+            pending_request: value["pending_request"].as_str().map(str::to_owned),
+            branch_count: branches.len(),
+        })
+    }
+
+    /// First difference against the cached baseline, or `None` when the panel
+    /// baseline still describes this status (pending is checked separately).
+    fn baseline_mismatch(&self, baseline: &Self) -> Option<String> {
+        if self.state_id != baseline.state_id {
+            return Some(format!(
+                "state_id {} (baseline {})",
+                self.state_id, baseline.state_id
+            ));
+        }
+        if self.generation != baseline.generation {
+            return Some(format!(
+                "generation {} (baseline {})",
+                self.generation, baseline.generation
+            ));
+        }
+        if self.active != baseline.active {
+            return Some(format!(
+                "active {} (baseline {})",
+                display_optional(self.active.as_deref()),
+                display_optional(baseline.active.as_deref())
+            ));
+        }
+        if self.last_event != baseline.last_event {
+            return Some(format!(
+                "last event {} (baseline {})",
+                display_optional(self.last_event.as_deref()),
+                display_optional(baseline.last_event.as_deref())
+            ));
+        }
+        if self.main_head != baseline.main_head {
+            return Some(format!(
+                "main head {} (baseline {})",
+                display_optional(self.main_head.as_deref()),
+                display_optional(baseline.main_head.as_deref())
+            ));
+        }
+        None
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct RecoveryEvent {
+    event: String,
+    generation: u64,
+    action: String,
+    #[serde(default)]
+    from: Option<String>,
+    #[serde(default)]
+    to: Option<String>,
+    #[serde(default)]
+    active_after: Option<String>,
+    #[serde(default)]
+    branch: Option<String>,
+    #[serde(default)]
+    previous_head: Option<String>,
+    #[serde(default)]
+    parents: Vec<String>,
+    #[serde(default)]
+    base: Option<EventBase>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct EventBase {
+    generation: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ManagedFile {
+    sha256: String,
+    size: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct RecoveryTarget {
+    from: String,
+    to: String,
+    files: BTreeMap<String, ManagedFile>,
+}
+
 #[derive(Debug)]
 pub struct VersionWorkspace {
     pub binary: PathBuf,
@@ -83,9 +240,12 @@ pub struct VersionWorkspace {
     pub generation: u64,
     pub active_snapshot: Option<String>,
     pub last_event: Option<String>,
+    /// Cached `status.branches.main`; part of the D3 panel baseline.
+    pub main_head: Option<String>,
     pub history_view: VersionHistory,
     pub pending_request: Option<String>,
     pub last_save_receipt: Option<SaveReceipt>,
+    pub last_file_recovery: Option<FileRecoveryReport>,
     pub detail: Vec<String>,
     pub draft: String,
     pub editing: bool,
@@ -110,9 +270,11 @@ impl VersionWorkspace {
             generation: 0,
             active_snapshot: None,
             last_event: None,
+            main_head: None,
             history_view: VersionHistory::default(),
             pending_request: None,
             last_save_receipt: None,
+            last_file_recovery: None,
             detail: Vec::new(),
             draft: String::new(),
             editing: false,
@@ -130,18 +292,30 @@ impl VersionWorkspace {
         Ok(connected)
     }
 
-    fn call(&self, arguments: &[&str]) -> Result<Value> {
-        let output = Command::new(&self.binary)
+    fn execute(&self, arguments: &[&str]) -> Result<Output> {
+        Command::new(&self.binary)
             .arg("version")
             .arg("--workspace")
             .arg(&self.workspace)
             .args(arguments)
             .output()
-            .with_context(|| format!("start molt CLI {}", self.binary.display()))?;
+            .with_context(|| format!("start molt CLI {}", self.binary.display()))
+    }
+
+    fn call(&self, arguments: &[&str]) -> Result<Value> {
+        let output = self.execute(arguments)?;
         if !output.status.success() {
             bail!("molt {}", String::from_utf8_lossy(&output.stderr).trim());
         }
         serde_json::from_slice(&output.stdout).context("parse molt CLI JSON response")
+    }
+
+    fn read_status(&self) -> Result<WorkspaceStatus> {
+        WorkspaceStatus::parse(&self.call(&["status"])?)
+    }
+
+    fn history_records(&self) -> Result<Vec<RecoveryEvent>> {
+        serde_json::from_value(self.call(&["history"])?).context("parse history events")
     }
 
     pub fn refresh(&mut self) -> Result<()> {
@@ -156,6 +330,11 @@ impl VersionWorkspace {
         self.generation = generation;
         self.active_snapshot = status["active"].as_str().map(str::to_owned);
         self.last_event = status["last_event"].as_str().map(str::to_owned);
+        self.main_head = status["branches"]
+            .as_object()
+            .and_then(|branches| branches.get("main"))
+            .and_then(Value::as_str)
+            .map(str::to_owned);
         self.pending_request = status["pending_request"].as_str().map(str::to_owned);
         let receipt = vec![
             format!("state_id {}", self.state_id),
@@ -164,6 +343,7 @@ impl VersionWorkspace {
                 "active {}",
                 self.active_snapshot.as_deref().unwrap_or("none")
             ),
+            format!("main head {}", self.main_head.as_deref().unwrap_or("none")),
             format!(
                 "last event {}",
                 self.last_event.as_deref().unwrap_or("none")
@@ -181,6 +361,305 @@ impl VersionWorkspace {
         let result = self.call(&["recover"])?;
         self.detail = vec![format!("recovery {}", result)];
         Ok(())
+    }
+
+    /// `b`: restore the file tree of the previous `main` snapshot with one
+    /// forward commit. Never calls kernel `rollback`; every rejection leaves
+    /// the workspace untouched.
+    pub fn file_recovery(&mut self) -> FileRecoveryReport {
+        let report = self.attempt_file_recovery();
+        self.detail = report.lines.clone();
+        self.last_file_recovery = Some(report.clone());
+        report
+    }
+
+    fn baseline(&self) -> WorkspaceStatus {
+        WorkspaceStatus {
+            state_id: self.state_id.clone(),
+            generation: self.generation,
+            active: self.active_snapshot.clone(),
+            last_event: self.last_event.clone(),
+            main_head: self.main_head.clone(),
+            pending_request: self.pending_request.clone(),
+            branch_count: 0,
+        }
+    }
+
+    fn attempt_file_recovery(&mut self) -> FileRecoveryReport {
+        let baseline = self.baseline();
+        if let Some(pending) = baseline.pending_request.as_deref() {
+            return rejection(
+                "pending",
+                format!(
+                    "another request is pending ({pending}); run u recover before restoring files"
+                ),
+            );
+        }
+        let status = match self.read_status() {
+            Ok(status) => status,
+            Err(error) => return rejection("read status", format!("{error:#}")),
+        };
+        if let Some(mismatch) = status.baseline_mismatch(&baseline) {
+            return rejection(
+                "baseline",
+                format!(
+                    "workspace changed since the last panel refresh ({mismatch}); press r before b"
+                ),
+            );
+        }
+        if let Some(pending) = status.pending_request.as_deref() {
+            return rejection(
+                "pending",
+                format!(
+                    "another request is pending ({pending}); run u recover before restoring files"
+                ),
+            );
+        }
+        let history = match self.history_records() {
+            Ok(history) => history,
+            Err(error) => return rejection("read history", format!("{error:#}")),
+        };
+        if status.generation == 0 {
+            if status.branch_count != 0
+                || status.active.is_some()
+                || status.last_event.is_some()
+                || !history.is_empty()
+            {
+                return rejection(
+                    "initial",
+                    "generation 0 is inconsistent with committed branches, pointers, or history",
+                );
+            }
+            return rejection(
+                "target",
+                "workspace has no committed generation; nothing to restore",
+            );
+        }
+        let Some(main_head) = status.main_head.clone() else {
+            return rejection("target", "main branch has no head");
+        };
+        match status.active.as_deref() {
+            Some(active) if active == main_head => {}
+            Some(_) => {
+                return rejection(
+                    "target",
+                    "main is not the active snapshot; activate main before restoring its predecessor",
+                );
+            }
+            None => return rejection("target", "workspace has no active snapshot"),
+        }
+        let target = match self.recovery_target(&history, &status) {
+            Ok(target) => target,
+            Err(error) => return rejection("target", error),
+        };
+
+        let parent = match create_private_parent("recover") {
+            Ok(parent) => parent,
+            Err(error) => return rejection("prepare export", format!("{error:#}")),
+        };
+        if let Err(error) = require_outside_workspace(&parent, &self.workspace) {
+            let mut report = rejection("prepare export", format!("{error:#}"));
+            append_cleanup(&mut report, &parent);
+            return report;
+        }
+        let parent_arg = parent.to_string_lossy().into_owned();
+        let export = match self.call(&["export", &target.from, "--into", &parent_arg]) {
+            Ok(export) => export,
+            Err(error) => {
+                let mut report = rejection("export", format!("{error:#}"));
+                append_cleanup(&mut report, &parent);
+                return report;
+            }
+        };
+        if export["snapshot"].as_str() != Some(target.from.as_str()) {
+            let mut report = rejection("export", "export did not echo the target snapshot");
+            append_cleanup(&mut report, &parent);
+            return report;
+        }
+        let Some(tree) = export["tree"].as_str().map(PathBuf::from) else {
+            let mut report = rejection("export", "export omitted the tree path");
+            append_cleanup(&mut report, &parent);
+            return report;
+        };
+        if let Err(error) = validate_exported_tree(&parent, &tree, &target.files) {
+            let mut report = rejection("export tree", format!("{error:#}"));
+            append_cleanup(&mut report, &parent);
+            return report;
+        }
+        let manifest = parent.join("manifest.json");
+        if manifest.starts_with(&tree) {
+            let mut report = rejection("manifest", "manifest must live outside the exported tree");
+            append_cleanup(&mut report, &parent);
+            return report;
+        }
+        let paths: Vec<&str> = target.files.keys().map(String::as_str).collect();
+        let encoded = match serde_json::to_vec(&paths) {
+            Ok(encoded) => encoded,
+            Err(error) => {
+                let mut report = rejection("manifest", format!("encode manifest: {error}"));
+                append_cleanup(&mut report, &parent);
+                return report;
+            }
+        };
+        if let Err(error) = fs::write(&manifest, encoded) {
+            let mut report = rejection("manifest", format!("write manifest: {error}"));
+            append_cleanup(&mut report, &parent);
+            return report;
+        }
+
+        let confirm = match self.read_status() {
+            Ok(confirm) => confirm,
+            Err(error) => {
+                let mut report = rejection("confirm", format!("{error:#}"));
+                append_cleanup(&mut report, &parent);
+                return report;
+            }
+        };
+        if let Some(mismatch) = confirm.baseline_mismatch(&baseline) {
+            let mut report = rejection(
+                "confirm",
+                format!(
+                    "workspace changed before the commit ({mismatch}); press r before retrying"
+                ),
+            );
+            append_cleanup(&mut report, &parent);
+            return report;
+        }
+        if let Some(pending) = confirm.pending_request.as_deref() {
+            let mut report = rejection(
+                "confirm",
+                format!(
+                    "another request became pending ({pending}); run u recover before retrying"
+                ),
+            );
+            append_cleanup(&mut report, &parent);
+            return report;
+        }
+
+        let generation_arg = status.generation.to_string();
+        let tree_arg = tree.to_string_lossy().into_owned();
+        let manifest_arg = manifest.to_string_lossy().into_owned();
+        let arguments = [
+            "commit-files",
+            "--root",
+            &tree_arg,
+            "--manifest",
+            &manifest_arg,
+            "--branch",
+            "main",
+            "--expect-generation",
+            &generation_arg,
+            "--expect-head",
+            &main_head,
+            "--activate",
+            "--reason",
+            RECOVERY_REASON,
+            "--reason-source",
+            RECOVERY_SOURCE,
+            "--include-request-id",
+        ];
+        let output = match self.execute(&arguments) {
+            Ok(output) => output,
+            Err(error) => {
+                let mut report = unknown("start commit-files", format!("{error:#}"), None);
+                append_cleanup(&mut report, &parent);
+                return report;
+            }
+        };
+        let mut report = classify_commit(&output, status.generation, &main_head, &self.workspace);
+        append_cleanup(&mut report, &parent);
+        if let Err(error) = self.refresh() {
+            report
+                .lines
+                .push(format!("status refresh warning: {error:#}"));
+        }
+        report
+    }
+
+    fn recovery_target(
+        &self,
+        history: &[RecoveryEvent],
+        status: &WorkspaceStatus,
+    ) -> std::result::Result<RecoveryTarget, String> {
+        validate_history(history, status)?;
+        let index = history
+            .iter()
+            .rposition(|event| event.from != event.active_after)
+            .ok_or_else(|| "no event changed the active snapshot".to_owned())?;
+        if index > 0 {
+            let expected = history[index - 1].active_after.as_deref();
+            let actual = history[index].from.as_deref();
+            if expected.is_none() || expected != actual {
+                return Err(
+                    "the selected event does not start from the snapshot the previous event left active"
+                        .to_owned(),
+                );
+            }
+        }
+        for position in index + 1..history.len() {
+            if history[position].from != history[position - 1].active_after {
+                return Err("history does not chain from the selected event to the tail".to_owned());
+            }
+        }
+        let event = &history[index];
+        if event.action != "commit" && event.action != "merge" {
+            return Err(format!(
+                "the last change to the active snapshot was `{}`; only a main commit or merge can be restored",
+                event.action
+            ));
+        }
+        if event.branch.as_deref() != Some("main") {
+            return Err("the last active change did not write main".to_owned());
+        }
+        let Some(to) = event.to.clone() else {
+            return Err("the selected event omitted its target snapshot".to_owned());
+        };
+        let Some(from) = event.from.clone().filter(|snapshot| !snapshot.is_empty()) else {
+            return Err("the previous tree has no snapshot parent (initial commit)".to_owned());
+        };
+        if event.active_after.as_deref() != Some(to.as_str()) {
+            return Err(
+                "the selected event did not leave its target as the active snapshot".to_owned(),
+            );
+        }
+        if status.active.as_deref() != Some(to.as_str())
+            || status.main_head.as_deref() != Some(to.as_str())
+        {
+            return Err("the selected event does not describe the current main head".to_owned());
+        }
+        if from == to {
+            return Err("the previous and current snapshots are identical (echo)".to_owned());
+        }
+        let from_show = self
+            .call(&["show", &from])
+            .map_err(|error| format!("{error:#}"))?;
+        let to_show = self
+            .call(&["show", &to])
+            .map_err(|error| format!("{error:#}"))?;
+        let files = parse_managed_tree(&from_show, &from)?;
+        parse_managed_tree(&to_show, &to)?;
+        let parents = to_show["descriptor"]["parents"].as_array();
+        let first_parent = parents
+            .and_then(|parents| parents.first())
+            .and_then(Value::as_str);
+        if first_parent != Some(from.as_str()) {
+            return Err(format!(
+                "snapshot {to} does not list {from} as its first parent"
+            ));
+        }
+        match event.action.as_str() {
+            "commit" if event.previous_head.as_deref() != Some(from.as_str()) => {
+                return Err(
+                    "the last commit came from another active snapshot, not from the previous main tree"
+                        .to_owned(),
+                );
+            }
+            "merge" if event.parents.first().map(String::as_str) != Some(from.as_str()) => {
+                return Err("the last merge did not start from the previous main tree".to_owned());
+            }
+            _ => {}
+        }
+        Ok(RecoveryTarget { from, to, files })
     }
 
     pub fn history(&mut self) -> Result<()> {
@@ -567,28 +1046,618 @@ impl VersionWorkspace {
         self.detail.insert(0, summary);
         Ok(())
     }
+}
 
-    pub fn rollback_last(&mut self) -> Result<()> {
-        let history = self.call(&["history"])?;
-        let events = history
-            .as_array()
-            .context("history response is not an array")?;
-        let snapshot = events
-            .last()
-            .and_then(|event| event["from"].as_str())
-            .context("no previous snapshot to roll back to")?;
-        let snapshot = snapshot.to_owned();
-        let generation = self.generation.to_string();
-        let result = self.call(&["rollback", &snapshot, "--expect-generation", &generation])?;
-        let receipt = vec![
-            format!(
-                "rollback target {}",
-                result["snapshot"].as_str().unwrap_or("unknown")
-            ),
-            "local active version changed".to_owned(),
-        ];
-        self.refresh().map(|()| self.detail.extend(receipt))
+fn display_optional(value: Option<&str>) -> &str {
+    value.unwrap_or("none")
+}
+
+fn push_wrapped(lines: &mut Vec<String>, text: &str) {
+    for line in text.lines() {
+        lines.push(truncate_text(line, 400));
     }
+}
+
+fn truncate_text(text: &str, limit: usize) -> String {
+    let mut characters = text.chars();
+    let prefix: String = characters.by_ref().take(limit).collect();
+    if characters.next().is_some() {
+        format!("{prefix}…")
+    } else {
+        prefix
+    }
+}
+
+fn rejection(stage: &str, detail: impl Into<String>) -> FileRecoveryReport {
+    let mut lines = vec![
+        "file recovery rejected · not submitted".to_owned(),
+        format!("stage {stage}"),
+    ];
+    push_wrapped(&mut lines, &detail.into());
+    FileRecoveryReport {
+        outcome: FileRecoveryOutcome::Rejected,
+        lines,
+        request_id: None,
+    }
+}
+
+fn unknown(
+    stage: &str,
+    detail: impl Into<String>,
+    request_id: Option<String>,
+) -> FileRecoveryReport {
+    let mut lines = vec![
+        "file recovery result unknown · do not retry".to_owned(),
+        format!("stage {stage}"),
+    ];
+    push_wrapped(&mut lines, &detail.into());
+    FileRecoveryReport {
+        outcome: FileRecoveryOutcome::Unknown,
+        lines,
+        request_id,
+    }
+}
+
+fn commit_report(
+    outcome: FileRecoveryOutcome,
+    headline: &str,
+    diagnostics: Vec<String>,
+    guidance: Option<String>,
+    request_id: Option<String>,
+) -> FileRecoveryReport {
+    let mut lines = vec![headline.to_owned()];
+    lines.extend(diagnostics);
+    if let Some(guidance) = guidance {
+        push_wrapped(&mut lines, &guidance);
+    }
+    FileRecoveryReport {
+        outcome,
+        lines,
+        request_id,
+    }
+}
+
+fn append_cleanup(report: &mut FileRecoveryReport, parent: &Path) {
+    if let Err(error) = remove_reader_parent(parent) {
+        report.lines.push(format!("cleanup warning: {error:#}"));
+    }
+}
+
+fn describe_exit(status: &std::process::ExitStatus) -> String {
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::ExitStatusExt;
+        if let Some(signal) = status.signal() {
+            return format!("signal {signal}");
+        }
+    }
+    match status.code() {
+        Some(code) => format!("exit {code}"),
+        None => "exit unknown".to_owned(),
+    }
+}
+
+fn extract_request_id(stderr: &str) -> Option<String> {
+    let (_, rest) = stderr.split_once("request ")?;
+    let candidate: String = rest
+        .chars()
+        .take_while(|character| {
+            !character.is_whitespace() && *character != ';' && *character != ','
+        })
+        .collect();
+    if candidate.is_empty() {
+        None
+    } else {
+        Some(candidate)
+    }
+}
+
+fn is_stale_message(stderr: &str) -> bool {
+    stderr.contains("stale")
+        && (stderr.contains("generation") || stderr.contains("head") || stderr.contains("branch"))
+}
+
+fn classify_commit(
+    output: &Output,
+    generation: u64,
+    head: &str,
+    workspace: &Path,
+) -> FileRecoveryReport {
+    let exit = describe_exit(&output.status);
+    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+    let mut diagnostics = vec!["stage commit-files".to_owned()];
+    diagnostics.push(if stderr.is_empty() {
+        exit
+    } else {
+        format!("{exit} · {stderr}")
+    });
+    match output.status.code() {
+        Some(0) => match serde_json::from_slice::<Value>(&output.stdout) {
+            Ok(receipt) => classify_receipt(&receipt, generation, head, diagnostics),
+            Err(error) => {
+                let stdout = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+                let mut report = commit_report(
+                    FileRecoveryOutcome::Unknown,
+                    "file recovery result unknown · do not retry",
+                    diagnostics,
+                    Some(
+                        "the CLI exited 0 but its receipt is not valid JSON; run u recover before retrying"
+                            .to_owned(),
+                    ),
+                    None,
+                );
+                push_wrapped(&mut report.lines, &format!("stdout {stdout}"));
+                push_wrapped(&mut report.lines, &format!("parse error: {error}"));
+                report
+            }
+        },
+        Some(4) => {
+            let request_id = extract_request_id(&stderr);
+            if stderr.contains("needs recovery") {
+                let guidance = match &request_id {
+                    Some(id) => format!(
+                        "this request needs recovery; query `molt version --workspace {} request-status {id}` (read-only) or run u; do not start over with a new request ID",
+                        workspace.display()
+                    ),
+                    None => "this request needs recovery; run u; do not start over with a new request ID".to_owned(),
+                };
+                commit_report(
+                    FileRecoveryOutcome::Unknown,
+                    "file recovery result unknown · do not retry",
+                    diagnostics,
+                    Some(guidance),
+                    request_id,
+                )
+            } else if stderr.contains("pending request") {
+                let guidance = match &request_id {
+                    Some(id) => format!(
+                        "pending request {id} belongs to another action and was not submitted by b; run u to recover it before retrying"
+                    ),
+                    None => "another request is pending and was not submitted by b; run u to recover it before retrying".to_owned(),
+                };
+                commit_report(
+                    FileRecoveryOutcome::Rejected,
+                    "file recovery rejected · another request is pending",
+                    diagnostics,
+                    Some(guidance),
+                    request_id,
+                )
+            } else {
+                commit_report(
+                    FileRecoveryOutcome::Unknown,
+                    "file recovery result unknown · do not retry",
+                    diagnostics,
+                    Some("recovery is required but the message does not identify this request; run u".to_owned()),
+                    request_id,
+                )
+            }
+        }
+        Some(3) => {
+            if is_stale_message(&stderr) {
+                commit_report(
+                    FileRecoveryOutcome::Rejected,
+                    "file recovery rejected · stale main",
+                    diagnostics,
+                    Some("the workspace changed before the write; press r to refresh, then try b again".to_owned()),
+                    None,
+                )
+            } else {
+                commit_report(
+                    FileRecoveryOutcome::Unknown,
+                    "file recovery result unknown · do not retry",
+                    diagnostics,
+                    Some("exit 3 without a clear stale generation or head is not classified; run u".to_owned()),
+                    None,
+                )
+            }
+        }
+        Some(2) => commit_report(
+            FileRecoveryOutcome::Rejected,
+            "file recovery rejected · input or workspace refused",
+            diagnostics,
+            Some("the CLI refused the inputs before writing; fix the reported condition and try b again".to_owned()),
+            None,
+        ),
+        _ => commit_report(
+            FileRecoveryOutcome::Unknown,
+            "file recovery result unknown · runtime failure · do not retry",
+            diagnostics,
+            Some("the CLI did not report a usable result; run u recover and do not retry with a new request ID".to_owned()),
+            None,
+        ),
+    }
+}
+
+fn classify_receipt(
+    receipt: &Value,
+    generation: u64,
+    head: &str,
+    diagnostics: Vec<String>,
+) -> FileRecoveryReport {
+    match receipt["changed"].as_bool() {
+        Some(true) => {
+            let new_generation = receipt["current"]["generation"].as_u64();
+            let snapshot = receipt["snapshot"]
+                .as_str()
+                .filter(|value| !value.is_empty());
+            let event = receipt["event"].as_str().filter(|value| !value.is_empty());
+            let request_id = receipt["request_id"]
+                .as_str()
+                .filter(|value| !value.is_empty());
+            match (new_generation, snapshot, event, request_id) {
+                (Some(new_generation), Some(snapshot), Some(event), Some(request_id))
+                    if new_generation == generation + 1 =>
+                {
+                    let mut lines = diagnostics;
+                    lines.push(format!("generation {new_generation}"));
+                    lines.push(format!("snapshot {snapshot}"));
+                    lines.push(format!("event {event}"));
+                    lines.push(format!("request ID {request_id}"));
+                    FileRecoveryReport {
+                        outcome: FileRecoveryOutcome::Restored,
+                        lines: {
+                            let mut report = vec![format!(
+                                "file recovery committed · generation {new_generation}"
+                            )];
+                            report.extend(lines);
+                            report
+                        },
+                        request_id: Some(request_id.to_owned()),
+                    }
+                }
+                _ => {
+                    let mut report = commit_report(
+                        FileRecoveryOutcome::Unknown,
+                        "file recovery result unknown · do not retry",
+                        diagnostics,
+                        Some("the CLI exited 0 but the receipt did not confirm generation, snapshot, event, and request ID; run u recover before retrying".to_owned()),
+                        None,
+                    );
+                    push_wrapped(&mut report.lines, &format!("receipt {receipt}"));
+                    report
+                }
+            }
+        }
+        Some(false) => {
+            let current = receipt["current"]["generation"].as_u64();
+            let snapshot = receipt["snapshot"].as_str();
+            if current == Some(generation) && snapshot == Some(head) && receipt["event"].is_null() {
+                commit_report(
+                    FileRecoveryOutcome::NoEffect,
+                    "file recovery no effect · generation unchanged",
+                    diagnostics,
+                    Some(format!("main head {head} already has the target tree")),
+                    None,
+                )
+            } else {
+                let mut report = commit_report(
+                    FileRecoveryOutcome::Unknown,
+                    "file recovery result unknown · do not retry",
+                    diagnostics,
+                    Some("the CLI exited 0 but the no-effect receipt did not match the original generation and head; press r".to_owned()),
+                    None,
+                );
+                push_wrapped(&mut report.lines, &format!("receipt {receipt}"));
+                report
+            }
+        }
+        _ => {
+            let mut report = commit_report(
+                FileRecoveryOutcome::Unknown,
+                "file recovery result unknown · do not retry",
+                diagnostics,
+                Some("the CLI exited 0 but the receipt omitted changed; run u recover before retrying".to_owned()),
+                None,
+            );
+            push_wrapped(&mut report.lines, &format!("receipt {receipt}"));
+            report
+        }
+    }
+}
+
+fn validate_history(
+    history: &[RecoveryEvent],
+    status: &WorkspaceStatus,
+) -> std::result::Result<(), String> {
+    for (index, event) in history.iter().enumerate() {
+        if index > 0 && event.generation <= history[index - 1].generation {
+            return Err("history generations are not strictly increasing".to_owned());
+        }
+        let expected = match &event.base {
+            None => 1,
+            Some(base) => base
+                .generation
+                .checked_add(1)
+                .ok_or_else(|| "history base generation overflowed".to_owned())?,
+        };
+        if event.generation != expected {
+            return Err(format!(
+                "event {} reports generation {} but its base implies {expected}",
+                event.event, event.generation
+            ));
+        }
+    }
+    let Some(tail) = history.last() else {
+        return Err("history is empty for a committed workspace".to_owned());
+    };
+    if tail.generation == 0 || tail.generation > status.generation {
+        return Err(format!(
+            "history tail generation {} is outside 1..={}",
+            tail.generation, status.generation
+        ));
+    }
+    if status.last_event.as_deref() != Some(tail.event.as_str()) {
+        return Err("history tail is not the status last event".to_owned());
+    }
+    if tail.active_after != status.active {
+        return Err("history tail does not end at the status active snapshot".to_owned());
+    }
+    if tail.branch.as_deref() == Some("main")
+        && matches!(tail.action.as_str(), "commit" | "merge")
+        && tail.to != status.main_head
+    {
+        return Err("history tail wrote main but its snapshot is not the main head".to_owned());
+    }
+    Ok(())
+}
+
+fn parse_managed_tree(
+    show: &Value,
+    snapshot: &str,
+) -> std::result::Result<BTreeMap<String, ManagedFile>, String> {
+    if show["snapshot"].as_str() != Some(snapshot) {
+        return Err(format!("show did not echo snapshot {snapshot}"));
+    }
+    let files = show["files"].as_object().ok_or_else(|| {
+        format!("snapshot {snapshot} has no managed files (echo or non-file snapshot)")
+    })?;
+    if files.len() > MAX_MANAGED_FILES {
+        return Err(format!(
+            "snapshot {snapshot} has more than {MAX_MANAGED_FILES} managed files"
+        ));
+    }
+    let mut tree = BTreeMap::new();
+    let mut total = 0u64;
+    for (path, metadata) in files {
+        if !valid_managed_path(path) {
+            return Err(format!(
+                "snapshot {snapshot} contains an invalid managed path: {path}"
+            ));
+        }
+        let sha256 = metadata["sha256"]
+            .as_str()
+            .ok_or_else(|| format!("snapshot {snapshot} omitted the sha256 of {path}"))?;
+        if !valid_sha256(sha256) {
+            return Err(format!(
+                "snapshot {snapshot} has an invalid sha256 for {path}"
+            ));
+        }
+        let size = metadata["size"]
+            .as_u64()
+            .ok_or_else(|| format!("snapshot {snapshot} omitted the size of {path}"))?;
+        if size > MAX_MANAGED_FILE_BYTES {
+            return Err(format!(
+                "{path} exceeds the {MAX_MANAGED_FILE_BYTES} byte file limit"
+            ));
+        }
+        total = total.saturating_add(size);
+        if total > MAX_MANAGED_TREE_BYTES {
+            return Err(format!(
+                "snapshot {snapshot} exceeds the {MAX_MANAGED_TREE_BYTES} byte tree limit"
+            ));
+        }
+        tree.insert(
+            path.clone(),
+            ManagedFile {
+                sha256: sha256.to_owned(),
+                size,
+            },
+        );
+    }
+    for path in tree.keys() {
+        let parts: Vec<&str> = path.split('/').collect();
+        for boundary in 1..parts.len() {
+            if tree.contains_key(&parts[..boundary].join("/")) {
+                return Err(format!("{path} conflicts with a parent directory path"));
+            }
+        }
+    }
+    Ok(tree)
+}
+
+fn valid_managed_path(path: &str) -> bool {
+    if path.is_empty() || path.len() > 240 {
+        return false;
+    }
+    path.split('/').all(valid_managed_component)
+}
+
+fn valid_managed_component(component: &str) -> bool {
+    if component.is_empty() || component.len() > 100 {
+        return false;
+    }
+    if component == "." || component == ".." {
+        return false;
+    }
+    if !component
+        .chars()
+        .all(|character| character.is_ascii_alphanumeric() || matches!(character, '.' | '_' | '-'))
+    {
+        return false;
+    }
+    let lowered = component.to_ascii_lowercase();
+    lowered != ".git" && lowered != ".env" && !lowered.starts_with(".env.")
+}
+
+fn valid_sha256(value: &str) -> bool {
+    value.strip_prefix("sha256:").is_some_and(|hex| {
+        hex.len() == 64
+            && hex
+                .chars()
+                .all(|character| matches!(character, '0'..='9' | 'a'..='f'))
+    })
+}
+
+fn require_real_directory(path: &Path) -> Result<()> {
+    let metadata = fs::symlink_metadata(path)?;
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        bail!("{} is not a real directory", path.display());
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
+fn require_mode(path: &Path, expected: u32) -> Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    let mode = fs::symlink_metadata(path)?.permissions().mode() & 0o777;
+    if mode != expected {
+        bail!(
+            "{} has mode {mode:o}, expected {expected:o}",
+            path.display()
+        );
+    }
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn require_mode(_path: &Path, _expected: u32) -> Result<()> {
+    Ok(())
+}
+
+#[cfg(unix)]
+fn current_uid() -> Result<u32> {
+    let status = fs::read_to_string("/proc/self/status").context("read /proc/self/status")?;
+    let line = status
+        .lines()
+        .find(|line| line.starts_with("Uid:"))
+        .context("/proc/self/status omitted Uid")?;
+    line.split_whitespace()
+        .nth(1)
+        .context("parse /proc/self/status Uid")?
+        .parse()
+        .context("parse /proc/self/status uid")
+}
+
+fn require_private_parent(parent: &Path) -> Result<()> {
+    let metadata = fs::symlink_metadata(parent)?;
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        bail!("export parent is not a real directory");
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
+        if metadata.uid() != current_uid()? {
+            bail!("export parent is not owned by the current user");
+        }
+        if metadata.permissions().mode() & 0o777 != 0o700 {
+            bail!("export parent is not mode 0700");
+        }
+    }
+    Ok(())
+}
+
+fn require_outside_workspace(path: &Path, workspace: &Path) -> Result<()> {
+    let canonical_workspace =
+        fs::canonicalize(workspace).context("resolve version workspace for export")?;
+    let canonical_path = fs::canonicalize(path).context("resolve export parent")?;
+    if canonical_path.starts_with(&canonical_workspace) {
+        bail!("export parent is inside the version workspace");
+    }
+    Ok(())
+}
+
+fn walk_published_tree(root: &Path) -> Result<BTreeMap<String, u64>> {
+    let mut files = BTreeMap::new();
+    walk_tree_directory(root, root, &mut files)?;
+    Ok(files)
+}
+
+fn walk_tree_directory(
+    root: &Path,
+    directory: &Path,
+    files: &mut BTreeMap<String, u64>,
+) -> Result<()> {
+    require_mode(directory, 0o500)?;
+    for entry in fs::read_dir(directory)? {
+        let entry = entry?;
+        let path = entry.path();
+        let file_type = entry.file_type()?;
+        if file_type.is_symlink() {
+            bail!("exported tree contains a symbolic link: {}", path.display());
+        }
+        if file_type.is_dir() {
+            walk_tree_directory(root, &path, files)?;
+        } else if file_type.is_file() {
+            require_mode(&path, 0o400)?;
+            let relative = path
+                .strip_prefix(root)?
+                .to_str()
+                .context("exported path is not UTF-8")?
+                .replace(std::path::MAIN_SEPARATOR, "/");
+            if !valid_managed_path(&relative) {
+                bail!("exported tree contains an invalid managed path: {relative}");
+            }
+            files.insert(relative, entry.metadata()?.len());
+        } else {
+            bail!(
+                "exported tree contains a non-regular path: {}",
+                path.display()
+            );
+        }
+    }
+    Ok(())
+}
+
+fn validate_exported_tree(
+    parent: &Path,
+    tree: &Path,
+    expected: &BTreeMap<String, ManagedFile>,
+) -> Result<()> {
+    require_private_parent(parent)?;
+    require_real_directory(tree)?;
+    let slot = tree
+        .parent()
+        .context("exported tree has no slot directory")?;
+    let name = slot
+        .file_name()
+        .and_then(|name| name.to_str())
+        .context("exported slot has no UTF-8 name")?;
+    if !name.starts_with("molt-tree-") || name.len() == "molt-tree-".len() {
+        bail!("exported tree is not inside a molt-tree slot");
+    }
+    if tree.file_name() != Some(std::ffi::OsStr::new("project")) {
+        bail!("exported tree is not a project directory");
+    }
+    require_real_directory(slot)?;
+    require_mode(slot, 0o700)?;
+    let canonical_parent = fs::canonicalize(parent)?;
+    let canonical_slot = fs::canonicalize(slot)?;
+    if canonical_slot.parent() != Some(canonical_parent.as_path()) {
+        bail!("exported slot is outside the private parent");
+    }
+    if fs::canonicalize(tree)? != canonical_slot.join("project") {
+        bail!("exported tree path is not canonical");
+    }
+    require_mode(tree, 0o500)?;
+    let actual = walk_published_tree(tree)?;
+    if actual.len() != expected.len() {
+        bail!(
+            "exported tree has {} files, expected {}",
+            actual.len(),
+            expected.len()
+        );
+    }
+    for (path, metadata) in expected {
+        match actual.get(path) {
+            Some(size) if *size == metadata.size => {}
+            Some(size) => bail!(
+                "{path} has {size} bytes in the exported tree, expected {}",
+                metadata.size
+            ),
+            None => bail!("exported tree is missing {path}"),
+        }
+    }
+    Ok(())
 }
 
 fn display_event_id(event: &str) -> String {
@@ -611,9 +1680,9 @@ fn display_sha256(sha256: &str) -> String {
     }
 }
 
-fn create_reader_parent() -> Result<PathBuf> {
+fn create_private_parent(label: &str) -> Result<PathBuf> {
     let parent = std::env::temp_dir().join(format!(
-        "molt-tui-reader-{}-{}",
+        "molt-tui-{label}-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
@@ -634,7 +1703,12 @@ fn create_reader_parent() -> Result<PathBuf> {
             return Err(error.into());
         }
     }
+    require_private_parent(&parent)?;
     Ok(parent)
+}
+
+fn create_reader_parent() -> Result<PathBuf> {
+    create_private_parent("reader")
 }
 
 fn collect_reader_files(root: &Path, directory: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
@@ -756,9 +1830,11 @@ mod tests {
             generation: 0,
             active_snapshot: None,
             last_event: Some("latest".to_owned()),
+            main_head: None,
             history_view,
             pending_request: None,
             last_save_receipt: None,
+            last_file_recovery: None,
             detail: vec![
                 "> g2 commit newest".to_owned(),
                 "  g1 commit older".to_owned(),
@@ -1011,5 +2087,31 @@ mod tests {
             "sha256:0123456789abcdef…"
         );
         assert_eq!(display_sha256("sha256:short"), "sha256:short");
+    }
+
+    #[test]
+    fn managed_paths_follow_the_cli_file_rules() {
+        for valid in ["config.json", "nested/tool.json", "a.b-c_d"] {
+            assert!(super::valid_managed_path(valid), "{valid}");
+        }
+        for invalid in [
+            "",
+            "/absolute",
+            "../escape",
+            "nested/../escape",
+            "./same",
+            "nested//file",
+            ".git/config",
+            ".ENV",
+            ".env.local",
+            "nested/.git/objects",
+            "space name",
+            "nested/trailing/",
+        ] {
+            assert!(!super::valid_managed_path(invalid), "{invalid}");
+        }
+        assert!(super::valid_sha256(&format!("sha256:{}", "a".repeat(64))));
+        assert!(!super::valid_sha256(&format!("sha256:{}", "A".repeat(64))));
+        assert!(!super::valid_sha256("sha256:abc"));
     }
 }

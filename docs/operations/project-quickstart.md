@@ -9,15 +9,15 @@ It requires no model account or provider configuration.
 
 ## Run the example / 运行示例
 
-### From a Linux bundle / 使用 Linux 安装包
+### From a locally built bundle / 使用本地构建发布包
 
-Verify the archive against its checksum, unpack it, and run from the extracted directory.
-Use a bundle that contains `share/molt/examples/project-workspace.sh` and
-`share/molt/examples/project-reader.mjs`. For the published v1.2.0rc9 archive,
-use the source instructions below for this walkthrough.
-核对归档的 SHA-256 后解包，在解包目录执行以下命令。
-请选择包含上述两个示例文件的候选包。若拿到的是公开发布的 v1.2.0rc9 归档，
-请用下方的源码方式完成本演练。
+The current v1.2.0rc10 release ships native deb, rpm and Arch packages; they do
+not include the example files used below. Build a bundle with
+`packaging/release/build-linux-x86_64.sh` if you want to run this section from a
+bundle. The v1.2.0rc9 tar.gz is retained only as the previous portable archive.
+当前 v1.2.0rc10 发行以 deb、rpm 和 Arch 原生包提供，不包含下方示例文件；
+如需从发布包运行本节，请用 `packaging/release/build-linux-x86_64.sh` 构建 bundle。
+v1.2.0rc9 的 tar.gz 仅作为上一版可移植归档保留。
 
 ```bash
 (

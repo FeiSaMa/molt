@@ -5,6 +5,7 @@
 | 状态 | Draft |
 | 日期 | 2026-11-21 |
 | 基线 | `a5ce76dbbe60`（`main`，`pyproject` 版本 `1.2.0rc8`） |
+| 实现状态 | 未交付：无 config DAG / 自动路由；Settings 仅 mock（2026-11-27，`6198139`） |
 | 关联 | spec §6.5 / §12；前置 0018 / 0019 / 0021 / 0022 |
 | 决策者 | 用户（评审中） |
 
@@ -67,6 +68,13 @@ v3 的配置要覆盖 model / provider / thinking / tools / MCP / permissions / 
 
 config 节点是应用层对象（SQLite `configs`），不直接作 kernel snapshot；需固化时由 broker 把 `prompt` / `tools` 落成 managed 快照，回填 `path → sha256` 到 `genome.artifacts`。
 
+### D7 交付状态与边界（2026-11-27，基线 `6198139`）
+
+- **genome 目标保留**：D2 的 genome 子集投影、`sha256:` 前缀与 Python / TS 字节一致校验仍是目标；现行 `molt/core/genome.py` 只覆盖 v1 genome，v3 投影与 golden 校验未实现。
+- **配置 DAG 未实现**：无 `configs` / `config_edges` 表；`crates/molt-tui/src/settings.rs` 的 `apply_config` 只改 `mock.active_config`，不是真实配置应用。
+- **路由未实现**：`off` / `suggest` / `auto` 仅存在于文档；无 `usage.route_decision` 写入，无成功 / 失败统计。
+- 本 ADR 保持 **Draft**。D2 的 genome 子集可作为独立目标先行；D3–D5 的 DAG / 路由在 agent + SQLite 落地后重启。**重启条件**：v3 agent 存储与 Settings 接线排期启动时，先定稿 X1–X4 并补 config DAG 验收，再实现路由。Q7（auto 的 N 与成功定义）对应 X1；A6（kernel manifest 允许额外 root 键）随 TS broker / golden 回归验证。
+
 ## 3. 备选方案
 
 | 方案 | 内容 | 否决理由 |
@@ -113,10 +121,10 @@ config 节点是应用层对象（SQLite `configs`），不直接作 kernel snap
 
 | ID | 问题 | 状态 |
 |---|---|---|
-| X1 | auto 的 N 与成功定义 | 待确认（建议 N=5；成功 = turn 完成且无用户回退） |
-| X2 | `switches.context` 的 `full` / `minimal` 投影规则 | 待定稿 |
-| X3 | 配置节点 TTL / 归档 | 待评估 |
-| X4 | 是否从 `.molt/config.json` 导入 | 待评估 |
+| X1 | auto 的 N 与成功定义 | 待确认（建议 N=5；成功 = turn 完成且无用户回退）。**延期条件**：auto 路由实现前确认；未确认前默认 `suggest` |
+| X2 | `switches.context` 的 `full` / `minimal` 投影规则 | 待定稿。**延期条件**：上下文投影实现前定稿 |
+| X3 | 配置节点 TTL / 归档 | 待评估。**延期条件**：config DAG 存储实现前评估归档策略 |
+| X4 | 是否从 `.molt/config.json` 导入 | 待评估。**延期条件**：配置导入实现前评估 |
 
 ## 9. 与现有 ADR 的关系
 
@@ -127,3 +135,10 @@ config 节点是应用层对象（SQLite `configs`），不直接作 kernel snap
 | 0021 | 依赖 | broker 落 prompt / tools 快照并回填 hash |
 | 0022 | 分离 | 两棵树：`c_` vs `n_` |
 | 0023 | 引用 | `permissions` 规则复用 0023 D1 |
+
+## 10. 修订记录
+
+| 日期 | 基线 | 修订内容 | 来源 |
+|---|---|---|---|
+| 2026-11-21 | `a5ce76dbbe60` | 初稿（W-04c）：统一配置、genome 投影、config DAG、suggest / auto 路由 | spec §19 |
+| 2026-11-27 | `6198139` | 补 D7：分开 genome 目标与未实现的 DAG / 路由；X1–X4 写延期条件；状态保持 Draft | 2026-11-27 设计-实现对账（spec §18 Q7/A6，本文件 §8；`crates/molt-tui/src/settings.rs` 静态核对） |

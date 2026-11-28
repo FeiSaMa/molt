@@ -19,7 +19,7 @@ bash packaging/release/verify-bundle.sh "$work/unpacked"/molt-* "$work/verificat
 wheel。真实 UDS 回归覆盖原 request ID 恢复、A/B 固定读取和回退、按 B 的事件 ID 查审计，
 以及旧入口拒绝与旧状态目录树零写入。带断点的项目保存恢复使用启用 fault-injection 的调试 kernel。
 
-本地候选 1.2.0rc9 把配套的 CLI、TUI 与默认功能 kernel 打入同一归档。构建按照 `Cargo.lock` 为两个 Rust 二进制核对目标依赖许可，按照 `packaging/release/build-requirements.txt` 的版本与哈希取得 wheel 构建后端。每次候选使用新输出目录，以源码清单、锁文件、二进制及归档的 SHA-256 标识。历史 1.1.0 和 rc8 各自的验收只对应其精确归档。
+版本说明：本节的 `1.2.0rc9` 与 rc8 内容是历史候选上下文，不代表当前发布入口；当前发布见 [1.2.0rc10 发行说明](../releases/1.2.0rc10.md)。本地候选 1.2.0rc9 把配套的 CLI、TUI 与默认功能 kernel 打入同一归档。构建按照 `Cargo.lock` 为两个 Rust 二进制核对目标依赖许可，按照 `packaging/release/build-requirements.txt` 的版本与哈希取得 wheel 构建后端。每次候选使用新输出目录，以源码清单、锁文件、二进制及归档的 SHA-256 标识。历史 1.1.0 和 rc8 各自的验收只对应其精确归档。
 
 旧包升级验收需要另外核验旧归档的校验文件，再解包并作为第三个参数交给下列脚本。省略旧包时，验包流程使用当前候选验证两处安装前缀切换。
 

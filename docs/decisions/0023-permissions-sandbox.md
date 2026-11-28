@@ -5,6 +5,7 @@
 | 状态 | Draft |
 | 日期 | 2026-11-21 |
 | 基线 | `a5ce76dbbe60`（`main`，`pyproject` 版本 `1.2.0rc8`） |
+| 实现状态 | 未交付：无权限引擎、无 v3 工具执行器；仅有 mock 审批 UI（2026-11-27，`6198139`） |
 | 关联 | spec §10 / §15；前置 0015 / 0020；被 0021（工具调用）与 0025（`permissions` 字段）引用 |
 | 决策者 | 用户（评审中） |
 
@@ -77,6 +78,13 @@ bwrap --die-with-parent --new-session \
 
 来源为 env `MOLT_<PROVIDER>_API_KEY` 或 `apiKeyHelper`；只在 agent 内存，不写 DB / 事件 / 日志 / 配置树；redact 已知前缀 + 高熵值；`mcp_servers.env_keys_json` 只存键名；provider 调用在沙箱外；工具需凭据时用继承 fd 或外部 helper。
 
+### D8 交付状态与延期条件（2026-11-27，基线 `6198139`）
+
+- **权限引擎未交付**：仓库根无 TypeScript agent / runtime（根目录 `agent/`、`.ts`、`package.json` 均不存在）；`crates/molt-tui/src/approval.rs` 只有 UI 状态与 `mock::ApprovalState`，不执行 D1–D3 的 last-match、多资源聚合或 deny 扫描。
+- **v3 工具沙箱未交付**：无工具注册表、无 `apply_patch` / exec 执行器；bwrap 调用只出现在 v2 GGUF worker（`molt/version_workers.py:16`；`examples/` 下的同名文件只是 4 行 re-export shim），不是 v3 tool executor，不能作为 D6 的已实现证据。
+- **C1 直连不替代 Q8**：现行 TUI Chat 直连 provider（key 在 TUI 进程内，见 ADR-0020 D1a），provider 出网不受 v3 bwrap 约束。这只说明现状，不回答 Q8「provider 出网位置 / remote MCP 网络策略」；Q8 仍是未决项，必须在 agent 模式落地前单独确认。
+- 本 ADR 保持 **Draft**；D1–D7 是目标设计，不是现状描述。**重启条件**：v3 权限引擎 / 工具执行器排期启动时，先按 D1–D6 与 P-01…P-12 验收，再接线 TUI；未重启前，审批 modal 不得被当作真实权限判定。
+
 ## 3. 备选方案
 
 | 方案 | 内容 | 否决理由 |
@@ -122,10 +130,10 @@ bwrap --die-with-parent --new-session \
 
 | ID | 问题 | 状态 |
 |---|---|---|
-| X1 | `always` 作用域 / TTL | 待确认（建议 `session` + 24h） |
-| X2 | provider 出网 / remote MCP 网络 | 待确认 |
-| X3 | 项目级规则文件随仓库分发 | 待评估（供应链风险） |
-| X4 | read 类是否需沙箱 | 待评估 |
+| X1 | `always` 作用域 / TTL | 待确认（建议 `session` + 24h）。**延期条件**：审批引擎实现前确定；影响 `saved_rules` 表与 UI |
+| X2 | provider 出网 / remote MCP 网络 | 待确认。**延期条件**：与 Q8 同批，在 provider / remote MCP 接线前定稿；现行 C1 直连不构成答案 |
+| X3 | 项目级规则文件随仓库分发 | 待评估（供应链风险）。**延期条件**：项目级规则文件随仓库分发前评估 |
+| X4 | read 类是否需沙箱 | 待评估。**延期条件**：read 类工具执行器实现前评估 |
 
 ## 9. 与现有 ADR 的关系
 
@@ -135,3 +143,10 @@ bwrap --die-with-parent --new-session \
 | 0018 | 不冲突 | `approvals` / `saved_rules` 属 agent 私有状态，不进版本图 |
 | 0025 | 被引用 | `permissions{mode, rules[]}` 复用 D1 的规则形状 |
 | AGENTS §二 | 落实 | 「控制失效即拒绝执行」直接落为 `sandbox_unavailable` |
+
+## 10. 修订记录
+
+| 日期 | 基线 | 修订内容 | 来源 |
+|---|---|---|---|
+| 2026-11-21 | `a5ce76dbbe60` | 初稿（W-04c）：规则模型、聚合、审批、工具分级、bwrap、密钥 | spec §19 |
+| 2026-11-27 | `6198139` | 补 D8：明确权限引擎与 v3 工具沙箱未交付；C1 直连不替代 Q8；X1–X4 写延期条件；状态保持 Draft | 2026-11-27 设计-实现对账（spec §18 Q8/Q9，本文件 §8；`crates/molt-tui/src/approval.rs`、`molt/version_workers.py` 静态核对） |

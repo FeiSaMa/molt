@@ -51,6 +51,19 @@ ADR-0019 将 v1 语义审计与迁移留在对应的历史发行归档。kernel 
 
 ## TUI 与版本工作区
 
-`crates/molt-tui` 提供终端界面。Chat 默认使用 DeepSeek 流式 API，读取 `DEEPSEEK_API_KEY` 或 `MOLT_API_KEY_HELPER`，会话保存在本地 JSONL。用 `molt tui --mock` 可离线操作。Settings、Diff 和 Approval 当前显示模拟数据。
+`crates/molt-tui` 是当前已交付的终端界面（P0 原型 + 部分现行路径）。现行路径与 v3 目标分层不同，不能把目标态当作现状：
 
-显式传入 `--version-workspace` 后，Versions 调用配套 CLI，由 broker 通过 Unix socket 提交 kernel 事务。保存带预期 generation 和 head，冲突保留草稿；成功回执里的 generation、snapshot、event 和 request ID 来自同一次响应。Tree 读取显式固定的 snapshot 导出。可用 `--molt-bin` 指定配套 CLI 的绝对路径，`--mock` 只影响此模式下的 Chat 等演示数据，Versions 的保存仍会写入所选工作区。[运行示例](operations/version-cli.md#终端界面)
+| 路径 | 现行（2026-11-28） |
+| --- | --- |
+| 入口 | `molt` 无参且 stdin/stdout 均为 TTY → `execv molt-tui`；`molt tui` 为显式子命令 |
+| 缺 `molt-tui` binary（现行行为） | 裸 `molt` + 双 TTY → help + `exit 0`（`molt/cli.py:282-288`）；显式 `molt tui` → `_run_tui(_tui_bin(), ...)`（`cli.py:299`）→ `exit 2`（`cli.py:50-56`）；非法 `MOLT_TUI_BIN` → `exit 2`（`cli.py:50-56`）。Q11/X2 的「双 TTY 缺失 → `exit 2`」是待收口的未来决策，不是当前行为 |
+| Chat | TUI 进程内直连 DeepSeek 流式 API，读取 `DEEPSEEK_API_KEY` 或 `MOLT_API_KEY_HELPER`；不经过 agent 中间层 |
+| 会话存储 | 本地 JSONL（`$HOME/.local/share/molt/sessions/<id>.jsonl`）；不是后端服务，也不是 SQLite |
+| Versions | `--version-workspace` → 子进程 `molt version` → Python broker → kernel；TUI 不直接接触 kernel socket；文件恢复（`b`）= 导出 `main` 直接前任文件树 + 前向提交，2026-11-28 独立 PTY / 真实 CLI 验收通过 |
+| Tree / Settings / Diff / Approval | 四个面板显示 MockData；Live 模式也不代表真实状态，不得当作真实操作（C4 / B1 待修） |
+
+C1 凭据边界：现行 Chat 直连把 provider key 放在 TUI 进程内存，相对目标态扩大了暴露面（进程转储、同 UID 进程、日志 / 错误串误带）。spec INV-6 的脱敏要求仍强制：key 只从 env / `MOLT_API_KEY_HELPER` 读，不进入 argv / 日志 / 错误串，`ProviderConfig` 的 `Debug` 打码。spec INV-2 原约束保持：TUI 不直接接触 kernel socket。目标 v3 分层是 TUI `--HTTP/SSE-->` TS agent `-->` TS broker `--UDS-->` kernel；目标态 TUI 不持 provider key。该目标层尚未交付（根目录无 `agent/`，无 `.ts`、无 `package.json`）。
+
+显式传入 `--version-workspace` 后，Versions 调用配套 CLI，由 broker 通过 Unix socket 提交 kernel 事务。保存带预期 generation 和 head，冲突保留草稿；成功回执里的 generation、snapshot、event 和 request ID 来自同一次响应。版本工作区可读取显式固定的 snapshot 导出（这是只读导出路径，不是会话 Tree 面板的真实数据源）。C5 前向恢复（2026-11-28）已实现：TUI `b` 只恢复当前 `main` 的直接前任文件树——导出该只读树、写本地清单，并以面板缓存基线的 generation 与 main 头发一次 `commit-files --activate`；switch（含切回 main）、rollback、旁支 active 写入并激活 main、非激活推进 main 均显式拒绝，不调用 kernel `rollback`。结果区分成功、无效果、拒绝与未知，未知禁止换新 request ID 盲重试；2026-11-28 通过独立 PTY / 真实 CLI 验收（自然态、两版恢复、真实 stale、同树 merge 后按 `b` 无变化、空树恢复五场景）。可用 `--molt-bin` 指定配套 CLI 的绝对路径，`--mock` 只影响此模式下的 Chat 等演示数据，Versions 的保存仍会写入所选工作区。[运行示例](operations/version-cli.md#终端界面)
+
+阶段口径与 spec §21 一致：TUI 为已交付 P0 原型加部分现行路径；完整 P1 agent 闭环未开始。

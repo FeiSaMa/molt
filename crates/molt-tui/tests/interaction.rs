@@ -1,7 +1,7 @@
 //! W-09 interaction tests: tree/settings/approval/diff keys and state frames.
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use molt_tui::{app, App, ColorMode, Screen};
+use molt_tui::{app, App, ColorMode, DataMode, Screen};
 use ratatui::{backend::TestBackend, Terminal};
 use unicode_width::UnicodeWidthStr;
 
@@ -36,6 +36,13 @@ fn assert_rows_fit(lines: &[String], width: u16) {
             "row {row} is {cells} cells: {line:?}"
         );
     }
+}
+
+/// A Live app whose non-Chat panels have no real backend attached.
+fn live(screen: Screen) -> App {
+    let mut application = App::with_screen(ColorMode::Ansi256, screen);
+    application.mode = DataMode::Live;
+    application
 }
 
 #[test]
@@ -592,4 +599,1260 @@ fn status_messages_expire_after_three_seconds() {
     assert!(application.status_text().is_some());
     application.tick(application.now + std::time::Duration::from_secs(4));
     assert!(application.status_text().is_none());
+}
+
+#[test]
+fn live_tree_without_a_workspace_hides_demo_nodes_and_blocks_mock_actions() {
+    let mut application = live(Screen::Tree);
+    assert_eq!(application.unavailable_panel(), Some(Screen::Tree));
+    let sessions = application.mock.sessions.len();
+    let selected = application.tree.selected;
+
+    for key in ['j', 'f', 'r', 'p', ' ', '/'] {
+        press(&mut application, KeyCode::Char(key));
+    }
+
+    assert_eq!(application.mock.sessions.len(), sessions);
+    assert_eq!(application.tree.selected, selected);
+    assert!(application.tree.marks.is_empty());
+    assert!(application.tree.pinned.is_empty());
+    assert!(application.tree.rollback.is_none());
+    assert!(!application.tree.search_input);
+    assert!(application
+        .status_text()
+        .is_some_and(|status| status.contains("unavailable")));
+
+    let text = render(&application, 120, 40).join("\n");
+    assert!(text.contains("TREE · unavailable"), "{text}");
+    assert!(
+        text.contains("no real session-tree store is connected"),
+        "{text}"
+    );
+    assert!(!text.contains("demo-6"), "{text}");
+    assert!(!text.contains("NODE n"), "{text}");
+    assert!(!text.contains("f fork"), "{text}");
+}
+
+#[test]
+fn live_settings_hides_the_mock_dag_and_blocks_apply() {
+    let mut application = live(Screen::Settings);
+    assert_eq!(application.unavailable_panel(), Some(Screen::Settings));
+    let active = application.mock.active_config.clone();
+    let routing = application.settings.routing;
+
+    for key in ['j', 'a', 'd', 'r'] {
+        press(&mut application, KeyCode::Char(key));
+    }
+    press(&mut application, KeyCode::Enter);
+
+    assert_eq!(application.mock.active_config, active);
+    assert_eq!(application.settings.routing, routing);
+    assert!(!application.settings.detail_open);
+    assert!(application
+        .status_text()
+        .is_some_and(|status| status.contains("settings unavailable")));
+
+    let text = render(&application, 120, 40).join("\n");
+    assert!(text.contains("SETTINGS · unavailable"), "{text}");
+    assert!(
+        text.contains("no real config backend is connected"),
+        "{text}"
+    );
+    assert!(!text.contains("CONFIG DAG"), "{text}");
+    assert!(!text.contains("a apply"), "{text}");
+}
+
+#[test]
+fn live_diff_hides_mock_hunks_and_blocks_patch_actions() {
+    let mut application = live(Screen::Diff);
+    assert_eq!(application.unavailable_panel(), Some(Screen::Diff));
+
+    for key in ['n', 's', 'a', 'r', 'o'] {
+        press(&mut application, KeyCode::Char(key));
+    }
+
+    assert_eq!(application.diff.current, 0);
+    assert!(!application.diff.split);
+    assert!(!application.diff.restore);
+
+    let text = render(&application, 120, 40).join("\n");
+    assert!(text.contains("DIFF · unavailable"), "{text}");
+    assert!(text.contains("no real diff backend is connected"), "{text}");
+    assert!(!text.contains("+++"), "{text}");
+    assert!(!text.contains("@@"), "{text}");
+    assert!(!text.contains("3 hunks"), "{text}");
+}
+
+#[test]
+fn live_approval_hides_the_mock_request_and_blocks_decisions() {
+    let mut application = live(Screen::Approval);
+    assert_eq!(application.unavailable_panel(), Some(Screen::Approval));
+    let pending = application.mock.pending_approvals().count();
+
+    press(&mut application, KeyCode::Char('y'));
+    press_shift(&mut application, 'A');
+    press(&mut application, KeyCode::Char('x'));
+
+    assert_eq!(application.mock.pending_approvals().count(), pending);
+    assert!(application.approvals.saved_rules.is_empty());
+    assert!(application
+        .status_text()
+        .is_some_and(|status| status.contains("approval unavailable")));
+
+    let text = render(&application, 120, 40).join("\n");
+    assert!(text.contains("APPROVAL · unavailable"), "{text}");
+    assert!(
+        text.contains("no real permission engine is connected"),
+        "{text}"
+    );
+    assert!(!text.contains("proc.exec"), "{text}");
+    assert!(!text.contains("cargo test"), "{text}");
+    assert!(!text.contains("once (approved)"), "{text}");
+
+    press(&mut application, KeyCode::Esc);
+    assert_eq!(application.screen, Screen::Chat);
+    assert!(application.composer_focused);
+}
+
+#[test]
+fn live_chat_keeps_the_composer_and_opens_only_the_unavailable_approval_screen() {
+    let mut application = live(Screen::Chat);
+    assert!(application.unavailable_panel().is_none());
+
+    press(&mut application, KeyCode::Char('h'));
+    press(&mut application, KeyCode::Char('i'));
+    assert_eq!(application.input, "hi");
+
+    // `a` opens the panel, but the panel has no real backend and refuses
+    // every decision below.
+    press(&mut application, KeyCode::Esc);
+    press(&mut application, KeyCode::Char('a'));
+    assert_eq!(application.screen, Screen::Approval);
+    assert_eq!(application.unavailable_panel(), Some(Screen::Approval));
+
+    let pending = application.mock.pending_approvals().count();
+    press(&mut application, KeyCode::Char('y'));
+    assert_eq!(application.mock.pending_approvals().count(), pending);
+    assert!(application
+        .status_text()
+        .is_some_and(|status| status.contains("approval unavailable")));
+
+    press(&mut application, KeyCode::Esc);
+    assert_eq!(application.screen, Screen::Chat);
+    assert!(application.composer_focused);
+    assert_eq!(application.input, "hi");
+    assert!(!application.quit);
+}
+
+#[test]
+fn mock_mode_still_runs_the_demo_actions() {
+    let mut tree = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+    assert!(tree.unavailable_panel().is_none());
+    let sessions = tree.mock.sessions.len();
+    press(&mut tree, KeyCode::Char('f'));
+    assert_eq!(tree.mock.sessions.len(), sessions + 1);
+
+    let mut settings = App::with_screen(ColorMode::Ansi256, Screen::Settings);
+    settings.select_config(1);
+    press(&mut settings, KeyCode::Char('a'));
+    assert_eq!(settings.mock.active_config, "low/full");
+
+    let mut approval = App::with_screen(ColorMode::Ansi256, Screen::Approval);
+    press(&mut approval, KeyCode::Char('y'));
+    assert_eq!(approval.mock.pending_approvals().count(), 0);
+
+    let mut diff = App::with_screen(ColorMode::Ansi256, Screen::Diff);
+    press(&mut diff, KeyCode::Char('a'));
+    assert!(diff
+        .status_text()
+        .is_some_and(|status| status.contains("patch applied")));
+}
+
+// ---------------------------------------------------------------------------
+// C5 file recovery: a fake `molt` CLI drives the rejection matrix, the
+// exported tree, the manifest and the exact `commit-files` argv.
+// ---------------------------------------------------------------------------
+
+use molt_tui::version_workspace::{
+    FileRecoveryOutcome, FileRecoveryReport, VersionHistory, VersionWorkspace,
+};
+use std::fs;
+use std::path::PathBuf;
+use std::sync::Mutex;
+
+const STATE_ID: &str = "state-1";
+const FROM: &str = "1111111111111111111111111111111111111111111111111111111111111111";
+const TO: &str = "2222222222222222222222222222222222222222222222222222222222222222";
+const NEW: &str = "3333333333333333333333333333333333333333333333333333333333333333";
+const SIDE: &str = "9999999999999999999999999999999999999999999999999999999999999999";
+const BEFORE: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const HASH: &str = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+const EVENT_1: &str = "sha256:4444444444444444444444444444444444444444444444444444444444444444";
+const EVENT_2: &str = "sha256:5555555555555555555555555555555555555555555555555555555555555555";
+const EVENT_3: &str = "sha256:6666666666666666666666666666666666666666666666666666666666666666";
+const EVENT_4: &str = "sha256:7777777777777777777777777777777777777777777777777777777777777777";
+const REQUEST_ID: &str = "synthetic-recovery-1234";
+
+/// Linux hands every open descriptor to a `vfork` child, so rewriting an
+/// executable while another thread forks can make a concurrent `execve` fail
+/// with ETXTBSY. Script writes and the `b` spawn sequence take one lock.
+static EXEC_LOCK: Mutex<()> = Mutex::new(());
+
+fn exec_lock() -> std::sync::MutexGuard<'static, ()> {
+    EXEC_LOCK
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+fn press_b(application: &mut App) {
+    let _guard = exec_lock();
+    application.handle_key(KeyEvent::new(KeyCode::Char('b'), KeyModifiers::NONE));
+}
+
+struct FakeMolt {
+    directory: PathBuf,
+    binary: PathBuf,
+    workspace: PathBuf,
+}
+
+impl FakeMolt {
+    fn new(label: &str) -> Self {
+        let directory = std::env::temp_dir().join(format!(
+            "molt-tui-fake-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let workspace = directory.join("workspace");
+        fs::create_dir_all(&workspace).unwrap();
+        fs::create_dir_all(directory.join("tree")).unwrap();
+        let _guard = exec_lock();
+        let binary = directory.join("molt");
+        let script = format!(
+            r#"#!/bin/sh
+DIR='{dir}'
+printf '%s\n' "$*" >> "$DIR/argv.log"
+cmd="$4"
+resp=""
+codefile=""
+errfile=""
+case "$cmd" in
+  status)
+    n=0
+    if [ -f "$DIR/status.count" ]; then n=$(cat "$DIR/status.count"); fi
+    n=$((n+1))
+    printf '%s' "$n" > "$DIR/status.count"
+    resp="$DIR/status-$n.json"
+    codefile="$DIR/status-$n.exit"
+    errfile="$DIR/status-$n.err"
+    if [ ! -f "$resp" ]; then resp="$DIR/status.json"; fi
+    if [ ! -f "$codefile" ]; then codefile="$DIR/status.exit"; fi
+    if [ ! -f "$errfile" ]; then errfile="$DIR/status.err"; fi
+    ;;
+  history)
+    resp="$DIR/history.json"; codefile="$DIR/history.exit"; errfile="$DIR/history.err" ;;
+  show)
+    resp="$DIR/show-$5.json"; codefile="$DIR/show.exit"; errfile="$DIR/show.err"
+    if [ ! -f "$resp" ]; then resp="$DIR/show.json"; fi
+    ;;
+  export)
+    if [ -f "$DIR/export.json" ]; then
+      resp="$DIR/export.json"; codefile="$DIR/export.exit"; errfile="$DIR/export.err"
+    else
+      into=""
+      prev=""
+      for a in "$@"; do
+        if [ "$prev" = "--into" ]; then into="$a"; fi
+        prev="$a"
+      done
+      tree="$into/molt-tree-fixture/project"
+      mkdir -p "$tree"
+      chmod 700 "$into/molt-tree-fixture"
+      cp -R "$DIR/tree/." "$tree/"
+      find "$tree" -type d -exec chmod 500 {{}} +
+      find "$tree" -type f -exec chmod 400 {{}} +
+      printf '{{"snapshot":"%s","tree":"%s"}}\n' "$5" "$tree"
+      exit 0
+    fi
+    ;;
+  commit-files)
+    resp="$DIR/commit.json"; codefile="$DIR/commit.exit"; errfile="$DIR/commit.err"
+    prev=""
+    for a in "$@"; do
+      if [ "$prev" = "--manifest" ]; then cp "$a" "$DIR/manifest.json"; fi
+      if [ "$prev" = "--root" ]; then printf '%s' "$a" > "$DIR/root.txt"; fi
+      prev="$a"
+    done
+    ;;
+  *)
+    resp="$DIR/other.json"; codefile="$DIR/other.exit"; errfile="$DIR/other.err" ;;
+esac
+if [ "$cmd" = "commit-files" ] && [ -f "$DIR/signal" ]; then kill -TERM $$; sleep 1; fi
+if [ -f "$errfile" ]; then cat "$errfile" >&2; fi
+if [ -f "$resp" ]; then cat "$resp"; fi
+if [ -f "$codefile" ]; then exit "$(cat "$codefile")"; fi
+exit 0
+"#,
+            dir = directory.display()
+        );
+        let staging = directory.join("molt.staging");
+        {
+            use std::io::Write;
+            use std::os::unix::fs::OpenOptionsExt;
+            let mut file = fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .mode(0o755)
+                .open(&staging)
+                .unwrap();
+            file.write_all(script.as_bytes()).unwrap();
+            file.sync_all().unwrap();
+        }
+        fs::rename(&staging, &binary).unwrap();
+        Self {
+            directory,
+            binary,
+            workspace,
+        }
+    }
+
+    fn respond(&self, name: &str, body: &str) {
+        fs::write(self.directory.join(format!("{name}.json")), body).unwrap();
+    }
+
+    fn exit(&self, name: &str, code: i32) {
+        fs::write(
+            self.directory.join(format!("{name}.exit")),
+            code.to_string(),
+        )
+        .unwrap();
+    }
+
+    fn stderr(&self, name: &str, text: &str) {
+        fs::write(self.directory.join(format!("{name}.err")), text).unwrap();
+    }
+
+    fn signal(&self) {
+        fs::write(self.directory.join("signal"), "term").unwrap();
+    }
+
+    fn tree_file(&self, path: &str, contents: &str) {
+        let path = self.directory.join("tree").join(path);
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).unwrap();
+        }
+        fs::write(path, contents).unwrap();
+    }
+
+    fn argv(&self) -> String {
+        fs::read_to_string(self.directory.join("argv.log")).unwrap_or_default()
+    }
+
+    fn manifest(&self) -> String {
+        fs::read_to_string(self.directory.join("manifest.json")).unwrap_or_default()
+    }
+
+    fn exported_root(&self) -> PathBuf {
+        PathBuf::from(
+            fs::read_to_string(self.directory.join("root.txt"))
+                .expect("commit-files received --root"),
+        )
+    }
+
+    fn app(&self, generation: u64, active: &str, main_head: &str, last_event: &str) -> App {
+        let mut application = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+        application.mode = DataMode::Live;
+        application.version_workspace = Some(VersionWorkspace {
+            binary: self.binary.clone(),
+            workspace: self.workspace.clone(),
+            state_id: STATE_ID.to_owned(),
+            generation,
+            active_snapshot: Some(active.to_owned()),
+            last_event: Some(last_event.to_owned()),
+            main_head: Some(main_head.to_owned()),
+            history_view: VersionHistory::default(),
+            pending_request: None,
+            last_save_receipt: None,
+            last_file_recovery: None,
+            detail: Vec::new(),
+            draft: String::new(),
+            editing: false,
+            pinned_reader: None,
+            reader_parent: None,
+            reader_tree: None,
+            reader_snapshot: None,
+            reader_files: Vec::new(),
+            reader_selected: 0,
+            reader_preview: String::new(),
+            retired_reader_parents: Vec::new(),
+        });
+        application.version_panel_open = true;
+        application
+    }
+}
+
+impl Drop for FakeMolt {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.directory);
+    }
+}
+
+fn status_json(generation: u64, active: &str, main: &str, last_event: &str) -> String {
+    format!(
+        r#"{{"state_id":"{STATE_ID}","generation":{generation},"current":{{"generation":{generation}}},"active":"{active}","last_event":"{last_event}","branches":{{"main":"{main}"}},"pending_request":null}}"#
+    )
+}
+
+fn initial_status_json() -> String {
+    format!(
+        r#"{{"state_id":"{STATE_ID}","generation":0,"current":null,"active":null,"last_event":null,"branches":{{}},"pending_request":null}}"#
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn event(
+    event: &str,
+    generation: u64,
+    action: &str,
+    from: Option<&str>,
+    to: &str,
+    active_after: &str,
+    branch: &str,
+    previous_head: Option<&str>,
+    parents: &[&str],
+) -> String {
+    let from = from
+        .map(|value| format!("\"{value}\""))
+        .unwrap_or_else(|| "null".to_owned());
+    let previous_head = previous_head
+        .map(|value| format!("\"{value}\""))
+        .unwrap_or_else(|| "null".to_owned());
+    let parents = parents
+        .iter()
+        .map(|parent| format!("\"{parent}\""))
+        .collect::<Vec<_>>()
+        .join(",");
+    let base = if generation == 1 {
+        "null".to_owned()
+    } else {
+        format!(r#"{{"generation":{}}}"#, generation - 1)
+    };
+    format!(
+        r#"{{"event":"{event}","generation":{generation},"action":"{action}","from":{from},"to":"{to}","active_after":"{active_after}","branch":"{branch}","previous_head":{previous_head},"parents":[{parents}],"base":{base}}}"#
+    )
+}
+
+fn history_json(events: &[String]) -> String {
+    format!("[{}]", events.join(","))
+}
+
+fn two_commit_history() -> String {
+    history_json(&[
+        event(EVENT_1, 1, "commit", None, FROM, FROM, "main", None, &[]),
+        event(
+            EVENT_2,
+            2,
+            "commit",
+            Some(FROM),
+            TO,
+            TO,
+            "main",
+            Some(FROM),
+            &[],
+        ),
+    ])
+}
+
+fn show_json(snapshot: &str, parents: &[&str], files: &[(&str, u64)]) -> String {
+    let parents = parents
+        .iter()
+        .map(|parent| format!("\"{parent}\""))
+        .collect::<Vec<_>>()
+        .join(",");
+    let files = files
+        .iter()
+        .map(|(path, size)| format!(r#""{path}":{{"sha256":"{HASH}","size":{size}}}"#))
+        .collect::<Vec<_>>()
+        .join(",");
+    format!(
+        r#"{{"snapshot":"{snapshot}","descriptor":{{"parents":[{parents}]}},"files":{{{files}}}}}"#
+    )
+}
+
+fn success_receipt(generation: u64, snapshot: &str, event: &str) -> String {
+    format!(
+        r#"{{"changed":true,"current":{{"generation":{generation}}},"snapshot":"{snapshot}","event":"{event}","request_id":"{REQUEST_ID}"}}"#
+    )
+}
+
+fn standard_target(fake: &FakeMolt) {
+    fake.respond("status", &status_json(2, TO, TO, EVENT_2));
+    fake.respond("history", &two_commit_history());
+    fake.respond(
+        &format!("show-{FROM}"),
+        &show_json(FROM, &[BEFORE], &[("config.json", 5), ("old.txt", 3)]),
+    );
+    fake.respond(
+        &format!("show-{TO}"),
+        &show_json(TO, &[FROM], &[("config.json", 5)]),
+    );
+    fake.tree_file("config.json", "hello");
+    fake.tree_file("old.txt", "old");
+}
+
+fn report(application: &App) -> &FileRecoveryReport {
+    application
+        .version_workspace
+        .as_ref()
+        .unwrap()
+        .last_file_recovery
+        .as_ref()
+        .expect("b records a report")
+}
+
+fn assert_outcome(application: &App, expected: FileRecoveryOutcome) {
+    let report = report(application);
+    assert_eq!(report.outcome, expected, "{:?}", report.lines);
+}
+
+fn commit_invocations(fake: &FakeMolt) -> Vec<String> {
+    fake.argv()
+        .lines()
+        .filter(|line| line.contains("commit-files"))
+        .map(str::to_owned)
+        .collect()
+}
+
+#[test]
+fn file_recovery_commits_the_previous_main_tree_once() {
+    let fake = FakeMolt::new("restore");
+    standard_target(&fake);
+    fake.respond("commit", &success_receipt(3, NEW, EVENT_3));
+    fake.respond("status-3", &status_json(3, NEW, NEW, EVENT_3));
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Restored);
+    let workspace = application.version_workspace.as_ref().unwrap();
+    assert_eq!(workspace.generation, 3);
+    assert_eq!(workspace.main_head.as_deref(), Some(NEW));
+    assert!(workspace
+        .detail
+        .iter()
+        .any(|line| line.contains("request ID") && line.contains(REQUEST_ID)));
+    assert!(application
+        .status_text()
+        .is_some_and(|status| status.contains("committed · generation 3")));
+
+    let commits = commit_invocations(&fake);
+    assert_eq!(commits.len(), 1, "{}", fake.argv());
+    let commit = &commits[0];
+    for token in [
+        "version --workspace",
+        "commit-files",
+        "--root",
+        "molt-tree-fixture/project",
+        "--manifest",
+        "--branch main",
+        "--expect-generation 2",
+        "--expect-head 2222222222222222222222222222222222222222222222222222222222222222",
+        "--activate",
+        "--reason",
+        "--reason-source",
+        "--include-request-id",
+    ] {
+        assert!(commit.contains(token), "missing {token}: {commit}");
+    }
+    assert!(!fake.argv().contains("rollback"), "{}", fake.argv());
+    assert_eq!(fake.manifest(), r#"["config.json","old.txt"]"#);
+    let parent = fake
+        .exported_root()
+        .parent()
+        .and_then(|slot| slot.parent())
+        .map(std::path::Path::to_path_buf)
+        .unwrap();
+    assert!(!parent.exists(), "recovery tree was not cleaned up");
+}
+
+#[test]
+fn file_recovery_rejects_a_stale_panel_baseline_before_history() {
+    let fake = FakeMolt::new("baseline");
+    fake.respond("status", &status_json(5, TO, TO, EVENT_2));
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(report(&application).lines[2].contains("generation 5"));
+    assert!(fake.argv().contains("status"), "{}", fake.argv());
+    assert!(!fake.argv().contains("history"), "{}", fake.argv());
+    assert!(commit_invocations(&fake).is_empty());
+    assert_eq!(
+        application.version_workspace.as_ref().unwrap().generation,
+        2
+    );
+}
+
+#[test]
+fn file_recovery_refuses_to_run_while_a_pending_request_is_cached() {
+    let fake = FakeMolt::new("pending");
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    application
+        .version_workspace
+        .as_mut()
+        .unwrap()
+        .pending_request = Some("synthetic-other".to_owned());
+
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(report(&application).lines[2].contains("another request is pending"));
+    assert!(fake.argv().is_empty(), "{}", fake.argv());
+}
+
+#[test]
+fn file_recovery_rejects_a_switch_back_to_main() {
+    let fake = FakeMolt::new("switch");
+    fake.respond("status", &status_json(4, FROM, FROM, EVENT_4));
+    fake.respond(
+        "history",
+        &history_json(&[
+            event(EVENT_1, 1, "commit", None, FROM, FROM, "main", None, &[]),
+            event(
+                EVENT_2,
+                2,
+                "create-branch",
+                Some(FROM),
+                SIDE,
+                FROM,
+                "side",
+                Some(FROM),
+                &[FROM],
+            ),
+            event(
+                EVENT_3,
+                3,
+                "switch",
+                Some(FROM),
+                SIDE,
+                SIDE,
+                "side",
+                Some(SIDE),
+                &[],
+            ),
+            event(
+                EVENT_4,
+                4,
+                "switch",
+                Some(SIDE),
+                FROM,
+                FROM,
+                "main",
+                Some(FROM),
+                &[],
+            ),
+        ]),
+    );
+
+    let mut application = fake.app(4, FROM, FROM, EVENT_4);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(
+        report(&application)
+            .lines
+            .iter()
+            .any(|line| line.contains("was `switch`")),
+        "{:?}",
+        report(&application).lines
+    );
+    assert!(commit_invocations(&fake).is_empty());
+}
+
+#[test]
+fn file_recovery_rejects_a_side_branch_write_that_activated_main() {
+    let fake = FakeMolt::new("side");
+    fake.respond("status", &status_json(4, TO, TO, EVENT_4));
+    fake.respond(
+        "history",
+        &history_json(&[
+            event(EVENT_1, 1, "commit", None, FROM, FROM, "main", None, &[]),
+            event(
+                EVENT_2,
+                2,
+                "create-branch",
+                Some(FROM),
+                SIDE,
+                FROM,
+                "side",
+                Some(FROM),
+                &[FROM],
+            ),
+            event(
+                EVENT_3,
+                3,
+                "commit",
+                Some(FROM),
+                SIDE,
+                SIDE,
+                "side",
+                Some(SIDE),
+                &[FROM],
+            ),
+            event(
+                EVENT_4,
+                4,
+                "commit",
+                Some(SIDE),
+                TO,
+                TO,
+                "main",
+                Some(FROM),
+                &[FROM],
+            ),
+        ]),
+    );
+    fake.respond(
+        &format!("show-{TO}"),
+        &show_json(TO, &[FROM], &[("config.json", 5)]),
+    );
+
+    let mut application = fake.app(4, TO, TO, EVENT_4);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(commit_invocations(&fake).is_empty());
+    assert!(!fake.argv().contains("export"), "{}", fake.argv());
+}
+
+#[test]
+fn file_recovery_rejects_an_empty_initial_parent() {
+    let fake = FakeMolt::new("initial");
+    fake.respond("status", &status_json(1, FROM, FROM, EVENT_1));
+    fake.respond(
+        "history",
+        &history_json(&[event(
+            EVENT_1,
+            1,
+            "commit",
+            None,
+            FROM,
+            FROM,
+            "main",
+            None,
+            &[],
+        )]),
+    );
+
+    let mut application = fake.app(1, FROM, FROM, EVENT_1);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("no snapshot parent")));
+    assert!(commit_invocations(&fake).is_empty());
+}
+
+#[test]
+fn file_recovery_rejects_an_echo_target() {
+    let fake = FakeMolt::new("echo");
+    standard_target(&fake);
+    fake.respond(
+        &format!("show-{FROM}"),
+        &format!(r#"{{"snapshot":"{FROM}","descriptor":{{"parents":[]}}}}"#),
+    );
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("no managed files")));
+    assert!(commit_invocations(&fake).is_empty());
+}
+
+#[test]
+fn file_recovery_rejects_invalid_paths_sizes_and_extra_tree_files() {
+    for (label, files, extra) in [
+        ("traversal", vec![("../evil", 1u64)], false),
+        ("oversize", vec![("big.bin", 300_000u64)], false),
+        ("extra", vec![("config.json", 5u64)], true),
+    ] {
+        let fake = FakeMolt::new(label);
+        standard_target(&fake);
+        fake.respond(&format!("show-{FROM}"), &show_json(FROM, &[BEFORE], &files));
+        if extra {
+            fake.tree_file("unexpected.txt", "extra");
+        }
+        let mut application = fake.app(2, TO, TO, EVENT_2);
+        press_b(&mut application);
+        assert_outcome(&application, FileRecoveryOutcome::Rejected);
+        assert!(commit_invocations(&fake).is_empty(), "{label}");
+        assert!(
+            !fake.argv().contains("commit-files"),
+            "{label}: {}",
+            fake.argv()
+        );
+    }
+}
+
+#[test]
+fn file_recovery_rejects_an_export_tree_outside_the_private_parent() {
+    let fake = FakeMolt::new("export-path");
+    standard_target(&fake);
+    fake.respond(
+        "export",
+        &format!(r#"{{"snapshot":"{FROM}","tree":"/tmp/not-the-export-parent/project"}}"#),
+    );
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(report(&application).lines[1].contains("export tree"));
+    assert!(commit_invocations(&fake).is_empty());
+}
+
+#[test]
+fn file_recovery_rejects_a_status_drift_after_the_target_is_prepared() {
+    let fake = FakeMolt::new("confirm");
+    standard_target(&fake);
+    fake.respond("status-2", &status_json(3, TO, TO, EVENT_3));
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(report(&application).lines[1].contains("confirm"));
+    assert!(commit_invocations(&fake).is_empty());
+    assert!(!fake.argv().contains("rollback"), "{}", fake.argv());
+}
+
+#[test]
+fn file_recovery_reports_no_effect_for_the_current_head_tree() {
+    let fake = FakeMolt::new("no-effect");
+    standard_target(&fake);
+    fake.respond(
+        "commit",
+        &format!(
+            r#"{{"changed":false,"current":{{"generation":2}},"snapshot":"{TO}","event":null}}"#
+        ),
+    );
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::NoEffect);
+    assert!(report(&application).lines[0].contains("no effect"));
+    assert_eq!(
+        application.version_workspace.as_ref().unwrap().generation,
+        2
+    );
+    assert_eq!(commit_invocations(&fake).len(), 1);
+    assert!(!fake.argv().contains("rollback"), "{}", fake.argv());
+}
+
+#[test]
+fn file_recovery_classifies_a_stale_conflict_without_retrying() {
+    let fake = FakeMolt::new("stale");
+    standard_target(&fake);
+    fake.exit("commit", 3);
+    fake.stderr("commit", "error: stale generation 2\n");
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(
+        report(&application).lines[0].contains("stale main"),
+        "{:?}",
+        report(&application).lines
+    );
+    assert_eq!(commit_invocations(&fake).len(), 1);
+    assert!(!fake.argv().contains("rollback"), "{}", fake.argv());
+}
+
+#[test]
+fn file_recovery_does_not_guess_an_unclassified_exit_3() {
+    let fake = FakeMolt::new("exit3");
+    standard_target(&fake);
+    fake.exit("commit", 3);
+    fake.stderr("commit", "error: resource temporarily unavailable\n");
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Unknown);
+    assert!(report(&application).lines[0].contains("result unknown"));
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("not classified")));
+    assert_eq!(commit_invocations(&fake).len(), 1);
+}
+
+#[test]
+fn file_recovery_reports_runtime_failures_and_signals_as_unknown() {
+    let fake = FakeMolt::new("runtime");
+    standard_target(&fake);
+    fake.exit("commit", 1);
+    fake.stderr("commit", "error: kernel unavailable\n");
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+    assert_outcome(&application, FileRecoveryOutcome::Unknown);
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("do not retry")));
+    assert_eq!(commit_invocations(&fake).len(), 1);
+    drop(application);
+
+    let signaling = FakeMolt::new("signal");
+    standard_target(&signaling);
+    signaling.signal();
+
+    let mut application = signaling.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+    assert_outcome(&application, FileRecoveryOutcome::Unknown);
+    assert!(
+        report(&application)
+            .lines
+            .iter()
+            .any(|line| line.contains("signal 15")),
+        "{:?}",
+        report(&application).lines
+    );
+    assert_eq!(commit_invocations(&signaling).len(), 1);
+}
+
+#[test]
+fn file_recovery_distinguishes_foreign_pending_from_its_own_recovery() {
+    let foreign = FakeMolt::new("foreign-pending");
+    standard_target(&foreign);
+    foreign.exit("commit", 4);
+    foreign.stderr(
+        "commit",
+        "error: pending request synthetic-other; query request-status or run recover\n",
+    );
+    let mut application = foreign.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert_eq!(
+        report(&application).request_id.as_deref(),
+        Some("synthetic-other")
+    );
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("not submitted by b")));
+    assert!(!report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("request ID synthetic-other")));
+    drop(application);
+
+    let own = FakeMolt::new("own-recovery");
+    standard_target(&own);
+    own.exit("commit", 4);
+    own.stderr(
+        "commit",
+        &format!("error: request {REQUEST_ID} needs recovery\n"),
+    );
+    let mut application = own.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+    assert_outcome(&application, FileRecoveryOutcome::Unknown);
+    assert_eq!(report(&application).request_id.as_deref(), Some(REQUEST_ID));
+    assert!(report(&application).lines[0].contains("do not retry"));
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("request-status")));
+}
+
+#[test]
+fn file_recovery_treats_an_incomplete_receipt_as_unknown() {
+    let fake = FakeMolt::new("receipt");
+    standard_target(&fake);
+    fake.respond(
+        "commit",
+        &format!(
+            r#"{{"changed":true,"current":{{"generation":3}},"snapshot":"{NEW}","event":"{EVENT_3}"}}"#
+        ),
+    );
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Unknown);
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("request ID")));
+    assert_eq!(commit_invocations(&fake).len(), 1);
+}
+
+#[test]
+fn file_recovery_empty_target_submits_an_empty_manifest() {
+    let fake = FakeMolt::new("empty");
+    fake.respond("status", &status_json(2, TO, TO, EVENT_2));
+    fake.respond("history", &two_commit_history());
+    fake.respond(&format!("show-{FROM}"), &show_json(FROM, &[BEFORE], &[]));
+    fake.respond(
+        &format!("show-{TO}"),
+        &show_json(TO, &[FROM], &[("config.json", 5)]),
+    );
+    fake.respond("commit", &success_receipt(3, NEW, EVENT_3));
+    fake.respond("status-3", &status_json(3, NEW, NEW, EVENT_3));
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Restored);
+    assert_eq!(fake.manifest(), "[]");
+    assert_eq!(commit_invocations(&fake).len(), 1);
+}
+
+#[test]
+fn file_recovery_rejects_a_generation_zero_workspace() {
+    let fake = FakeMolt::new("zero");
+    fake.respond("status", &initial_status_json());
+    fake.respond("history", "[]");
+
+    let mut application = fake.app(0, FROM, FROM, EVENT_1);
+    application
+        .version_workspace
+        .as_mut()
+        .unwrap()
+        .active_snapshot = None;
+    application.version_workspace.as_mut().unwrap().last_event = None;
+    application.version_workspace.as_mut().unwrap().main_head = None;
+
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(
+        report(&application)
+            .lines
+            .iter()
+            .any(|line| line.contains("no committed generation")),
+        "{:?}",
+        report(&application).lines
+    );
+    assert!(commit_invocations(&fake).is_empty());
+}
+
+#[test]
+fn file_recovery_rejects_history_without_an_active_change() {
+    let fake = FakeMolt::new("no-target");
+    fake.respond("status", &status_json(1, FROM, FROM, EVENT_1));
+    fake.respond(
+        "history",
+        &history_json(&[event(
+            EVENT_1,
+            1,
+            "commit",
+            Some(FROM),
+            FROM,
+            FROM,
+            "main",
+            None,
+            &[],
+        )]),
+    );
+
+    let mut application = fake.app(1, FROM, FROM, EVENT_1);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("no event changed the active snapshot")));
+    assert!(commit_invocations(&fake).is_empty());
+}
+
+fn assert_no_recovery_side_effects(fake: &FakeMolt, application: &App, expected: &str) {
+    assert_outcome(application, FileRecoveryOutcome::Rejected);
+    assert!(
+        report(application)
+            .lines
+            .iter()
+            .any(|line| line.contains(expected)),
+        "{:?}",
+        report(application).lines
+    );
+    let argv = fake.argv();
+    assert!(
+        !argv
+            .lines()
+            .any(|line| line.split_whitespace().nth(3) == Some("export")),
+        "{argv}"
+    );
+    assert!(commit_invocations(fake).is_empty(), "{argv}");
+}
+
+#[test]
+fn file_recovery_rejects_a_selected_event_whose_from_breaks_the_predecessor_link() {
+    let fake = FakeMolt::new("broken-link");
+    fake.respond("status", &status_json(2, TO, TO, EVENT_2));
+    fake.respond(
+        "history",
+        &history_json(&[
+            event(EVENT_1, 1, "commit", None, FROM, BEFORE, "main", None, &[]),
+            event(
+                EVENT_2,
+                2,
+                "commit",
+                Some(FROM),
+                TO,
+                TO,
+                "main",
+                Some(FROM),
+                &[],
+            ),
+        ]),
+    );
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_no_recovery_side_effects(
+        &fake,
+        &application,
+        "does not start from the snapshot the previous event left active",
+    );
+}
+
+#[test]
+fn file_recovery_rejects_a_selected_event_that_omits_its_from_link() {
+    let fake = FakeMolt::new("missing-link");
+    fake.respond("status", &status_json(2, TO, TO, EVENT_2));
+    fake.respond(
+        "history",
+        &history_json(&[
+            event(EVENT_1, 1, "commit", None, FROM, FROM, "main", None, &[]),
+            event(EVENT_2, 2, "commit", None, TO, TO, "main", Some(FROM), &[]),
+        ]),
+    );
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_no_recovery_side_effects(
+        &fake,
+        &application,
+        "does not start from the snapshot the previous event left active",
+    );
+}
+
+#[test]
+fn file_recovery_rejects_workspace_replacement_and_history_binding_drift() {
+    let replaced = FakeMolt::new("replaced");
+    replaced.respond(
+        "status",
+        &format!(
+            r#"{{"state_id":"state-2","generation":2,"current":{{"generation":2}},"active":"{TO}","last_event":"{EVENT_2}","branches":{{"main":"{TO}"}},"pending_request":null}}"#
+        ),
+    );
+    let mut application = replaced.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("state_id state-2")));
+    assert!(commit_invocations(&replaced).is_empty());
+    drop(application);
+    drop(replaced);
+
+    let unbound = FakeMolt::new("unbound");
+    unbound.respond("status", &status_json(2, TO, TO, EVENT_2));
+    unbound.respond(
+        "history",
+        &history_json(&[
+            event(EVENT_1, 1, "commit", None, FROM, FROM, "main", None, &[]),
+            event(
+                EVENT_2,
+                2,
+                "commit",
+                Some(FROM),
+                TO,
+                FROM,
+                "main",
+                Some(FROM),
+                &[],
+            ),
+        ]),
+    );
+    let mut application = unbound.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("does not end at the status active")));
+    assert!(commit_invocations(&unbound).is_empty());
+}
+
+#[test]
+fn file_recovery_rejects_a_status_whose_current_generation_disagrees() {
+    let fake = FakeMolt::new("current");
+    fake.respond(
+        "status",
+        &format!(
+            r#"{{"state_id":"{STATE_ID}","generation":2,"current":{{"generation":1}},"active":"{TO}","last_event":"{EVENT_2}","branches":{{"main":"{TO}"}},"pending_request":null}}"#
+        ),
+    );
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert_eq!(report(&application).lines[1], "stage read status");
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("current generation")));
+    assert!(commit_invocations(&fake).is_empty());
+}
+
+#[test]
+fn file_recovery_rejects_an_export_without_a_tree_path() {
+    let fake = FakeMolt::new("export-missing");
+    standard_target(&fake);
+    fake.respond("export", &format!(r#"{{"snapshot":"{FROM}"}}"#));
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(report(&application)
+        .lines
+        .iter()
+        .any(|line| line.contains("export omitted the tree path")));
+    assert!(commit_invocations(&fake).is_empty());
+}
+
+#[test]
+fn file_recovery_reports_exit_2_as_an_input_rejection() {
+    let fake = FakeMolt::new("exit2");
+    standard_target(&fake);
+    fake.exit("commit", 2);
+    fake.stderr("commit", "error: invalid managed path: ../evil\n");
+
+    let mut application = fake.app(2, TO, TO, EVENT_2);
+    press_b(&mut application);
+
+    assert_outcome(&application, FileRecoveryOutcome::Rejected);
+    assert!(report(&application).lines[0].contains("input or workspace refused"));
+    assert_eq!(commit_invocations(&fake).len(), 1);
+    assert!(!fake.argv().contains("rollback"), "{}", fake.argv());
 }

@@ -48,8 +48,9 @@ Keep a separate verified v2 backup/export and rehearse its recovery before
 relying on rollback.
 
 This service unit is a deployment example, not a signed package or an automatic
-installer. The `1.2.0rc9` bundle is a local candidate. Before a
-public or production deployment, record the exact bundle checksum, source
-fingerprint, persistent-user-manager test, backup and recovery evidence, and
-the responsible operator. The historical `1.1.0` release bundle and its
-procedure are retained as archival evidence.
+installer. The `1.2.0rc9` bundle mentioned in this document is historical
+context for the example, not the current release entry; see the `1.2.0rc10`
+release notes for current packages. Before a public or production deployment,
+record the exact bundle checksum, source fingerprint, persistent-user-manager
+test, backup and recovery evidence, and the responsible operator. The historical
+`1.1.0` release bundle and its procedure are retained as archival evidence.

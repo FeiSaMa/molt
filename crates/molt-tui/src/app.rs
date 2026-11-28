@@ -32,7 +32,7 @@ use crate::session::{self, Session, SessionStore, SessionSummary};
 use crate::settings::SettingsState;
 use crate::theme::{ColorMode, Theme};
 use crate::tree::TreeState;
-use crate::version_workspace::VersionWorkspace;
+use crate::version_workspace::{FileRecoveryOutcome, VersionWorkspace};
 use crate::{clipboard, logo, wordmark};
 
 /// Status messages disappear after three seconds of wall clock time.
@@ -703,7 +703,10 @@ impl App {
             }
             return;
         }
-        if self.screen == Screen::Approval && self.handle_approval_key(key) {
+        if self.mode == DataMode::Mock
+            && self.screen == Screen::Approval
+            && self.handle_approval_key(key)
+        {
             return;
         }
         if key.code == KeyCode::Tab {
@@ -723,6 +726,12 @@ impl App {
         }
         if self.screen == Screen::Tree && self.uses_managed_tree() {
             self.handle_version_tree_key(key);
+            return;
+        }
+        // Live mode has no real backend for the demo-only panels. Reject the
+        // action at dispatch time so a visual label alone cannot be bypassed.
+        if self.unavailable_panel().is_some() {
+            self.reject_unavailable_action(key);
             return;
         }
         let consumed = match self.screen {
@@ -775,6 +784,46 @@ impl App {
         self.version_workspace.is_some()
     }
 
+    /// The current screen when Live mode has no real backend for it. `None`
+    /// means the screen is Mock (where the demo is explicit) or has a real
+    /// backend (Chat, or Tree with a connected Versions workspace).
+    pub fn unavailable_panel(&self) -> Option<Screen> {
+        if self.mode != DataMode::Live {
+            return None;
+        }
+        match self.screen {
+            Screen::Tree if !self.uses_managed_tree() => Some(Screen::Tree),
+            Screen::Settings | Screen::Diff | Screen::Approval => Some(self.screen),
+            _ => None,
+        }
+    }
+
+    /// One-line reason for an unavailable panel.
+    fn unavailable_detail(screen: Screen) -> &'static str {
+        match screen {
+            Screen::Tree => "no real session-tree store is connected",
+            Screen::Settings => "no real config backend is connected",
+            Screen::Diff => "no real diff backend is connected",
+            Screen::Approval => "no real permission engine is connected",
+            _ => "no real backend is connected",
+        }
+    }
+
+    /// Keep navigation keys working but refuse every demo action in Live mode.
+    fn reject_unavailable_action(&mut self, key: KeyEvent) {
+        if self.screen == Screen::Approval && key.code == KeyCode::Esc {
+            self.screen = Screen::Chat;
+            self.composer_focused = true;
+            self.set_status(StatusLevel::Info, "returned to live chat");
+            return;
+        }
+        let panel = self.screen.title().to_ascii_lowercase();
+        self.set_status(
+            StatusLevel::Warning,
+            format!("{panel} unavailable in live · no real data source connected"),
+        );
+    }
+
     fn handle_version_panel_key(&mut self, key: KeyEvent) {
         let Some(workspace) = self.version_workspace.as_mut() else {
             self.version_panel_open = false;
@@ -809,6 +858,19 @@ impl App {
             self.version_panel_open = false;
             self.screen = Screen::Tree;
             self.composer_focused = false;
+            return;
+        }
+        if key.code == KeyCode::Char('b') {
+            let report = workspace.file_recovery();
+            let level = match report.outcome {
+                FileRecoveryOutcome::Restored => StatusLevel::Success,
+                FileRecoveryOutcome::NoEffect => StatusLevel::Info,
+                FileRecoveryOutcome::Rejected => StatusLevel::Warning,
+                FileRecoveryOutcome::Unknown => StatusLevel::Danger,
+            };
+            let headline = report.headline();
+            workspace.last_file_recovery = Some(report);
+            self.set_status(level, headline);
             return;
         }
         let result = match key.code {
@@ -855,7 +917,6 @@ impl App {
             }
             KeyCode::Char('a') => workspace.audit_last(),
             KeyCode::Char('u') => workspace.recover().and_then(|()| workspace.refresh()),
-            KeyCode::Char('b') => workspace.rollback_last(),
             _ => return,
         };
         if let Err(error) = result {
@@ -1074,6 +1135,12 @@ impl App {
             Screen::Tree if self.uses_managed_tree() => {
                 "j/k browse · PgUp/PgDn · Ctrl+V Versions · read-only"
             }
+            Screen::Tree | Screen::Settings | Screen::Diff if self.mode == DataMode::Live => {
+                "unavailable in live · Tab next · ? help"
+            }
+            Screen::Approval if self.mode == DataMode::Live => {
+                "unavailable in live · Esc chat · Tab next · ? help"
+            }
             Screen::Tree => {
                 "j/k move · h/l fold · f fork · r rollback · p pin · Space mark · / search"
             }
@@ -1178,7 +1245,9 @@ impl App {
         }
         let mut lines = vec![
             Line::from("Ctrl+V · local workspace · v save receipt · / filter · c clear"),
-            Line::from("e edit · s save · p pin reader · l read pinned · t tree · b rollback"),
+            Line::from(
+                "e edit · s save · p pin reader · l read pinned · t tree · b restore previous files",
+            ),
             Line::from("u recover · h history · j/k move · PgUp/PgDn · a audit · Esc close"),
         ];
         if let Some(workspace) = workspace {
@@ -1213,9 +1282,10 @@ impl App {
         // wordmark and no icon glyphs; narrow terminals simply truncate it.
         let mode = match (self.mode, self.screen, self.version_workspace.is_some()) {
             (DataMode::Live, Screen::Chat, true) => "live chat · molt connected",
-            (DataMode::Live, Screen::Chat, false) => "live chat · mock panels",
-            (_, _, true) => "molt connected · mock panels",
-            _ => "mock",
+            (DataMode::Live, Screen::Chat, false) => "live chat · demo panels unavailable",
+            (DataMode::Live, _, _) => "live · demo panels unavailable",
+            (DataMode::Mock, _, true) => "molt connected · mock panels",
+            (DataMode::Mock, _, false) => "mock",
         };
         let label = fit(&format!(" molt · v3 · {mode}"), area.width);
         frame.render_widget(
@@ -1307,6 +1377,7 @@ impl App {
         let mut lines = Vec::new();
         let theme = self.theme;
 
+        let demo = self.mode == DataMode::Live;
         let compact = width < 22;
         lines.push(styled_line("SESSIONS", width, theme.title()));
         if self.mode == DataMode::Live {
@@ -1366,7 +1437,11 @@ impl App {
             }
         }
 
-        lines.push(styled_line("MCP", width, theme.title()));
+        lines.push(styled_line(
+            if demo { "MCP · demo only" } else { "MCP" },
+            width,
+            theme.title(),
+        ));
         for server in &self.mock.mcp {
             let (text, style) = match server.status {
                 McpStatus::Connected => (format!("● {} ok", server.name), theme.success()),
@@ -1385,7 +1460,11 @@ impl App {
             }
         }
 
-        lines.push(styled_line("TODOS", width, theme.title()));
+        lines.push(styled_line(
+            if demo { "TODOS · demo only" } else { "TODOS" },
+            width,
+            theme.title(),
+        ));
         for todo in &self.mock.todos {
             let mark = if todo.done { "x" } else { " " };
             let style = if todo.done {
@@ -1400,7 +1479,15 @@ impl App {
             ));
         }
 
-        lines.push(styled_line("CONFIG", width, theme.title()));
+        lines.push(styled_line(
+            if demo {
+                "CONFIG · demo only"
+            } else {
+                "CONFIG"
+            },
+            width,
+            theme.title(),
+        ));
         if let Some(config) = self.mock.active_config() {
             if compact {
                 lines.push(styled_line(config.id.clone(), width, theme.info()));
@@ -1430,28 +1517,33 @@ impl App {
             );
             return;
         }
-        let context = match self.screen {
-            Screen::Tree if self.uses_managed_tree() => self
-                .version_workspace
-                .as_ref()
-                .and_then(|workspace| workspace.reader_snapshot.clone())
-                .unwrap_or_else(|| "no tree".to_owned()),
-            Screen::Tree => self.tree_context_id(),
-            Screen::Settings => self.mock.active_config.clone(),
-            Screen::Diff => format!("{} hunks", self.mock.hunk_count()),
-            Screen::Approval => format!("{} pending", self.mock.pending_approvals().count()),
-            Screen::Chat | Screen::Startup => {
-                if self.mode == DataMode::Live {
-                    self.session
-                        .as_ref()
-                        .map(|session| session.id.clone())
-                        .unwrap_or_else(|| "live".to_owned())
-                } else {
-                    self.mock
-                        .sessions
-                        .first()
-                        .map(|session| session.id.clone())
-                        .unwrap_or_else(|| "mock".to_owned())
+        let unavailable = self.unavailable_panel();
+        let context = if unavailable.is_some() {
+            "unavailable".to_owned()
+        } else {
+            match self.screen {
+                Screen::Tree if self.uses_managed_tree() => self
+                    .version_workspace
+                    .as_ref()
+                    .and_then(|workspace| workspace.reader_snapshot.clone())
+                    .unwrap_or_else(|| "no tree".to_owned()),
+                Screen::Tree => self.tree_context_id(),
+                Screen::Settings => self.mock.active_config.clone(),
+                Screen::Diff => format!("{} hunks", self.mock.hunk_count()),
+                Screen::Approval => format!("{} pending", self.mock.pending_approvals().count()),
+                Screen::Chat | Screen::Startup => {
+                    if self.mode == DataMode::Live {
+                        self.session
+                            .as_ref()
+                            .map(|session| session.id.clone())
+                            .unwrap_or_else(|| "live".to_owned())
+                    } else {
+                        self.mock
+                            .sessions
+                            .first()
+                            .map(|session| session.id.clone())
+                            .unwrap_or_else(|| "mock".to_owned())
+                    }
                 }
             }
         };
@@ -1476,6 +1568,10 @@ impl App {
         if body.width == 0 || body.height == 0 {
             return;
         }
+        if let Some(panel) = unavailable {
+            self.render_unavailable(frame, body, panel);
+            return;
+        }
         match self.screen {
             Screen::Startup => {}
             Screen::Chat => self.render_chat(frame, body),
@@ -1490,6 +1586,48 @@ impl App {
             Screen::Diff => self.render_diff(frame, body),
             Screen::Approval => self.render_approval(frame, body),
         }
+    }
+
+    /// Explicit empty state for a Live screen whose real backend does not
+    /// exist. The embedded demo is never painted here, so mock approvals,
+    /// diffs or configs cannot be mistaken for real state.
+    fn render_unavailable(&self, frame: &mut Frame, area: Rect, screen: Screen) {
+        if area.width == 0 || area.height == 0 {
+            return;
+        }
+        let width = area.width;
+        let mut lines = vec![styled_line(
+            format!("UNAVAILABLE · {}", screen.title()),
+            width,
+            self.theme.warning().add_modifier(Modifier::BOLD),
+        )];
+        for text in [
+            "live mode · not connected to a real data source",
+            Self::unavailable_detail(screen),
+            "nothing on this screen reflects real state",
+        ] {
+            for line in wrap_text(text, width) {
+                lines.push(styled_line(line, width, self.theme.text()));
+            }
+        }
+        lines.push(Line::default());
+        for text in [
+            "demo data is hidden · demo actions are disabled",
+            "Chat, sessions and Versions stay available · --mock keeps the demo",
+        ] {
+            for line in wrap_text(text, width) {
+                lines.push(styled_line(line, width, self.theme.muted()));
+            }
+        }
+        if screen == Screen::Tree {
+            for line in wrap_text(
+                "start with --version-workspace for the read-only Versions tree",
+                width,
+            ) {
+                lines.push(styled_line(line, width, self.theme.muted()));
+            }
+        }
+        frame.render_widget(Paragraph::new(lines).style(self.theme.base()), area);
     }
 
     fn render_status(&self, frame: &mut Frame, area: Rect) {
@@ -1814,7 +1952,7 @@ impl App {
             .title(Span::styled(" HELP ", self.theme.title()));
         let inner = block.inner(rect);
         frame.render_widget(block, rect);
-        let lines = vec![
+        let mut lines = vec![
             styled_line("Ctrl+Q   quit", inner.width, self.theme.text()),
             styled_line(
                 "Tab      Chat -> Tree -> Settings -> Diff",
@@ -1822,7 +1960,11 @@ impl App {
                 self.theme.text(),
             ),
             styled_line(
-                "a        approval screen (modal)",
+                if self.mode == DataMode::Live {
+                    "a        unavailable in live (no approval engine)"
+                } else {
+                    "a        approval screen (modal)"
+                },
                 inner.width,
                 self.theme.text(),
             ),
@@ -1854,22 +1996,35 @@ impl App {
                 self.theme.text(),
             ),
             styled_line("Up/Down  scroll main pane", inner.width, self.theme.text()),
-            styled_line(
+        ];
+        if self.mode == DataMode::Live {
+            lines.push(styled_line(
+                "Ctrl+V   Versions workspace (if connected)",
+                inner.width,
+                self.theme.text(),
+            ));
+            lines.push(styled_line(
+                "Tree/Settings/Diff/Approval unavailable in live",
+                inner.width,
+                self.theme.text(),
+            ));
+        } else {
+            lines.push(styled_line(
                 "Tree     j/k · h/l · f · r · p · Space · /",
                 inner.width,
                 self.theme.text(),
-            ),
-            styled_line(
+            ));
+            lines.push(styled_line(
                 "Settings j/k · a apply · d diff · r routing",
                 inner.width,
                 self.theme.text(),
-            ),
-            styled_line(
+            ));
+            lines.push(styled_line(
                 "Diff     n/N hunk · s split · a apply · r restore",
                 inner.width,
                 self.theme.text(),
-            ),
-        ];
+            ));
+        }
         frame.render_widget(Paragraph::new(lines).style(self.theme.panel()), inner);
     }
 
@@ -2279,9 +2434,11 @@ mod tests {
             generation: 2,
             active_snapshot: None,
             last_event: Some("event-new".to_owned()),
+            main_head: None,
             history_view,
             pending_request: None,
             last_save_receipt: None,
+            last_file_recovery: None,
             detail: vec![
                 "> g2 commit event-new".to_owned(),
                 "  g1 commit event-old".to_owned(),
@@ -2327,9 +2484,11 @@ mod tests {
             generation: 17,
             active_snapshot: None,
             last_event: Some("event-0".to_owned()),
+            main_head: None,
             history_view,
             pending_request: None,
             last_save_receipt: None,
+            last_file_recovery: None,
             detail: Vec::new(),
             draft: String::new(),
             editing: false,
@@ -2380,6 +2539,85 @@ mod tests {
     }
 
     #[test]
+    fn version_panel_b_runs_recovery_and_never_sends_commit_files_on_rejection() {
+        use crate::version_workspace::{FileRecoveryOutcome, VersionHistory};
+        use std::os::unix::fs::PermissionsExt;
+
+        let directory = std::env::temp_dir().join(format!(
+            "molt-tui-b-recovery-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        let workspace_directory = directory.join("workspace");
+        std::fs::create_dir(&workspace_directory).unwrap();
+        let binary = directory.join("molt");
+        let argv_log = directory.join("argv.log");
+        std::fs::write(
+            &binary,
+            format!(
+                "#!/bin/sh\nprintf '%s\\n' \"$*\" >> '{}'\nprintf 'error: status unavailable\\n' >&2\nexit 1\n",
+                argv_log.display()
+            ),
+        )
+        .unwrap();
+        let mut permissions = std::fs::metadata(&binary).unwrap().permissions();
+        permissions.set_mode(0o755);
+        std::fs::set_permissions(&binary, permissions).unwrap();
+
+        let mut app = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+        app.mode = DataMode::Live;
+        app.version_workspace = Some(VersionWorkspace {
+            binary,
+            workspace: workspace_directory,
+            state_id: "synthetic-state".to_owned(),
+            generation: 2,
+            active_snapshot: Some("snapshot-b".to_owned()),
+            last_event: Some("event-b".to_owned()),
+            main_head: Some("snapshot-b".to_owned()),
+            history_view: VersionHistory::default(),
+            pending_request: None,
+            last_save_receipt: None,
+            last_file_recovery: None,
+            detail: Vec::new(),
+            draft: String::new(),
+            editing: false,
+            pinned_reader: None,
+            reader_parent: None,
+            reader_tree: None,
+            reader_snapshot: None,
+            reader_files: Vec::new(),
+            reader_selected: 0,
+            reader_preview: String::new(),
+            retired_reader_parents: Vec::new(),
+        });
+        app.version_panel_open = true;
+
+        press(&mut app, KeyCode::Char('b'));
+
+        let workspace = app.version_workspace.as_ref().unwrap();
+        assert_eq!(workspace.generation, 2);
+        assert_eq!(workspace.active_snapshot.as_deref(), Some("snapshot-b"));
+        let report = workspace.last_file_recovery.as_ref().unwrap();
+        assert_eq!(report.outcome, FileRecoveryOutcome::Rejected);
+        assert_eq!(workspace.detail, report.lines);
+        assert!(workspace.detail[0].contains("rejected"));
+        assert!(app
+            .status_text()
+            .is_some_and(|status| status.contains("rejected")));
+        let log = std::fs::read_to_string(&argv_log).unwrap();
+        assert!(log.contains("version --workspace"), "{log}");
+        assert!(log.contains(" status"), "{log}");
+        assert!(!log.contains("commit-files"), "{log}");
+        assert!(!log.contains("rollback"), "{log}");
+        drop(app);
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
     fn managed_tree_keys_browse_exports_without_running_mock_actions() {
         use crate::version_workspace::VersionHistory;
         use std::path::PathBuf;
@@ -2405,9 +2643,11 @@ mod tests {
             generation: 2,
             active_snapshot: None,
             last_event: None,
+            main_head: None,
             history_view: VersionHistory::default(),
             pending_request: None,
             last_save_receipt: None,
+            last_file_recovery: None,
             detail: Vec::new(),
             draft: String::new(),
             editing: false,
@@ -2420,6 +2660,7 @@ mod tests {
             reader_preview: "alpha".to_owned(),
             retired_reader_parents: Vec::new(),
         });
+        assert!(app.unavailable_panel().is_none());
         let mock_selected = app.tree.selected;
         let mock_session_count = app.mock.sessions.len();
 
@@ -2454,9 +2695,11 @@ mod tests {
             generation: 0,
             active_snapshot: None,
             last_event: None,
+            main_head: None,
             history_view: VersionHistory::default(),
             pending_request: None,
             last_save_receipt: None,
+            last_file_recovery: None,
             detail: Vec::new(),
             draft: String::new(),
             editing: false,
@@ -2487,6 +2730,27 @@ mod tests {
         assert!(app.input.is_empty());
         assert!(!app.last_assistant.is_empty());
         assert!(!app.streaming);
+    }
+
+    #[test]
+    fn live_demo_only_panels_report_unavailable() {
+        for screen in [
+            Screen::Tree,
+            Screen::Settings,
+            Screen::Diff,
+            Screen::Approval,
+        ] {
+            let mut app = App::with_screen(ColorMode::Ansi256, screen);
+            app.mode = DataMode::Live;
+            assert_eq!(app.unavailable_panel(), Some(screen));
+        }
+
+        let mut chat = App::with_screen(ColorMode::Ansi256, Screen::Chat);
+        chat.mode = DataMode::Live;
+        assert_eq!(chat.unavailable_panel(), None);
+
+        let mock = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+        assert_eq!(mock.unavailable_panel(), None);
     }
 
     #[test]

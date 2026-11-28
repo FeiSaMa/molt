@@ -5,6 +5,7 @@
 | 状态 | Draft |
 | 日期 | 2026-11-21 |
 | 基线 | `a5ce76dbbe60`（`main`，`pyproject` 版本 `1.2.0rc8`） |
+| 实现状态 | 部分交付：入口与 TUI 已存在；TS agent / TS broker 未交付（2026-11-27，`6198139`） |
 | 关联 | spec §2 / §4 / §5.1 / §11 / §15；ADR-0015 / 0018 / 0019；0021 / 0022 同批评审 |
 | 决策者 | 用户（X1 于 2026-11-21 确认） |
 
@@ -30,6 +31,20 @@ v2 只负责「版本 + 审计」，交互交给外部程序：`molt project ope
 - TUI 不连 kernel / broker、不写 DB、不持密钥。
 - broker 是唯一接触 kernel socket 的模块；`node:net` 仅允许出现在 `src/broker/**`（INV-2）。
 - kernel 一行不改（INV-1、D6）。
+
+### D1a 现行路径与目标分层（2026-11-27，基线 `6198139`）
+
+D1 的四层是**目标态**，不是当前仓库的现状。现行路径如下，二者不得混写：
+
+| 环节 | 现行实现 | 与目标态的差异 |
+|---|---|---|
+| 入口 | `molt` 无参且 stdin/stdout 均为 TTY → `execv molt-tui`；`molt tui` 为显式子命令（`molt/cli.py:28-58,282-300`） | 与 D2 一致 |
+| TUI → 模型 | TUI 进程内读 `DEEPSEEK_API_KEY` / `MOLT_API_KEY_HELPER`，直连 provider `POST /chat/completions`（`crates/molt-tui/src/provider.rs`） | 无 agent 中间层；TUI 持 provider key（C1） |
+| 会话存储 | 本地 JSONL：`$HOME/.local/share/molt/sessions/<id>.jsonl`（`crates/molt-tui/src/session.rs`） | 不是 SQLite，也不是后端服务 |
+| TUI → kernel | Versions 面板经子进程 `molt version` → Python `VersionSandbox` → kernel（`crates/molt-tui/src/version_workspace.rs:134-146`） | 无 TS broker；spec INV-2 保持（TUI 不直接接触 kernel socket） |
+| Tree / Settings / Diff / Approval | 仍读 `MockData`（`app.rs`、`tree.rs`、`settings.rs`、`approval.rs`） | C4 / B1 待修 |
+
+**C1 凭据边界（现状、残余风险、目标）**：现行直连把 provider key 放进 TUI 进程内存，相对目标态扩大了凭据暴露面——进程转储、同 UID 进程读取、日志/错误串误带、崩溃转储都可能触及密钥。这不改变 **spec INV-6**（密钥脱敏）：密钥只从 env / `MOLT_API_KEY_HELPER` 读，不进入 argv / 日志 / 错误串，`ProviderConfig` 的 `Debug` 必须打码；也不改变 **spec INV-2**（TUI 不直接接触 kernel socket）。目标态（agent 模式）仍要求 TUI 不持 provider key，provider 调用在 agent 侧、工具在沙箱内。在目标态落地前，部署方应按「TUI 进程持有 provider key」评估信任边界，不得按目标态的描述假定密钥只在 agent 侧。
 
 ### D2 入口行为
 
@@ -107,9 +122,9 @@ truecolor 半块 → 256 色半块 → 16 色半块单/双色（非 ASCII）→ 
 | ID | 问题 | 状态 |
 |---|---|---|
 | X1 | ADR-0015 §M0「agent runtime 随 agent 归档」是否禁止 v3 agent | **已确认（用户，2026-11-21）**：M0 仅界定 v1 实验面，不禁止 v3 在 kernel 之外新建 agent |
-| X2 | 找不到 `molt-tui` 时 `exit 2` 还是回落 help | 待确认（建议 `exit 2`，与 D2 一致） |
-| X3 | 动效 / 鼠标默认值 | 可后调；不影响本 ADR 接受 |
-| X4 | 是否拆出 0026 TUI 专篇 | 待评审（当前 TUI 细节留在 spec §13） |
+| X2 | 找不到 `molt-tui` 时 `exit 2` 还是回落 help | 待确认（建议 `exit 2`，与 D2 一致）。**收口条件（2026-11-27）**：B 批自然态 PTY 验收覆盖双 TTY 启动与 `molt-tui` 缺失分支——双 TTY 缺失时 `exit 2`、非 TTY 时 help + `exit 0`；证据留存并注明日期后关闭。未收口前按建议值评审，不改实现 |
+| X3 | 动效 / 鼠标默认值 | 可后调；不影响本 ADR 接受。**延期条件**：P1 动效 / 鼠标实现前再定 |
+| X4 | 是否拆出 0026 TUI 专篇 | 待评审。**本轮不拆（2026-11-27）**；延期触发条件：TUI 细节超出 spec §13 承载、TUI 需要独立验收/发布节奏、或 B 批通过后进入 P1 接线时重评。未触发前细节留在 spec §13 |
 
 ## 9. 与现有 ADR 的关系
 
@@ -121,3 +136,10 @@ truecolor 半块 → 256 色半块 → 16 色半块单/双色（非 ASCII）→ 
 | 0021 | 下游 | broker 契约与 golden 对齐 |
 | 0022 | 下游 | 会话树与回退由 agent 执行，TUI 只确认 / 展示 |
 | 0023–0025 | 同批 | 权限、记忆、配置；本 ADR 只定层与边界 |
+
+## 10. 修订记录
+
+| 日期 | 基线 | 修订内容 | 来源 |
+|---|---|---|---|
+| 2026-11-21 | `a5ce76dbbe60` | 初稿（W-04b）：四层目标、入口行为、后端发现、TUI 栈与降级 | spec §19 |
+| 2026-11-27 | `6198139` | 分离现行路径与目标分层；补 C1 残余风险并保留 spec INV-6 / INV-2 原约束；X2 写双 TTY / 缺 binary 收口条件与日期；X3 写延期条件；X4 记本轮不拆及延期触发条件；状态保持 Draft | 2026-11-27 设计-实现对账（spec §18–§20、本文件 §8 X1–X4；`molt/cli.py`、`crates/molt-tui/src/provider.rs`、`version_workspace.rs` 静态核对） |
