@@ -202,7 +202,7 @@ v2 的形态是「Rust kernel + Python `VersionSandbox` + 外部 OpenCode」。v
 | 项 | 现状 | 待修与验收 |
 |---|---|---|
 | C4 | Live 模式下 Tree / Settings / Diff / Approval 仍读 `MockData`（`app.rs`、`tree.rs`、`settings.rs`、`approval.rs`），没有 fail closed | **B1 待修**：Live 下无真实数据源的四个面板不得展示为真实状态或接受动作；显式 Mock 模式保留演示。真实 Live 可用范围限定为已连接且有真实后端支持的 Chat、Versions 路径；会话存储是本地 JSONL，不属于后端。首轮自然态 PTY 验收后逐项验证 |
-| C5 | B2 封堵已执行（2026-11-28）：TUI `b` 不再调用 `molt version rollback`，文件恢复动作明确不可用；前向恢复未实现，C5 仍待修 | **B2 剩余**：TUI 文件恢复改为导出目标状态 + 前向提交新 generation，不调用 kernel `rollback`；验收仍需覆盖操作前后内容、generation、历史与无 kernel rollback 调用，并运行既有 CLI rollback 回归，确认其仍只改变活动快照 |
+| C5 | 前向恢复已实现（2026-11-28）：TUI Versions 的 `b` 只恢复当前 `main` 的直接前任文件树——从全局 history 倒查最近一次活动变更，要求其为 `main` 的 commit / merge 且两端都是受管文件快照，再以面板基线的 generation 与 main 头发一次 `commit-files --activate`。switch（含切回 `main`）、rollback、旁支 active 写入并激活 `main`、非激活推进 `main` 均显式拒绝；不调用 kernel `rollback` | **C5 已通过独立验收（2026-11-28）**：真实 PTY 覆盖自然态无提交、两版 synthetic 恢复、真实 stale 拒绝（原 argv exit 3 且不重试）、同树 merge 后 `b` 的 `changed:false` 无效果、`[]` 真实空树恢复。同日 `cargo fmt` / `clippy` / `build` / `test` 与 version / project CLI pytest 17 passed，D3 history 链接缺口已修复并补测试。`docs/operations/version-cli.md` 本轮冻结；该手册已记载同树提交返回 `changed:false` 与空事件，但尚未说明无变化时回执可不含 `request_id`（即使传 `--include-request-id`），也未说明 generation 不推进 |
 
 C4 / C5 在 A 批只记录状态，不在本轮修复；不得把「四面板 mock」或「Versions 回退」描述为已符合目标契约。
 
@@ -644,7 +644,7 @@ ADR 0020–0025 正文已生成（W-04b / W-04c，2026-11-21），文件名为�
 | `contracts/openapi-v3.json` | 待补（W-06） | HTTP 契约 |
 | `contracts/events.schema.json` | 待补（W-06） | SSE 事件 schema |
 | `contracts/README.md` | 待补（W-06） | 契约目录说明 |
-| `crates/molt-tui/` | 已交付（P0 原型 + 部分现行路径） | 入口、6 屏、selftest、logo；Chat 直连 provider、JSONL 会话、Versions 经 CLI 已接通；Tree / Settings / Diff / Approval 仍 mock（C4 / B1 待修）；B2 封堵已执行（2026-11-28）：TUI `b` 不再调用 CLI rollback，文件恢复动作明确不可用；前向恢复未实现，C5 / B2 仍待修；完整 P1 agent 闭环未开始 |
+| `crates/molt-tui/` | 已交付（P0 原型 + 部分现行路径） | 入口、6 屏、selftest、logo；Chat 直连 provider、JSONL 会话、Versions 经 CLI 已接通；Tree / Settings / Diff / Approval 仍 mock（C4 / B1 待修）；B2 封堵已执行（2026-11-28），C5 前向恢复（TUI `b`：导出 `main` 直接前任文件树 + 前向提交）已实现，并于 2026-11-28 通过独立 PTY / 真实 CLI 验收（五场景）；完整 P1 agent 闭环未开始 |
 
 TUI 阶段口径与 `docs/architecture.md`「TUI 与版本工作区」一致：当前是已交付的 P0 原型，加上 Chat 直连、JSONL 会话与 Versions CLI 这些超出纯 mock 的现行路径；TS agent / TS broker / SQLite / 权限引擎 / 工具执行器均未交付，不因 TUI 可用而视为 P1 闭环。
 

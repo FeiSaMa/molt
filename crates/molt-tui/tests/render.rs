@@ -127,9 +127,11 @@ fn app_with_version_workspace() -> App {
         generation: 3,
         active_snapshot: Some("snapshot-3".to_owned()),
         last_event: Some("event-3".to_owned()),
+        main_head: Some("snapshot-3".to_owned()),
         history_view: Default::default(),
         pending_request: None,
         last_save_receipt: None,
+        last_file_recovery: None,
         detail: vec![
             "state_id synthetic-state-id".to_owned(),
             "generation 3".to_owned(),
@@ -231,6 +233,47 @@ fn version_panel_save_receipt_wraps_and_returns_to_previous_view() {
 }
 
 #[test]
+fn version_panel_offers_file_recovery_and_renders_each_outcome() {
+    use molt_tui::version_workspace::{FileRecoveryOutcome, FileRecoveryReport};
+
+    let mut application = app_with_version_workspace();
+    application.version_panel_open = true;
+    let frame = render_app(&application, 120, 40).join("\n");
+    assert!(frame.contains("b restore previous files"), "{frame}");
+    assert!(!frame.contains("file recovery unavailable"), "{frame}");
+
+    for (outcome, headline) in [
+        (
+            FileRecoveryOutcome::Rejected,
+            "file recovery rejected · not submitted",
+        ),
+        (
+            FileRecoveryOutcome::NoEffect,
+            "file recovery no effect · generation unchanged",
+        ),
+        (
+            FileRecoveryOutcome::Restored,
+            "file recovery committed · generation 3",
+        ),
+        (
+            FileRecoveryOutcome::Unknown,
+            "file recovery result unknown · do not retry",
+        ),
+    ] {
+        let workspace = application.version_workspace.as_mut().unwrap();
+        workspace.last_file_recovery = Some(FileRecoveryReport {
+            outcome,
+            lines: vec![headline.to_owned(), "stage commit-files".to_owned()],
+            request_id: None,
+        });
+        workspace.detail = vec![headline.to_owned(), "stage commit-files".to_owned()];
+        let frame = render_app(&application, 120, 40).join("\n");
+        assert!(frame.contains(headline), "{frame}");
+        assert!(frame.contains("stage commit-files"), "{frame}");
+    }
+}
+
+#[test]
 fn managed_tree_shows_snapshot_paths_and_text_preview_at_80x24() {
     use molt_tui::version_workspace::VersionWorkspace;
     use std::path::PathBuf;
@@ -244,9 +287,11 @@ fn managed_tree_shows_snapshot_paths_and_text_preview_at_80x24() {
         generation: 3,
         active_snapshot: Some("snapshot-3".to_owned()),
         last_event: Some("event-3".to_owned()),
+        main_head: Some("snapshot-3".to_owned()),
         history_view: Default::default(),
         pending_request: None,
         last_save_receipt: None,
+        last_file_recovery: None,
         detail: Vec::new(),
         draft: String::new(),
         editing: false,

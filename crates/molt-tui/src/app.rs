@@ -32,15 +32,11 @@ use crate::session::{self, Session, SessionStore, SessionSummary};
 use crate::settings::SettingsState;
 use crate::theme::{ColorMode, Theme};
 use crate::tree::TreeState;
-use crate::version_workspace::VersionWorkspace;
+use crate::version_workspace::{FileRecoveryOutcome, VersionWorkspace};
 use crate::{clipboard, logo, wordmark};
 
 /// Status messages disappear after three seconds of wall clock time.
 pub const STATUS_TTL: Duration = Duration::from_secs(3);
-/// `b` is reserved for TUI file recovery (C5). The forward-commit path does
-/// not exist yet, so the key must not call the CLI rollback operation.
-pub const FILE_RECOVERY_DISABLED: &str =
-    "TUI file recovery is disabled (C5 pending); use CLI export + forward commit";
 /// The fake model turn triggered by `t` in the chat view.
 pub const MOCK_STREAM_MS: u64 = 1500;
 
@@ -864,7 +860,19 @@ impl App {
             self.composer_focused = false;
             return;
         }
-        let mut file_recovery_disabled = false;
+        if key.code == KeyCode::Char('b') {
+            let report = workspace.file_recovery();
+            let level = match report.outcome {
+                FileRecoveryOutcome::Restored => StatusLevel::Success,
+                FileRecoveryOutcome::NoEffect => StatusLevel::Info,
+                FileRecoveryOutcome::Rejected => StatusLevel::Warning,
+                FileRecoveryOutcome::Unknown => StatusLevel::Danger,
+            };
+            let headline = report.headline();
+            workspace.last_file_recovery = Some(report);
+            self.set_status(level, headline);
+            return;
+        }
         let result = match key.code {
             KeyCode::Esc | KeyCode::Char('q') => {
                 self.version_panel_open = false;
@@ -909,19 +917,8 @@ impl App {
             }
             KeyCode::Char('a') => workspace.audit_last(),
             KeyCode::Char('u') => workspace.recover().and_then(|()| workspace.refresh()),
-            KeyCode::Char('b') => {
-                workspace
-                    .detail
-                    .insert(0, FILE_RECOVERY_DISABLED.to_owned());
-                file_recovery_disabled = true;
-                Ok(())
-            }
             _ => return,
         };
-        if file_recovery_disabled {
-            self.set_status(StatusLevel::Warning, FILE_RECOVERY_DISABLED);
-            return;
-        }
         if let Err(error) = result {
             let message = format!("operation failed: {error}");
             if key.code == KeyCode::Char('s') {
@@ -1249,7 +1246,7 @@ impl App {
         let mut lines = vec![
             Line::from("Ctrl+V · local workspace · v save receipt · / filter · c clear"),
             Line::from(
-                "e edit · s save · p pin reader · l read pinned · t tree · b file recovery unavailable",
+                "e edit · s save · p pin reader · l read pinned · t tree · b restore previous files",
             ),
             Line::from("u recover · h history · j/k move · PgUp/PgDn · a audit · Esc close"),
         ];
@@ -2437,9 +2434,11 @@ mod tests {
             generation: 2,
             active_snapshot: None,
             last_event: Some("event-new".to_owned()),
+            main_head: None,
             history_view,
             pending_request: None,
             last_save_receipt: None,
+            last_file_recovery: None,
             detail: vec![
                 "> g2 commit event-new".to_owned(),
                 "  g1 commit event-old".to_owned(),
@@ -2485,9 +2484,11 @@ mod tests {
             generation: 17,
             active_snapshot: None,
             last_event: Some("event-0".to_owned()),
+            main_head: None,
             history_view,
             pending_request: None,
             last_save_receipt: None,
+            last_file_recovery: None,
             detail: Vec::new(),
             draft: String::new(),
             editing: false,
@@ -2538,12 +2539,12 @@ mod tests {
     }
 
     #[test]
-    fn version_panel_b_reports_file_recovery_disabled_without_calling_molt() {
-        use crate::version_workspace::VersionHistory;
+    fn version_panel_b_runs_recovery_and_never_sends_commit_files_on_rejection() {
+        use crate::version_workspace::{FileRecoveryOutcome, VersionHistory};
         use std::os::unix::fs::PermissionsExt;
 
         let directory = std::env::temp_dir().join(format!(
-            "molt-tui-b-disabled-{}-{}",
+            "molt-tui-b-recovery-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -2551,12 +2552,14 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir(&directory).unwrap();
+        let workspace_directory = directory.join("workspace");
+        std::fs::create_dir(&workspace_directory).unwrap();
         let binary = directory.join("molt");
         let argv_log = directory.join("argv.log");
         std::fs::write(
             &binary,
             format!(
-                "#!/bin/sh\nprintf '%s\\n' \"$*\" >> '{}'\nexit 1\n",
+                "#!/bin/sh\nprintf '%s\\n' \"$*\" >> '{}'\nprintf 'error: status unavailable\\n' >&2\nexit 1\n",
                 argv_log.display()
             ),
         )
@@ -2566,16 +2569,19 @@ mod tests {
         std::fs::set_permissions(&binary, permissions).unwrap();
 
         let mut app = App::with_screen(ColorMode::Ansi256, Screen::Tree);
+        app.mode = DataMode::Live;
         app.version_workspace = Some(VersionWorkspace {
             binary,
-            workspace: "/tmp/synthetic".into(),
+            workspace: workspace_directory,
             state_id: "synthetic-state".to_owned(),
             generation: 2,
             active_snapshot: Some("snapshot-b".to_owned()),
             last_event: Some("event-b".to_owned()),
+            main_head: Some("snapshot-b".to_owned()),
             history_view: VersionHistory::default(),
             pending_request: None,
             last_save_receipt: None,
+            last_file_recovery: None,
             detail: Vec::new(),
             draft: String::new(),
             editing: false,
@@ -2595,15 +2601,18 @@ mod tests {
         let workspace = app.version_workspace.as_ref().unwrap();
         assert_eq!(workspace.generation, 2);
         assert_eq!(workspace.active_snapshot.as_deref(), Some("snapshot-b"));
-        assert_eq!(workspace.detail[0], FILE_RECOVERY_DISABLED);
+        let report = workspace.last_file_recovery.as_ref().unwrap();
+        assert_eq!(report.outcome, FileRecoveryOutcome::Rejected);
+        assert_eq!(workspace.detail, report.lines);
+        assert!(workspace.detail[0].contains("rejected"));
         assert!(app
             .status_text()
-            .is_some_and(|status| status.contains(FILE_RECOVERY_DISABLED)));
-        assert!(
-            !argv_log.exists(),
-            "b must not invoke the molt CLI: {:?}",
-            std::fs::read_to_string(&argv_log)
-        );
+            .is_some_and(|status| status.contains("rejected")));
+        let log = std::fs::read_to_string(&argv_log).unwrap();
+        assert!(log.contains("version --workspace"), "{log}");
+        assert!(log.contains(" status"), "{log}");
+        assert!(!log.contains("commit-files"), "{log}");
+        assert!(!log.contains("rollback"), "{log}");
         drop(app);
         std::fs::remove_dir_all(directory).unwrap();
     }
@@ -2634,9 +2643,11 @@ mod tests {
             generation: 2,
             active_snapshot: None,
             last_event: None,
+            main_head: None,
             history_view: VersionHistory::default(),
             pending_request: None,
             last_save_receipt: None,
+            last_file_recovery: None,
             detail: Vec::new(),
             draft: String::new(),
             editing: false,
@@ -2684,9 +2695,11 @@ mod tests {
             generation: 0,
             active_snapshot: None,
             last_event: None,
+            main_head: None,
             history_view: VersionHistory::default(),
             pending_request: None,
             last_save_receipt: None,
+            last_file_recovery: None,
             detail: Vec::new(),
             draft: String::new(),
             editing: false,
