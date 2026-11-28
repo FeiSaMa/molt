@@ -202,7 +202,7 @@ v2 的形态是「Rust kernel + Python `VersionSandbox` + 外部 OpenCode」。v
 | 项 | 现状 | 待修与验收 |
 |---|---|---|
 | C4 | Live 模式下 Tree / Settings / Diff / Approval 仍读 `MockData`（`app.rs`、`tree.rs`、`settings.rs`、`approval.rs`），没有 fail closed | **B1 待修**：Live 下无真实数据源的四个面板不得展示为真实状态或接受动作；显式 Mock 模式保留演示。真实 Live 可用范围限定为已连接且有真实后端支持的 Chat、Versions 路径；会话存储是本地 JSONL，不属于后端。首轮自然态 PTY 验收后逐项验证 |
-| C5 | 前向恢复已实现（2026-11-28）：TUI Versions 的 `b` 只恢复当前 `main` 的直接前任文件树——从全局 history 倒查最近一次活动变更，要求其为 `main` 的 commit / merge 且两端都是受管文件快照，再以面板基线的 generation 与 main 头发一次 `commit-files --activate`。switch（含切回 `main`）、rollback、旁支 active 写入并激活 `main`、非激活推进 `main` 均显式拒绝；不调用 kernel `rollback` | **C5 已通过独立验收（2026-11-28）**：真实 PTY 覆盖自然态无提交、两版 synthetic 恢复、真实 stale 拒绝（原 argv exit 3 且不重试）、同树 merge 后 `b` 的 `changed:false` 无效果、`[]` 真实空树恢复。同日 `cargo fmt` / `clippy` / `build` / `test` 与 version / project CLI pytest 17 passed，D3 history 链接缺口已修复并补测试。`docs/operations/version-cli.md` 本轮冻结；该手册已记载同树提交返回 `changed:false` 与空事件，但尚未说明无变化时回执可不含 `request_id`（即使传 `--include-request-id`），也未说明 generation 不推进 |
+| C5 | 前向恢复已实现（2026-11-28）：TUI Versions 的 `b` 只恢复当前 `main` 的直接前任文件树——从全局 history 倒查最近一次活动变更，要求其为 `main` 的 commit / merge 且两端都是受管文件快照，再以面板基线的 generation 与 main 头发一次 `commit-files --activate`。switch（含切回 `main`）、rollback、旁支 active 写入并激活 `main`、非激活推进 `main` 均显式拒绝；不调用 kernel `rollback` | **C5 已通过独立验收（2026-11-28）**（文档自述，未复核；验收 SHA 未记录；本段五场景、PTY/CLI 与 cargo/pytest 结果为自述，缺口句为文档状态记录；不得读作当前 main 已通过）：真实 PTY 覆盖自然态无提交、两版 synthetic 恢复、真实 stale 拒绝（原 argv exit 3 且不重试）、同树 merge 后 `b` 的 `changed:false` 无效果、`[]` 真实空树恢复。同日 `cargo fmt` / `clippy` / `build` / `test` 与 version / project CLI pytest 17 passed，D3 history 链接缺口已修复并补测试。`docs/operations/version-cli.md` 本轮冻结；该手册已记载同树提交返回 `changed:false` 与空事件，但尚未说明无变化时回执可不含 `request_id`（即使传 `--include-request-id`），也未说明 generation 不推进 |
 
 C4 / C5 在 A 批只记录状态，不在本轮修复；不得把「四面板 mock」或「Versions 回退」描述为已符合目标契约。
 
@@ -607,7 +607,7 @@ ADR 0020–0025 正文已生成（W-04b / W-04c，2026-11-21），文件名为�
 |---|---|---|---|
 | [0020](decisions/0020-v3-layering.md) | v3 分层与进程边界 | TUI / agent / broker / kernel；`molt → molt-tui`；kernel 零改动；TUI 栈与降级 | Q1 / Q10 / Q11 / A1；Q11 / X2 收口条件见 §18 Q11 与 ADR-0020 X2（2026-11-27） |
 | [0021](decisions/0021-ts-broker.md) | TS broker 与 kernel 事务契约 | 单写者 / journal / 原 ID 恢复 / state 根隔离 / golden 字节对齐 / managed vs workspace | Q2 / A5 / A6、0021 X1；TS broker 未交付，预算来源分列见 ADR-0021 D5 |
-| [0022](decisions/0022-session-tree.md) | 会话树、fork 与回退 | `parent_id` 树 / leaf / boundary / checkpoint / 前向 commit / 两棵树分离 | Q4 / Q5、0022 X1；X1 只约束文件回退，CLI 运维 rollback 不在范围（ADR-0022 D5.1）；C5 待 B2 修 |
+| [0022](decisions/0022-session-tree.md) | 会话树、fork 与回退 | `parent_id` 树 / leaf / boundary / checkpoint / 前向 commit / 两棵树分离 | Q4 / Q5、0022 X1；X1 只约束文件回退，CLI 运维 rollback 不在范围（ADR-0022 D5.1）；2026-11-28 文档状态：C5 验收表述为自述、验收 SHA 未记录（见 §5.6 / 行 205、§21 文件清单 / 行 647）；相关文档待同步。 |
 | [0023](decisions/0023-permissions-sandbox.md) | 权限、审批与沙箱 | last-match + deny>ask>allow / once/always/reject / 工具分级 / bwrap / 脱敏 | Q8 / Q9；权限引擎与 v3 工具沙箱未交付（ADR-0023 D8） |
 | [0024](decisions/0024-memory-system.md) | 记忆系统 | 双层 / frontmatter / FTS5 / 两阶段 / 去重 / 过期 / 证据 / 与 compaction 关系 | Q2 / Q6；**0024 已归档（2026-11-27），重启条件见 ADR-0024 头部** |
 | [0025](decisions/0025-config-dag-routing.md) | 统一配置模型、配置树与自动路由 | genome 子集 / DAG / suggest / auto / 跨版本不可比 | Q7 / A6；genome 目标保留，DAG / 路由未交付（ADR-0025 D7） |
@@ -644,7 +644,7 @@ ADR 0020–0025 正文已生成（W-04b / W-04c，2026-11-21），文件名为�
 | `contracts/openapi-v3.json` | 待补（W-06） | HTTP 契约 |
 | `contracts/events.schema.json` | 待补（W-06） | SSE 事件 schema |
 | `contracts/README.md` | 待补（W-06） | 契约目录说明 |
-| `crates/molt-tui/` | 已交付（P0 原型 + 部分现行路径） | 入口、6 屏、selftest、logo；Chat 直连 provider、JSONL 会话、Versions 经 CLI 已接通；Tree / Settings / Diff / Approval 仍 mock（C4 / B1 待修）；B2 封堵已执行（2026-11-28），C5 前向恢复（TUI `b`：导出 `main` 直接前任文件树 + 前向提交）已实现，并于 2026-11-28 通过独立 PTY / 真实 CLI 验收（五场景）；完整 P1 agent 闭环未开始 |
+| `crates/molt-tui/` | 已交付（P0 原型 + 部分现行路径） | 入口、6 屏、selftest、logo；Chat 直连 provider、JSONL 会话、Versions 经 CLI 已接通；Tree / Settings / Diff / Approval 仍 mock（C4 / B1 待修）；B2 封堵已执行（2026-11-28），C5 前向恢复（TUI `b`：导出 `main` 直接前任文件树 + 前向提交）已实现，并于 2026-11-28 通过独立 PTY / 真实 CLI 验收（五场景；该验收表述为文档自述，未复核；验收 SHA 未记录；不得读作当前 main 已通过）；完整 P1 agent 闭环未开始 |
 
 TUI 阶段口径与 `docs/architecture.md`「TUI 与版本工作区」一致：当前是已交付的 P0 原型，加上 Chat 直连、JSONL 会话与 Versions CLI 这些超出纯 mock 的现行路径；TS agent / TS broker / SQLite / 权限引擎 / 工具执行器均未交付，不因 TUI 可用而视为 P1 闭环。
 
