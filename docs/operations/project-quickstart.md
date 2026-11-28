@@ -20,15 +20,26 @@ bundle. The v1.2.0rc9 tar.gz is retained only as the previous portable archive.
 v1.2.0rc9 的 tar.gz 仅作为上一版可移植归档保留。
 
 ```bash
+unset molt_demo_cli molt_demo_kernel molt_demo_reader
+demo_env=$(mktemp -d /tmp/molt-demo-env.XXXXXX)
 (
   set -e
-  demo_env=$(mktemp -d /tmp/molt-demo-env.XXXXXX)
+  test -d "$demo_env"
   export PYTHONDONTWRITEBYTECODE=1
   uv venv --python 3.12.13 "$demo_env/venv"
   uv pip install --no-index --python "$demo_env/venv/bin/python" ./wheels/molt-*.whl
   TMPDIR=/tmp bash ./share/molt/examples/project-workspace.sh \
     "$demo_env/venv/bin/molt" ./bin/molt-kernel
 )
+demo_status=$?
+if [[ $demo_status -eq 0 ]]; then
+  molt_demo_cli="$demo_env/venv/bin/molt"
+  molt_demo_kernel="$(pwd)/bin/molt-kernel"
+  molt_demo_reader="$(pwd)/share/molt/examples/project-reader.mjs"
+else
+  printf 'Bundle demo failed; handoff paths stay unset.\n' >&2
+  false
+fi
 ```
 
 ### From source / 使用源码
@@ -38,17 +49,29 @@ Clone the repository and run the following in Bash.
 安装 Rust 后克隆仓库，在 Bash 中执行以下命令。
 
 ```bash
-git clone https://github.com/FeiSaMa/molt.git
-cd molt
+unset molt_demo_cli molt_demo_kernel molt_demo_reader
+molt_repo_base=$(pwd)
+build=$(mktemp -d /tmp/molt-build.XXXXXX)
 (
   set -e
-  build=$(mktemp -d /tmp/molt-build.XXXXXX)
+  test -d "$build"
+  git clone https://github.com/FeiSaMa/molt.git
+  cd molt
   export PYTHONDONTWRITEBYTECODE=1
   UV_PROJECT_ENVIRONMENT="$build/venv" uv sync --locked --python 3.12.13
   cargo build --locked -p molt-kernel --target-dir "$build/target"
   TMPDIR=/tmp bash examples/project-workspace.sh \
     "$build/venv/bin/molt" "$build/target/debug/molt-kernel"
 )
+demo_status=$?
+if [[ $demo_status -eq 0 ]]; then
+  molt_demo_cli="$build/venv/bin/molt"
+  molt_demo_kernel="$build/target/debug/molt-kernel"
+  molt_demo_reader="$molt_repo_base/molt/examples/project-reader.mjs"
+else
+  printf 'Source demo failed; handoff paths stay unset.\n' >&2
+  false
+fi
 ```
 
 The script prints two results after rollback. The previously pinned job reads
@@ -100,6 +123,133 @@ node share/molt/examples/project-reader.mjs /path/to/molt ./project.json setting
 Replace the executable, config path and file names with those for your project.
 The quickstart stops its demo kernel when it exits.
 请替换为自己项目的可执行文件、配置路径和受管文件名。快速开始示例退出时会停止演示 kernel。
+
+#### Run the reader end to end on synthetic files / 用合成文件完整跑通读者
+
+The demo blocks above stop their kernel on exit. Each block clears
+`molt_demo_cli`, `molt_demo_kernel` and `molt_demo_reader` when it starts and
+sets them only after every step succeeds, so a failed run stops at that step,
+reports a non-zero status and leaves the three paths unset. Run one demo block
+first, wait for it to exit, then paste the block below in the same shell. The
+new workspace and its kernel live in a fresh temporary directory; the earlier
+demo and any real project are not touched.
+
+上方两个示例退出时会停止各自 kernel。每个代码块开始时清空 `molt_demo_cli`、
+`molt_demo_kernel` 和 `molt_demo_reader`，仅在每一步都成功后才写入，因此失败会停在
+该步、返回非零并让三个路径保持未赋值。先在同一 shell 中运行其中一个示例并等它退出，
+再粘贴下面的代码块。新工作区与 kernel 位于新的临时目录，不重启或清理之前的示例，也
+不接触真实项目。
+
+```bash
+(
+  set -eo pipefail
+  export PYTHONDONTWRITEBYTECODE=1
+
+  molt=${molt_demo_cli:-}
+  kernel=${molt_demo_kernel:-}
+  reader=${molt_demo_reader:-}
+  if [[ -z $molt || -z $kernel || -z $reader ]] \
+    || [[ ! -x $molt || ! -x $kernel || ! -r $reader ]]; then
+    printf 'Demo paths are missing or unreadable; re-run the demo block above\n' >&2
+    printf 'in this shell and let it finish, then paste this block again.\n' >&2
+    exit 1
+  fi
+
+  demo=$(mktemp -d /tmp/molt-reader.XXXXXX)
+  demo=$(realpath -e -- "$demo")
+  printf 'Reader demo directory: %s\n' "$demo"
+
+  v() { "$molt" version --workspace "$demo/w" "$@"; }
+  p() { "$molt" project --config "$demo/project.json" "$@"; }
+
+  kernel_pid=
+  cleanup() {
+    if [[ -n $kernel_pid ]]; then
+      kill "$kernel_pid" 2>/dev/null || true
+      wait "$kernel_pid" 2>/dev/null || true
+    fi
+    if [[ -S $demo/w/state/kernel.sock ]]; then
+      unlink "$demo/w/state/kernel.sock"
+    fi
+  }
+  trap cleanup EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+
+  v init --kernel "$kernel" --synthetic
+  "$molt" version --workspace "$demo/w" serve --kernel "$kernel" \
+    >"$demo/kernel.log" 2>&1 &
+  kernel_pid=$!
+
+  ready=0
+  for attempt in {1..100}; do
+    if v status >"$demo/status.json" 2>"$demo/status.err"; then
+      ready=1
+      break
+    fi
+    kill -0 "$kernel_pid" 2>/dev/null || break
+    sleep .05
+  done
+  if (( ! ready )); then
+    printf 'Reader demo did not start. See %s/kernel.log and %s/status.err\n' "$demo" >&2
+    exit 1
+  fi
+
+  mkdir -m 700 "$demo/edit" "$demo/exports"
+  cat >"$demo/project.json" <<'JSON'
+{"workspace":"w","edits":"edit","exports":"exports","files":["settings.json","prompt.txt"]}
+JSON
+
+  edit=$(p begin | jq -er '.edit')
+  printf '%s\n' '{"mode":"short"}' >"$edit/settings.json"
+  printf '%s\n' 'Write a summary' >"$edit/prompt.txt"
+  p save --reason 'Save a short baseline' >"$demo/saved.json"
+
+  node "$reader" "$molt" "$demo/project.json" settings.json prompt.txt \
+    >"$demo/reader.json"
+  jq -e '.snapshot and .tree and .files' "$demo/reader.json" >/dev/null
+  jq -jr '.files["settings.json"], .files["prompt.txt"]' "$demo/reader.json"
+)
+```
+
+The block prints `Reader demo directory:` first, `init` prints its own status
+line in between, and the last two lines are the file contents the reader
+returned:
+
+```
+Reader demo directory: /tmp/molt-reader.<random>
+{"mode":"short"}
+Write a summary
+```
+
+`reader.json` in that directory holds the full result: `snapshot` is the saved
+snapshot ID, `tree` is the absolute path of the pinned export, and `files` maps
+each requested relative path to its UTF-8 text, including the newline written by
+`printf`:
+
+```json
+{
+  "snapshot": "<snapshot ID>",
+  "tree": "<absolute pinned export path>",
+  "files": {
+    "settings.json": "{\"mode\":\"short\"}\n",
+    "prompt.txt": "Write a summary\n"
+  }
+}
+```
+
+Any failing command stops the block. On success, failure, `Ctrl-C` or `TERM`,
+the trap stops only the kernel this block started and removes its socket; the
+earlier demos and any real project stay untouched. The temporary directory is
+kept for inspection (`kernel.log`, `saved.json`, `reader.json`); delete it by
+hand when done.
+
+代码块先打印 `Reader demo directory:`，`init` 在中间打印自己的状态行，最后两行是读者
+读回的文件内容。`reader.json` 保存完整结果：`snapshot` 为快照 ID，`tree` 为固定导出
+的绝对路径，`files` 把每个请求的相对路径映射到其 UTF-8 文本（含 `printf` 写入的
+换行）。任何一步失败都会停止该代码块；无论成功、失败、`Ctrl-C` 还是 `TERM`，trap 只
+停止本代码块启动的 kernel 并移除其 socket，之前的示例与真实项目不受影响。临时目录
+保留供查看（`kernel.log`、`saved.json`、`reader.json`），看完请手工删除。
 
 An application can import the function and parse its own file formats.
 应用可以导入函数并按自己的格式解析文件。
